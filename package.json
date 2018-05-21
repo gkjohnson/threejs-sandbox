@@ -1,0 +1,24 @@
+{
+  "name": "threejs-optimize-triangle-indices",
+  "version": "1.0.0",
+  "description": "THREE.BufferGeometry extension to generate and optimize triangle indices",
+  "main": "index.js",
+  "peerDependencies": {
+    "three": "^0.92.0"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gkjohnson/threejs-optimize-triangle-indices.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gkjohnson/threejs-optimize-triangle-indices/issues"
+  },
+  "homepage": "https://github.com/gkjohnson/threejs-optimize-triangle-indices#readme"
+}
