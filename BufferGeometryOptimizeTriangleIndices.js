@@ -12,8 +12,10 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 	
 	}, {} );
 
+	// TODO: This should be iterating ver the existing indices if they're already there.
 	for ( var i = 0; i < len; i ++ ) {
 
+		// Generate a hash for the vertex attributes at the current index 'i'
 		var hash = '';
 		for ( var j = 0, l = names.length; j < l; j ++ ) {
 
@@ -30,6 +32,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 
 		}
 
+		// Add another reference to the vertex if it's already referenced
 		if ( hash in map ) {
 
 			indices.push( map[ hash ] );
@@ -61,6 +64,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 	}
 
 	// TODO: Convert the attributes into proper arrays for the mesh.
+	// TODO: Check if memory is improved at all
 
 }
 
