@@ -1,19 +1,4 @@
-THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(precision = 6) {
-
-	var self = this;
-	function getMemoryUse() {
-
-		var mem = 0;
-		for ( var name in self.attributes ) {
-
-			mem += self.attributes[ name ].array.byteLength;
-
-		}
-
-		mem += self.index ? self.index.array.byteLength : 0;
-		return mem;
-
-	}
+THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6 ) {
 
 	var map = {};
 	var indices = this.getIndex();
@@ -74,6 +59,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(precision = 6)
 			}
 
 			map[ hash ] = currindex;
+			newIndices.push(currindex);
 			currindex ++;
 		}
 
@@ -83,9 +69,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(precision = 6)
 
 		var name = names[ i ];
 		var attribute = this.getAttribute( name );
-
-		var bufftype = attribute.array.constructor;
-		var buffer = new bufftype( attrarrays[ name ] );
+		var buffer = new attribute.array.constructor( attrarrays[ name ] );
 
 		attribute.setArray( buffer );
 		attribute.needsUpdate = true;
@@ -109,7 +93,19 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(precision = 6)
 
 	}
 
-	// TODO: Check if memory is improved at all
+}
+
+THREE.BufferGeometry.prototype.getMemoryUse = function() {
+
+	var mem = 0;
+	for ( var name in this.attributes ) {
+
+		mem += this.attributes[ name ].array.byteLength;
+
+	}
+
+	mem += this.index ? this.index.array.byteLength : 0;
+	return mem;
 
 }
 
