@@ -1,9 +1,25 @@
-THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory = false, precision = 8) {
+THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(precision = 6) {
+
+	var self = this;
+	function getMemoryUse() {
+
+		var mem = 0;
+		for ( var name in self.attributes ) {
+
+			mem += self.attributes[ name ].array.byteLength;
+
+		}
+
+		mem += self.index ? self.index.array.byteLength : 0;
+		return mem;
+
+	}
 
 	var map = {};
-	var len = this.getAttribute( 'position' ).count;
+	var indices = this.getIndex();
+	var len = indices ? indices.count : this.getAttribute( 'position' ).count;
 	var names = Object.keys( this.attributes );
-	var indices = [];
+	var newIndices = [];
 	var currindex = 0;
 	var attrarrays = names.reduce( ( a, name ) => {
 
@@ -12,21 +28,21 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 	
 	}, {} );
 
-	// TODO: This should be iterating ver the existing indices if they're already there.
 	for ( var i = 0; i < len; i ++ ) {
 
 		// Generate a hash for the vertex attributes at the current index 'i'
+		var index = indices ? indices.getX(i) : i;
 		var hash = '';
 		for ( var j = 0, l = names.length; j < l; j ++ ) {
 
 			var name = names[ j ];
-			var attribute = this.attributes[ name ];
+			var attribute = this.getAttribute( name );
 			var array = attribute.array;
-			var size = attribute.size;
+			var size = attribute.itemSize;
 
 			for ( var k = 0; k < size; k ++ ) {
 
-				hash += `${ array[ i * size + k ].toFixed( precision ) }|`;
+				hash += `${ parseFloat( array[ i * size + k ].toFixed( precision ) ) }|`;
 
 			}
 
@@ -35,7 +51,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 		// Add another reference to the vertex if it's already referenced
 		if ( hash in map ) {
 
-			indices.push( map[ hash ] );
+			newIndices.push( map[ hash ] );
 
 		} else {
 
@@ -43,11 +59,11 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 			for ( var j = 0, l = names.length; j < l; j ++ ) {
 
 				var name = names[ j ];
-				var attribute = this.attributes[ name ];
+				var attribute = this.getAttribute( name );
 				var array = attribute.array;
 				var newarray = attrarrays[ name ];
-				var size = attribute.size;
-				
+				var size = attribute.itemSize;
+
 				for ( var k = 0; k < size; k ++ ) {
 					
 					var index = i * size + k;
@@ -63,7 +79,36 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function(optimizeMemory
 
 	}
 
-	// TODO: Convert the attributes into proper arrays for the mesh.
+	for ( var i = 0, l = names.length; i < l; i ++ ) {
+
+		var name = names[ i ];
+		var attribute = this.getAttribute( name );
+
+		var bufftype = attribute.array.constructor;
+		var buffer = new bufftype( attrarrays[ name ] );
+
+		attribute.setArray( buffer );
+		attribute.needsUpdate = true;
+
+	}
+
+	var cons = Uint8Array;
+	if ( newIndices.length >= Math.pow( 2, 8 ) ) cons = Uint16Array;
+	if ( newIndices.length >= Math.pow( 2, 16 ) ) cons = Uint32Array;
+
+	var newIndexBuffer = new cons( newIndices );
+	if ( indices === null ) {
+
+		indices = new THREE.BufferAttribute( newIndexBuffer, 1 );
+		this.setIndex(indices);
+
+	} else {
+		
+		indices.setArray( newIndexBuffer );
+		indices.needsUpdate = true;
+
+	}
+
 	// TODO: Check if memory is improved at all
 
 }
