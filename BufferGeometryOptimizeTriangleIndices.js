@@ -5,29 +5,36 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 	var len = indices ? indices.count : this.getAttribute( 'position' ).count;
 	var names = Object.keys( this.attributes );
 	var newIndices = [];
-	var currindex = 0;
-	var attrarrays = names.reduce( ( a, name ) => {
+	var currIndex = 0;
+	var attrArrays = {};
+	var getDataFuncs = {};
 
-		a[ name ] = [];
-		return a;
-	
-	}, {} );
+	names.forEach( name => {
+
+		var array = this.getAttribute( name ).array;
+		var dataView = new DataView( array.buffer );
+		var func = `getUint${ array.BYTES_PER_ELEMENT * 8 }`;
+		getDataFuncs[ name ] = i => dataView[ func ]( i * array.BYTES_PER_ELEMENT );
+
+		attrArrays[ name ] = [];
+
+	} );
 
 	for ( var i = 0; i < len; i ++ ) {
 
 		// Generate a hash for the vertex attributes at the current index 'i'
-		var index = indices ? indices.getX(i) : i;
+		var index = indices ? indices.array[ i ] : i;
 		var hash = '';
 		for ( var j = 0, l = names.length; j < l; j ++ ) {
 
 			var name = names[ j ];
 			var attribute = this.getAttribute( name );
-			var array = attribute.array;
 			var size = attribute.itemSize;
+			var getData = getDataFuncs[ name ];
 
 			for ( var k = 0; k < size; k ++ ) {
 
-				hash += `${ parseFloat( array[ i * size + k ].toFixed( precision ) ) }|`;
+				hash += `${ getData( (i * size + k) ) }|`
 
 			}
 
@@ -43,11 +50,13 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 			// copy data to the new index in the attribute arrays
 			for ( var j = 0, l = names.length; j < l; j ++ ) {
 
-				var name = names[ j ];
+				var name = names[ j ];				
 				var attribute = this.getAttribute( name );
 				var array = attribute.array;
-				var newarray = attrarrays[ name ];
 				var size = attribute.itemSize;
+
+				attrArrays[ name ] = attrArrays[ name ] || [];
+				var newarray = attrArrays[ name ];
 
 				for ( var k = 0; k < size; k ++ ) {
 					
@@ -58,9 +67,9 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 
 			}
 
-			map[ hash ] = currindex;
-			newIndices.push(currindex);
-			currindex ++;
+			map[ hash ] = currIndex;
+			newIndices.push(currIndex);
+			currIndex ++;
 		}
 
 	}
@@ -69,7 +78,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 
 		var name = names[ i ];
 		var attribute = this.getAttribute( name );
-		var buffer = new attribute.array.constructor( attrarrays[ name ] );
+		var buffer = new attribute.array.constructor( attrArrays[ name ] );
 
 		attribute.setArray( buffer );
 		attribute.needsUpdate = true;
