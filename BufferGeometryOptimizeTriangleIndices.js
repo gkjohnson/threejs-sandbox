@@ -1,4 +1,4 @@
-THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6 ) {
+THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3 ) {
 
 	var map = {};
 	var indices = this.getIndex();
@@ -7,19 +7,8 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 	var newIndices = [];
 	var currIndex = 0;
 	var attrArrays = {};
-	var getDataFuncs = {};
 
-	names.forEach( name => {
-
-		var array = this.getAttribute( name ).array;
-		var dataView = new DataView( array.buffer );
-		var func = `getUint${ array.BYTES_PER_ELEMENT * 8 }`;
-		getDataFuncs[ name ] = i => dataView[ func ]( i * array.BYTES_PER_ELEMENT );
-
-		attrArrays[ name ] = [];
-
-	} );
-
+	var multVal = Math.pow( 10, precision + 1 );
 	for ( var i = 0; i < len; i ++ ) {
 
 		// Generate a hash for the vertex attributes at the current index 'i'
@@ -30,11 +19,13 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 6
 			var name = names[ j ];
 			var attribute = this.getAttribute( name );
 			var size = attribute.itemSize;
-			var getData = getDataFuncs[ name ];
+			var array = attribute.array;
 
 			for ( var k = 0; k < size; k ++ ) {
 
-				hash += `${ getData( (i * size + k) ) }|`
+				// double tilde truncates the decimal value
+				var val = array[ i * size + k ];
+				hash += `${ ~~(val * multVal) / multVal },`
 
 			}
 
