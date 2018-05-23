@@ -1,5 +1,5 @@
 # threejs-optimize-triangle-indices
-THREE.BufferGeometry extension to generate and optimize triangle indices by deduping vertex attributes and generating new triangle indices.
+`THREE.BufferGeometry` extension to generate and optimize triangle indices by deduping vertex attributes and generating new triangle indices.
 
 ## Use
 
@@ -30,7 +30,7 @@ THREE.BufferGeometry extension to generate and optimize triangle indices by dedu
 
 Returns the memory allocated for the geometry (vertex attribute and index arrays) as bytes.
 
-### BufferGeometry.optimizeTriangleIndices(precision = 6)
+### BufferGeometry.optimizeTriangleIndices(precision = 3)
 
 Updates the vertex attributes and index arrays with optimized, deduped versions representing the same mesh.
 
