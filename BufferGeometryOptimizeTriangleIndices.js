@@ -1,15 +1,15 @@
 // Generate an index buffer if the geometry doesn't have one, or optimize it
 // if it's already available.
-THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3 ) {
+THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
 
 	var hashToIndex = {};
 	var indices = this.getIndex();
 	var positions = this.getAttribute( 'position' );
 	var vertexCount = indices ? indices.count : positions.count;
-	
+
 	// next value for triangle indices
 	var nextIndex = 0;
-	
+
 	// attributes and new attribute arrays
 	var attributeNames = Object.keys( this.attributes );
 	var attrArrays = {};
@@ -19,7 +19,6 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 	for ( var i = 0; i < vertexCount; i ++ ) {
 
 		// Generate a hash for the vertex attributes at the current index 'i'
-		var index = indices ? indices.array[ i ] : i;
 		var hash = '';
 		for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
 
@@ -32,7 +31,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 
 				// double tilde truncates the decimal value
 				var val = array[ i * size + k ];
-				hash += `${ ~~( val * precisionMultiplier ) / precisionMultiplier },`
+				hash += `${ ~ ~ ( val * precisionMultiplier ) / precisionMultiplier },`;
 
 			}
 
@@ -49,7 +48,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 			// copy data to the new index in the attribute arrays
 			for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
 
-				var name = attributeNames[ j ];				
+				var name = attributeNames[ j ];
 				var attribute = this.getAttribute( name );
 				var array = attribute.array;
 				var itemSize = attribute.itemSize;
@@ -57,8 +56,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 				attrArrays[ name ] = attrArrays[ name ] || [];
 				var newarray = attrArrays[ name ];
 				for ( var k = 0; k < itemSize; k ++ ) {
-					
-					var index = i * itemSize + k;
+
 					newarray.push( array[ i * itemSize + k ] );
 
 				}
@@ -66,7 +64,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 			}
 
 			hashToIndex[ hash ] = nextIndex;
-			newIndices.push(nextIndex);
+			newIndices.push( nextIndex );
 			nextIndex ++;
 
 		}
@@ -95,19 +93,19 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function( precision = 3
 	if ( indices === null ) {
 
 		indices = new THREE.BufferAttribute( newIndexBuffer, 1 );
-		this.setIndex(indices);
+		this.setIndex( indices );
 
 	} else {
-		
+
 		indices.setArray( newIndexBuffer );
 		indices.needsUpdate = true;
 
 	}
 
-}
+};
 
 // Return the estimated memory used by this geometry
-THREE.BufferGeometry.prototype.getMemoryUse = function() {
+THREE.BufferGeometry.prototype.getMemoryUse = function () {
 
 	var mem = 0;
 	for ( var name in this.attributes ) {
@@ -119,4 +117,4 @@ THREE.BufferGeometry.prototype.getMemoryUse = function() {
 	mem += this.index ? this.index.array.byteLength : 0;
 	return mem;
 
-}
+};
