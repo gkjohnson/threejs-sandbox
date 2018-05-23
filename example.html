@@ -13,53 +13,73 @@
             padding: 0;
             overflow: hidden;
         }
+
+        #output {
+            position: absolute;
+            width: 100%;
+            color: white;
+            text-align: center;
+            font-family: sans-serif;
+            padding: 10px;
+        }
+
     </style>
+
+    <div id="output"><h3>Unoptimized vs Optimized Geometry<h3></div>
 
     <script>
         
+        const outputel = document.getElementById('output');
+        function addOutput(s) {
+
+            outputel.innerHTML += `<br>${ s }`;
+
+        }
+
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 2000 );
         camera.position.set( 0, 3, 6.5 );
         camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
 
-        const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
+        const ambientLight = new THREE.AmbientLight( new THREE.Color(0xDD2C00).lerp(new THREE.Color(0xcccccc), 0.5), 0.4 );
         scene.add( ambientLight );
         
         const directionalLight = new THREE.DirectionalLight();
         directionalLight.position.set( 10, 10, 0 );
         scene.add( directionalLight );
-        
-        const rotator = new THREE.Object3D();
-        scene.add( rotator );
-        
+                
         const renderer = new THREE.WebGLRenderer( { antialias: true } );
         renderer.setPixelRatio( window.devicePixelRatio );
         renderer.setSize( window.innerWidth, window.innerHeight );
-        renderer.setClearColor( 0x222222 );
+        renderer.setClearColor( 0xFF3D00 );
         document.body.appendChild( renderer.domElement );
 
 
 
-        const geom = new THREE.SphereGeometry(1, 100, 100);
+        let starttime = performance.now();
+        const geom = new THREE.TorusKnotGeometry(1, .4, 200, 100);
+        addOutput(`${ geom.faces.length } triangles generated in ${ ~~(performance.now() - starttime) }ms`);
+
         const mesh = new THREE.Mesh(geom, new THREE.MeshPhongMaterial());
-        mesh.position.y = 1;
-        rotator.add(mesh);
+        mesh.position.x = -2;
+        scene.add(mesh);
 
         const buff = new THREE.BufferGeometry().setFromObject( mesh );
         const bmesh = new THREE.Mesh(buff, new THREE.MeshPhongMaterial());
 
-        console.log(`${ (buff.getMemoryUse() / 1000).toFixed(2) } kb`);
+        
+        const origmem =`${ (buff.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+
+        starttime = performance.now();
         buff.optimizeTriangleIndices();
-        console.log(`${ (buff.getMemoryUse() / 1000).toFixed(2) } kb`);
+
+        const finalmem =`${ (buff.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+        addOutput(`Optimized from ${ origmem } to ${ finalmem } in ${ ~~(performance.now() - starttime) }ms`)
 
 
-
-
-        bmesh.position.y = -1;
-        rotator.add(bmesh);
-
-
-
+        bmesh.position.x = 2;
+        scene.add(bmesh);
 
         window.addEventListener( 'resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -68,7 +88,8 @@
         } );
 
         ( function renderLoop() {
-            rotator.rotateY( 0.005 );
+            mesh.rotateY( 0.005 );
+            bmesh.rotateY( 0.005 );
             renderer.render( scene, camera );
             requestAnimationFrame( renderLoop );
         } )();
