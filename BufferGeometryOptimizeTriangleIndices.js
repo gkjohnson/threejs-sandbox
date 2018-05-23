@@ -1,7 +1,7 @@
-// Generate an index buffer if the geometry doesn't have one, or optimize it
-// if it's already available.
 THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
 
+	// Generate an index buffer if the geometry doesn't have one, or optimize it
+	// if it's already available.
 	var hashToIndex = {};
 	var indices = this.getIndex();
 	var positions = this.getAttribute( 'position' );
@@ -104,9 +104,9 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 
 };
 
-// Return the estimated memory used by this geometry
 THREE.BufferGeometry.prototype.getMemoryUse = function () {
 
+	// Return the estimated memory used by this geometry
 	var mem = 0;
 	for ( var name in this.attributes ) {
 
