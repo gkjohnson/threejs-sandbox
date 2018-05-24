@@ -26,7 +26,7 @@
 
     </style>
 
-    <div id="output"><h3>Unoptimized vs Optimized Geometry<h3></div>
+    <div id="output"><h3>Unoptimized vs Optimized Geometry vs Interleaved to Non-interleaved Optimized<h3></div>
 
     <script>
         
@@ -84,12 +84,12 @@
         const bgeom = geom.clone();
         const bmesh = new THREE.Mesh(bgeom, materials);
         
-        const origmem =`${ (bgeom.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+        const origmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
 
         starttime = performance.now();
         bgeom.mergeVertices();
 
-        const finalmem =`${ (bgeom.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+        const finalmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
         addOutput(`Optimized from ${ origmem } to ${ finalmem } in ${ ~~(performance.now() - starttime) }ms`)
         
         bmesh.position.x = 0;
@@ -111,15 +111,6 @@
         scene.add(ilmesh);
 
 
-
-
-        addOutput('left: original unpotimized BufferGeometry');
-        addOutput('middle: optimized BufferGeometry');
-        addOutput('right: original to interleaved attribute to noninterleaved optimized geometry');
-
-
-
-
         window.addEventListener( 'resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -133,8 +124,6 @@
             renderer.render( scene, camera );
             requestAnimationFrame( renderLoop );
         } )();
-
-        // TODO: Show visuals to verify that it's visually identical
 
     </script>
 </body>

@@ -59,6 +59,21 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 };
 
+THREE.BufferGeometryUtils.getMemoryUse = function ( geometry ) {
+
+	// Return the estimated memory used by this geometry
+	var mem = 0;
+	for ( var name in geometry.attributes ) {
+
+		mem += geometry.getAttribute( name ).array.byteLength;
+
+	}
+
+	mem += geometry.getIndex() ? geometry.getIndex().array.byteLength : 0;
+	return mem;
+
+};
+
 THREE.InterleavedBufferAttribute.prototype.copy = function ( source ) {
 
 	this.data = source.data;
@@ -192,20 +207,5 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 	this.setIndex( newIndices );
 
 	return this;
-
-};
-
-THREE.BufferGeometry.prototype.getMemoryUse = function ( geometry ) {
-
-	// Return the estimated memory used by this geometry
-	var mem = 0;
-	for ( var name in geometry.attributes ) {
-
-		mem += geometry.getAttribute( name ).array.byteLength;
-
-	}
-
-	mem += geometry.getIndex() ? geometry.getIndex().array.byteLength : 0;
-	return mem;
 
 };
