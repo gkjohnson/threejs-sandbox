@@ -146,10 +146,21 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 	for ( var i = 0, l = attributeNames.length; i < l; i ++ ) {
 
 		var name = attributeNames[ i ];
-		var attribute = this.getAttribute( name ).clone();
-		var buffer = new attribute.array.constructor( attrArrays[ name ] );
+		var oldAttribute = this.getAttribute( name );
+		var attribute;
 
-		attribute.setArray( buffer );
+		var buffer = new attribute.array.constructor( attrArrays[ name ] );
+		if ( oldAttribute.isInterleavedBufferAttribute ) {
+			
+			attribute = new THREE.BufferAttribute( buffer, oldAttribute.itemSize, oldAttribute.itemSize );
+
+		} else {
+
+			attribute = this.getAttribute( name ).clone();
+			attribute.setArray( buffer );
+
+		}
+
 		this.addAttribute( name, attribute );
 
 	}

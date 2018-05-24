@@ -60,7 +60,7 @@
 
         // Set up initial geometry
         let starttime = performance.now();
-        let geom = new THREE.TorusKnotGeometry(1, .4, 200, 100);
+        let geom = new THREE.TorusKnotGeometry(.5, .2, 200, 100);
         addOutput(`${ geom.faces.length } triangles generated in ${ ~~(performance.now() - starttime) }ms`);
         geom = new THREE.BufferGeometry().fromGeometry( geom );
 
@@ -75,7 +75,7 @@
             new THREE.MeshPhongMaterial({ color: 0x2196F3 })
         ];
         const mesh = new THREE.Mesh(geom, materials);
-        mesh.position.x = -4;
+        mesh.position.x = -2;
         scene.add(mesh);
 
 
@@ -107,11 +107,15 @@
 
         ilgeom.mergeVertices();
 
-        ilmesh.position.x = 4;
+        ilmesh.position.x = 2;
         scene.add(ilmesh);
 
 
 
+
+        addOutput('left: original unpotimized BufferGeometry');
+        addOutput('middle: optimized BufferGeometry');
+        addOutput('right: original to interleaved attribute to noninterleaved optimized geometry');
 
 
 
