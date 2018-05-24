@@ -1,3 +1,75 @@
+THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
+
+	var TypedArray;
+	var arrayLength = 0;
+	var stride = 0;
+
+	for ( var i = 0, l = attributes.length; i < l; ++ i ) {
+
+		var attribute = attributes[ i ];
+
+		if ( TypedArray === undefined ) TypedArray = attribute.array.constructor;
+		if ( TypedArray !== attribute.array.constructor ) {
+
+			console.warn( 'AttributeBuffers of different types cannot be interleaved' );
+			return null;
+
+		}
+
+		arrayLength += attribute.array.length;
+		stride += attribute.itemSize;
+
+	}
+
+	var interleavedBuffer = new THREE.InterleavedBuffer( new TypedArray( arrayLength ), stride );
+	var offset = 0;
+	var res = [];
+	var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
+	var setters = [ 'setX', 'setY', 'setZ', 'setW' ];
+
+	for ( var j = 0, l = attributes.length; j < l; j ++ ) {
+
+		var attribute = attributes[ j ];
+		var itemSize = attribute.itemSize;
+		var count = attribute.count;
+		var iba = new THREE.InterleavedBufferAttribute( interleavedBuffer, itemSize, offset, attribute.normalized );
+		res.push( iba );
+
+		offset += itemSize;
+
+		for ( var c = 0; c < count; c ++ ) {
+
+			for ( var k = 0; k < itemSize; k ++ ) {
+
+				iba[ setters[ k ] ]( c, attribute[ getters[ k ] ]( c ) )
+
+			}
+
+		}
+
+	}
+
+	return res;
+
+}
+
+THREE.InterleavedBufferAttribute.prototype.copy = function ( source ) {
+
+	this.data = source.data;
+	this.itemSize = source.itemSize;
+	this.offset = source.offset;
+	this.normalized = source.normalized;
+
+	return this;
+
+}
+
+THREE.InterleavedBufferAttribute.prototype.clone = function () {
+
+	return new this.constructor( this.data, this.itemSize, this.offset, this.normalized ).copy( this );
+
+}
+
 THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
 
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
