@@ -47,7 +47,7 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 			for ( var k = 0; k < itemSize; k ++ ) {
 
-				iba[ setters[ k ] ]( c, attribute[ getters[ k ] ]( c ) )
+				iba[ setters[ k ] ]( c, attribute[ getters[ k ] ]( c ) );
 
 			}
 
@@ -57,7 +57,7 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 	return res;
 
-}
+};
 
 THREE.InterleavedBufferAttribute.prototype.copy = function ( source ) {
 
@@ -68,13 +68,13 @@ THREE.InterleavedBufferAttribute.prototype.copy = function ( source ) {
 
 	return this;
 
-}
+};
 
 THREE.InterleavedBufferAttribute.prototype.clone = function () {
 
 	return new this.constructor( this.data, this.itemSize, this.offset, this.normalized ).copy( this );
 
-}
+};
 
 THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 
@@ -157,7 +157,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 
 		var buffer = new attribute.array.constructor( attrArrays[ name ] );
 		if ( oldAttribute.isInterleavedBufferAttribute ) {
-			
+
 			attribute = new THREE.BufferAttribute( buffer, oldAttribute.itemSize, oldAttribute.itemSize );
 
 		} else {
