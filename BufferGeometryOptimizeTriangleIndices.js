@@ -1,29 +1,5 @@
 THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
 
-	var groups = this.groups;
-	if ( groups !== null ) {
-
-		for ( var i = 0, l = groups.length; i < l; i ++ ) {
-
-			var g1 = groups[ i ];
-			for ( var j = i + 1; j < l; j ++ ) {
-
-				var g2 = groups[ j ];
-				if ( g2.start < g1.start && g2.start + g2.count < g1.start + g1.count || 
-					g2.start > g1.start && g2.start + g2.count > g1.start + g1.count
-				) {
-
-					console.warn( 'Cannot merge vertices on geometry with overlapping group ranges.' );
-					return this;
-
-				}
-
-			}
-
-		}
-
-	}
-
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
 	var hashToIndex = {};

@@ -42,7 +42,7 @@
         camera.position.set( 0, 3, 6.5 );
         camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
 
-        const ambientLight = new THREE.AmbientLight( new THREE.Color(0xDD2C00).lerp(new THREE.Color(0xcccccc), 0.5), 0.4 );
+        const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
         scene.add( ambientLight );
         
         const directionalLight = new THREE.DirectionalLight();
@@ -58,15 +58,26 @@
 
 
         let starttime = performance.now();
-        const geom = new THREE.TorusKnotGeometry(1, .4, 200, 100);
+        let geom = new THREE.TorusKnotGeometry(1, .4, 200, 100);
         addOutput(`${ geom.faces.length } triangles generated in ${ ~~(performance.now() - starttime) }ms`);
+        geom = new THREE.BufferGeometry().fromGeometry( geom );
 
-        const mesh = new THREE.Mesh(geom, new THREE.MeshPhongMaterial());
+        geom.clearGroups();
+        geom.addGroup(0, 30000, 0);
+        geom.addGroup(30000, 30000, 1);
+        geom.addGroup(60000, 60000, 2);
+
+        const materials = [
+            new THREE.MeshPhongMaterial({ color: 0xE91E63 }),
+            new THREE.MeshPhongMaterial({ color: 0x4CAF50 }),
+            new THREE.MeshPhongMaterial({ color: 0x2196F3 })
+        ];
+        const mesh = new THREE.Mesh(geom, materials);
         mesh.position.x = -2;
         scene.add(mesh);
 
-        const buff = new THREE.BufferGeometry().setFromObject( mesh );
-        const bmesh = new THREE.Mesh(buff, new THREE.MeshPhongMaterial());
+        const buff = geom.clone();
+        const bmesh = new THREE.Mesh(buff, materials);
 
         
         const origmem =`${ (buff.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
