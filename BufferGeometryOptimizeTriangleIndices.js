@@ -1,9 +1,12 @@
 THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
+	// Interleaves the provided attributes into an InterleavedBuffer and returns
+	// a set of InterleavedBufferAttributes for each attribute
 	var TypedArray;
 	var arrayLength = 0;
 	var stride = 0;
 
+	// calculate the the length and type of the interleavedBuffer
 	for ( var i = 0, l = attributes.length; i < l; ++ i ) {
 
 		var attribute = attributes[ i ];
@@ -21,6 +24,7 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 	}
 
+	// Create the set of buffer attributes
 	var interleavedBuffer = new THREE.InterleavedBuffer( new TypedArray( arrayLength ), stride );
 	var offset = 0;
 	var res = [];
@@ -37,6 +41,8 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 		offset += itemSize;
 
+		// Move the data for each attribute into the new interleavedBuffer
+		// at the appropriate offset
 		for ( var c = 0; c < count; c ++ ) {
 
 			for ( var k = 0; k < itemSize; k ++ ) {
@@ -189,17 +195,17 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 
 };
 
-THREE.BufferGeometry.prototype.getMemoryUse = function () {
+THREE.BufferGeometry.prototype.getMemoryUse = function ( geometry ) {
 
 	// Return the estimated memory used by this geometry
 	var mem = 0;
-	for ( var name in this.attributes ) {
+	for ( var name in geometry.attributes ) {
 
-		mem += this.attributes[ name ].array.byteLength;
+		mem += geometry.getAttribute( name ).array.byteLength;
 
 	}
 
-	mem += this.index ? this.index.array.byteLength : 0;
+	mem += geometry.getIndex() ? geometry.getIndex().array.byteLength : 0;
 	return mem;
 
 };
