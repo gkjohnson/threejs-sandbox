@@ -126,7 +126,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 
 	this.setIndex( newIndices );
 
-	return this.
+	return this;
 
 };
 
