@@ -1,5 +1,29 @@
 THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
 
+	var groups = this.groups;
+	if ( groups !== null ) {
+
+		for ( var i = 0, l = groups.length; i < l; i ++ ) {
+
+			var g1 = groups[ i ];
+			for ( var j = i + 1; j < l; j ++ ) {
+
+				var g2 = groups[ j ];
+				if ( g2.start < g1.start && g2.start + g2.count < g1.start + g1.count || 
+					g2.start > g1.start && g2.start + g2.count > g1.start + g1.count
+				) {
+
+					console.warn( 'Cannot merge vertices on geometry with overlapping group ranges.' );
+					return this;
+
+				}
+
+			}
+
+		}
+
+	}
+
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
 	var hashToIndex = {};
@@ -14,6 +38,7 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 	var attributeNames = Object.keys( this.attributes );
 	var attrArrays = {};
 	var newIndices = [];
+	var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
 
 	var precisionMultiplier = Math.pow( 10, precision + 1 );
 	for ( var i = 0; i < vertexCount; i ++ ) {
@@ -24,14 +49,12 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 
 			var name = attributeNames[ j ];
 			var attribute = this.getAttribute( name );
-			var size = attribute.itemSize;
-			var array = attribute.array;
+			var itemSize = attribute.itemSize;
 
-			for ( var k = 0; k < size; k ++ ) {
+			for ( var k = 0; k < itemSize; k ++ ) {
 
 				// double tilde truncates the decimal value
-				var val = array[ i * size + k ];
-				hash += `${ ~ ~ ( val * precisionMultiplier ) / precisionMultiplier },`;
+				hash += `${ ~ ~ ( attribute[ getters[ k ] ]( i ) * precisionMultiplier ) },`;
 
 			}
 
@@ -50,14 +73,13 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 
 				var name = attributeNames[ j ];
 				var attribute = this.getAttribute( name );
-				var array = attribute.array;
 				var itemSize = attribute.itemSize;
 
 				attrArrays[ name ] = attrArrays[ name ] || [];
 				var newarray = attrArrays[ name ];
 				for ( var k = 0; k < itemSize; k ++ ) {
 
-					newarray.push( array[ i * itemSize + k ] );
+					newarray.push( attribute[ getters[ k ] ]( i ) );
 
 				}
 
@@ -76,11 +98,11 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 	for ( var i = 0, l = attributeNames.length; i < l; i ++ ) {
 
 		var name = attributeNames[ i ];
-		var attribute = this.getAttribute( name );
+		var attribute = this.getAttribute( name ).clone();
 		var buffer = new attribute.array.constructor( attrArrays[ name ] );
 
 		attribute.setArray( buffer );
-		attribute.needsUpdate = true;
+		this.addAttribute( name, attribute );
 
 	}
 
@@ -90,17 +112,21 @@ THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 
 	if ( newIndices.length >= Math.pow( 2, 16 ) ) cons = Uint32Array;
 
 	var newIndexBuffer = new cons( newIndices );
+	var newIndices = null;
 	if ( indices === null ) {
 
-		indices = new THREE.BufferAttribute( newIndexBuffer, 1 );
-		this.setIndex( indices );
+		newIndices = new THREE.BufferAttribute( newIndexBuffer, 1 );
 
 	} else {
 
-		indices.setArray( newIndexBuffer );
-		indices.needsUpdate = true;
+		newIndices = this.getIndex().clone();
+		newIndices.setArray( newIndexBuffer );
 
 	}
+
+	this.setIndex( newIndices );
+
+	return this.
 
 };
 
