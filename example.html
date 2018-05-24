@@ -3,7 +3,8 @@
 <head>
     <title></title>
 
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r92/build/three.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r92/examples/js/BufferGeometryUtils.js"></script>
     <script type="text/javascript" src="./BufferGeometryOptimizeTriangleIndices.js"></script>
 </head>
 <body>
@@ -36,7 +37,7 @@
 
         }
 
-
+        // Initialize Scene
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 2000 );
         camera.position.set( 0, 3, 6.5 );
@@ -57,6 +58,7 @@
 
 
 
+        // Set up initial geometry
         let starttime = performance.now();
         let geom = new THREE.TorusKnotGeometry(1, .4, 200, 100);
         addOutput(`${ geom.faces.length } triangles generated in ${ ~~(performance.now() - starttime) }ms`);
@@ -73,24 +75,46 @@
             new THREE.MeshPhongMaterial({ color: 0x2196F3 })
         ];
         const mesh = new THREE.Mesh(geom, materials);
-        mesh.position.x = -2;
+        mesh.position.x = -4;
         scene.add(mesh);
 
-        const buff = geom.clone();
-        const bmesh = new THREE.Mesh(buff, materials);
 
+
+        // Set up cloned geometry
+        const bgeom = geom.clone();
+        const bmesh = new THREE.Mesh(bgeom, materials);
         
-        const origmem =`${ (buff.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+        const origmem =`${ (bgeom.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
 
         starttime = performance.now();
-        buff.optimizeTriangleIndices();
+        bgeom.mergeVertices();
 
-        const finalmem =`${ (buff.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
+        const finalmem =`${ (bgeom.getMemoryUse() / Math.pow(10, 6)).toFixed(2) }mb`;
         addOutput(`Optimized from ${ origmem } to ${ finalmem } in ${ ~~(performance.now() - starttime) }ms`)
-
-
-        bmesh.position.x = 2;
+        
+        bmesh.position.x = 0;
         scene.add(bmesh);
+
+
+
+        // Interleave original geometry
+        var akeys = Object.keys(geom.attributes);
+        var interleaved = THREE.BufferGeometryUtils.interleaveAttributes(akeys.map(key => geom.attributes[key]));
+        akeys.forEach((k, i) => geom.addAttribute(k, interleaved[i]));
+
+        const ilgeom = geom.clone();
+        const ilmesh = new THREE.Mesh(ilgeom, materials);
+
+        ilgeom.mergeVertices();
+
+        ilmesh.position.x = 4;
+        scene.add(ilmesh);
+
+
+
+
+
+
 
         window.addEventListener( 'resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -101,6 +125,7 @@
         ( function renderLoop() {
             mesh.rotateY( 0.005 );
             bmesh.rotateY( 0.005 );
+            ilmesh.rotateY( 0.005 );
             renderer.render( scene, camera );
             requestAnimationFrame( renderLoop );
         } )();

@@ -70,7 +70,7 @@ THREE.InterleavedBufferAttribute.prototype.clone = function () {
 
 }
 
-THREE.BufferGeometry.prototype.optimizeTriangleIndices = function ( precision = 3 ) {
+THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
