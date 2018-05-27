@@ -1,4 +1,4 @@
-# threejs-optimize-triangle-indices
+# threejs-merge-vertices
 `THREE.BufferGeometry` extension to generate and optimize triangle indices by deduping vertex attributes and generating new triangle indices.
 
 ## Use
