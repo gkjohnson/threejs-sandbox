@@ -5,7 +5,7 @@
 
     <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r92/build/three.js"></script>
     <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r92/examples/js/BufferGeometryUtils.js"></script>
-    <script type="text/javascript" src="./BufferGeometryOptimizeTriangleIndices.js"></script>
+    <script type="text/javascript" src="./mergeVertices.js"></script>
 </head>
 <body>
     <style>
@@ -29,7 +29,7 @@
     <div id="output"><h3>Unoptimized vs Optimized Geometry vs Interleaved to Non-interleaved Optimized<h3></div>
 
     <script>
-        
+
         const outputel = document.getElementById('output');
         function addOutput(s) {
 
@@ -45,11 +45,11 @@
 
         const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
         scene.add( ambientLight );
-        
+
         const directionalLight = new THREE.DirectionalLight();
         directionalLight.position.set( 10, 10, 0 );
         scene.add( directionalLight );
-                
+
         const renderer = new THREE.WebGLRenderer( { antialias: true } );
         renderer.setPixelRatio( window.devicePixelRatio );
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -83,7 +83,7 @@
         // Set up cloned geometry
         const bgeom = geom.clone();
         const bmesh = new THREE.Mesh(bgeom, materials);
-        
+
         const origmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
 
         starttime = performance.now();
@@ -91,7 +91,7 @@
 
         const finalmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
         addOutput(`Optimized from ${ origmem } to ${ finalmem } in ${ ~~(performance.now() - starttime) }ms`)
-        
+
         bmesh.position.x = 0;
         scene.add(bmesh);
 

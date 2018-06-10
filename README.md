@@ -15,7 +15,7 @@
 
   // The buffer geometry is taking '' with all attributes
   console.log(`${ bufgeom.getMemoryUse() * 1000 }kb`);
-  
+
   // Optimize the buffer geometry and generate triangle indices
   bufgeom.optimizeTriangleIndices();
 
@@ -26,11 +26,20 @@
 ```
 
 ## API
-### BufferGeometry.getMemoryUse()
+### InterleavedBufferAttribute.copy
+### InterleavedBufferAttribute.clone
+
+Missing copy and clone functions.
+
+### BufferGeometryUtils.getMemoryUse(bufferGeometry)
 
 Returns the memory allocated for the geometry (vertex attribute and index arrays) as bytes.
 
-### BufferGeometry.optimizeTriangleIndices(precision = 3)
+### BufferGeometryUtils.interleaveAttributes(attributes)
+
+Converts the provided normal attributes into a set of interleaved attributes that share a buffer.
+
+### BufferGeometry.mergeVertices(precision = 3)
 
 Updates the vertex attributes and index arrays with optimized, deduped versions representing the same mesh.
 
