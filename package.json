@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "eslint-config-mdcs": "^4.2.3"
+  }
+}
