@@ -30,10 +30,10 @@
 
     <script>
 
-        const outputel = document.getElementById('output');
-        function addOutput(s) {
+        const outputel = document.getElementById( 'output' );
+        function addOutput( s ) {
 
-            outputel.innerHTML += `<br>${ s }`;
+ 			outputel.innerHTML += `<br>${ s }`;
 
         }
 
@@ -60,69 +60,73 @@
 
         // Set up initial geometry
         let starttime = performance.now();
-        let geom = new THREE.TorusKnotGeometry(.5, .2, 200, 100);
-        addOutput(`${ geom.faces.length } triangles generated in ${ ~~(performance.now() - starttime) }ms`);
+        let geom = new THREE.TorusKnotGeometry( .5, .2, 200, 100 );
+        addOutput( `${ geom.faces.length } triangles generated in ${ ~ ~ ( performance.now() - starttime ) }ms` );
         geom = new THREE.BufferGeometry().fromGeometry( geom );
 
         geom.clearGroups();
-        geom.addGroup(0, 30000, 0);
-        geom.addGroup(30000, 30000, 1);
-        geom.addGroup(60000, 60000, 2);
+        geom.addGroup( 0, 30000, 0 );
+        geom.addGroup( 30000, 30000, 1 );
+        geom.addGroup( 60000, 60000, 2 );
 
         const materials = [
-            new THREE.MeshPhongMaterial({ color: 0xE91E63 }),
-            new THREE.MeshPhongMaterial({ color: 0x4CAF50 }),
-            new THREE.MeshPhongMaterial({ color: 0x2196F3 })
+        	new THREE.MeshPhongMaterial( { color: 0xE91E63 } ),
+        	new THREE.MeshPhongMaterial( { color: 0x4CAF50 } ),
+        	new THREE.MeshPhongMaterial( { color: 0x2196F3 } )
         ];
-        const mesh = new THREE.Mesh(geom, materials);
-        mesh.position.x = -2;
-        scene.add(mesh);
+        const mesh = new THREE.Mesh( geom, materials );
+        mesh.position.x = - 2;
+        scene.add( mesh );
 
 
 
         // Set up cloned geometry
         const bgeom = geom.clone();
-        const bmesh = new THREE.Mesh(bgeom, materials);
+        const bmesh = new THREE.Mesh( bgeom, materials );
 
-        const origmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
+        const origmem = `${ ( THREE.BufferGeometryUtils.getMemoryUse( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
 
         starttime = performance.now();
         bgeom.mergeVertices();
 
-        const finalmem =`${ (THREE.BufferGeometryUtils.getMemoryUse(bgeom) / Math.pow(10, 6)).toFixed(2) }mb`;
-        addOutput(`Optimized from ${ origmem } to ${ finalmem } in ${ ~~(performance.now() - starttime) }ms`)
+        const finalmem = `${ ( THREE.BufferGeometryUtils.getMemoryUse( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
+        addOutput( `Optimized from ${ origmem } to ${ finalmem } in ${ ~ ~ ( performance.now() - starttime ) }ms` );
 
         bmesh.position.x = 0;
-        scene.add(bmesh);
+        scene.add( bmesh );
 
 
 
         // Interleave original geometry
-        var akeys = Object.keys(geom.attributes);
-        var interleaved = THREE.BufferGeometryUtils.interleaveAttributes(akeys.map(key => geom.attributes[key]));
-        akeys.forEach((k, i) => geom.addAttribute(k, interleaved[i]));
+        var akeys = Object.keys( geom.attributes );
+        var interleaved = THREE.BufferGeometryUtils.interleaveAttributes( akeys.map( key => geom.attributes[ key ] ) );
+        akeys.forEach( ( k, i ) => geom.addAttribute( k, interleaved[ i ] ) );
 
         const ilgeom = geom.clone();
-        const ilmesh = new THREE.Mesh(ilgeom, materials);
+        const ilmesh = new THREE.Mesh( ilgeom, materials );
 
         ilgeom.mergeVertices();
 
         ilmesh.position.x = 2;
-        scene.add(ilmesh);
+        scene.add( ilmesh );
 
 
         window.addEventListener( 'resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize( window.innerWidth, window.innerHeight );
+
+        	camera.aspect = window.innerWidth / window.innerHeight;
+        	camera.updateProjectionMatrix();
+        	renderer.setSize( window.innerWidth, window.innerHeight );
+
         } );
 
         ( function renderLoop() {
-            mesh.rotateY( 0.005 );
-            bmesh.rotateY( 0.005 );
-            ilmesh.rotateY( 0.005 );
-            renderer.render( scene, camera );
-            requestAnimationFrame( renderLoop );
+
+        	mesh.rotateY( 0.005 );
+        	bmesh.rotateY( 0.005 );
+        	ilmesh.rotateY( 0.005 );
+        	renderer.render( scene, camera );
+        	requestAnimationFrame( renderLoop );
+
         } )();
 
     </script>
