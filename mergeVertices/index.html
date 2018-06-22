@@ -84,12 +84,12 @@
         const bgeom = geom.clone();
         const bmesh = new THREE.Mesh( bgeom, materials );
 
-        const origmem = `${ ( THREE.BufferGeometryUtils.getMemoryUse( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
+        const origmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
 
         starttime = performance.now();
         bgeom.mergeVertices();
 
-        const finalmem = `${ ( THREE.BufferGeometryUtils.getMemoryUse( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
+        const finalmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
         addOutput( `Optimized from ${ origmem } to ${ finalmem } in ${ ~ ~ ( performance.now() - starttime ) }ms` );
 
         bmesh.position.x = 0;
@@ -97,10 +97,12 @@
 
 
 
-        // Interleave original geometry
+    	// Interleave original geometry
+    	console.log( 'Bytes before interleaved', THREE.BufferGeometryUtils.estimateBytesUsed( geom ) );
         var akeys = Object.keys( geom.attributes );
         var interleaved = THREE.BufferGeometryUtils.interleaveAttributes( akeys.map( key => geom.attributes[ key ] ) );
         akeys.forEach( ( k, i ) => geom.addAttribute( k, interleaved[ i ] ) );
+    	console.log( 'Bytes after interleaved', THREE.BufferGeometryUtils.estimateBytesUsed( geom ) );
 
         const ilgeom = geom.clone();
         const ilmesh = new THREE.Mesh( ilgeom, materials );

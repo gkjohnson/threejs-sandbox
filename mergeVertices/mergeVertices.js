@@ -59,17 +59,21 @@ THREE.BufferGeometryUtils.interleaveAttributes = function ( attributes ) {
 
 };
 
-THREE.BufferGeometryUtils.getMemoryUse = function ( geometry ) {
+THREE.BufferGeometryUtils.estimateBytesUsed = function ( geometry ) {
 
-	// Return the estimated memory used by this geometry
+	// Return the estimated memory used by this geometry in bytes
+	// Calculate using itemSize, count, and BYTES_PER_ELEMENT to account
+	// for InterleavedBufferAttributes.
 	var mem = 0;
 	for ( var name in geometry.attributes ) {
 
-		mem += geometry.getAttribute( name ).array.byteLength;
+		var attr = geometry.getAttribute( name );
+		mem += attr.count * attr.itemSize * attr.array.BYTES_PER_ELEMENT;
 
 	}
 
-	mem += geometry.getIndex() ? geometry.getIndex().array.byteLength : 0;
+	var indices = geometry.getIndex();
+	mem += indices ? indices.count * indices.itemSize * indices.array.BYTES_PER_ELEMENT : 0;
 	return mem;
 
 };
@@ -91,7 +95,9 @@ THREE.InterleavedBufferAttribute.prototype.clone = function () {
 
 };
 
-THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
+THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
+
+	tolerance = Math.max( tolerance, Number.EPSILON );
 
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
@@ -109,7 +115,9 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 	var newIndices = [];
 	var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
 
-	var precisionMultiplier = Math.pow( 10, precision + 1 );
+	// convert the error tolerance to an amount of decimal places to truncate to
+	var decimalShift = Math.log10( 1 / tolerance );
+	var shiftMultiplier = Math.pow( 10, decimalShift );
 	for ( var i = 0; i < vertexCount; i ++ ) {
 
 		// Generate a hash for the vertex attributes at the current index 'i'
@@ -123,7 +131,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( precision = 3 ) {
 			for ( var k = 0; k < itemSize; k ++ ) {
 
 				// double tilde truncates the decimal value
-				hash += `${ ~ ~ ( attribute[ getters[ k ] ]( i ) * precisionMultiplier ) },`;
+				hash += `${ ~ ~ ( attribute[ getters[ k ] ]( i ) * shiftMultiplier ) },`;
 
 			}
 
