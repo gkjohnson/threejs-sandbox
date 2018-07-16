@@ -121,8 +121,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		// TODO: remove any un-traversed matrices
 
 		var cmat = this._compositeMaterial;
-		cmat.uniforms.sourceBuffer.value = readBuffer;
-		cmat.uniforms.velocityBuffer.value = this._velocityBuffer;
+		cmat.uniforms.sourceBuffer.value = readBuffer.texture;
+		cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
 
 		if ( cmat.defines.SAMPLES !== this.blurSamples ) {
 
@@ -198,33 +198,38 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				uniform float expand;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
-				varying vec3 vNormal;
 
 				void main() {
 
 					vec3 transformed;
 					vec4 p1, p2;
 
-					transformed = vec3(position);
+					// Get the normal
 					${ THREE.ShaderChunk.skinbase_vertex }
+					${ THREE.ShaderChunk.beginnormal_vertex }
+					${ THREE.ShaderChunk.skinnormal_vertex }
+					${ THREE.ShaderChunk.defaultnormal_vertex }
+
+					// Get the current vertex position
+					transformed = vec3( position );
 					${ THREE.ShaderChunk.skinning_vertex }
 					p2 = modelViewMatrix * vec4(transformed, 1.0);
 
-					transformed = vec3(position);
+					// Get the previous vertex position
+					transformed = vec3( position );
 					${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
 					${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
 					p1 = prevModelViewMatrix * vec4(transformed, 1.0);
 
-					// TODO: account for skinned animation when dealing with the normal
+					// The delta between frames
 					vec3 delta = p2.xyz - p1.xyz;
-					vec3 n = normalize((modelViewMatrix * vec4(normal.xyz, 0)).xyz);
-					float dot = clamp(dot(delta, n), -1., 1.);
+					float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
 
 					vec4 dir = vec4(delta, 0) * dot * expand;
 					prevPosition = prevProjectionMatrix * (p1 + dir);
 					newPosition = projectionMatrix * (p2 + dir);
-
 					gl_Position = newPosition;
+
 
 				}`,
 
@@ -269,44 +274,50 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				uniform float expand;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
-				varying vec3 vNormal;
+				varying vec3 color;
 
 				void main() {
 
 					vec3 transformed;
 					vec4 p1, p2;
 
-					transformed = vec3( position );
+					// Get the normal
 					${ THREE.ShaderChunk.skinbase_vertex }
-					${ THREE.ShaderChunk.skinning_vertex }
-					p2 = prevModelViewMatrix * vec4(transformed, 1.0);
+					${ THREE.ShaderChunk.beginnormal_vertex }
+					${ THREE.ShaderChunk.skinnormal_vertex }
+					${ THREE.ShaderChunk.defaultnormal_vertex }
 
+					// Get the current vertex position
+					transformed = vec3( position );
+					${ THREE.ShaderChunk.skinning_vertex }
+					p2 = modelViewMatrix * vec4(transformed, 1.0);
+
+					// Get the previous vertex position
 					transformed = vec3( position );
 					${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
 					${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-					p1 = modelViewMatrix * vec4(transformed, 1.0);
+					p1 = prevModelViewMatrix * vec4(transformed, 1.0);
 
+					// The delta between frames
 					vec3 delta = p2.xyz - p1.xyz;
-					vec3 n = normalize((modelViewMatrix * vec4(normal.xyz, 0)).xyz);
-					float dot = clamp(dot(delta, n), -1., 1.);
+					float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
 
 					vec4 dir = vec4(delta, 0) * dot * expand;
 					prevPosition = prevProjectionMatrix * (p1 + dir);
 					newPosition = projectionMatrix * (p2 + dir);
-
 					gl_Position = newPosition;
 
-					vNormal = (modelViewMatrix * vec4(normal.xyz, 0)).xyz;
-
+					color = (modelViewMatrix * vec4(normal.xyz, 0)).xyz;
+					color = normalize(color);
 
 				}`,
 
 			fragmentShader:
 				`
-				varying vec3 vNormal;
+				varying vec3 color;
 
 				void main() {
-					gl_FragColor = vec4(vNormal, 1);
+					gl_FragColor = vec4(color, 1);
 				}`
 		} );
 

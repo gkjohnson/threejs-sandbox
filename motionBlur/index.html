@@ -82,7 +82,7 @@
 			function init() {
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 35, 35 * 3.5 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xE91E63 );
@@ -100,12 +100,11 @@
 				} );
 
 				// geometry
-				var geometry = new THREE.TorusKnotBufferGeometry( 18, 8, 150, 40 );
+				var geometry = new THREE.TorusKnotBufferGeometry( 2.5, 1, 150, 40 );
 				var torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
-				torusMesh1.position.x = 0.0;
+				torusMesh1.position.x = -10.0;
 				torusMesh1.castShadow = true;
 				torusMesh1.receiveShadow = true;
-				// torusMesh1.visible = false;
 				scene.add( torusMesh1 );
 				objects.push( torusMesh1 );
 
@@ -113,8 +112,9 @@
 				loader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/models/fbx/Samba%20Dancing.fbx', res => {
 
 					scene.add( res );
-					res.scale.multiplyScalar( 0.4 );
-					res.position.y = -30;
+					res.scale.multiplyScalar( 0.05 );
+					res.position.y = -5;
+					console.log(res.position)
 					mixer = new THREE.AnimationMixer( res );
 					mixer.clipAction( res.animations[ 0 ] ).play();
 
@@ -136,7 +136,7 @@
 				} );
 
 				// Lights
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.1 ) );
+				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.5 ) );
 
 				var spotLight = new THREE.SpotLight( 0xffffff, 1 );
 				spotLight.position.set( 50, 100, 50 );
@@ -167,7 +167,7 @@
 				document.body.appendChild( stats.dom );
 
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 50;
+				controls.minDistance = 5;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -176,10 +176,10 @@
 
 				gui.add( params, 'enabled' );
 				gui.add( params, 'animate' );
-				gui.add( params, 'samples', 0, 100 );
+				gui.add( params, 'samples', 0, 50 );
 				gui.add( params, 'intensity', 0, 4 );
 				gui.add( params, 'expand', 0, 10 );
-				gui.add( params, 'speed', 0, 100 );
+				gui.add( params, 'speed', 0, 50 );
 
 				gui.add( motionPass.debug, 'display', {
 					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
@@ -232,9 +232,9 @@
 
 				if ( params.animate || oneFramePast === false) {
 
+					animTime += deltaTime * params.speed;
 					if ( mixer !== undefined ) {
 
-						animTime += deltaTime;
 						mixer.update( deltaTime * params.speed / 20 );
 
 					}
@@ -242,6 +242,10 @@
 					for ( var i = 0, l = objects.length; i < l; i ++ ) {
 
 						objects[ i ].rotation.y += 0.01 * params.speed;
+						// objects[ i ].position.y = Math.sin( animTime ) * 2;
+						// objects[ i ].position.y *= objects[ i ].position.y;
+						// objects[ i ].scale.set( 1, 1, 1 ).multiplyScalar( ( Math.sin( animTime ) + 1.5 ) * .5 );
+						// console.log(animTime)
 
 					}
 
