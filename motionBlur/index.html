@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - materials - hdr environment mapping</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/FXAAShader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
+
+		<script src="MotionBlurPass.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Per Object Motion Blur by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var stats;
+			var params = {
+				enabled: true,
+				animate: true,
+				samples: 30,
+				intensity: 1,
+				expand: 1,
+				speed: 1,
+				showVelocityBuffer: false
+			};
+			var camera, scene, renderer, controls;
+			var effectFXAA, motionPass, renderScene;
+			var composer;
+			var objects = [];
+			var standardMaterial;
+			var prevMatrices = new WeakMap();
+
+			init();
+			animate();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 35, 35 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xE91E63 );
+
+				renderer = new THREE.WebGLRenderer();
+
+
+				standardMaterial = new THREE.MeshStandardMaterial( {
+					map: null,
+					color: 0xffffff,
+					metalness: 0.5,
+				} );
+
+				window.standardMaterial = standardMaterial;
+
+				var geometry = new THREE.TorusKnotBufferGeometry( 18, 8, 150, 40 );
+				var torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
+				torusMesh1.position.x = 0.0;
+				torusMesh1.castShadow = true;
+				torusMesh1.receiveShadow = true;
+				scene.add( torusMesh1 );
+				objects.push( torusMesh1 );
+
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( './textures/roughness_map.jpg', function ( map ) {
+
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 9, 2 );
+					standardMaterial.roughnessMap = map;
+					standardMaterial.bumpMap = map;
+					standardMaterial.needsUpdate = true;
+
+				} );
+
+				// Lights
+
+				scene.add( new THREE.AmbientLight( 0xffffff, 0.1 ) );
+
+				var spotLight = new THREE.SpotLight( 0xffffff, 1 );
+				spotLight.position.set( 50, 100, 50 );
+				spotLight.angle = Math.PI / 7;
+				spotLight.penumbra = 0.8;
+				spotLight.castShadow = true;
+				scene.add( spotLight );
+
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
+
+				renderScene = new THREE.RenderPass( scene, camera );
+
+				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				motionPass = new THREE.MotionBlurPass( scene, camera );
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderScene );
+				composer.addPass( effectFXAA );
+				composer.addPass( motionPass );
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 50;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				var gui = new dat.GUI();
+
+				gui.add( params, 'enabled' );
+				gui.add( params, 'animate' );
+				gui.add( params, 'samples', 0, 100 );
+				gui.add( params, 'intensity', 0, 4 );
+				gui.add( params, 'expand', 0, 10 );
+				gui.add( params, 'speed', 0, 100 );
+
+				gui.add( motionPass.debug, 'display', {
+					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
+					'Velocity Buffer': THREE.MotionBlurPass.VELOCITY,
+					'Geometry': THREE.MotionBlurPass.GEOMETRY
+				} ).onChange( val => motionPass.debug.display = parseFloat(val) );
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				motionPass.enabled = params.enabled;
+				motionPass.blurSamples = params.samples;
+				motionPass.intensity = params.intensity;
+				motionPass.expand = params.expand;
+				motionPass.renderToScreen = params.enabled;
+				effectFXAA.renderToScreen = !params.enabled;
+
+				var timer = Date.now() * 0.00025;
+
+				camera.lookAt( scene.position );
+
+
+				if ( params.animate === false ) {
+
+					for ( var i = 0, l = objects.length; i < l; i ++ ) {
+
+						var o = objects[ i ];
+						var tx = prevMatrices.get( o );
+
+						o.position.copy( tx.position );
+						o.rotation.copy( tx.rotation );
+						o.scale.copy( tx.scale );
+
+						motionPass._prevPosMap.get( o ).compose( o.position, o.quaternion, o.scale );
+
+					}
+
+				} else {
+
+					for ( var i = 0, l = objects.length; i < l; i ++ ) {
+
+						var o = objects[ i ];
+						var tx = prevMatrices.get( o );
+						if ( tx === undefined ) {
+
+							tx = {
+								position: o.position.clone(),
+								quaternion: o.quaternion.clone(),
+								rotation: o.rotation.clone(),
+								scale: o.scale.clone()
+							}
+							prevMatrices.set( o, tx );
+
+						}
+
+						tx.position.copy( o.position );
+						tx.quaternion.copy( o.quaternion );
+						tx.rotation.copy( o.rotation );
+						tx.scale.copy( o.scale );
+
+					}
+
+				}
+
+				for ( var i = 0, l = objects.length; i < l; i ++ ) {
+
+					objects[ i ].rotation.y += 0.01 * params.speed;
+
+				}
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+</html>
