@@ -205,15 +205,15 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 					vec3 transformed;
 					vec4 p1, p2;
 
-					transformed = vec3( position );
+					transformed = vec3(position);
 					${ THREE.ShaderChunk.skinbase_vertex }
 					${ THREE.ShaderChunk.skinning_vertex }
-					p2 = prevModelViewMatrix * vec4(transformed, 1.0);
+					p2 = modelViewMatrix * vec4(transformed, 1.0);
 
-					transformed = vec3( position );
+					transformed = vec3(position);
 					${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
 					${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-					p1 = modelViewMatrix * vec4(transformed, 1.0);
+					p1 = prevModelViewMatrix * vec4(transformed, 1.0);
 
 					// TODO: account for skinned animation when dealing with the normal
 					vec3 delta = p2.xyz - p1.xyz;
