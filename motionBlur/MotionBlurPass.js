@@ -23,6 +23,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 
 	};
 
+	// list of positions from previous frames
 	this._prevPosMap = new WeakMap();
 
 	// render targets
@@ -70,12 +71,14 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
+		// Set the clear state
 		var prevClearColor = renderer.getClearColor().clone();
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = false;
 		renderer.setClearColor( new THREE.Color( 0, 0, 0 ), 0 );
 
+		// Traversal function for iterating down and rendering the scene
 		var self = this;
 		function recurse( obj ) {
 
@@ -110,18 +113,21 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		}
 
+		// Update the materials and render to the target
 		this._velocityMaterial.uniforms.expand.value = this.expand * 0.1;
 		this._geomMaterial.uniforms.expand.value = this.expand * 0.1;
 
 		renderer.compile( this.scene, this.camera );
 
+		// If we're rendering the blurred view, then we need to render
+		// to the velocity buffer, otherwise we can render a debug view
 		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
 
 			renderer.setRenderTarget( this._velocityBuffer );
 
 		} else {
 
-			renderer.setRenderTarget( null );
+			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
 
 		}
 
@@ -144,6 +150,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		}
 		cmat.uniforms.intensity.value = this.intensity;
 
+		// compose the final blurred frame
 		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
 
 			renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );

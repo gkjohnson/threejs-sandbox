@@ -52,6 +52,7 @@
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+			// globals
 			var stats;
 			var params = {
 				enabled: true,
@@ -59,7 +60,7 @@
 				samples: 30,
 				intensity: 1,
 				expand: 1,
-				speed: 1,
+				speed: 20,
 				showVelocityBuffer: false
 			};
 			var camera, scene, renderer, controls;
@@ -67,6 +68,8 @@
 			var composer;
 			var objects = [];
 			var standardMaterial;
+
+			// save the previous frames matrices so we can stop the animation
 			var prevMatrices = new WeakMap();
 
 			init();
@@ -81,7 +84,10 @@
 				scene.background = new THREE.Color( 0xE91E63 );
 
 				renderer = new THREE.WebGLRenderer();
-
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
 
 				standardMaterial = new THREE.MeshStandardMaterial( {
 					map: null,
@@ -89,8 +95,7 @@
 					metalness: 0.5,
 				} );
 
-				window.standardMaterial = standardMaterial;
-
+				// geometry
 				var geometry = new THREE.TorusKnotBufferGeometry( 18, 8, 150, 40 );
 				var torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
 				torusMesh1.position.x = 0.0;
@@ -113,7 +118,6 @@
 				} );
 
 				// Lights
-
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.1 ) );
 
 				var spotLight = new THREE.SpotLight( 0xffffff, 1 );
@@ -123,11 +127,8 @@
 				spotLight.castShadow = true;
 				scene.add( spotLight );
 
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.shadowMap.enabled = true;
-				document.body.appendChild( renderer.domElement );
 
+				// Render Passes
 				renderScene = new THREE.RenderPass( scene, camera );
 
 				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
@@ -205,10 +206,7 @@
 				motionPass.renderToScreen = params.enabled;
 				effectFXAA.renderToScreen = !params.enabled;
 
-				var timer = Date.now() * 0.00025;
-
 				camera.lookAt( scene.position );
-
 
 				if ( params.animate === false ) {
 
