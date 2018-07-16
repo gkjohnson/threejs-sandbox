@@ -1,6 +1,8 @@
 # threejs-merge-vertices
 `THREE.BufferGeometry` extension to generate and optimize triangle indices by deduping vertex attributes and generating new triangle indices. Also provides a couple bug fixes and utility functions for `BufferGeometry`.
 
+[Demo here!](https://gkjohnson.github.io/threejs-contributions/mergeVertices/index.html)
+
 Submitted in [this PR](https://github.com/mrdoob/three.js/pull/14116) to THREE.js.
 
 ## Use
