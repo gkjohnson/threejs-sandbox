@@ -108,9 +108,6 @@
 
 				torusMesh2 = torusMesh1.clone();
 				torusMesh2.position.set( 6, 0, 6 );
-				console.log(torusMesh2.castShadow)
-				console.log(torusMesh2.receiveShadow)
-
 				scene.add(torusMesh2);
 
 				torusMesh3 = torusMesh1.clone();
@@ -300,7 +297,6 @@
 						spheres[ i ].rotateOnAxis( spheres[ i ].rotationVector, .01 * params.speed / 5 );
 
 					}
-
 
 					oneFramePast = !params.animate;
 
