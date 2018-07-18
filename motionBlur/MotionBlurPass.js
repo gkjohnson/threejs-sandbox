@@ -7,13 +7,34 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 
 	THREE.Pass.call( this );
 
+	Object.defineProperty( this, 'enabled', {
+
+		set: val => {
+
+			if ( val === false ) {
+
+				this._prevPosMap.clear();
+
+			}
+
+			this._enabled = val;
+
+		},
+
+		get: () => this._enabled
+
+	} );
+
 	this.enabled = true;
 	this.needsSwap = false;
 
 	// settings
-	this.blurSamples = 30;
-	this.expand = 1;
-	this.intensity = 1;
+	this.blurSamples = options.blurSamples || 30;
+	this.expand = options.expand || 1;
+	this.intensity = options.intensity || 1;
+	this.blurTransparent = options.blurTransparent || false;
+	this.renderCameraBlur = options.renderCameraBlur || true;
+
 	this.scene = scene;
 	this.camera = camera;
 
@@ -25,7 +46,9 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	};
 
 	// list of positions from previous frames
-	this._prevPosMap = new WeakMap();
+	this._prevPosMap = new Map();
+	this._frustum = new THREE.Frustum();
+	this._projScreenMatrix = new THREE.Matrix4();
 
 	// render targets
 	this._velocityBuffer =
@@ -61,6 +84,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 	dispose: function () {
 
 		this._velocityBuffer.dispose();
+		this._prevPosMap.clear();
 
 	},
 
@@ -81,6 +105,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		// Traversal function for iterating down and rendering the scene
 		var self = this;
+		var newMap = new Map();
 		function recurse( obj ) {
 
 			if ( obj.visible === false ) return;
@@ -88,6 +113,12 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			if ( obj.type === 'Mesh' || obj.type === 'SkinnedMesh' ) {
 
 				self._drawMesh( renderer, obj );
+
+				if ( self._prevPosMap.has( obj ) ) {
+
+					newMap.set( obj, self._prevPosMap.get( obj ) );
+
+				}
 
 			}
 
@@ -113,12 +144,18 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		}
 
+		this._projScreenMatrix.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse );
+		this._frustum.setFromMatrix( this._projScreenMatrix );
 		renderer.clear();
 		recurse( this.scene );
 
+		// replace the old map with a new one storing only
+		// the most recently traversed meshes
+		this._prevPosMap.clear();
+		this._prevPosMap = newMap;
+
 		this._prevCamWorldInverse.copy( this.camera.matrixWorldInverse );
 		this._prevCamProjection.copy( this.camera.projectionMatrix );
-		// TODO: remove any un-traversed matrices
 
 		var cmat = this._compositeMaterial;
 		cmat.uniforms.sourceBuffer.value = readBuffer.texture;
@@ -130,7 +167,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			cmat.needsUpdate = true;
 
 		}
-		cmat.uniforms.intensity.value = this.intensity;
 
 		// compose the final blurred frame
 		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
@@ -145,8 +181,9 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	},
 
-	getPrevSkinningParseVertex: function () {
+	getPrevSkinningParsVertex: function () {
 
+		// Modified THREE.ShaderChunk.skinning_pars_vertex
 		return `
 		#ifdef USE_SKINNING
 			#ifdef BONE_TEXTURE
@@ -177,6 +214,41 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	},
 
+	getVertexTransform: function () {
+
+		return `
+		vec3 transformed;
+		vec4 p1, p2;
+
+		// Get the normal
+		${ THREE.ShaderChunk.skinbase_vertex }
+		${ THREE.ShaderChunk.beginnormal_vertex }
+		${ THREE.ShaderChunk.skinnormal_vertex }
+		${ THREE.ShaderChunk.defaultnormal_vertex }
+
+		// Get the current vertex position
+		transformed = vec3( position );
+		${ THREE.ShaderChunk.skinning_vertex }
+		p2 = modelViewMatrix * vec4(transformed, 1.0);
+
+		// Get the previous vertex position
+		transformed = vec3( position );
+		${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
+		${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
+		p1 = prevModelViewMatrix * vec4(transformed, 1.0);
+
+		// The delta between frames
+		vec3 delta = p2.xyz - p1.xyz;
+		float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
+
+		vec4 dir = vec4(delta, 0) * dot * expand;
+		prevPosition = prevProjectionMatrix * (p1 + dir);
+		newPosition = projectionMatrix * (p2 + dir);
+		gl_Position = newPosition;
+		`;
+
+	},
+
 	getVelocityMaterial: function () {
 
 		return new THREE.ShaderMaterial( {
@@ -185,13 +257,14 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevProjectionMatrix: { value: new THREE.Matrix4() },
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
-				expand: { value: 1 }
+				expand: { value: 1 },
+				intensity: { value: 1 }
 			},
 
 			vertexShader:
 				`
 				${ THREE.ShaderChunk.skinning_pars_vertex }
-				${ this.getPrevSkinningParseVertex() }
+				${ this.getPrevSkinningParsVertex() }
 
 				uniform mat4 prevProjectionMatrix;
 				uniform mat4 prevModelViewMatrix;
@@ -201,52 +274,21 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 				void main() {
 
-					vec3 transformed;
-					vec4 p1, p2;
-
-					// Get the normal
-					${ THREE.ShaderChunk.skinbase_vertex }
-					${ THREE.ShaderChunk.beginnormal_vertex }
-					${ THREE.ShaderChunk.skinnormal_vertex }
-					${ THREE.ShaderChunk.defaultnormal_vertex }
-
-					// Get the current vertex position
-					transformed = vec3( position );
-					${ THREE.ShaderChunk.skinning_vertex }
-					p2 = modelViewMatrix * vec4(transformed, 1.0);
-
-					// Get the previous vertex position
-					transformed = vec3( position );
-					${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
-					${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-					p1 = prevModelViewMatrix * vec4(transformed, 1.0);
-
-					// The delta between frames
-					vec3 delta = p2.xyz - p1.xyz;
-					float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
-
-					vec4 dir = vec4(delta, 0) * dot * expand;
-					prevPosition = prevProjectionMatrix * (p1 + dir);
-					newPosition = projectionMatrix * (p2 + dir);
-					gl_Position = newPosition;
-
+					${ this.getVertexTransform() }
 
 				}`,
 
 			fragmentShader:
 				`
+				uniform float intensity;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 
 				void main() {
 					vec4 vel;
-					// TODO: Account for skinned meshes
-					// NOTE: 0 is in the middle of the screen.
-					// The velocities here are small b/c the positions are [-1, 1], so the velocities
-					// are [-2, 2], but that will be extreme (all the way from left to right of the screen)
 					vel.xyz = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
-
 					vel.w = 1.0;
+					vel.xyz *= intensity;
 					gl_FragColor = vel;
 				}`
 		} );
@@ -267,7 +309,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			vertexShader:
 				`
 				${ THREE.ShaderChunk.skinning_pars_vertex }
-				${ this.getPrevSkinningParseVertex() }
+				${ this.getPrevSkinningParsVertex() }
 
 				uniform mat4 prevProjectionMatrix;
 				uniform mat4 prevModelViewMatrix;
@@ -278,34 +320,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 				void main() {
 
-					vec3 transformed;
-					vec4 p1, p2;
-
-					// Get the normal
-					${ THREE.ShaderChunk.skinbase_vertex }
-					${ THREE.ShaderChunk.beginnormal_vertex }
-					${ THREE.ShaderChunk.skinnormal_vertex }
-					${ THREE.ShaderChunk.defaultnormal_vertex }
-
-					// Get the current vertex position
-					transformed = vec3( position );
-					${ THREE.ShaderChunk.skinning_vertex }
-					p2 = modelViewMatrix * vec4(transformed, 1.0);
-
-					// Get the previous vertex position
-					transformed = vec3( position );
-					${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
-					${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-					p1 = prevModelViewMatrix * vec4(transformed, 1.0);
-
-					// The delta between frames
-					vec3 delta = p2.xyz - p1.xyz;
-					float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
-
-					vec4 dir = vec4(delta, 0) * dot * expand;
-					prevPosition = prevProjectionMatrix * (p1 + dir);
-					newPosition = projectionMatrix * (p2 + dir);
-					gl_Position = newPosition;
+					${ this.getVertexTransform() }
 
 					color = (modelViewMatrix * vec4(normal.xyz, 0)).xyz;
 					color = normalize(color);
@@ -332,9 +347,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			},
 
 			uniforms: {
-				"sourceBuffer": { value: null },
-				"velocityBuffer": { value: null },
-				"intensity": { value: 1 }
+				sourceBuffer: { value: null },
+				velocityBuffer: { value: null }
 			},
 
 			vertexShader:
@@ -351,7 +365,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				varying vec2 vUv;
 				uniform sampler2D sourceBuffer;
 				uniform sampler2D velocityBuffer;
-				uniform float intensity;
 				void main() {
 
 					vec2 vel = texture2D(velocityBuffer, vUv).xy;
@@ -359,7 +372,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 					for(int i = 1; i <= SAMPLES; i ++) {
 
-						vec2 offset = intensity * vel * (float(i - 1) / float(SAMPLES) - 0.5);
+						vec2 offset = vel * (float(i - 1) / float(SAMPLES) - 0.5);
 						result += texture2D(sourceBuffer, vUv + offset);
 
 					}
@@ -396,11 +409,9 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var isSkinned = obj.type === 'SkinnedMesh' && obj.skeleton && obj.skeleton.bones && obj.skeleton.boneMatrices;
 
 		data.geometryMaterial.skinning = isSkinned;
-		data.geometryMaterial.uniforms.expand.value = this.expand * 0.1;
-
 		data.velocityMaterial.skinning = isSkinned;
-		data.velocityMaterial.uniforms.expand.value = this.expand * 0.1;
 
+		// copy the skeleton state into the prevBoneTexture uniform
 		var skeleton = obj.skeleton;
 		if ( isSkinned && ( data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length ) ) {
 
@@ -440,12 +451,43 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	_drawMesh( renderer, obj ) {
 
+		var blurTransparent = this.blurTransparent;
+		var renderCameraBlur = this.renderCameraBlur;
+		var intensity = this.intensity;
+		var expand = this.expand;
+		var overrides = obj.motionBlur;
+		if ( overrides ) {
+
+			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
+			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
+			if ( 'intensity' in overrides ) intensity = overrides.intensity;
+			if ( 'expand' in overrides ) expand = overrides.expand;
+
+		}
+
+		var skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
+		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
+		if ( skip ) {
+
+			if ( this._prevPosMap.has( obj ) ) {
+
+				this._saveMaterialState( obj );
+
+			}
+			return;
+
+		}
+
 		var data = this._getMaterialState( obj );
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+		mat.uniforms.expand.value = expand * 0.1;
+		if ( mat.uniforms.intensity ) mat.uniforms.intensity.value = intensity;
 
 		// TODO: if we render multiple instances of the mesh we may get a better blur that includes the background
-		mat.uniforms.prevProjectionMatrix.value.copy( this._prevCamProjection );
-		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( this._prevCamWorldInverse, data.matrixWorld );
+		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
+		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
+		mat.uniforms.prevProjectionMatrix.value.copy( projMat );
+		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
 
 		renderer.renderBufferDirect( this.camera, null, obj.geometry, mat, obj, null );
 
