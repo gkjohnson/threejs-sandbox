@@ -241,7 +241,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		vec3 delta = p2.xyz - p1.xyz;
 		float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
 
-		vec4 dir = vec4(delta, 0) * dot * expand;
+		vec4 dir = vec4(normalize(delta), 0) * dot * expand;
 		prevPosition = prevProjectionMatrix * (p1 + dir);
 		newPosition = projectionMatrix * (p2 + dir);
 		gl_Position = newPosition;
