@@ -58,18 +58,17 @@
 			var stats;
 			var params = {
 				enabled: true,
+				cameraBlur: true,
 				animate: true,
 				samples: 30,
 				intensity: 1,
 				expand: 1,
-				speed: 20,
-				showVelocityBuffer: false
+				speed: 20
 			};
 			var camera, scene, renderer, controls;
-			var effectFXAA, motionPass, renderScene;
 			var composer;
+			var effectFXAA, motionPass, renderScene;
 			var torusMesh1, torusMesh2, torusMesh3;
-			var standardMaterial;
 
 			var spheres = [];
 			var mixer, clock, animTime = 0;
@@ -91,7 +90,7 @@
 				renderer.shadowMap.enabled = true;
 				document.body.appendChild( renderer.domElement );
 
-				standardMaterial = new THREE.MeshStandardMaterial( {
+				var standardMaterial = new THREE.MeshStandardMaterial( {
 					map: null,
 					color: 0xffffff,
 					metalness: 0.5,
@@ -114,26 +113,26 @@
 				torusMesh3.position.set( 0, 0, -7.5 );
 				scene.add(torusMesh3);
 
-				var sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( .5, 32, 32 ), new THREE.MeshStandardMaterial({ color: 'white', emissive: 'white', emissiveIntensity: .5 }) );
+				var sphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( .5, 32, 32 ),
+					new THREE.MeshStandardMaterial({ color: 'white', emissive: 'white', emissiveIntensity: .5 })
+				);
 				for ( var i = 0; i < 500; i ++ ) {
 
-					var p = new THREE.Object3D();
+					var o = new THREE.Object3D();
 					var s = sphere.clone();
-					p.add( s );
+					o.add( s );
 
 					s.position.set( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
 					if ( s.position.length() === 0 ) s.position.set( 1, 1, 1 );
-					s.position
-						.normalize()
-						.multiplyScalar( 30 + Math.random() * 20 );
+					s.position.normalize().multiplyScalar( 30 + Math.random() * 20 );
 					s.scale.multiplyScalar( 0.5 + Math.random() );
 
-					p.rotationVector =
-						new THREE.Vector3( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 )
-							.normalize();
+					o.rotationVector = new THREE.Vector3( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 )
+					o.rotationVector.normalize();
 
-					scene.add( p );
-					spheres.push( p );
+					scene.add( o );
+					spheres.push( o );
 
 				}
 
@@ -148,6 +147,7 @@
 
 							c.castShadow = true;
 							c.receiveShadow = true;
+							c.motionBlur = { expand: 0 }
 
 						}
 
@@ -157,6 +157,7 @@
 					mixer.clipAction( res.animations[ 0 ] ).play();
 
 				});
+
 				clock = new THREE.Clock();
 
 				var textureLoader = new THREE.TextureLoader();
@@ -183,9 +184,8 @@
 				var shadowCam = directionalLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -15;
 				shadowCam.right = shadowCam.top = 15;
-
-				directionalLight.shadow.mapSize.width = directionalLight.shadow.mapSize.height = 1024;
-
+				directionalLight.shadow.mapSize.width = 1024;
+				directionalLight.shadow.mapSize.height = 1024;
 				scene.add( directionalLight );
 
 				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
@@ -225,6 +225,7 @@
 				var gui = new dat.GUI();
 
 				gui.add( params, 'enabled' );
+				gui.add( params, 'cameraBlur' );
 				gui.add( params, 'animate' );
 				gui.add( params, 'samples', 0, 50 );
 				gui.add( params, 'intensity', 0, 4 );
@@ -233,7 +234,7 @@
 
 				gui.add( motionPass.debug, 'display', {
 					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
-					'Velocity Buffer': THREE.MotionBlurPass.VELOCITY,
+					'Velocity': THREE.MotionBlurPass.VELOCITY,
 					'Geometry': THREE.MotionBlurPass.GEOMETRY
 				} ).onChange( val => motionPass.debug.display = parseFloat(val) );
 
@@ -268,10 +269,12 @@
 			var oneFramePast = false;
 			function render() {
 
+				// set the variables
 				motionPass.enabled = params.enabled;
 				motionPass.blurSamples = params.samples;
 				motionPass.intensity = params.intensity;
 				motionPass.expand = params.expand;
+				motionPass.renderCameraBlur = params.cameraBlur;
 				motionPass.renderToScreen = params.enabled;
 				effectFXAA.renderToScreen = !params.enabled;
 
@@ -313,4 +316,5 @@
 		</script>
 
 	</body>
+
 </html>

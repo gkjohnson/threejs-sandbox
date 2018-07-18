@@ -469,7 +469,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
 		if ( skip ) {
 
-			if ( this._prevPosMap.has( obj ) ) {
+			if ( this._prevPosMap.has( obj ) && this.debug.dontUpdateState === false ) {
 
 				this._saveMaterialState( obj );
 
