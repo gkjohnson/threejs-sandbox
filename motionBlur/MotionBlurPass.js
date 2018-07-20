@@ -29,7 +29,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this.needsSwap = false;
 
 	// settings
-	this.blurSamples = options.blurSamples || 30;
+	this.samples = options.samples || 30;
 	this.expand = options.expand || 1;
 	this.smearIntensity = options.smearIntensity || 1;
 	this.maxSmearFactor = options.maxSmearFactor || 0.05;
@@ -164,9 +164,9 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		cmat.uniforms.sourceBuffer.value = readBuffer.texture;
 		cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
 
-		if ( cmat.defines.SAMPLES !== this.blurSamples ) {
+		if ( cmat.defines.SAMPLES !== this.samples ) {
 
-			cmat.defines.SAMPLES = Math.max( 0, Math.floor( this.blurSamples ) );
+			cmat.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
 			cmat.needsUpdate = true;
 
 		}
