@@ -66,6 +66,7 @@
 				animate: true,
 				samples: 30,
 				intensity: 1,
+				maxSmearFactor: 5,
 				expand: 1,
 				speed: 20
 			};
@@ -232,11 +233,13 @@
 
 				// dat gui
 				var gui = new dat.GUI();
+				gui.width = 300;
 				gui.add( params, 'enabled' );
 				gui.add( params, 'cameraBlur' );
 				gui.add( params, 'animate' );
 				gui.add( params, 'samples', 0, 50 );
 				gui.add( params, 'intensity', 0, 4 );
+				gui.add( params, 'maxSmearFactor', 0, 100 );
 				gui.add( params, 'expand', 0, 10 );
 				gui.add( params, 'speed', 0, 50 );
 
@@ -282,7 +285,8 @@
 				// set the variables
 				motionPass.enabled = params.enabled;
 				motionPass.blurSamples = params.samples;
-				motionPass.intensity = params.intensity;
+				motionPass.smearIntensity = params.intensity;
+				motionPass.maxSmearFactor = params.maxSmearFactor / 100;
 				motionPass.expand = params.expand;
 				motionPass.renderCameraBlur = params.cameraBlur;
 				motionPass.renderToScreen = params.enabled;

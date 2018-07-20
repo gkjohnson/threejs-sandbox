@@ -31,7 +31,8 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	// settings
 	this.blurSamples = options.blurSamples || 30;
 	this.expand = options.expand || 1;
-	this.intensity = options.intensity || 1;
+	this.smearIntensity = options.smearIntensity || 1;
+	this.maxSmearFactor = options.maxSmearFactor || 0.05;
 	this.blurTransparent = options.blurTransparent || false;
 	this.renderCameraBlur = options.renderCameraBlur || true;
 
@@ -247,14 +248,16 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		var blurTransparent = this.blurTransparent;
 		var renderCameraBlur = this.renderCameraBlur;
-		var intensity = this.intensity;
+		var smearIntensity = this.smearIntensity;
 		var expand = this.expand;
+		var maxSmearFactor = this.maxSmearFactor;
 		var overrides = obj.motionBlur;
 		if ( overrides ) {
 
 			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
 			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
-			if ( 'intensity' in overrides ) intensity = overrides.intensity;
+			if ( 'smearIntensity' in overrides ) smearIntensity = overrides.smearIntensity;
+			if ( 'maxSmearFactor' in overrides ) maxSmearFactor = overrides.maxSmearFactor;
 			if ( 'expand' in overrides ) expand = overrides.expand;
 
 		}
@@ -275,7 +278,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var data = this._getMaterialState( obj );
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 		mat.uniforms.expand.value = expand * 0.1;
-		if ( mat.uniforms.intensity ) mat.uniforms.intensity.value = intensity;
+		if ( mat.uniforms.smearIntensity ) mat.uniforms.smearIntensity.value = smearIntensity;
+		if ( mat.uniforms.maxSmearFactor ) mat.uniforms.maxSmearFactor.value = maxSmearFactor * 2; // screen coordinates [-1, 1]
 
 		// TODO: if we render multiple instances of the mesh we may get a better blur that includes the background
 		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
@@ -374,7 +378,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
 				expand: { value: 1 },
-				intensity: { value: 1 }
+				smearIntensity: { value: 1 },
+				maxSmearFactor: { value: 2 }
 			},
 
 			vertexShader:
@@ -396,7 +401,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			fragmentShader:
 				`
-				uniform float intensity;
+				uniform float smearIntensity;
+				uniform float maxSmearFactor;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 
@@ -404,7 +410,10 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 					vec4 vel;
 					vel.xyz = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
 					vel.w = 1.0;
-					vel.xyz *= intensity;
+
+					float length = min(length(vel.xyz) * smearIntensity, maxSmearFactor);
+					vel.xyz = normalize(vel.xyz) * length;
+
 					gl_FragColor = vel;
 				}`
 		} );
