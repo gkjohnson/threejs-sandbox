@@ -71,7 +71,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var effectFXAA, motionPass, renderScene;
+			var FXAAPass, motionPass, renderPass;
 			var torusMesh1, torusMesh2, torusMesh3;
 
 			var spheres = [];
@@ -82,6 +82,7 @@
 
 			function init() {
 
+				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
@@ -92,15 +93,31 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
 				document.body.appendChild( renderer.domElement );
 
+				// geometry
 				var standardMaterial = new THREE.MeshStandardMaterial( {
 					map: null,
 					color: 0xffffff,
 					metalness: 0.5,
 				} );
 
-				// geometry
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
+
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 9, 2 );
+					standardMaterial.roughnessMap = map;
+					standardMaterial.bumpMap = map;
+					standardMaterial.map = map;
+					standardMaterial.needsUpdate = true;
+
+				} );
+
 				var geometry = new THREE.TorusKnotBufferGeometry( 2.5, 1, 150, 40 );
 				torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
 				torusMesh1.position.set( -6, 0, 6 );
@@ -117,6 +134,7 @@
 				torusMesh3.position.set( 0, 0, -7.5 );
 				scene.add(torusMesh3);
 
+				// background spheres
 				var sphere = new THREE.Mesh(
 					new THREE.SphereBufferGeometry( .5, 32, 32 ),
 					new THREE.MeshStandardMaterial({ color: 'white', emissive: 'white', emissiveIntensity: .5 })
@@ -140,6 +158,7 @@
 
 				}
 
+				// load samba dancer
 				var loader = new THREE.FBXLoader();
 				loader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/models/fbx/Samba%20Dancing.fbx', res => {
 
@@ -164,20 +183,6 @@
 
 				clock = new THREE.Clock();
 
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
-
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 9, 2 );
-					standardMaterial.roughnessMap = map;
-					standardMaterial.bumpMap = map;
-					standardMaterial.map = map;
-					standardMaterial.needsUpdate = true;
-
-				} );
-
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.5 ) );
 
@@ -192,6 +197,7 @@
 				directionalLight.shadow.mapSize.height = 1024;
 				scene.add( directionalLight );
 
+				// Shadow
 				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
@@ -199,35 +205,33 @@
 				plane.position.y = -5;
 				scene.add( plane );
 
+				// Render Pass Setup
+				renderPass = new THREE.RenderPass( scene, camera );
 
-				// Render Passes
-				renderScene = new THREE.RenderPass( scene, camera );
-
-				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
-				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				FXAAPass = new THREE.ShaderPass( THREE.FXAAShader );
+				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 				motionPass = new THREE.MotionBlurPass( scene, camera );
 
 				composer = new THREE.EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
-				composer.addPass( renderScene );
-				composer.addPass( effectFXAA );
+				composer.addPass( renderPass );
+				composer.addPass( FXAAPass );
 				composer.addPass( motionPass );
 
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
-
+				// stats
 				stats = new Stats();
 				document.body.appendChild( stats.dom );
 
+				// camera controls
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+				// dat gui
 				var gui = new dat.GUI();
-
 				gui.add( params, 'enabled' );
 				gui.add( params, 'cameraBlur' );
 				gui.add( params, 'animate' );
@@ -256,7 +260,7 @@
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
-				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 			}
 
@@ -270,7 +274,9 @@
 
 			}
 
-			var oneFramePast = false;
+			// flag indicating that we've animated on frame past the
+			// point that we stopped animation
+			var animatedOneFramePast = false;
 			function render() {
 
 				// set the variables
@@ -280,14 +286,14 @@
 				motionPass.expand = params.expand;
 				motionPass.renderCameraBlur = params.cameraBlur;
 				motionPass.renderToScreen = params.enabled;
-				effectFXAA.renderToScreen = !params.enabled;
+				FXAAPass.renderToScreen = !params.enabled;
 
 				camera.lookAt( scene.position );
 
 				const deltaTime = clock.getDelta();
 				motionPass.debug.dontUpdateState = !params.animate;
 
-				if ( params.animate || oneFramePast === false) {
+				if ( params.animate || animatedOneFramePast === false) {
 
 					animTime += deltaTime * params.speed;
 					if ( mixer !== undefined ) {
@@ -305,11 +311,11 @@
 
 					}
 
-					oneFramePast = !params.animate;
+					animatedOneFramePast = !params.animate;
 
 				} else if ( params.animate ) {
 
-					oneFramePast = false;
+					animatedOneFramePast = false;
 
 				}
 
