@@ -1,4 +1,7 @@
 {
+	"scripts": {
+		"start": "static-server"
+	},
   "devDependencies": {
     "eslint-config-mdcs": "^4.2.3",
     "static-server": "^2.2.1"
