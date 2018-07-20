@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - materials - hdr environment mapping</title>
+		<title>threejs webgl - postprocessing - per-object motion blur</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -48,6 +48,10 @@
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Per Object Motion Blur by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Using a technique similar to the one described <a href="http://john-chapman-graphics.blogspot.com/2013/01/per-object-motion-blur.html">here</a>.
+			</br>
+			A velocity buffer is rendered using the previous and current frame positions for each object </br> which is then used to smear the final frame.
 		</div>
 
 		<script>
