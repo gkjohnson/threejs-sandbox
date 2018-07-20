@@ -61,7 +61,7 @@ The set of options that can be passed to the MotionBlurPass constructor. These c
 	// Whether or not to blur transparent objects
 	blurTransparent: false,
 
-	// Whenter or not to account for camera motion in the blur
+	// Whether or not to account for camera motion in the blur
 	renderCameraBlur: true
 }
 ```
