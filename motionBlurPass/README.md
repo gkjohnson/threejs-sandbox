@@ -77,5 +77,7 @@ All of the options above can be overriden by adding a `motionBlur` overrides obj
 
 ```
 
-### TODO
-- Draw interpolated geometry between frames and use that to smear?
+### Possible Improvements
+- Draw multiple interpolated positions of geometry between frames and use that to smear
+- Allow for setting the scale of the velocity buffer
+- Add dithering / jitter to the smear samples to improve the low sample look
