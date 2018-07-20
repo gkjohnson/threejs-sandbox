@@ -114,6 +114,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 				self._drawMesh( renderer, obj );
 
+				// Recreate the map of drawn geometry so we can
+				// drop references to removed meshes
 				if ( self._prevPosMap.has( obj ) ) {
 
 					newMap.set( obj, self._prevPosMap.get( obj ) );
@@ -181,9 +183,121 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	},
 
+	_getMaterialState( obj ) {
+
+		var data = this._prevPosMap.get( obj );
+		if ( data === undefined ) {
+
+			data = {
+
+				matrixWorld: obj.matrixWorld.clone(),
+				geometryMaterial: this._geomMaterial.clone(),
+				velocityMaterial: this._velocityMaterial.clone(),
+				boneMatrices: null,
+				boneTexture: null,
+
+			};
+			this._prevPosMap.set( obj, data );
+
+		}
+
+		var isSkinned = obj.type === 'SkinnedMesh' && obj.skeleton && obj.skeleton.bones && obj.skeleton.boneMatrices;
+
+		data.geometryMaterial.skinning = isSkinned;
+		data.velocityMaterial.skinning = isSkinned;
+
+		// copy the skeleton state into the prevBoneTexture uniform
+		var skeleton = obj.skeleton;
+		if ( isSkinned && ( data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length ) ) {
+
+			var boneMatrices = new Float32Array( skeleton.boneMatrices.length );
+			boneMatrices.set( skeleton.boneMatrices );
+			data.boneMatrices = boneMatrices;
+
+			var size = Math.sqrt( skeleton.boneMatrices.length / 4 );
+			var boneTexture = new THREE.DataTexture( boneMatrices, size, size, THREE.RGBAFormat, THREE.FloatType );
+			boneTexture.needsUpdate = true;
+
+			data.geometryMaterial.uniforms.prevBoneTexture.value = boneTexture;
+			data.velocityMaterial.uniforms.prevBoneTexture.value = boneTexture;
+			data.boneTexture = boneTexture;
+
+		}
+
+		return data;
+
+	},
+
+	_saveMaterialState( obj ) {
+
+		var data = this._prevPosMap.get( obj );
+
+		if ( data.boneMatrices !== null ) {
+
+			data.boneMatrices.set( obj.skeleton.boneMatrices );
+			data.boneTexture.needsUpdate = true;
+
+		}
+
+		data.matrixWorld.copy( obj.matrixWorld );
+
+	},
+
+	_drawMesh( renderer, obj ) {
+
+		var blurTransparent = this.blurTransparent;
+		var renderCameraBlur = this.renderCameraBlur;
+		var intensity = this.intensity;
+		var expand = this.expand;
+		var overrides = obj.motionBlur;
+		if ( overrides ) {
+
+			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
+			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
+			if ( 'intensity' in overrides ) intensity = overrides.intensity;
+			if ( 'expand' in overrides ) expand = overrides.expand;
+
+		}
+
+		var skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
+		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
+		if ( skip ) {
+
+			if ( this._prevPosMap.has( obj ) && this.debug.dontUpdateState === false ) {
+
+				this._saveMaterialState( obj );
+
+			}
+			return;
+
+		}
+
+		var data = this._getMaterialState( obj );
+		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+		mat.uniforms.expand.value = expand * 0.1;
+		if ( mat.uniforms.intensity ) mat.uniforms.intensity.value = intensity;
+
+		// TODO: if we render multiple instances of the mesh we may get a better blur that includes the background
+		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
+		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
+		mat.uniforms.prevProjectionMatrix.value.copy( projMat );
+		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
+
+		renderer.renderBufferDirect( this.camera, null, obj.geometry, mat, obj, null );
+
+		if ( this.debug.dontUpdateState === false ) {
+
+			this._saveMaterialState( obj );
+
+		}
+
+	},
+
+	// Shaders
 	getPrevSkinningParsVertex: function () {
 
-		// Modified THREE.ShaderChunk.skinning_pars_vertex
+		// Modified THREE.ShaderChunk.skinning_pars_vertex to handle
+		// a second set of bone information from the previou frame
 		return `
 		#ifdef USE_SKINNING
 			#ifdef BONE_TEXTURE
@@ -216,6 +330,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	getVertexTransform: function () {
 
+		// Returns the body of the vertex shader for the velocity buffer and
+		// outputs the position of the current and last frame positions
 		return `
 		vec3 transformed;
 		vec4 p1, p2;
@@ -385,117 +501,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				`
 
 		} );
-
-	},
-
-	_getMaterialState( obj ) {
-
-		var data = this._prevPosMap.get( obj );
-		if ( data === undefined ) {
-
-			data = {
-
-				matrixWorld: obj.matrixWorld.clone(),
-				geometryMaterial: this._geomMaterial.clone(),
-				velocityMaterial: this._velocityMaterial.clone(),
-				boneMatrices: null,
-				boneTexture: null,
-
-			};
-			this._prevPosMap.set( obj, data );
-
-		}
-
-		var isSkinned = obj.type === 'SkinnedMesh' && obj.skeleton && obj.skeleton.bones && obj.skeleton.boneMatrices;
-
-		data.geometryMaterial.skinning = isSkinned;
-		data.velocityMaterial.skinning = isSkinned;
-
-		// copy the skeleton state into the prevBoneTexture uniform
-		var skeleton = obj.skeleton;
-		if ( isSkinned && ( data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length ) ) {
-
-			var boneMatrices = new Float32Array( skeleton.boneMatrices.length );
-			boneMatrices.set( skeleton.boneMatrices );
-			data.boneMatrices = boneMatrices;
-
-			var size = Math.sqrt( skeleton.boneMatrices.length / 4 );
-			var boneTexture = new THREE.DataTexture( boneMatrices, size, size, THREE.RGBAFormat, THREE.FloatType );
-			boneTexture.needsUpdate = true;
-
-			data.geometryMaterial.uniforms.prevBoneTexture.value = boneTexture;
-			data.velocityMaterial.uniforms.prevBoneTexture.value = boneTexture;
-			data.boneTexture = boneTexture;
-
-		}
-
-		return data;
-
-	},
-
-	_saveMaterialState( obj ) {
-
-		var data = this._prevPosMap.get( obj );
-
-		if ( data.boneMatrices !== null ) {
-
-			data.boneMatrices.set( obj.skeleton.boneMatrices );
-			data.boneTexture.needsUpdate = true;
-
-		}
-
-		data.matrixWorld.copy( obj.matrixWorld );
-
-	},
-
-
-	_drawMesh( renderer, obj ) {
-
-		var blurTransparent = this.blurTransparent;
-		var renderCameraBlur = this.renderCameraBlur;
-		var intensity = this.intensity;
-		var expand = this.expand;
-		var overrides = obj.motionBlur;
-		if ( overrides ) {
-
-			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
-			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
-			if ( 'intensity' in overrides ) intensity = overrides.intensity;
-			if ( 'expand' in overrides ) expand = overrides.expand;
-
-		}
-
-		var skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
-		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
-		if ( skip ) {
-
-			if ( this._prevPosMap.has( obj ) && this.debug.dontUpdateState === false ) {
-
-				this._saveMaterialState( obj );
-
-			}
-			return;
-
-		}
-
-		var data = this._getMaterialState( obj );
-		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
-		mat.uniforms.expand.value = expand * 0.1;
-		if ( mat.uniforms.intensity ) mat.uniforms.intensity.value = intensity;
-
-		// TODO: if we render multiple instances of the mesh we may get a better blur that includes the background
-		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
-		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
-		mat.uniforms.prevProjectionMatrix.value.copy( projMat );
-		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
-
-		renderer.renderBufferDirect( this.camera, null, obj.geometry, mat, obj, null );
-
-		if ( this.debug.dontUpdateState === false ) {
-
-			this._saveMaterialState( obj );
-
-		}
 
 	}
 
