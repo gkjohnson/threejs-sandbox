@@ -1,6 +1,3 @@
-THREE.ShaderChunk.lights_fragment_begin
-THREE.ShaderChunk.shadowmap_pars_fragment
-
 // https://computergraphics.stackexchange.com/questions/5698/making-low-discrepancy-sequence-noise-textures-not-lds-sample-positions
 // http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
 
@@ -76,6 +73,11 @@ poissonDisk[63] = vec2(-0.178564, -0.596057);
 `;
 
 const functionDefinitions = `
+// https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
+float random(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453) - 0.5;
+}
+
 float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, float searchSize) {
 
 	${ poissonDefinitions }
@@ -89,6 +91,10 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, flo
 	for(int i = 0; i < 64; i++) {
 
 		vec2 offset = poissonDisk[i] * searchSize / shadowMapSize;
+		float rand = random(shadowMapSize * shadowCoord.xy);
+		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
+		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
+
 		vec2 newUv = uv + offset;
 		float blockerDepth = unpackRGBAToDepth( texture2D(shadowMap, newUv) );
 
@@ -103,17 +109,20 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, flo
 
 }
 
-float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, float shadowRadius, vec4 shadowCoord) {
+float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4 shadowCoord) {
 
 	${ poissonDefinitions }
 
-	vec2 texelSize = vec2( 1.0 ) / shadowMapSize;
 	float count = 1.0;
 	float shadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );
 
 	for (int i = 0; i < 64; i ++) {
 
-		vec2 offset = poissonDisk[i] * shadowRadius * .01;
+		vec2 offset = poissonDisk[i] * shadowRadius / shadowMapSize;
+		float rand = random(shadowMapSize * shadowCoord.xy);
+		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
+		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
+
 		vec2 suv = shadowCoord.xy + offset;
 		shadow += texture2DCompare( shadowMap, suv, shadowCoord.z );
 		count ++;
@@ -128,13 +137,17 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, float shadowRadius, vec
 `;
 
 const shadowLogic = `
-float lightWidth = 20.0;
+float lightWidth = 5.0;
 float searchSize = 32.0;
 
 float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
 float dreceiver = shadowCoord.z;
-float penumbra = (dreceiver - dblocker) * lightWidth / dblocker;
-penumbra = max(penumbra, 0.05);
+float p = (dreceiver - dblocker) / dblocker;
+vec2 penumbra = vec2(lightWidth, lightWidth) * p;
+penumbra = max(penumbra, 1.0);
+
+// penumbra = max(penumbra, 0.05);
+// penumbra = 1.0 - pow(1.0 - penumbra, 1.1);
 
 shadow = pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
 `;

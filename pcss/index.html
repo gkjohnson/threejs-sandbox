@@ -70,7 +70,7 @@
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xE91E63 );
 
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
@@ -154,7 +154,7 @@
 				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.5 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				directionalLight.position.set( 50, 100, 50 );
+				directionalLight.position.set( 5, 10, 5 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
