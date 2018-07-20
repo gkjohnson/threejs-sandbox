@@ -2,9 +2,9 @@
 
 A per-object motion blur pass that works with the THREE.RenderComposer class. Works with meshes and skinned meshes by saving the position on the previous frame and smearing between there and the new position. Morph targets and displacement maps are not accounted for.
 
-[![](./docs/image.png)](https://gkjohnson.github.io/threejs-contributions/motionBlurPass/index.html)
+[![](./docs/image.png)](https://gkjohnson.github.io/threejs-contributions/motionBlurPass/webgl_postprocessing_perobjectmotionblur.html)
 
-[Demo Here!](https://gkjohnson.github.io/threejs-contributions/motionBlurPass/index.html)
+[Demo Here!](https://gkjohnson.github.io/threejs-contributions/motionBlurPass/webgl_postprocessing_perobjectmotionblur.html)
 
 ### Use
 
