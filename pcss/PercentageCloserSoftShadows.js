@@ -145,6 +145,16 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec
 
 }
 
+vec2 getPenumbra(float dblocker, float dreceiver, float softness, vec2 lightSize) {
+
+	float p = (dreceiver - dblocker) / dblocker;
+	vec2 penumbra = lightSize * p * softness;
+	penumbra = max(penumbra, 1.0);
+
+	return penumbra;
+
+}
+
 float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4 shadowCoord) {
 
 	${ poissonDefinitions }
@@ -181,13 +191,8 @@ const shadowLogic = `
 
 float dist = 1.0 - shadowCoord.z;
 vec2 searchSize = lightSize * dist * softness;
-
-float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
-float dreceiver = shadowCoord.z;
-float p = (dreceiver - dblocker) / dblocker;
-vec2 penumbra = lightSize * p * softness;
-penumbra = max(penumbra, 1.0);
-
+float blocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
+vec2 penumbra = getPenumbra(blocker, shadowCoord.z, softness, lightSize);
 shadow = pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
 `;
 
