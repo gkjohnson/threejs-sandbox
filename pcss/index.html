@@ -53,17 +53,18 @@
 
 			var stats;
 			var params = {
-				blockerSamples: 64,
-				pcfSamples: 64,
 
-				lightIntensity: 1000,
-				lightDistance: 20,
-				lightWidth: 10,
-				lightHeight: 10,
-				lightRotationSpeed: 0.25,
-
-				noiseIntensity: 1,
-				softness: 3,
+				light: {
+					intensity: 1000,
+					distance: 20,
+					width: 10,
+					height: 10,
+					rotationSpeed: 0.25,
+				},
+				shadow: {
+					noiseIntensity: 1,
+					softness: 3,
+				}
 			};
 
 			var uniforms = {
@@ -144,6 +145,7 @@
 
 							var newMat = standardMaterial.clone();
 							newMat.uniforms.diffuse.value.copy( c.material.color );
+							newMat.uniforms.roughness.value = .25;
 							newMat.skinning = true;
 							materials.push( newMat );
 
@@ -209,14 +211,19 @@
 
 				// dat gui
 				var gui = new dat.GUI();
-				gui.add( params, 'lightIntensity', 0, 5000 );
-				gui.add( params, 'lightDistance', 5, 60 );
-				gui.add( params, 'lightWidth', 0.1, 50 );
-				gui.add( params, 'lightHeight', 0.1, 50 );
-				gui.add( params, 'lightRotationSpeed', 0, 1 );
-				gui.add( params, 'noiseIntensity', 0, 2 );
-				gui.add( params, 'softness', 0, 5 );
-				gui.width = 350;
+				var lightFolder = gui.addFolder( 'light' );
+				lightFolder.add( params.light, 'intensity', 0, 5000 )
+				lightFolder.add( params.light, 'distance', 5, 60 )
+				lightFolder.add( params.light, 'width', 0.1, 50 )
+				lightFolder.add( params.light, 'height', 0.1, 50 )
+				lightFolder.add( params.light, 'rotationSpeed', 0, 1 );
+				lightFolder.open();
+
+				var shadowFolder = gui.addFolder( 'shadow' );
+				shadowFolder.add( params.shadow, 'noiseIntensity', 0, 2 );
+				shadowFolder.add( params.shadow, 'softness', 0, 5 );
+				shadowFolder.open();
+
 				gui.open();
 
 			}
@@ -264,23 +271,23 @@
 
 				// areaLight.position.y = Math.sin(window.performance.now() * 0.0001 ) * 10;
 				areaLight.lookAt(0,0,0);
-				areaLight.position.normalize().multiplyScalar( params.lightDistance );
+				areaLight.position.normalize().multiplyScalar( params.light.distance );
 
 				directionalLight.position.copy( areaLight.position );
-				lightQuad.scale.x = areaLight.width = params.lightWidth;
-				lightQuad.scale.y = areaLight.height = params.lightHeight;
+				lightQuad.scale.x = areaLight.width = params.light.width;
+				lightQuad.scale.y = areaLight.height = params.light.height;
 
-				areaLight.intensity = params.lightIntensity / ( areaLight.width * areaLight.height );
-				areaLightContainer.rotation.y += deltaTime * params.lightRotationSpeed;
+				areaLight.intensity = params.light.intensity / ( areaLight.width * areaLight.height );
+				areaLightContainer.rotation.y += deltaTime * params.light.rotationSpeed;
 
-				uniforms.lightSize.value.x = params.lightWidth;
-				uniforms.lightSize.value.y = params.lightHeight;
+				uniforms.lightSize.value.x = params.light.width;
+				uniforms.lightSize.value.y = params.light.height;
 				uniforms.lightSize.needsUpdate = true;
 
-				uniforms.noiseIntensity.value = params.noiseIntensity;
+				uniforms.noiseIntensity.value = params.shadow.noiseIntensity;
 				uniforms.noiseIntensity.needsUpdate = true;
 
-				uniforms.softness.value = params.softness;
+				uniforms.softness.value = params.shadow.softness;
 				uniforms.softness.needsUpdate = true;
 
 				renderer.render( scene, camera );

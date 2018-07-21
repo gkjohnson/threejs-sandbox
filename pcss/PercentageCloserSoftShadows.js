@@ -2,7 +2,7 @@
 // http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
 
 // TODO: Remove dependency on shadow texture size
-// TODO: Address shadow acne
+// TODO: Find a way to keep the contact shadows hard
 
 const poissonDefinitions = `
 // from https://www.geeks3d.com/20100628/3d-programming-ready-to-use-64-sample-poisson-disc/
@@ -234,7 +234,19 @@ IncidentLight directLight;
 	}
 #endif
 
-// REMOVED DIRECTIONAL LIGHT
+// REMOVED THE DIRECTIONAL LIGHTS
+// #if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )
+// 	DirectionalLight directionalLight;
+// 	#pragma unroll_loop
+// 	for ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {
+// 		directionalLight = directionalLights[ i ];
+// 		getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );
+// 		#ifdef USE_SHADOWMAP
+// 		directLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+// 		#endif
+// 		RE_Direct( directLight, geometry, material, reflectedLight );
+// 	}
+// #endif
 
 #if ( NUM_RECT_AREA_LIGHTS > 0 ) && defined( RE_Direct_RectArea )
 	RectAreaLight rectAreaLight;
@@ -242,17 +254,16 @@ IncidentLight directLight;
 	for ( int i = 0; i < NUM_RECT_AREA_LIGHTS; i ++ ) {
 		rectAreaLight = rectAreaLights[ i ];
 
-		// TODO: Why is there shadow acne?
-		float factor = 0.0;
+		// EDITED: Use the shadow map from the directional light
+		float factor = 1.0;
 		#ifdef USE_SHADOWMAP
-		DirectionalLight directionalLight = directionalLights[ 0 ];
-
-		factor = getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] );
-
+		DirectionalLight directionalLight = directionalLights[0 ];
+		getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );
+		factor =
+			all( bvec2( directionalLight.shadow, directLight.visible ) ) ?
+				getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) :
+				1.0;
 		#endif
-
-
-
 
 		RE_Direct_RectArea_CUSTOM( rectAreaLight, geometry, material, reflectedLight, factor );
 	}
