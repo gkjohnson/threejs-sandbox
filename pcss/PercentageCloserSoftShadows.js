@@ -180,18 +180,13 @@ const shadowLogic = `
 // float delta = shadowCoord.z - unpackRGBAToDepth( texture2D(shadowMap, shadowCoord.xy) );
 
 float dist = 1.0 - shadowCoord.z;
-
 vec2 searchSize = lightSize * dist * softness;
-// searchSize = 11150.0 * clamp(shadowCoord.z - 0.02, 1.0, 0.0) / shadowCoord.z;
 
 float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
 float dreceiver = shadowCoord.z;
 float p = (dreceiver - dblocker) / dblocker;
 vec2 penumbra = lightSize * p * softness;
 penumbra = max(penumbra, 1.0);
-
-// penumbra = max(penumbra, 0.05);
-// penumbra = 1.0 - pow(1.0 - penumbra, 1.1);
 
 shadow = pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
 `;
