@@ -149,9 +149,8 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 // BLOCKER_SAMPLES
 
 const shadowLogic = `
-// vec2 lightSize = vec2(lightWidth, lightHeight);
+// TODO: Can we start with a better assumption here for search size
 vec2 searchSize = lightSize * (1.0 - shadowCoord.z) * softness;// * 25.0 * ;
-// searchSize = 11150.0 * clamp(shadowCoord.z - 0.02, 1.0, 0.0) / shadowCoord.z;
 
 float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
 float dreceiver = shadowCoord.z;

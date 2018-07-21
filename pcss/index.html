@@ -31,6 +31,7 @@
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/lights/RectAreaLightUniformsLib.js"></script>
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
@@ -130,10 +131,12 @@
 
 						if ( c.type === 'SkinnedMesh' ) {
 
-							c.material = standardMaterial.clone();
-							c.material.skinning = true;
-							materials.push( c.material );
+							var newMat = standardMaterial.clone();
+							newMat.uniforms.diffuse.value.copy( c.material.color );
+							newMat.skinning = true;
+							materials.push( newMat );
 
+							c.material = newMat;
 							c.castShadow = true;
 							c.receiveShadow = true;
 							c.motionBlur = { expand: 0 }
