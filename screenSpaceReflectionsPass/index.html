@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/FXAAShader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/inflate.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/loaders/FBXLoader.js"></script>
+
+		<script type="text/javascript" src="SSRRPass.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			// globals
+			var stats;
+			var params = {
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var FXAAPass, motionPass, renderPass;
+			var torusMesh1, torusMesh2, torusMesh3;
+
+			var spheres = [];
+			var mixer, clock, animTime = 0;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xFFC107 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var standardMaterial = new THREE.MeshStandardMaterial( {
+					map: null,
+					color: 0xffffff,
+					metalness: 0.5,
+				} );
+
+
+				// Lights
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.1 ) );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				directionalLight.position.set( 50, 100, 50 );
+				directionalLight.castShadow = true;
+
+				var shadowCam = directionalLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -15;
+				shadowCam.right = shadowCam.top = 15;
+				directionalLight.shadow.mapSize.width = 1024;
+				directionalLight.shadow.mapSize.height = 1024;
+				scene.add( directionalLight );
+
+				// Shadow
+				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0 }));
+				plane.receiveShadow = true;
+				plane.rotation.set( -Math.PI / 2, 0, 0 );
+				plane.scale.multiplyScalar( 2000 );
+				plane.position.y = -4;
+				scene.add( plane );
+
+				var geom = new THREE.SphereBufferGeometry(4, 30, 30);
+				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.9, roughness: 0 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = -10;
+				scene.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 0;
+				scene.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0, roughness: 0.9 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 10;
+				scene.add(sphere);
+
+
+				// Render Pass Setup
+				renderPass = new THREE.RenderPass( scene, camera );
+
+				FXAAPass = new THREE.ShaderPass( THREE.FXAAShader );
+				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				ssrrPass = new THREE.SSRRPass( scene, camera );
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( ssrrPass );
+
+				// composer.addPass( FXAAPass );
+				// FXAAPass.renderToScreen = true;
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			// flag indicating that we've animated on frame past the
+			// point that we stopped animation
+			var animatedOneFramePast = false;
+			function render() {
+
+				camera.lookAt( scene.position );
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
