@@ -48,15 +48,35 @@
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+			// TODO: Remove dependency on shadow texture size
 			// globals
 			var stats;
 			var params = {
 				blockerSamples: 64,
-				pcfSamples: 64
+				pcfSamples: 64,
+
+				lightDistance: 20,
+				lightWidth: 1,
+				lightHeight: 1,
+
+				noiseIntensity: 1,
+				softness: 1,
 			};
+
+			var uniforms = {
+				lightSize: { value: new THREE.Vector2() },
+				noiseIntensity: { value: 1 },
+				softness: { value: 1 }
+			}
+
 			var camera, scene, renderer, controls;
 			var torusMesh1, torusMesh2, torusMesh3;
 			var mixer, clock, animTime = 0;
+
+			var directionalLight, lightQuad;
+			var materials = []
+
+			THREE.ShaderLib.standard.uniforms = Object.assign(THREE.ShaderLib.standard.uniforms, uniforms)
 
 			init();
 			animate();
@@ -79,35 +99,10 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				var standardMaterial = new THREE.MeshStandardMaterial( {
-					map: null,
-					color: 0xffffff,
-					metalness: 0.5,
-				} );
-
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
-
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 9, 2 );
-					standardMaterial.roughnessMap = map;
-					standardMaterial.map = map;
-					standardMaterial.needsUpdate = true;
-
-				} );
-
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Normal.jpg', function ( map ) {
-
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 9, 2 );
-					standardMaterial.normalMap = map;
-					standardMaterial.needsUpdate = true;
-
-				} );
+				var standardMaterial = new THREE.ShaderMaterial( THREE.ShaderLib.standard )
+				standardMaterial.uniforms = Object.assign( {}, standardMaterial.uniforms, uniforms );
+				standardMaterial.lights = true;
+				materials.push(standardMaterial);
 
 				var geometry = new THREE.TorusKnotBufferGeometry( 2.5, 1, 150, 40 );
 				torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
@@ -135,6 +130,10 @@
 
 						if ( c.type === 'SkinnedMesh' ) {
 
+							c.material = standardMaterial.clone();
+							c.material.skinning = true;
+							materials.push( c.material );
+
 							c.castShadow = true;
 							c.receiveShadow = true;
 							c.motionBlur = { expand: 0 }
@@ -151,11 +150,16 @@
 				clock = new THREE.Clock();
 
 				// Lights
-				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.5 ) );
+				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.15 ) );
 
-				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
 				directionalLight.position.set( 5, 10, 5 );
 				directionalLight.castShadow = true;
+
+				lightQuad = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }) );
+				lightQuad.position.copy(directionalLight.position);
+				lightQuad.lookAt( 0, 0, 0 )
+				scene.add( lightQuad );
 
 				var shadowCam = directionalLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -15;
@@ -165,7 +169,7 @@
 				scene.add( directionalLight );
 
 				// Shadow
-				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
+				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), standardMaterial );
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
 				plane.scale.multiplyScalar( 30 );
@@ -185,6 +189,11 @@
 
 				// dat gui
 				var gui = new dat.GUI();
+				gui.add( params, 'lightDistance', 5, 60 );
+				gui.add( params, 'lightWidth', 0.1, 50 );
+				gui.add( params, 'lightHeight', 0.1, 50 );
+				gui.add( params, 'noiseIntensity', 0, 2 );
+				gui.add( params, 'softness', 0, 5 );
 				gui.open();
 
 			}
@@ -230,6 +239,21 @@
 				torusMesh1.rotation.y += 0.01;
 				torusMesh2.position.y = Math.sin( animTime ) * 2;
 				torusMesh3.scale.set( 1, 1, 1 ).multiplyScalar( 0.25 + ( 1 + Math.sin( animTime ) ) * 0.4 );
+
+				directionalLight.position.normalize().multiplyScalar( params.lightDistance );
+				lightQuad.position.copy( directionalLight.position );
+
+				lightQuad.scale.x = params.lightWidth;
+				lightQuad.scale.y = params.lightHeight;
+				uniforms.lightSize.value.x = params.lightWidth;
+				uniforms.lightSize.value.y = params.lightHeight;
+				uniforms.lightSize.needsUpdate = true;
+
+				uniforms.noiseIntensity.value = params.noiseIntensity;
+				uniforms.noiseIntensity.needsUpdate = true;
+
+				uniforms.softness.value = params.softness;
+				uniforms.softness.needsUpdate = true;
 
 				renderer.render( scene, camera );
 

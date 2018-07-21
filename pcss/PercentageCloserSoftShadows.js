@@ -73,12 +73,17 @@ poissonDisk[63] = vec2(-0.178564, -0.596057);
 `;
 
 const functionDefinitions = `
+
+uniform vec2 lightSize;
+uniform float noiseIntensity;
+uniform float softness;
+
 // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
 float random(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453) - 0.5;
 }
 
-float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, float searchSize) {
+float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec2 searchSize) {
 
 	${ poissonDefinitions }
 
@@ -90,10 +95,11 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, flo
 
 	for(int i = 0; i < 64; i++) {
 
-		vec2 offset = poissonDisk[i] * searchSize / shadowMapSize;
-		float rand = random(shadowMapSize * shadowCoord.xy);
+		vec2 offset = poissonDisk[i] / shadowMapSize;
+		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;
 		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
 		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
+		offset *= searchSize;
 
 		vec2 newUv = uv + offset;
 		float blockerDepth = unpackRGBAToDepth( texture2D(shadowMap, newUv) );
@@ -118,10 +124,11 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 
 	for (int i = 0; i < 64; i ++) {
 
-		vec2 offset = poissonDisk[i] * shadowRadius / shadowMapSize;
-		float rand = random(shadowMapSize * shadowCoord.xy);
+		vec2 offset = poissonDisk[i] / shadowMapSize;
+		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;
 		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
 		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
+		offset *= shadowRadius;
 
 		vec2 suv = shadowCoord.xy + offset;
 		shadow += texture2DCompare( shadowMap, suv, shadowCoord.z );
@@ -136,14 +143,20 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 }
 `;
 
+// LIGHT_WIDTH
+// LIGHT_HEIGHT
+// PCF_SAMPLES
+// BLOCKER_SAMPLES
+
 const shadowLogic = `
-float lightWidth = 5.0;
-float searchSize = 32.0;
+// vec2 lightSize = vec2(lightWidth, lightHeight);
+vec2 searchSize = lightSize * (1.0 - shadowCoord.z) * softness;// * 25.0 * ;
+// searchSize = 11150.0 * clamp(shadowCoord.z - 0.02, 1.0, 0.0) / shadowCoord.z;
 
 float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
 float dreceiver = shadowCoord.z;
 float p = (dreceiver - dblocker) / dblocker;
-vec2 penumbra = vec2(lightWidth, lightWidth) * p;
+vec2 penumbra = lightSize * p * softness;
 penumbra = max(penumbra, 1.0);
 
 // penumbra = max(penumbra, 0.05);
@@ -155,5 +168,5 @@ shadow = pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
 
 THREE.ShaderChunk.shadowmap_pars_fragment =
 	THREE.ShaderChunk.shadowmap_pars_fragment
-		.replace( /float getShadow/, t => `${ functionDefinitions }\n${ t }`)
+		.replace( /float getShadow/, t => `${ functionDefinitions }\n${ t }` )
 		.replace( /#if defined\( SHADOWMAP_TYPE_PCF \)(.|\n)*?#endif/, shadowLogic );
