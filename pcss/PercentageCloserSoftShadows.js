@@ -1,5 +1,6 @@
 // https://computergraphics.stackexchange.com/questions/5698/making-low-discrepancy-sequence-noise-textures-not-lds-sample-positions
 // http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
+// https://developer.nvidia.com/sites/default/files/akamai/gamedev/docs/PCSS_Integration.pdf
 
 // TODO: Remove dependency on shadow texture size
 // TODO: Find a way to keep the contact shadows hard
