@@ -123,7 +123,7 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec
 	float avgDepth = 0.0;
 	float blockerCount = 0.0;
 
-	for(int i = 0; i < 64; i++) {
+	for(int i = 0; i < int(BLOCKER_SAMPLES); i++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
 		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;
@@ -152,7 +152,7 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 	float count = 1.0;
 	float shadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );
 
-	for (int i = 0; i < 64; i ++) {
+	for (int i = 0; i < int(PCF_SAMPLES); i ++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
 		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;

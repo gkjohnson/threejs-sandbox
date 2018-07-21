@@ -64,6 +64,8 @@
 				shadow: {
 					noiseIntensity: 1,
 					softness: 3,
+					pcfSamples: 64,
+					blockerSamples: 64
 				}
 			};
 
@@ -75,14 +77,18 @@
 				metalness: { value: 0 }
 			}
 
+			var defines = {
+				STANDARD: "",
+				PCF_SAMPLES: 64,
+				BLOCKER_SAMPLES: 64
+			}
+
 			var camera, scene, renderer, controls;
 			var torusMesh1, torusMesh2, torusMesh3;
 			var mixer, clock, animTime = 0;
 
 			var directionalLight, lightQuad, areaLight, areaLightContainer;
 			var materials = []
-
-			THREE.ShaderLib.standard.uniforms = Object.assign(THREE.ShaderLib.standard.uniforms, uniforms)
 
 			init();
 			animate();
@@ -107,6 +113,7 @@
 				// geometry
 				var standardMaterial = new THREE.ShaderMaterial( THREE.ShaderLib.standard )
 				standardMaterial.uniforms = Object.assign( {}, standardMaterial.uniforms, uniforms );
+				standardMaterial.defines = defines;
 				standardMaterial.lights = true;
 				materials.push(standardMaterial);
 
@@ -222,6 +229,18 @@
 				var shadowFolder = gui.addFolder( 'shadow' );
 				shadowFolder.add( params.shadow, 'noiseIntensity', 0, 2 );
 				shadowFolder.add( params.shadow, 'softness', 0, 5 );
+
+
+				shadowFolder.add( params.shadow, 'pcfSamples', 0, 64 )
+					.onFinishChange(val => {
+						defines.PCF_SAMPLES = val;
+						materials.forEach( m => m.needsUpdate = true );
+					});
+				shadowFolder.add( params.shadow, 'blockerSamples', 0, 64 )
+					.onFinishChange(val => {
+							defines.BLOCKER_SAMPLES = val;
+							materials.forEach( m => m.needsUpdate = true );
+						});
 				shadowFolder.open();
 
 				gui.open();
