@@ -43,38 +43,42 @@
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Percentage Closer Soft Shadows by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br>Soft shadows with contact hardening based on <a href="http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf">this paper by NVidia</a>.
 		</div>
 
 		<script>
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-			// TODO: Remove dependency on shadow texture size
-			// globals
 			var stats;
 			var params = {
 				blockerSamples: 64,
 				pcfSamples: 64,
 
+				lightIntensity: 2500,
 				lightDistance: 20,
-				lightWidth: 1,
-				lightHeight: 1,
+				lightWidth: 10,
+				lightHeight: 10,
+				lightRotationSpeed: 0.25,
 
 				noiseIntensity: 1,
-				softness: 1,
+				softness: 3,
 			};
 
 			var uniforms = {
 				lightSize: { value: new THREE.Vector2() },
 				noiseIntensity: { value: 1 },
-				softness: { value: 1 }
+				softness: { value: 1 },
+				roughness: { value: 0 },
+				metalness: { value: 0 }
 			}
 
 			var camera, scene, renderer, controls;
 			var torusMesh1, torusMesh2, torusMesh3;
 			var mixer, clock, animTime = 0;
 
-			var directionalLight, lightQuad;
+			var directionalLight, lightQuad, areaLight, areaLightContainer;
 			var materials = []
 
 			THREE.ShaderLib.standard.uniforms = Object.assign(THREE.ShaderLib.standard.uniforms, uniforms)
@@ -89,7 +93,7 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xE91E63 );
+				scene.background = new THREE.Color( 0x009688 );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -113,12 +117,19 @@
 				torusMesh1.receiveShadow = true;
 				scene.add( torusMesh1 );
 
-				torusMesh2 = torusMesh1.clone();
+				torusMesh2 = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 1, 1 ), standardMaterial );
+				torusMesh2.castShadow = true;
+				torusMesh2.receiveShadow = true;
 				torusMesh2.position.set( 6, 0, 6 );
+				torusMesh2.rotation.set( 90, 90, 90 );
+				torusMesh2.scale.set( 2, 2, 2);
 				scene.add(torusMesh2);
 
-				torusMesh3 = torusMesh1.clone();
+				torusMesh3 = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 1, 1 ), standardMaterial );
+				torusMesh3.castShadow = true;
+				torusMesh3.receiveShadow = true;
 				torusMesh3.position.set( 0, 0, -7.5 );
+				torusMesh3.scale.y = 10;
 				scene.add(torusMesh3);
 
 				// load samba dancer
@@ -153,29 +164,35 @@
 				clock = new THREE.Clock();
 
 				// Lights
-				scene.add( new THREE.HemisphereLight( 0xE91E63, 0x552233, 0.15 ) );
+				scene.add( new THREE.AmbientLight( 0x009688, 0.025 ) );
+
+				areaLightContainer = new THREE.Object3D();
+				scene.add( areaLightContainer );
+
+				areaLight = new THREE.RectAreaLight( 0xffffff, 1, 1, 1 );
+				areaLight.position.set( 5, 5, 5 );
+				areaLight.lookAt( 0, 0, 0 );
+				areaLightContainer.add( areaLight );
 
 				directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				directionalLight.position.set( 5, 10, 5 );
 				directionalLight.castShadow = true;
+				areaLightContainer.add( directionalLight );
 
 				lightQuad = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }) );
-				lightQuad.position.copy(directionalLight.position);
-				lightQuad.lookAt( 0, 0, 0 )
-				scene.add( lightQuad );
+				areaLight.add( lightQuad );
 
 				var shadowCam = directionalLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -15;
 				shadowCam.right = shadowCam.top = 15;
 				directionalLight.shadow.mapSize.width = 1024;
 				directionalLight.shadow.mapSize.height = 1024;
-				scene.add( directionalLight );
 
 				// Shadow
 				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), standardMaterial );
+				plane.castShadow = true;
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.multiplyScalar( 30 );
+				plane.scale.multiplyScalar( 2000 );
 				plane.position.y = -5;
 				scene.add( plane );
 
@@ -192,11 +209,14 @@
 
 				// dat gui
 				var gui = new dat.GUI();
+				gui.add( params, 'lightIntensity', 0, 10000 );
 				gui.add( params, 'lightDistance', 5, 60 );
 				gui.add( params, 'lightWidth', 0.1, 50 );
 				gui.add( params, 'lightHeight', 0.1, 50 );
+				gui.add( params, 'lightRotationSpeed', 0, 1 );
 				gui.add( params, 'noiseIntensity', 0, 2 );
 				gui.add( params, 'softness', 0, 5 );
+				gui.width = 350;
 				gui.open();
 
 			}
@@ -240,14 +260,19 @@
 				}
 
 				torusMesh1.rotation.y += 0.01;
-				torusMesh2.position.y = Math.sin( animTime ) * 2;
-				torusMesh3.scale.set( 1, 1, 1 ).multiplyScalar( 0.25 + ( 1 + Math.sin( animTime ) ) * 0.4 );
+				torusMesh2.position.y = Math.sin( animTime ) * 2 - 1.5;
 
-				directionalLight.position.normalize().multiplyScalar( params.lightDistance );
-				lightQuad.position.copy( directionalLight.position );
+				// areaLight.position.y = Math.sin(window.performance.now() * 0.0001 ) * 10;
+				areaLight.lookAt(0,0,0);
+				areaLight.position.normalize().multiplyScalar( params.lightDistance );
 
-				lightQuad.scale.x = params.lightWidth;
-				lightQuad.scale.y = params.lightHeight;
+				directionalLight.position.copy( areaLight.position );
+				lightQuad.scale.x = areaLight.width = params.lightWidth;
+				lightQuad.scale.y = areaLight.height = params.lightHeight;
+
+				areaLight.intensity = params.lightIntensity / ( areaLight.width * areaLight.height );
+				areaLightContainer.rotation.y += deltaTime * params.lightRotationSpeed;
+
 				uniforms.lightSize.value.x = params.lightWidth;
 				uniforms.lightSize.value.y = params.lightHeight;
 				uniforms.lightSize.needsUpdate = true;

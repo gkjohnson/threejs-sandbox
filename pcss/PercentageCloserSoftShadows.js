@@ -1,6 +1,9 @@
 // https://computergraphics.stackexchange.com/questions/5698/making-low-discrepancy-sequence-noise-textures-not-lds-sample-positions
 // http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
 
+// TODO: Remove dependency on shadow texture size
+// TODO: Address shadow acne
+
 const poissonDefinitions = `
 // from https://www.geeks3d.com/20100628/3d-programming-ready-to-use-64-sample-poisson-disc/
 // another option is the halton sequence
@@ -78,6 +81,33 @@ uniform vec2 lightSize;
 uniform float noiseIntensity;
 uniform float softness;
 
+void RE_Direct_RectArea_CUSTOM( const in RectAreaLight rectAreaLight, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight, float factor ) {
+	vec3 normal = geometry.normal;
+	vec3 viewDir = geometry.viewDir;
+	vec3 position = geometry.position;
+	vec3 lightPos = rectAreaLight.position;
+	vec3 halfWidth = rectAreaLight.halfWidth;
+	vec3 halfHeight = rectAreaLight.halfHeight;
+	vec3 lightColor = rectAreaLight.color;
+	float roughness = material.specularRoughness;
+	vec3 rectCoords[ 4 ];
+	rectCoords[ 0 ] = lightPos - halfWidth - halfHeight;
+	rectCoords[ 1 ] = lightPos + halfWidth - halfHeight;
+	rectCoords[ 2 ] = lightPos + halfWidth + halfHeight;
+	rectCoords[ 3 ] = lightPos - halfWidth + halfHeight;
+	vec2 uv = LTC_Uv( normal, viewDir, roughness );
+	vec4 t1 = texture2D( ltc_1, uv );
+	vec4 t2 = texture2D( ltc_2, uv );
+	mat3 mInv = mat3(
+		vec3( t1.x, 0, t1.y ),
+		vec3(    0, 1,    0 ),
+		vec3( t1.z, 0, t1.w )
+	);
+	vec3 fresnel = ( material.specularColor * t2.x + ( vec3( 1.0 ) - material.specularColor ) * t2.y );
+	reflectedLight.directSpecular += lightColor * fresnel * LTC_Evaluate( normal, viewDir, position, mInv, rectCoords ) * factor;
+	reflectedLight.directDiffuse += lightColor * material.diffuseColor * LTC_Evaluate( normal, viewDir, position, mat3( 1.0 ), rectCoords ) * factor;
+}
+
 // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
 float random(vec2 co){
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453) - 0.5;
@@ -143,14 +173,16 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 }
 `;
 
-// LIGHT_WIDTH
-// LIGHT_HEIGHT
-// PCF_SAMPLES
-// BLOCKER_SAMPLES
-
 const shadowLogic = `
 // TODO: Can we start with a better assumption here for search size
-vec2 searchSize = lightSize * (1.0 - shadowCoord.z) * softness;// * 25.0 * ;
+// Using this delta value can help keep the contact shadows crisp but
+// leads to some other odd artifacts
+// float delta = shadowCoord.z - unpackRGBAToDepth( texture2D(shadowMap, shadowCoord.xy) );
+
+float dist = 1.0 - shadowCoord.z;
+
+vec2 searchSize = lightSize * dist * softness;
+// searchSize = 11150.0 * clamp(shadowCoord.z - 0.02, 1.0, 0.0) / shadowCoord.z;
 
 float dblocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
 float dreceiver = shadowCoord.z;
@@ -169,3 +201,73 @@ THREE.ShaderChunk.shadowmap_pars_fragment =
 	THREE.ShaderChunk.shadowmap_pars_fragment
 		.replace( /float getShadow/, t => `${ functionDefinitions }\n${ t }` )
 		.replace( /#if defined\( SHADOWMAP_TYPE_PCF \)(.|\n)*?#endif/, shadowLogic );
+
+
+THREE.ShaderChunk.lights_fragment_begin = `
+GeometricContext geometry;
+geometry.position = - vViewPosition;
+geometry.normal = normal;
+geometry.viewDir = normalize( vViewPosition );
+IncidentLight directLight;
+#if ( NUM_POINT_LIGHTS > 0 ) && defined( RE_Direct )
+	PointLight pointLight;
+	#pragma unroll_loop
+	for ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {
+		pointLight = pointLights[ i ];
+		getPointDirectLightIrradiance( pointLight, geometry, directLight );
+		#ifdef USE_SHADOWMAP
+		directLight.color *= all( bvec2( pointLight.shadow, directLight.visible ) ) ? getPointShadow( pointShadowMap[ i ], pointLight.shadowMapSize, pointLight.shadowBias, pointLight.shadowRadius, vPointShadowCoord[ i ], pointLight.shadowCameraNear, pointLight.shadowCameraFar ) : 1.0;
+		#endif
+		RE_Direct( directLight, geometry, material, reflectedLight );
+	}
+#endif
+#if ( NUM_SPOT_LIGHTS > 0 ) && defined( RE_Direct )
+	SpotLight spotLight;
+	#pragma unroll_loop
+	for ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {
+		spotLight = spotLights[ i ];
+		getSpotDirectLightIrradiance( spotLight, geometry, directLight );
+		#ifdef USE_SHADOWMAP
+		directLight.color *= all( bvec2( spotLight.shadow, directLight.visible ) ) ? getShadow( spotShadowMap[ i ], spotLight.shadowMapSize, spotLight.shadowBias, spotLight.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;
+		#endif
+		RE_Direct( directLight, geometry, material, reflectedLight );
+	}
+#endif
+
+// REMOVED DIRECTIONAL LIGHT
+
+#if ( NUM_RECT_AREA_LIGHTS > 0 ) && defined( RE_Direct_RectArea )
+	RectAreaLight rectAreaLight;
+	#pragma unroll_loop
+	for ( int i = 0; i < NUM_RECT_AREA_LIGHTS; i ++ ) {
+		rectAreaLight = rectAreaLights[ i ];
+
+		// TODO: Why is there shadow acne?
+		float factor = 0.0;
+		#ifdef USE_SHADOWMAP
+		DirectionalLight directionalLight = directionalLights[ 0 ];
+
+		factor = getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] );
+
+		#endif
+
+
+
+
+		RE_Direct_RectArea_CUSTOM( rectAreaLight, geometry, material, reflectedLight, factor );
+	}
+#endif
+#if defined( RE_IndirectDiffuse )
+	vec3 irradiance = getAmbientLightIrradiance( ambientLightColor );
+	#if ( NUM_HEMI_LIGHTS > 0 )
+		#pragma unroll_loop
+		for ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {
+			irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );
+		}
+	#endif
+#endif
+#if defined( RE_IndirectSpecular )
+	vec3 radiance = vec3( 0.0 );
+	vec3 clearCoatRadiance = vec3( 0.0 );
+#endif
+`;
