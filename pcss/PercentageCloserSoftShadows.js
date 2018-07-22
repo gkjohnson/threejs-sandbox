@@ -74,6 +74,13 @@ poissonDisk[61] = vec2(0.789239, -0.419965);
 poissonDisk[62] = vec2(-0.545396, 0.538133);
 poissonDisk[63] = vec2(-0.178564, -0.596057);
 
+float rand = rand(shadowCoord.xy) * noiseIntensity;
+for(int i = 0; i < 64; i ++) {
+	vec2 v = poissonDisk[i];
+	poissonDisk[i].x = v.x * cos(rand) - v.y * sin(rand);
+	poissonDisk[i].y = v.y * cos(rand) + v.x * sin(rand);
+}
+
 `;
 
 const functionDefinitions = `
@@ -122,12 +129,7 @@ vec2 findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec2
 	for(int i = 0; i < int(BLOCKER_SAMPLES); i++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
-		float rand = rand(shadowCoord.xy) * noiseIntensity;
-		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
-		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
-		offset *= searchSize;
-
-		vec2 newUv = uv + offset;
+		vec2 newUv = uv + offset * searchSize;
 		float blockerDepth = unpackRGBAToDepth( texture2D(shadowMap, newUv) );
 
 		float isBlocking = step(blockerDepth, thisDepth);
@@ -155,12 +157,7 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 	for (int i = 0; i < int(PCF_SAMPLES); i ++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
-		float rand = rand(shadowCoord.xy) * noiseIntensity;
-		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
-		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
-		offset *= shadowRadius;
-
-		vec2 suv = shadowCoord.xy + offset;
+		vec2 suv = shadowCoord.xy + offset * shadowRadius;
 		shadow += texture2DCompare( shadowMap, suv, shadowCoord.z );
 		shadow += texture2DCompare( shadowMap, suv - offset.yx * 2.0, shadowCoord.z );
 
