@@ -27,7 +27,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	} );
 
 	this.enabled = true;
-	this.needsSwap = false;
+	this.needsSwap = true;
 
 	// settings
 	this.samples = options.samples || 30;
@@ -61,7 +61,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 			minFilter: THREE.LinearFilter,
 			magFilter: THREE.LinearFilter,
 			format: THREE.RGBFormat,
-			type: THREE.HalfFloatType
+			type: THREE.UnsignedByteType
 		} );
 	this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
 	this._velocityBuffer.texture.generateMipmaps = false;
