@@ -52,6 +52,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this._frustum = new THREE.Frustum();
 	this._projScreenMatrix = new THREE.Matrix4();
 	this._cameraMatricesNeedInitializing = true;
+	this._prevClearColor = new THREE.Color();
 
 	// render targets
 	this._velocityBuffer =
@@ -61,7 +62,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 			format: THREE.RGBFormat,
 			type: THREE.HalfFloatType
 		} );
-	this._velocityBuffer.texture.name = "MotionBlurPass";
+	this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
 	this._velocityBuffer.texture.generateMipmaps = false;
 
 	this._prevCamProjection = new THREE.Matrix4();
@@ -100,7 +101,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
-		var prevClearColor = renderer.getClearColor().clone();
+		this._prevClearColor.copy( renderer.getClearColor() );
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = false;
@@ -191,7 +192,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		}
 
 		// Restore renderer settings
-		renderer.setClearColor( prevClearColor, prevClearAlpha );
+		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
 		renderer.autoClear = prevAutoClear;
 
 	},
@@ -370,12 +371,16 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		// The delta between frames
 		vec3 delta = p2.xyz - p1.xyz;
-		float dot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
+		vec3 direction = normalize(delta);
 
-		vec4 dir = vec4(normalize(delta), 0) * dot * expand;
+		float expandDot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
+		vec4 dir = vec4(direction, 0) * expandDot * expand;
 		prevPosition = prevProjectionMatrix * (p1 + dir);
 		newPosition = projectionMatrix * (p2 + dir);
-		gl_Position = newPosition;
+
+		float stretchDot = dot(direction, transformedNormal);
+		stretchDot = step(0.0, stretchDot);
+		gl_Position = mix(prevPosition, newPosition, stretchDot);
 		`;
 
 	},
