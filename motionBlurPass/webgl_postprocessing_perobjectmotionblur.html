@@ -65,8 +65,6 @@
 				cameraBlur: true,
 				animate: true,
 				samples: 15,
-				'velocity multiplier': 1,
-				'velocity cap': 5,
 				expandGeometry: 1,
 				interpolateGeometry: 1,
 				speed: 20,
@@ -227,8 +225,6 @@
 				motionFolder.add( params, 'enabled' );
 				motionFolder.add( params, 'cameraBlur' );
 				motionFolder.add( params, 'samples', 0, 50 );
-				motionFolder.add( params, 'velocity multiplier', 0, 4 );
-				motionFolder.add( params, 'velocity cap', 0, 100 );
 				motionFolder.add( params, 'expandGeometry', 0, 10 );
 				motionFolder.add( params, 'interpolateGeometry', 0, 1 );
 				motionFolder.add( params, 'renderTargetScale', 0, 1 )
@@ -286,8 +282,6 @@
 				// set the variables
 				motionPass.enabled = params.enabled;
 				motionPass.samples = params.samples;
-				motionPass.velocityMultiplier = params[ 'velocity multiplier' ];
-				motionPass.velocityCap = params[ 'velocity cap' ] / 100;
 				motionPass.expandGeometry = params.expandGeometry;
 				motionPass.interpolateGeometry = params.interpolateGeometry;
 				motionPass.renderCameraBlur = params.cameraBlur;

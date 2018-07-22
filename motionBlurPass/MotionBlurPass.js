@@ -33,8 +33,6 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this.samples = options.samples || 30;
 	this.expandGeometry = options.expandGeometry || 1;
 	this.interpolateGeometry = options.interpolateGeometry || 1;
-	this.velocityMultiplier = options.velocityMultiplier || 1;
-	this.velocityCap = options.velocityCap || 0.05;
 	this.blurTransparent = options.blurTransparent || false;
 	this.renderCameraBlur = options.renderCameraBlur || true;
 	this.renderTargetScale = options.renderTargetScale || 1;
@@ -264,17 +262,13 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		var blurTransparent = this.blurTransparent;
 		var renderCameraBlur = this.renderCameraBlur;
-		var velocityMultiplier = this.velocityMultiplier;
 		var expandGeometry = this.expandGeometry;
 		var interpolateGeometry = this.interpolateGeometry;
-		var velocityCap = this.velocityCap;
 		var overrides = obj.motionBlur;
 		if ( overrides ) {
 
 			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
 			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
-			if ( 'velocityMultiplier' in overrides ) velocityMultiplier = overrides.velocityMultiplier;
-			if ( 'velocityCap' in overrides ) velocityCap = overrides.velocityCap;
 			if ( 'expandGeometry' in overrides ) expandGeometry = overrides.expandGeometry;
 			if ( 'interpolateGeometry' in overrides ) interpolateGeometry = overrides.interpolateGeometry;
 
@@ -297,8 +291,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 		mat.uniforms.expandGeometry.value = expandGeometry * 0.1;
 		mat.uniforms.interpolateGeometry.value = interpolateGeometry;
-		if ( mat.uniforms.velocityMultiplier ) mat.uniforms.velocityMultiplier.value = velocityMultiplier;
-		if ( mat.uniforms.velocityCap ) mat.uniforms.velocityCap.value = velocityCap * 2; // screen coordinates [-1, 1]
 
 		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
 		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
@@ -403,9 +395,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
 				expandGeometry: { value: 1 },
-				interpolateGeometry: { value: 1 },
-				velocityMultiplier: { value: 1 },
-				velocityCap: { value: 2 }
+				interpolateGeometry: { value: 1 }
 			},
 
 			vertexShader:
@@ -428,17 +418,12 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			fragmentShader:
 				`
-				uniform float velocityMultiplier;
-				uniform float velocityCap;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 
 				void main() {
 					vec3 vel;
 					vel = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
-
-					float length = min(length(vel) * velocityMultiplier, velocityCap);
-					vel = normalize(vel) * length;
 
 					gl_FragColor = vec4(vel, 1.0);
 				}`
