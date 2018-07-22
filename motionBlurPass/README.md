@@ -48,7 +48,10 @@ The set of options that can be passed to the MotionBlurPass constructor. These c
 
 	// How much to expand the geometry by along the motion vector
 	// This can cause cracks in geometry with hard normals
-	expand: 1,
+	expandGeometry: 1,
+
+	// TODO
+	interpolateGeometry: 1,
 
 	// How intensely to blur the models
 	smearIntensity: 1,
@@ -79,5 +82,8 @@ All of the options above can be overriden by adding a `motionBlur` overrides obj
 
 ### Possible Improvements
 - Draw multiple interpolated positions of geometry between frames and use that to smear
-- Allow for setting the scale of the velocity buffer
 - Add dithering / jitter to the smear samples to improve the low sample look
+- Use depth to more inteligently sample
+- Blur the velocity buffer to extend in the direction of the velocities
+- Use a depth-aware blur and keep track of the primary and secondary velocity vectors
+- Iteratively blur the samples
