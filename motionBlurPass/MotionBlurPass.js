@@ -36,6 +36,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this.maxSmearFactor = options.maxSmearFactor || 0.05;
 	this.blurTransparent = options.blurTransparent || false;
 	this.renderCameraBlur = options.renderCameraBlur || true;
+	this.renderTargetScale = options.renderTargetScale || 1;
 
 	this.scene = scene;
 	this.camera = camera;
@@ -94,7 +95,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	setSize: function ( width, height ) {
 
-		this._velocityBuffer.setSize( width, height );
+		this._velocityBuffer.setSize( width * this.renderTargetScale, height * this.renderTargetScale );
 
 	},
 
@@ -350,7 +351,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		// outputs the position of the current and last frame positions
 		return `
 		vec3 transformed;
-		vec4 p1, p2;
 
 		// Get the normal
 		${ THREE.ShaderChunk.skinbase_vertex }
@@ -361,26 +361,25 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		// Get the current vertex position
 		transformed = vec3( position );
 		${ THREE.ShaderChunk.skinning_vertex }
-		p2 = modelViewMatrix * vec4(transformed, 1.0);
+		newPosition = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
 
 		// Get the previous vertex position
 		transformed = vec3( position );
 		${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
 		${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-		p1 = prevModelViewMatrix * vec4(transformed, 1.0);
+		prevPosition = prevProjectionMatrix * prevModelViewMatrix * vec4(transformed, 1.0);
 
 		// The delta between frames
-		vec3 delta = p2.xyz - p1.xyz;
+		vec3 delta = newPosition.xyz - prevPosition.xyz;
 		vec3 direction = normalize(delta);
 
-		float expandDot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
-		vec4 dir = vec4(direction, 0) * expandDot * expand;
-		prevPosition = prevProjectionMatrix * (p1 + dir);
-		newPosition = projectionMatrix * (p2 + dir);
+		// float expandDot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
+		// vec4 dir = vec4(direction, 0) * expandDot * expand;
 
 		float stretchDot = dot(direction, transformedNormal);
-		stretchDot = step(0.0, stretchDot);
-		gl_Position = mix(prevPosition, newPosition, stretchDot);
+		float stretchStep = step(0.0, stretchDot);
+
+		gl_Position = mix(prevPosition, newPosition, stretchStep);
 		`;
 
 	},

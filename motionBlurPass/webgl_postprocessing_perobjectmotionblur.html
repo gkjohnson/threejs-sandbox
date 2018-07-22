@@ -68,7 +68,8 @@
 				intensity: 1,
 				maxSmearFactor: 5,
 				expand: 1,
-				speed: 20
+				speed: 20,
+				renderTargetScale: 1
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -227,6 +228,12 @@
 				gui.add( params, 'maxSmearFactor', 0, 100 );
 				gui.add( params, 'expand', 0, 10 );
 				gui.add( params, 'speed', 0, 50 );
+				gui.add( params, 'renderTargetScale', 0, 1 )
+					.onChange( v => {
+						motionPass.renderTargetScale = v;
+						onWindowResize();
+
+					} );
 
 				gui.add( motionPass.debug, 'display', {
 					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
