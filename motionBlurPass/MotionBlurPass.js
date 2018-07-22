@@ -54,6 +54,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this._projScreenMatrix = new THREE.Matrix4();
 	this._cameraMatricesNeedInitializing = true;
 	this._prevClearColor = new THREE.Color();
+	this._clearColor = new THREE.Color( 0, 0, 0 );
 
 	// render targets
 	this._velocityBuffer =
@@ -106,7 +107,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = false;
-		renderer.setClearColor( new THREE.Color( 0, 0, 0 ), 0 );
+		renderer.setClearColor( this._clearColor, 0 );
 
 		// Traversal function for iterating down and rendering the scene
 		var self = this;
