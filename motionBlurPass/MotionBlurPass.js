@@ -361,25 +361,30 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		// Get the current vertex position
 		transformed = vec3( position );
 		${ THREE.ShaderChunk.skinning_vertex }
-		newPosition = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+		newPosition = modelViewMatrix * vec4(transformed, 1.0);
 
 		// Get the previous vertex position
 		transformed = vec3( position );
 		${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
 		${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-		prevPosition = prevProjectionMatrix * prevModelViewMatrix * vec4(transformed, 1.0);
+		prevPosition = prevModelViewMatrix * vec4(transformed, 1.0);
 
 		// The delta between frames
 		vec3 delta = newPosition.xyz - prevPosition.xyz;
 		vec3 direction = normalize(delta);
 
-		// float expandDot = clamp(dot(delta, transformedNormal), -1.0, 1.0);
-		// vec4 dir = vec4(direction, 0) * expandDot * expand;
-
+		// Stretch along the velocity axes
+		// TODO: Can we combine the stretch and expand
 		float stretchDot = dot(direction, transformedNormal);
-		float stretchStep = step(0.0, stretchDot);
+		vec4 expandDir = vec4(direction, 0.0) * stretchDot * expand * length(delta);
+		vec4 newPosition2 =  projectionMatrix * (newPosition + expandDir);
+		vec4 prevPosition2 = prevProjectionMatrix * (prevPosition + expandDir);
 
-		gl_Position = mix(prevPosition, newPosition, stretchStep);
+		newPosition =  projectionMatrix * newPosition;
+		prevPosition = prevProjectionMatrix * prevPosition;
+
+		gl_Position = mix(prevPosition2, newPosition2, step(0.0, 1.0));
+
 		`;
 
 	},
