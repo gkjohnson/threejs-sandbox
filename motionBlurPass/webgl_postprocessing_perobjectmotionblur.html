@@ -67,7 +67,8 @@
 				samples: 30,
 				intensity: 1,
 				maxSmearFactor: 5,
-				expand: 1,
+				expandGeometry: 1,
+				interpolateGeometry: 1,
 				speed: 20,
 				renderTargetScale: 1
 			};
@@ -157,7 +158,7 @@
 
 							c.castShadow = true;
 							c.receiveShadow = true;
-							c.motionBlur = { expand: 0 }
+							c.motionBlur = { expandGeometry: 0, interpolateGeometry: 0 }
 
 						}
 
@@ -227,7 +228,8 @@
 				gui.add( params, 'samples', 0, 50 );
 				gui.add( params, 'intensity', 0, 4 );
 				gui.add( params, 'maxSmearFactor', 0, 100 );
-				gui.add( params, 'expand', 0, 10 );
+				gui.add( params, 'expandGeometry', 0, 10 );
+				gui.add( params, 'interpolateGeometry', 0, 1 );
 				gui.add( params, 'speed', 0, 50 );
 				gui.add( params, 'renderTargetScale', 0, 1 )
 					.onChange( v => {
@@ -280,7 +282,8 @@
 				motionPass.samples = params.samples;
 				motionPass.smearIntensity = params.intensity;
 				motionPass.maxSmearFactor = params.maxSmearFactor / 100;
-				motionPass.expand = params.expand;
+				motionPass.expandGeometry = params.expandGeometry;
+				motionPass.interpolateGeometry = params.interpolateGeometry;
 				motionPass.renderCameraBlur = params.cameraBlur;
 
 				camera.lookAt( scene.position );

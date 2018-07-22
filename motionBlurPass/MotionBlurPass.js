@@ -31,7 +31,8 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 
 	// settings
 	this.samples = options.samples || 30;
-	this.expand = options.expand || 1;
+	this.expandGeometry = options.expandGeometry || 1;
+	this.interpolateGeometry = options.interpolateGeometry || 1;
 	this.smearIntensity = options.smearIntensity || 1;
 	this.maxSmearFactor = options.maxSmearFactor || 0.05;
 	this.blurTransparent = options.blurTransparent || false;
@@ -264,7 +265,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var blurTransparent = this.blurTransparent;
 		var renderCameraBlur = this.renderCameraBlur;
 		var smearIntensity = this.smearIntensity;
-		var expand = this.expand;
+		var expandGeometry = this.expandGeometry;
+		var interpolateGeometry = this.interpolateGeometry;
 		var maxSmearFactor = this.maxSmearFactor;
 		var overrides = obj.motionBlur;
 		if ( overrides ) {
@@ -273,7 +275,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
 			if ( 'smearIntensity' in overrides ) smearIntensity = overrides.smearIntensity;
 			if ( 'maxSmearFactor' in overrides ) maxSmearFactor = overrides.maxSmearFactor;
-			if ( 'expand' in overrides ) expand = overrides.expand;
+			if ( 'expandGeometry' in overrides ) expandGeometry = overrides.expandGeometry;
+			if ( 'interpolateGeometry' in overrides ) interpolateGeometry = overrides.interpolateGeometry;
 
 		}
 
@@ -292,7 +295,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		var data = this._getMaterialState( obj );
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
-		mat.uniforms.expand.value = expand * 0.1;
+		mat.uniforms.expandGeometry.value = expandGeometry * 0.1;
+		mat.uniforms.interpolateGeometry.value = interpolateGeometry;
 		if ( mat.uniforms.smearIntensity ) mat.uniforms.smearIntensity.value = smearIntensity;
 		if ( mat.uniforms.maxSmearFactor ) mat.uniforms.maxSmearFactor.value = maxSmearFactor * 2; // screen coordinates [-1, 1]
 
@@ -377,14 +381,14 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		// Stretch along the velocity axes
 		// TODO: Can we combine the stretch and expand
 		float stretchDot = dot(direction, transformedNormal);
-		vec4 expandDir = vec4(direction, 0.0) * stretchDot * expand * length(delta);
+		vec4 expandDir = vec4(direction, 0.0) * stretchDot * expandGeometry * length(delta);
 		vec4 newPosition2 =  projectionMatrix * (newPosition + expandDir);
 		vec4 prevPosition2 = prevProjectionMatrix * (prevPosition + expandDir);
 
 		newPosition =  projectionMatrix * newPosition;
 		prevPosition = prevProjectionMatrix * prevPosition;
 
-		gl_Position = mix(prevPosition2, newPosition2, step(0.0, stretchDot));
+		gl_Position = mix(newPosition2, prevPosition2, interpolateGeometry * (1.0 - step(0.0, stretchDot) ) );
 
 		`;
 
@@ -398,7 +402,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevProjectionMatrix: { value: new THREE.Matrix4() },
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
-				expand: { value: 1 },
+				expandGeometry: { value: 1 },
+				interpolateGeometry: { value: 1 },
 				smearIntensity: { value: 1 },
 				maxSmearFactor: { value: 2 }
 			},
@@ -410,7 +415,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 				uniform mat4 prevProjectionMatrix;
 				uniform mat4 prevModelViewMatrix;
-				uniform float expand;
+				uniform float expandGeometry;
+				uniform float interpolateGeometry;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 
@@ -449,7 +455,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevProjectionMatrix: { value: new THREE.Matrix4() },
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
-				expand: { value: 1 }
+				expandGeometry: { value: 1 },
+				interpolateGeometry: { value: 1 }
 			},
 
 			vertexShader:
@@ -459,7 +466,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 				uniform mat4 prevProjectionMatrix;
 				uniform mat4 prevModelViewMatrix;
-				uniform float expand;
+				uniform float expandGeometry;
+				uniform float interpolateGeometry;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 				varying vec3 color;
