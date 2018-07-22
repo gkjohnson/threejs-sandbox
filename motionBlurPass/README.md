@@ -44,22 +44,19 @@ The set of options that can be passed to the MotionBlurPass constructor. These c
 	// How many steps to samples to take when smearing the motion blur
 	// More samples is smoother. This option is only available globally
 	// and not overrideable.
-	samples: 30,
+	samples: 15,
 
-	// How much to expand the geometry by along the motion vector
+	// How much to bloat the geometry by along the motion vector
 	// This can cause cracks in geometry with hard normals
-	expandGeometry: 1,
+	expandGeometry: 0,
 
-	// TODO
+	// Whether or not to interpolate the geometry between this frame
+	// and the previous frame's position. This creates an elongated
+	// version of the model
 	interpolateGeometry: 1,
 
 	// How intensely to blur the models
 	smearIntensity: 1,
-
-	// What the maximum amount of smear is to apply to a model. This is good
-	// for limiting smear in fast camera moves or when models are moving and
-	// nearly disappear
-	maxSmearFactor: 0.05,
 
 	// Whether or not to blur transparent objects
 	blurTransparent: false,
