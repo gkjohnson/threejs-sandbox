@@ -64,8 +64,8 @@
 				shadow: {
 					noiseIntensity: 1,
 					softness: 3,
-					pcfSamples: 20,
-					blockerSamples: 20
+					pcfSamples: 5,
+					blockerSamples: 5
 				}
 			};
 
@@ -79,8 +79,8 @@
 
 			var defines = {
 				STANDARD: "",
-				PCF_SAMPLES: 64,
-				BLOCKER_SAMPLES: 64
+				PCF_SAMPLES: params.shadow.pcfSamples,
+				BLOCKER_SAMPLES: params.shadow.blockerSamples
 			}
 
 			var camera, scene, renderer, controls;
