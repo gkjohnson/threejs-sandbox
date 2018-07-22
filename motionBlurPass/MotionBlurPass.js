@@ -31,7 +31,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 
 	// settings
 	this.samples = options.samples || 30;
-	this.expandGeometry = options.expandGeometry || 1;
+	this.expandGeometry = options.expandGeometry || 0;
 	this.interpolateGeometry = options.interpolateGeometry || 1;
 	this.blurTransparent = options.blurTransparent || false;
 	this.renderCameraBlur = options.renderCameraBlur || true;
@@ -289,8 +289,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		var data = this._getMaterialState( obj );
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
-		mat.uniforms.expandGeometry.value = expandGeometry * 0.1;
-		mat.uniforms.interpolateGeometry.value = interpolateGeometry;
+		mat.uniforms.expandGeometry.value = expandGeometry;
+		mat.uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
 
 		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
 		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
@@ -394,7 +394,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevProjectionMatrix: { value: new THREE.Matrix4() },
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
-				expandGeometry: { value: 1 },
+				expandGeometry: { value: 0 },
 				interpolateGeometry: { value: 1 }
 			},
 
@@ -439,7 +439,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevProjectionMatrix: { value: new THREE.Matrix4() },
 				prevModelViewMatrix: { value: new THREE.Matrix4() },
 				prevBoneTexture: { value: null },
-				expandGeometry: { value: 1 },
+				expandGeometry: { value: 0 },
 				interpolateGeometry: { value: 1 }
 			},
 
