@@ -61,7 +61,7 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 			minFilter: THREE.LinearFilter,
 			magFilter: THREE.LinearFilter,
 			format: THREE.RGBFormat,
-			type: THREE.UnsignedByteType
+			type: THREE.HalfFloatType
 		} );
 	this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
 	this._velocityBuffer.texture.generateMipmaps = false;
@@ -383,7 +383,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		newPosition =  projectionMatrix * newPosition;
 		prevPosition = prevProjectionMatrix * prevPosition;
 
-		gl_Position = mix(prevPosition2, newPosition2, step(0.0, 1.0));
+		gl_Position = mix(prevPosition2, newPosition2, step(0.0, stretchDot));
 
 		`;
 

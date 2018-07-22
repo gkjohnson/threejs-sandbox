@@ -203,8 +203,9 @@
 				composer = new THREE.EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
-				composer.addPass( FXAAPass );
 				composer.addPass( motionPass );
+				composer.addPass( FXAAPass );
+				FXAAPass.renderToScreen = true;
 
 				// stats
 				stats = new Stats();
@@ -281,8 +282,6 @@
 				motionPass.maxSmearFactor = params.maxSmearFactor / 100;
 				motionPass.expand = params.expand;
 				motionPass.renderCameraBlur = params.cameraBlur;
-				motionPass.renderToScreen = params.enabled;
-				FXAAPass.renderToScreen = !params.enabled;
 
 				camera.lookAt( scene.position );
 
