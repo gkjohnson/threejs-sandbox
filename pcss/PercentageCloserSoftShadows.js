@@ -159,11 +159,10 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 		vec2 offset = poissonDisk[i] / shadowMapSize;
 		vec2 suv = shadowCoord.xy + offset * shadowRadius;
 		shadow += texture2DCompare( shadowMap, suv, shadowCoord.z );
-		shadow += texture2DCompare( shadowMap, suv - offset.yx * 2.0, shadowCoord.z );
 
 	}
 
-	shadow /= float(PCF_SAMPLES * 2);
+	shadow /= float(PCF_SAMPLES);
 
 	return shadow;
 
