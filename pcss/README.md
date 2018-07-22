@@ -1,6 +1,6 @@
 # Percentage Closer Soft Shadows
 
-A hacked in implementation of [NVidia's Percentage Closer Soft Shadows](http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf) to approximate an Area Light shadow.
+A hacked in implementation of [NVidia's Percentage Closer Soft Shadows](http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf) to approximate an Area Light shadow. Poisson disk generation code borrowed from [spidersharma03's PCSS implementation](https://github.com/mrdoob/three.js/blob/master/examples/webgl_shadowmap_pcss.html#L54).
 
 [![](./docs/image.png)](https://gkjohnson.github.io/threejs-sandbox/pcss/index.html)
 
