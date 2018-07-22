@@ -174,19 +174,19 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		this._prevCamWorldInverse.copy( this.camera.matrixWorldInverse );
 		this._prevCamProjection.copy( this.camera.projectionMatrix );
 
-		var cmat = this._compositeMaterial;
-		cmat.uniforms.sourceBuffer.value = readBuffer.texture;
-		cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
-
-		if ( cmat.defines.SAMPLES !== this.samples ) {
-
-			cmat.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
-			cmat.needsUpdate = true;
-
-		}
-
 		// compose the final blurred frame
 		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
+
+			var cmat = this._compositeMaterial;
+			cmat.uniforms.sourceBuffer.value = readBuffer.texture;
+			cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+
+			if ( cmat.defines.SAMPLES !== this.samples ) {
+
+				cmat.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
+				cmat.needsUpdate = true;
+
+			}
 
 			renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
 
