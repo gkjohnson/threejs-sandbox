@@ -33,8 +33,8 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 	this.samples = options.samples || 30;
 	this.expandGeometry = options.expandGeometry || 1;
 	this.interpolateGeometry = options.interpolateGeometry || 1;
-	this.smearIntensity = options.smearIntensity || 1;
-	this.maxSmearFactor = options.maxSmearFactor || 0.05;
+	this.velocityMultiplier = options.velocityMultiplier || 1;
+	this.velocityCap = options.velocityCap || 0.05;
 	this.blurTransparent = options.blurTransparent || false;
 	this.renderCameraBlur = options.renderCameraBlur || true;
 	this.renderTargetScale = options.renderTargetScale || 1;
@@ -264,17 +264,17 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		var blurTransparent = this.blurTransparent;
 		var renderCameraBlur = this.renderCameraBlur;
-		var smearIntensity = this.smearIntensity;
+		var velocityMultiplier = this.velocityMultiplier;
 		var expandGeometry = this.expandGeometry;
 		var interpolateGeometry = this.interpolateGeometry;
-		var maxSmearFactor = this.maxSmearFactor;
+		var velocityCap = this.velocityCap;
 		var overrides = obj.motionBlur;
 		if ( overrides ) {
 
 			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
 			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
-			if ( 'smearIntensity' in overrides ) smearIntensity = overrides.smearIntensity;
-			if ( 'maxSmearFactor' in overrides ) maxSmearFactor = overrides.maxSmearFactor;
+			if ( 'velocityMultiplier' in overrides ) velocityMultiplier = overrides.velocityMultiplier;
+			if ( 'velocityCap' in overrides ) velocityCap = overrides.velocityCap;
 			if ( 'expandGeometry' in overrides ) expandGeometry = overrides.expandGeometry;
 			if ( 'interpolateGeometry' in overrides ) interpolateGeometry = overrides.interpolateGeometry;
 
@@ -297,8 +297,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 		mat.uniforms.expandGeometry.value = expandGeometry * 0.1;
 		mat.uniforms.interpolateGeometry.value = interpolateGeometry;
-		if ( mat.uniforms.smearIntensity ) mat.uniforms.smearIntensity.value = smearIntensity;
-		if ( mat.uniforms.maxSmearFactor ) mat.uniforms.maxSmearFactor.value = maxSmearFactor * 2; // screen coordinates [-1, 1]
+		if ( mat.uniforms.velocityMultiplier ) mat.uniforms.velocityMultiplier.value = velocityMultiplier;
+		if ( mat.uniforms.velocityCap ) mat.uniforms.velocityCap.value = velocityCap * 2; // screen coordinates [-1, 1]
 
 		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
 		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
@@ -404,8 +404,8 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 				prevBoneTexture: { value: null },
 				expandGeometry: { value: 1 },
 				interpolateGeometry: { value: 1 },
-				smearIntensity: { value: 1 },
-				maxSmearFactor: { value: 2 }
+				velocityMultiplier: { value: 1 },
+				velocityCap: { value: 2 }
 			},
 
 			vertexShader:
@@ -428,20 +428,19 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			fragmentShader:
 				`
-				uniform float smearIntensity;
-				uniform float maxSmearFactor;
+				uniform float velocityMultiplier;
+				uniform float velocityCap;
 				varying vec4 prevPosition;
 				varying vec4 newPosition;
 
 				void main() {
-					vec4 vel;
-					vel.xyz = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
-					vel.w = 1.0;
+					vec3 vel;
+					vel = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
 
-					float length = min(length(vel.xyz) * smearIntensity, maxSmearFactor);
-					vel.xyz = normalize(vel.xyz) * length;
+					float length = min(length(vel) * velocityMultiplier, velocityCap);
+					vel = normalize(vel) * length;
 
-					gl_FragColor = vel;
+					gl_FragColor = vec4(vel, 1.0);
 				}`
 		} );
 
