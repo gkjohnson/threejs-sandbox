@@ -67,15 +67,16 @@
 				samples: 30,
 				intensity: 1,
 				maxSmearFactor: 5,
-				expand: 1,
-				speed: 20
+				expandGeometry: 1,
+				interpolateGeometry: 1,
+				speed: 20,
+				renderTargetScale: 1
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var FXAAPass, motionPass, renderPass;
 			var torusMesh1, torusMesh2, torusMesh3;
 
-			var spheres = [];
 			var mixer, clock, animTime = 0;
 
 			init();
@@ -145,30 +146,6 @@
 				torusMesh3.position.set( 0, 0, -7.5 );
 				scene.add(torusMesh3);
 
-				// background spheres
-				var sphere = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( .5, 32, 32 ),
-					new THREE.MeshStandardMaterial({ color: 'white', emissive: 'white', emissiveIntensity: .5 })
-				);
-				for ( var i = 0; i < 500; i ++ ) {
-
-					var o = new THREE.Object3D();
-					var s = sphere.clone();
-					o.add( s );
-
-					s.position.set( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
-					if ( s.position.length() === 0 ) s.position.set( 1, 1, 1 );
-					s.position.normalize().multiplyScalar( 30 + Math.random() * 20 );
-					s.scale.multiplyScalar( 0.5 + Math.random() );
-
-					o.rotationVector = new THREE.Vector3( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 )
-					o.rotationVector.normalize();
-
-					scene.add( o );
-					spheres.push( o );
-
-				}
-
 				// load samba dancer
 				var loader = new THREE.FBXLoader();
 				loader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/models/fbx/Samba%20Dancing.fbx', res => {
@@ -181,7 +158,7 @@
 
 							c.castShadow = true;
 							c.receiveShadow = true;
-							c.motionBlur = { expand: 0 }
+							c.motionBlur = { expandGeometry: 0, interpolateGeometry: 0 }
 
 						}
 
@@ -227,8 +204,9 @@
 				composer = new THREE.EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
-				composer.addPass( FXAAPass );
 				composer.addPass( motionPass );
+				composer.addPass( FXAAPass );
+				FXAAPass.renderToScreen = true;
 
 				// stats
 				stats = new Stats();
@@ -250,8 +228,15 @@
 				gui.add( params, 'samples', 0, 50 );
 				gui.add( params, 'intensity', 0, 4 );
 				gui.add( params, 'maxSmearFactor', 0, 100 );
-				gui.add( params, 'expand', 0, 10 );
+				gui.add( params, 'expandGeometry', 0, 10 );
+				gui.add( params, 'interpolateGeometry', 0, 1 );
 				gui.add( params, 'speed', 0, 50 );
+				gui.add( params, 'renderTargetScale', 0, 1 )
+					.onChange( v => {
+						motionPass.renderTargetScale = v;
+						onWindowResize();
+
+					} );
 
 				gui.add( motionPass.debug, 'display', {
 					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
@@ -297,10 +282,9 @@
 				motionPass.samples = params.samples;
 				motionPass.smearIntensity = params.intensity;
 				motionPass.maxSmearFactor = params.maxSmearFactor / 100;
-				motionPass.expand = params.expand;
+				motionPass.expandGeometry = params.expandGeometry;
+				motionPass.interpolateGeometry = params.interpolateGeometry;
 				motionPass.renderCameraBlur = params.cameraBlur;
-				motionPass.renderToScreen = params.enabled;
-				FXAAPass.renderToScreen = !params.enabled;
 
 				camera.lookAt( scene.position );
 
@@ -319,11 +303,6 @@
 					torusMesh1.rotation.y += 0.01 * params.speed;
 					torusMesh2.position.y = Math.sin( animTime ) * 2;
 					torusMesh3.scale.set( 1, 1, 1 ).multiplyScalar( 0.25 + ( 1 + Math.sin( animTime ) ) * 0.4 );
-					for ( var i = 0, l = spheres.length; i < l; i ++ ) {
-
-						spheres[ i ].rotateOnAxis( spheres[ i ].rotationVector, .01 * params.speed / 5 );
-
-					}
 
 					animatedOneFramePast = !params.animate;
 
