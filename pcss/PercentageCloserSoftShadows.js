@@ -109,12 +109,7 @@ void RE_Direct_RectArea_CUSTOM( const in RectAreaLight rectAreaLight, const in G
 	reflectedLight.directDiffuse += lightColor * material.diffuseColor * LTC_Evaluate( normal, viewDir, position, mat3( 1.0 ), rectCoords ) * factor;
 }
 
-// https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl
-float random(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453) - 0.5;
-}
-
-float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec2 searchSize) {
+vec2 findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec2 searchSize) {
 
 	${ poissonDefinitions }
 
@@ -127,7 +122,7 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec
 	for(int i = 0; i < int(BLOCKER_SAMPLES); i++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
-		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;
+		float rand = rand(shadowCoord.xy) * noiseIntensity;
 		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
 		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
 		offset *= searchSize;
@@ -141,17 +136,13 @@ float findBlocker(sampler2D shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec
 
 	}
 
-	avgDepth /= max(blockerCount, 1.0);
-	return avgDepth;
-
+	return vec2(avgDepth / blockerCount, blockerCount);
 }
 
 vec2 getPenumbra(float dblocker, float dreceiver, float softness, vec2 lightSize) {
 
 	float p = (dreceiver - dblocker) / dblocker;
 	vec2 penumbra = lightSize * p * softness;
-	penumbra = max(penumbra, 1.0);
-
 	return penumbra;
 
 }
@@ -160,41 +151,42 @@ float pcfSample(sampler2D shadowMap, vec2 shadowMapSize, vec2 shadowRadius, vec4
 
 	${ poissonDefinitions }
 
-	float count = 1.0;
-	float shadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );
-
+	float shadow = 0.0;
 	for (int i = 0; i < int(PCF_SAMPLES); i ++) {
 
 		vec2 offset = poissonDisk[i] / shadowMapSize;
-		float rand = random(shadowMapSize * shadowCoord.xy) * noiseIntensity;
+		float rand = rand(shadowCoord.xy) * noiseIntensity;
 		offset.x = offset.x * cos(rand) - offset.y * sin(rand);
 		offset.y = offset.y * cos(rand) + offset.x * sin(rand);
 		offset *= shadowRadius;
 
 		vec2 suv = shadowCoord.xy + offset;
 		shadow += texture2DCompare( shadowMap, suv, shadowCoord.z );
-		count ++;
+		shadow += texture2DCompare( shadowMap, suv - offset.yx * 2.0, shadowCoord.z );
 
 	}
 
-	shadow /= count;
+	shadow /= float(PCF_SAMPLES * 2);
 
 	return shadow;
 
 }
+
+float getPCSSShadow(vec2 lightSize, sampler2D shadowMap, vec2 shadowMapSize, vec4 shadowCoord) {
+	vec2 searchSize = softness * lightSize * (shadowCoord.z) / shadowCoord.z;
+	vec2 blocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
+
+	if (blocker.y == 0.0) {
+		return 1.0;
+	}
+
+	vec2 penumbra = getPenumbra(blocker.x, shadowCoord.z, softness, lightSize);
+	return pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
+}
 `;
 
 const shadowLogic = `
-// TODO: Can we start with a better assumption here for search size
-// Using this delta value can help keep the contact shadows crisp but
-// leads to some other odd artifacts
-// float delta = shadowCoord.z - unpackRGBAToDepth( texture2D(shadowMap, shadowCoord.xy) );
-
-float dist = 1.0 - shadowCoord.z;
-vec2 searchSize = lightSize * dist * softness;
-float blocker = findBlocker(shadowMap, shadowCoord, shadowMapSize, searchSize);
-vec2 penumbra = getPenumbra(blocker, shadowCoord.z, softness, lightSize);
-shadow = pcfSample(shadowMap, shadowMapSize, penumbra, shadowCoord);
+shadow = getPCSSShadow(lightSize, shadowMap, shadowMapSize, shadowCoord);
 `;
 
 
