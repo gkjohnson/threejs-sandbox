@@ -84,3 +84,4 @@ All of the options above can be overriden by adding a `motionBlur` overrides obj
 - Blur the velocity buffer to extend in the direction of the velocities
 - Use a depth-aware blur and keep track of the primary and secondary velocity vectors
 - Iteratively blur the samples
+- _Don't draw objects that haven't moved, reuse the depth buffer_
