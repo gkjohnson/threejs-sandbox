@@ -25,7 +25,7 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.LinearFilter,
 			magFilter: THREE.LinearFilter,
-			format: THREE.RGBAFormat,
+			format: THREE.RGBFormat,
 			type: THREE.FloatType
 		} );
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
@@ -162,6 +162,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._compositeMaterial.uniforms.stepSize.value = window.stepSize || 0.05;
 		this._compositeMaterial.uniforms.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
 		this._compositeMaterial.uniforms.projMatrix.value.copy( this.camera.projectionMatrix );
+
+		this._compositeMaterial.uniforms.resolution.value.set( readBuffer.width, readBuffer.height );
+
 		this._quad.material = this._compositeMaterial;
 
 		renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
@@ -315,7 +318,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				depthBuffer: { value: null },
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
-				stepSize: { value: 0.05 }
+				stepSize: { value: 0.05 },
+				resolution: { value: new THREE.Vector2() },
 			},
 
 			vertexShader:
@@ -339,6 +343,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform mat4 invProjectionMatrix;
 				uniform mat4 projMatrix;
 				uniform float stepSize;
+				uniform vec2 resolution;
 
 				vec3 Deproject(vec3 p) {
 					vec4 res = invProjectionMatrix * vec4(p, 1);
@@ -368,14 +373,15 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					// view space information
 					vec2 uv = vUv * 2.0 - vec2(1, 1);
-					vec3 vpos =  Deproject(vec3(uv, 2.0 * (1.0 - depthSample.r) - 1.0));
+					float vdepth = 2.0 * (1.0 - depthSample.r) - 1.0;
+					vec3 vpos =  Deproject(vec3(uv, vdepth));
 					vec3 vnorm = UnpackNormal(dataSample);
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 					float thickness = 0.0005;
 
 
-					#define MAX_STEPS 500.0
-					#define MAX_DIST 50.0
+					#define MAX_STEPS 100.0
+					#define MAX_DIST 100.0
 
 					float dist = (vpos.z + dir.z * MAX_DIST) > nearClip ? (nearClip - vpos.z) / dir.z : MAX_DIST;
 					vec3 V0 = vpos;
@@ -386,27 +392,43 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec3 C0 = H0.xyz / H0.w;
 					vec3 C1 = H1.xyz / H1.w;
+					vec3 delta = C1 - C0;
 
 					vec4 col;
 
+					vec2 texelSize = 40.0 / resolution;
+					float stepSize = min( texelSize.x / abs( delta.x ), texelSize.y / abs( delta.y) );
+					float prevRayDepth = vdepth;
+
+					float jitter = rand(gl_FragCoord.xy) * 0.0001;
+
 					for (float step = 1.0; step <= MAX_STEPS; step += 1.0) {
-						vec3 CN = mix(C0, C1, step / MAX_STEPS);
+						vec3 CN = mix(C0, C1, step * stepSize);
 
 						if (CN.x > 1.0 || CN.x < -1.0) break;
 						if (CN.y > 1.0 || CN.y < -1.0) break;
 						if (CN.z > 1.0 || CN.z < -1.0) break;
 
-
 						vec2 UVN = CN.xy * 0.5 + vec2(0.5);
-						float depth = 2.0 * (1.0 - texture2D(depthBuffer, UVN).r) - 1.0;
-						if (CN.z > depth && CN.z < depth + thickness) {
+
+						float newSceneDepth = 2.0 * (1.0 - texture2D(depthBuffer, UVN).r) - 1.0;
+						float newRayDepth = CN.z;
+
+						float rayZMax = newRayDepth;
+						float rayZMin = prevRayDepth;
+
+						// Catch the back sides of stuff
+						if (rayZMin > rayZMax) {
+						   float t = rayZMin; rayZMin = rayZMax; rayZMax = t;
+						}
+
+						if (rayZMax > newSceneDepth && rayZMin < newSceneDepth + thickness) {
 							col = texture2D(sourceBuffer, UVN);
-							col.a = 0.25;
+							col.a = 0.5;
 							break;
 						}
-						// col = vec4(VN.z);
-						// col.a = 1.0;
-						// break;
+
+						prevRayDepth = newRayDepth;
 
 					}
 
