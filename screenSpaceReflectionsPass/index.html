@@ -76,7 +76,7 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xFFC107 );
+				scene.background = new THREE.Color( 0x0 );
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -117,7 +117,7 @@
 				scene.add( plane );
 
 				var geom = new THREE.SphereBufferGeometry(4, 30, 30);
-				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.9, roughness: 0 } ) );
+				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
 				sphere.position.x = -10;
@@ -129,11 +129,17 @@
 				sphere.position.x = 0;
 				scene.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0, roughness: 0.9 } ) );
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
 				sphere.position.x = 10;
 				scene.add(sphere);
+
+				var mirror = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+				mirror.rotation.set( 0, -Math.PI / 2, 0 );
+				mirror.scale.multiplyScalar( 20 );
+				mirror.position.y = -4;
+				scene.add(mirror);
 
 
 				// Render Pass Setup

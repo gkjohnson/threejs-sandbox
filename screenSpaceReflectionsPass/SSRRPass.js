@@ -159,6 +159,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._compositeMaterial.uniforms.depthBuffer.value = this._depthBuffer.texture;
 		this._compositeMaterial.uniforms.packedBuffer.value = this._packedBuffer.texture;
 		this._compositeMaterial.uniforms.sourceBuffer.value = readBuffer.texture;
+		this._compositeMaterial.uniforms.stepSize.value = window.stepSize || 0.05;
 		this._compositeMaterial.uniforms.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
 		this._compositeMaterial.uniforms.projMatrix.value.copy( this.camera.projectionMatrix );
 		this._quad.material = this._compositeMaterial;
@@ -296,11 +297,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>
 
-					// if (vViewPosition.x > 5.0) {
-					// 	gl_FragColor.x = 1.;
-					// 	return;
-					// }
-
 					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, metalnessFactor );
 				}
 			`
@@ -318,12 +314,14 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				packedBuffer: { value: null },
 				depthBuffer: { value: null },
 				invProjectionMatrix: { value: new THREE.Matrix4() },
-				projMatrix: { value: new THREE.Matrix4() }
+				projMatrix: { value: new THREE.Matrix4() },
+				stepSize: { value: 0.05 }
 			},
 
 			vertexShader:
 				`
 				varying vec2 vUv;
+				uniform mat4 invProjectionMatrix;
 				void main() {
 					vUv = uv;
 					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
@@ -340,6 +338,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform sampler2D depthBuffer;
 				uniform mat4 invProjectionMatrix;
 				uniform mat4 projMatrix;
+				uniform float stepSize;
 
 				vec3 Deproject(vec3 p) {
 					vec4 res = invProjectionMatrix * vec4(p, 1);
@@ -367,133 +366,33 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					// view space information
 					vec2 uv = vUv * 2.0 - vec2(1, 1);
-					vec3 vpos = Deproject(vec3(gl_FragCoord.xy, depthSample.r));
-
-
-					if (vpos.x < 10.0) {
-						gl_FragColor.x = 1.;
-						return;
-					}
-
-					gl_FragColor = dataSample;
-					return;
-
-					vec3 vnorm = normalize(UnpackNormal(dataSample));
-
-
-
-					vec3 temp = vpos;
-					// temp.z *= -1.;
-					// temp.y *= -1.;
-					// temp *= -1.;
-					vec3 dir = reflect(normalize(temp), vnorm);
-					// dir.z *= -1.;
-					// vnorm.z *= -1.0;
-
-					dir = vec3(1,0,0);
-
-
-					// FORWARD IS NEGATIVE
-					// vpos.z -= 10.5;
-					// gl_FragColor = vec4(-vpos.b / 100., 0, 0, 1);
-					// gl_FragColor = vec4(vpos, 1);
-					// gl_FragColor.z -= 2.;
-					// return;
-
+					vec3 vpos =  Deproject(vec3(uv, 2.0 * (1.0 - depthSample.r) - 1.0));
+					vec3 vnorm = UnpackNormal(dataSample);
+					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 
 					vec4 col;
+					vpos += dir * stepSize;
 					for (int i = 0; i < 100; i ++) {
 
-						vpos += dir * 0.01;
+						vpos += dir * stepSize;
 
 						vec3 pro = Project(vpos);
 						vec2 newUv = pro.xy * 0.5 + vec2(0.5, 0.5);
-						float dep = texture2D(depthBuffer, newUv).r;
+						vec4 samp = texture2D(depthBuffer, newUv);
+						float dep = 2.0 * (1.0 - samp.r) - 1.0;
 
-						// gl_FragColor = vec4(dir, 1.0);
-						// return;
+						// TODO: Why is this needed?
+						// if (samp.r < 0.001) dep = 1000000000.0;
 
-						if ( dep > 0.1 ) {
-							dep = 0.;
-						}
-
-						if ( pro.b + 1e-7 < dep ) {
+						if ( dep < pro.b ) {
 							col = texture2D(sourceBuffer, newUv);
-							col.a = .5;
-							// return;
+							col.a = 0.5;
 						}
-
-						// gl_FragColor = vec4(pro.b, 0, 0, 0);
-						// gl_FragColor = vec4(vUv.xy, 0, 0);
 
 					}
 
-
 					gl_FragColor = mix(result, col, col.a);
-
-					// if (depthSample.r > .9) gl_FragColor = vec4(depthSample.r, 0,0,0);
-					// else gl_FragColor = vec4(0, 1.,0,0);
-
-					// gl_FragColor = vec4(-vpos.b / 10., 0,0,1);
-
-
-
-
-
-
-					// vpos += dir * 0.001;
-					// vec4 col = vec4(0,0,0,0);
-					// for (int i = 0; i < 50; i ++) {
-
-					// 	vpos += dir * 0.01;
-
-					// 	vec3 pro = Project(vpos);
-					// 	vec2 newUv = pro.xy * 0.5 + vec2(0.5, 0.5);
-					// 	float dep = texture2D(depthBuffer, newUv).r;
-
-					// 	if (dep > pro.b) {
-					// 		col = texture2D(sourceBuffer, newUv);// * 0.1 + result;
-					// 		// col.b = 1.;
-					// 		col.a = 1.;
-					// 		// col.
-					// 		break;
-					// 	}
-
-					// 	// }
-
-					// 	// gl_FragColor()
-
-					// }
-
-					// gl_FragColor = col;
-					// // result = vec4(ct / 20.,0,0,0);
-					// result.xyz = mix(result.xyz, col.xyz, col.a);
-					// gl_FragColor = result;
-					// // gl_FragColor = vec4(ct / 100. ,0,0,0);
-
-					// vec3 a = Project(vpos);
-
-					// // gl_FragColor = vec4(a.b,0,0,1);
-
-
-
-
-
-					// // vec3
-					// // gl_FragColor = vec4(vUv * 2.0 - vec2(1.0, 1.0), 0, 0);
-					// // gl_FragColor = vec4(rayDir, 0);
-
-
-
-					// float roughness = dataSample.z;
-					// float metalness = dataSample.w;
-					// vec3 normal = UnpackNormal(dataSample);
-
-					// // gl_FragColor = vec4(normal, 0.0);
-					// // gl_FragColor = result;
-					// // gl_FragColor = result;
-					// // // gl_FragColor = vec4(depth, depth, depth, 1);
-					// // gl_FragColor = depthSample;
+					return;
 
 				}
 				`
