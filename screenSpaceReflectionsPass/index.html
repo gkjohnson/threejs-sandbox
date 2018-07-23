@@ -154,9 +154,8 @@
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
 				composer.addPass( ssrrPass );
-
-				// composer.addPass( FXAAPass );
-				// FXAAPass.renderToScreen = true;
+				composer.addPass( FXAAPass );
+				FXAAPass.renderToScreen = true;
 
 				// stats
 				stats = new Stats();

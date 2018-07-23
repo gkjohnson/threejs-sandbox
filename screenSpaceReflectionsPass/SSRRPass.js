@@ -1,14 +1,14 @@
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
  *
- *  Approach from http://john-chapman-graphics.blogspot.com/2013/01/per-object-motion-blur.html
+ *  Approach from http://jcgt.org/published/0003/04/04/paper.pdf
  */
 THREE.SSRRPass = function ( scene, camera, options = {} ) {
 
 	THREE.Pass.call( this );
 
 	this.enabled = true;
-	this.needsSwap = false;
+	this.needsSwap = true;
 
 	this.scene = scene;
 	this.camera = camera;
@@ -164,7 +164,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._compositeMaterial.uniforms.projMatrix.value.copy( this.camera.projectionMatrix );
 		this._quad.material = this._compositeMaterial;
 
-		renderer.render( this._compositeScene, this._compositeCamera, null, true );
+		renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
 
 		this.resetMaterialPool();
 
