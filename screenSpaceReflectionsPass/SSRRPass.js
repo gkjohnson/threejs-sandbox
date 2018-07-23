@@ -359,6 +359,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				}
 
 				void main() {
+                    float nearClip = Deproject(vec3(0, 0, -1)).z;
+                    float farClip = Deproject(vec3(0, 0, 1)).z;
 
 					vec4 result = texture2D(sourceBuffer, vUv);
 					vec4 depthSample = texture2D(depthBuffer, vUv);
@@ -369,30 +371,46 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec3 vpos =  Deproject(vec3(uv, 2.0 * (1.0 - depthSample.r) - 1.0));
 					vec3 vnorm = UnpackNormal(dataSample);
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
+					float thickness = 0.0005;
+
+
+					#define MAX_STEPS 500.0
+					#define MAX_DIST 50.0
+
+					float dist = (vpos.z + dir.z * MAX_DIST) > nearClip ? (nearClip - vpos.z) / dir.z : MAX_DIST;
+					vec3 V0 = vpos;
+					vec3 V1 = V0 + dir * dist;
+
+					vec4 H0 = projMatrix * vec4(V0, 1.0);
+					vec4 H1 = projMatrix * vec4(V1, 1.0);
+
+					vec3 C0 = H0.xyz / H0.w;
+					vec3 C1 = H1.xyz / H1.w;
 
 					vec4 col;
-					vpos += dir * stepSize;
-					for (int i = 0; i < 100; i ++) {
 
-						vpos += dir * stepSize;
+					for (float step = 1.0; step <= MAX_STEPS; step += 1.0) {
+						vec3 CN = mix(C0, C1, step / MAX_STEPS);
 
-						vec3 pro = Project(vpos);
-						vec2 newUv = pro.xy * 0.5 + vec2(0.5, 0.5);
-						vec4 samp = texture2D(depthBuffer, newUv);
-						float dep = 2.0 * (1.0 - samp.r) - 1.0;
+						if (CN.x > 1.0 || CN.x < -1.0) break;
+						if (CN.y > 1.0 || CN.y < -1.0) break;
+						if (CN.z > 1.0 || CN.z < -1.0) break;
 
-						// TODO: Why is this needed?
-						// if (samp.r < 0.001) dep = 1000000000.0;
 
-						if ( dep < pro.b ) {
-							col = texture2D(sourceBuffer, newUv);
-							col.a = 0.5;
+						vec2 UVN = CN.xy * 0.5 + vec2(0.5);
+						float depth = 2.0 * (1.0 - texture2D(depthBuffer, UVN).r) - 1.0;
+						if (CN.z > depth && CN.z < depth + thickness) {
+							col = texture2D(sourceBuffer, UVN);
+							col.a = 0.25;
+							break;
 						}
+						// col = vec4(VN.z);
+						// col.a = 1.0;
+						// break;
 
 					}
 
 					gl_FragColor = mix(result, col, col.a);
-					return;
 
 				}
 				`
