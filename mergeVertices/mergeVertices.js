@@ -120,6 +120,8 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 	var shiftMultiplier = Math.pow( 10, decimalShift );
 	for ( var i = 0; i < vertexCount; i ++ ) {
 
+		var index = indices ? indices.getX( i ) : i;
+
 		// Generate a hash for the vertex attributes at the current index 'i'
 		var hash = '';
 		for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
@@ -131,7 +133,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 			for ( var k = 0; k < itemSize; k ++ ) {
 
 				// double tilde truncates the decimal value
-				hash += `${ ~ ~ ( attribute[ getters[ k ] ]( i ) * shiftMultiplier ) },`;
+				hash += `${ ~ ~ ( attribute[ getters[ k ] ]( index ) * shiftMultiplier ) },`;
 
 			}
 
@@ -156,7 +158,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 				var newarray = attrArrays[ name ];
 				for ( var k = 0; k < itemSize; k ++ ) {
 
-					newarray.push( attribute[ getters[ k ] ]( i ) );
+					newarray.push( attribute[ getters[ k ] ]( index ) );
 
 				}
 
