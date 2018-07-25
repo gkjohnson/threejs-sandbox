@@ -35,8 +35,8 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 
 	this._packedBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
-			minFilter: THREE.LinearFilter,
-			magFilter: THREE.LinearFilter,
+			minFilter: THREE.NearestFilter,
+			magFilter: THREE.NearestFilter,
 			type: THREE.FloatType,
 			format: THREE.RGBAFormat
 		} );
@@ -383,7 +383,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 					float thickness = 0.5;
 
-					#define MAX_STEPS 500.0
+					#define MAX_STEPS 50
 					#define MAX_DIST 100.0
 
 					float dist = (vpos.z + dir.z * MAX_DIST) > nearClip ? (nearClip - vpos.z) / dir.z : MAX_DIST;
@@ -407,8 +407,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec3 delta = C1 - C0;
 
-					vec4 col;
-
 					float prevRayDepth = vdepth;
 
 					// derivatives
@@ -424,35 +422,33 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 UV = UV0;
 					float k = k0;
 
-					float scale = 5.0;
-					for (float stepCount = 1.0; stepCount <= MAX_STEPS; stepCount += 1.0) {
-						C += dC * scale;
-						Q += dQ * scale;
-						UV += dUV * scale;
-						k += dk * scale;
 
-						if (C.x > 1.0 || C.x < -1.0) break;
-						if (C.y > 1.0 || C.y < -1.0) break;
-						if (C.z > 1.0 || C.z < -1.0) break;
+					vec4 T = vec4(UV.xy, Q.z, k);
+					vec4 dT = vec4(dUV.xy, dQ.z, dk);
 
-						float newSceneDepth = 2.0 * (1.0 - texture2D(depthBuffer, UV).r) - 1.0;
-						float newRayDepth = C.z;
+					float scale = 50.0;
+					bool hit = false;
+					for (int stepCount = 1; stepCount <= MAX_STEPS; stepCount ++) {
+						T += dT * scale;
 
+						if (T.x > 1.0 || T.x < 0.0) break;
+						if (T.y > 1.0 || T.y < 0.0) break;
 
-						newSceneDepth = texture2D(packedBuffer, UV).w;
-						newRayDepth = -(Q / k).z; //(Project(Q / k).z * 0.5 + 0.5);
+						float newSceneDepth = texture2D(packedBuffer, T.xy).w;
+						float newRayDepth = -T.z / T.w;
 
 						float rayZMax = newRayDepth;
 						float rayZMin = prevRayDepth;
 
 						// Catch the back sides of stuff
 						if (rayZMin > rayZMax) {
-						   float t = rayZMin; rayZMin = rayZMax; rayZMax = t;
+						   float t = rayZMin;
+						   rayZMin = rayZMax;
+						   rayZMax = t;
 						}
 
 						if (rayZMax > newSceneDepth && rayZMin < newSceneDepth + thickness) {
-							col = texture2D(sourceBuffer, UV);
-							col.a = 0.5;
+							hit = true;
 							break;
 						}
 
@@ -460,7 +456,14 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					}
 
-					gl_FragColor = mix(result, col, col.a);
+
+					if (hit) {
+						vec4 col = texture2D(sourceBuffer, T.xy);
+						col.a = 0.5;
+						result = mix(result, col, col.a);
+					}
+
+					gl_FragColor = result;
 
 				}
 				`
