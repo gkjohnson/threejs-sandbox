@@ -92,6 +92,8 @@
         const finalmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
         addOutput( `Optimized from ${ origmem } to ${ finalmem } in ${ ~ ~ ( performance.now() - starttime ) }ms` );
 
+		bgeom.mergeVertices();
+
         bmesh.position.x = 0;
         scene.add( bmesh );
 
@@ -107,6 +109,7 @@
         const ilgeom = geom.clone();
         const ilmesh = new THREE.Mesh( ilgeom, materials );
 
+        ilgeom.mergeVertices();
         ilgeom.mergeVertices();
 
         ilmesh.position.x = 2;
