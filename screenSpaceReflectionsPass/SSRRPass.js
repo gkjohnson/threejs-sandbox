@@ -23,8 +23,8 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	// render targets
 	this._depthBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
-			minFilter: THREE.LinearFilter,
-			magFilter: THREE.LinearFilter,
+			minFilter: THREE.NearestFilter,
+			magFilter: THREE.NearestFilter,
 			format: THREE.RGBFormat,
 			type: THREE.FloatType
 		} );
@@ -377,7 +377,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec3 vpos =  Deproject(vec3(uv, vdepth));
 					vec3 vnorm = UnpackNormal(dataSample);
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
-					float thickness = 0.0005;
+					float thickness = 0.005;
 
 
 					#define MAX_STEPS 100.0
@@ -392,29 +392,34 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec3 C0 = H0.xyz / H0.w;
 					vec3 C1 = H1.xyz / H1.w;
+
+					vec2 UV0 = C0.xy * 0.5 + vec2(0.5);
+					vec2 UV1 = C1.xy * 0.5 + vec2(0.5);
+
 					vec3 delta = C1 - C0;
 
 					vec4 col;
 
 					float prevRayDepth = vdepth;
 
-
+					// derivatives
 					float div = max(abs(resolution.x * delta.x), abs(resolution.y * delta.y));
 					vec3 dC = delta / div;
+					vec2 dUV = (UV1 - UV0) / div;
 
-					vec3 CN = C0 + dC * (0.5 - rand(gl_FragCoord.xy)) * 20.;
+					// step values
+					vec3 C = C0;
+					vec2 UV = UV0;
 					for (float stepCount = 1.0; stepCount <= MAX_STEPS; stepCount += 1.0) {
-						CN += dC * 40.0;
-						// vec3 CN = mix(C0, C1, stepCount * stepSize);
+						C += dC * 40.0;
+						UV += dUV * 40.0;
 
-						if (CN.x > 1.0 || CN.x < -1.0) break;
-						if (CN.y > 1.0 || CN.y < -1.0) break;
-						if (CN.z > 1.0 || CN.z < -1.0) break;
+						if (C.x > 1.0 || C.x < -1.0) break;
+						if (C.y > 1.0 || C.y < -1.0) break;
+						if (C.z > 1.0 || C.z < -1.0) break;
 
-						vec2 UVN = CN.xy * 0.5 + vec2(0.5);
-
-						float newSceneDepth = 2.0 * (1.0 - texture2D(depthBuffer, UVN).r) - 1.0;
-						float newRayDepth = CN.z;
+						float newSceneDepth = 2.0 * (1.0 - texture2D(depthBuffer, UV).r) - 1.0;
+						float newRayDepth = C.z;
 
 						float rayZMax = newRayDepth;
 						float rayZMin = prevRayDepth;
@@ -425,7 +430,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						}
 
 						if (rayZMax > newSceneDepth && rayZMin < newSceneDepth + thickness) {
-							col = texture2D(sourceBuffer, UVN);
+							col = texture2D(sourceBuffer, UV);
 							col.a = 0.5;
 							break;
 						}
