@@ -37,7 +37,7 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.LinearFilter,
 			magFilter: THREE.LinearFilter,
-			type: THREE.HalfFloatType,
+			type: THREE.FloatType,
 			format: THREE.RGBAFormat
 		} );
 	this._packedBuffer.texture.name = "SSRRPass.Packed";
@@ -300,7 +300,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>
 
-					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, metalnessFactor );
+					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, vViewPosition.z );
 				}
 			`
 
@@ -364,23 +364,26 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				}
 
 				void main() {
-                    float nearClip = Deproject(vec3(0, 0, -1)).z;
-                    float farClip = Deproject(vec3(0, 0, 1)).z;
+
+					// [-1, -2000]
+					vec2 screenCoord = vUv * 2.0 - vec2(1, 1);
+					vec3 ray = Deproject(vec3(screenCoord, -1));
+					float nearClip = Deproject(vec3(0, 0, -1)).z;
+					float farClip = Deproject(vec3(0, 0, 1)).z;
+					ray /= -ray.z;
 
 					vec4 result = texture2D(sourceBuffer, vUv);
-					vec4 depthSample = texture2D(depthBuffer, vUv);
 					vec4 dataSample = texture2D(packedBuffer, vUv);
 
 					// view space information
-					vec2 uv = vUv * 2.0 - vec2(1, 1);
-					float vdepth = 2.0 * (1.0 - depthSample.r) - 1.0;
-					vec3 vpos =  Deproject(vec3(uv, vdepth));
+					float vdepth = dataSample.w;
+					vec3 vpos =  vdepth * ray;
 					vec3 vnorm = UnpackNormal(dataSample);
+
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
-					float thickness = 0.005;
+					float thickness = 0.5;
 
-
-					#define MAX_STEPS 100.0
+					#define MAX_STEPS 500.0
 					#define MAX_DIST 100.0
 
 					float dist = (vpos.z + dir.z * MAX_DIST) > nearClip ? (nearClip - vpos.z) / dir.z : MAX_DIST;
@@ -390,8 +393,14 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec4 H0 = projMatrix * vec4(V0, 1.0);
 					vec4 H1 = projMatrix * vec4(V1, 1.0);
 
-					vec3 C0 = H0.xyz / H0.w;
-					vec3 C1 = H1.xyz / H1.w;
+					float k0 = 1.0 / H0.w;
+					float k1 = 1.0 / H1.w;
+
+					vec3 C0 = H0.xyz * k0;
+					vec3 C1 = H1.xyz * k1;
+
+					vec3 Q0 = V0.xyz * k0;
+					vec3 Q1 = V1.xyz * k1;
 
 					vec2 UV0 = C0.xy * 0.5 + vec2(0.5);
 					vec2 UV1 = C1.xy * 0.5 + vec2(0.5);
@@ -405,14 +414,22 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					// derivatives
 					float div = max(abs(resolution.x * delta.x), abs(resolution.y * delta.y));
 					vec3 dC = delta / div;
+					vec3 dQ = (Q1 - Q0) / div;
 					vec2 dUV = (UV1 - UV0) / div;
+					float dk = (k1 - k0) / div;
 
 					// step values
 					vec3 C = C0;
+					vec3 Q = Q0;
 					vec2 UV = UV0;
+					float k = k0;
+
+					float scale = 5.0;
 					for (float stepCount = 1.0; stepCount <= MAX_STEPS; stepCount += 1.0) {
-						C += dC * 40.0;
-						UV += dUV * 40.0;
+						C += dC * scale;
+						Q += dQ * scale;
+						UV += dUV * scale;
+						k += dk * scale;
 
 						if (C.x > 1.0 || C.x < -1.0) break;
 						if (C.y > 1.0 || C.y < -1.0) break;
@@ -420,6 +437,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 						float newSceneDepth = 2.0 * (1.0 - texture2D(depthBuffer, UV).r) - 1.0;
 						float newRayDepth = C.z;
+
+
+						newSceneDepth = texture2D(packedBuffer, UV).w;
+						newRayDepth = -(Q / k).z; //(Project(Q / k).z * 0.5 + 0.5);
 
 						float rayZMax = newRayDepth;
 						float rayZMin = prevRayDepth;
