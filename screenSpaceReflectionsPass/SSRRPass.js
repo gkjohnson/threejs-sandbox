@@ -396,14 +396,16 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec4 col;
 
-					vec2 texelSize = 40.0 / resolution;
-					float stepSize = min( texelSize.x / abs( delta.x ), texelSize.y / abs( delta.y) );
 					float prevRayDepth = vdepth;
 
-					float jitter = rand(gl_FragCoord.xy) * 0.0001;
 
-					for (float step = 1.0; step <= MAX_STEPS; step += 1.0) {
-						vec3 CN = mix(C0, C1, step * stepSize);
+					float div = max(abs(resolution.x * delta.x), abs(resolution.y * delta.y));
+					vec3 dC = delta / div;
+
+					vec3 CN = C0 + dC * (0.5 - rand(gl_FragCoord.xy)) * 20.;
+					for (float stepCount = 1.0; stepCount <= MAX_STEPS; stepCount += 1.0) {
+						CN += dC * 40.0;
+						// vec3 CN = mix(C0, C1, stepCount * stepSize);
 
 						if (CN.x > 1.0 || CN.x < -1.0) break;
 						if (CN.y > 1.0 || CN.y < -1.0) break;
