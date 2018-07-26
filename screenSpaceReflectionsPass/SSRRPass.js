@@ -10,6 +10,11 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this.enabled = true;
 	this.needsSwap = true;
 
+	// thickness
+	// jitter
+	// fade
+	// scale
+
 	this.scene = scene;
 	this.camera = camera;
 
@@ -25,18 +30,18 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
-			format: THREE.AlphaFormat,
+			format: THREE.RGBFormat,
 			type: THREE.FloatType
 		} );
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
 	this._depthBuffer.texture.generateMipmaps = false;
-	this._depthMaterial = new THREE.MeshDepthMaterial();
+	this._depthMaterial = this.createLinearDepthMaterial();
 
 	this._packedBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
-			type: THREE.FloatType,
+			type: THREE.HalfFloatType,
 			format: THREE.RGBAFormat
 		} );
 	this._packedBuffer.texture.name = "SSRRPass.Packed";
@@ -171,25 +176,11 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	createLinearDepthMaterial() {
 
-	},
-
-	createPackedMaterial() {
 
 		return new THREE.ShaderMaterial( {
 
-			uniforms: {
-
-				roughnessMap: { value: null },
-				roughness: { value: 0 },
-
-				metalnessMap: { value: null },
-				metalness: { value: 0 },
-
-				normalMap: { value: null }
-
-			},
-
 			vertexShader: `
+				#define PHYSICAL
 				varying vec3 vViewPosition;
 				#ifndef FLAT_SHADED
 					varying vec3 vNormal;
@@ -299,7 +290,143 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>
 
-					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, vViewPosition.z );
+					gl_FragColor = vec4(vViewPosition.z);
+				}
+			`
+
+		} );
+
+
+	},
+
+	createPackedMaterial() {
+
+		return new THREE.ShaderMaterial( {
+
+			uniforms: {
+
+				roughnessMap: { value: null },
+				roughness: { value: 0 },
+
+				metalnessMap: { value: null },
+				metalness: { value: 0 },
+
+				normalMap: { value: null }
+
+			},
+
+			vertexShader: `
+				#define PHYSICAL
+				varying vec3 vViewPosition;
+				#ifndef FLAT_SHADED
+					varying vec3 vNormal;
+				#endif
+				#include <common>
+				#include <uv_pars_vertex>
+				#include <uv2_pars_vertex>
+				#include <displacementmap_pars_vertex>
+				#include <color_pars_vertex>
+				#include <fog_pars_vertex>
+				#include <morphtarget_pars_vertex>
+				#include <skinning_pars_vertex>
+				#include <shadowmap_pars_vertex>
+				#include <logdepthbuf_pars_vertex>
+				#include <clipping_planes_pars_vertex>
+				void main() {
+					#include <uv_vertex>
+					#include <uv2_vertex>
+					#include <color_vertex>
+					#include <beginnormal_vertex>
+					#include <morphnormal_vertex>
+					#include <skinbase_vertex>
+					#include <skinnormal_vertex>
+					#include <defaultnormal_vertex>
+				#ifndef FLAT_SHADED
+					vNormal = normalize( transformedNormal );
+				#endif
+					#include <begin_vertex>
+					#include <morphtarget_vertex>
+					#include <skinning_vertex>
+					#include <displacementmap_vertex>
+					#include <project_vertex>
+					#include <logdepthbuf_vertex>
+					#include <clipping_planes_vertex>
+					vViewPosition = mvPosition.xyz;
+					#include <worldpos_vertex>
+					#include <shadowmap_vertex>
+					#include <fog_vertex>
+				}
+			`,
+
+			fragmentShader: `
+				#define PHYSICAL
+				uniform vec3 diffuse;
+				uniform vec3 emissive;
+				uniform float roughness;
+				uniform float metalness;
+				uniform float opacity;
+				#ifndef STANDARD
+					uniform float clearCoat;
+					uniform float clearCoatRoughness;
+				#endif
+				varying vec3 vViewPosition;
+				#ifndef FLAT_SHADED
+					varying vec3 vNormal;
+				#endif
+				#include <common>
+				#include <packing>
+				#include <dithering_pars_fragment>
+				#include <color_pars_fragment>
+				#include <uv_pars_fragment>
+				#include <uv2_pars_fragment>
+				#include <map_pars_fragment>
+				#include <alphamap_pars_fragment>
+				#include <aomap_pars_fragment>
+				#include <lightmap_pars_fragment>
+				#include <emissivemap_pars_fragment>
+				#include <envmap_pars_fragment>
+				#include <fog_pars_fragment>
+				#include <bsdfs>
+				#include <cube_uv_reflection_fragment>
+				#include <lights_pars_begin>
+				#include <lights_pars_maps>
+				#include <lights_physical_pars_fragment>
+				#include <shadowmap_pars_fragment>
+				#include <bumpmap_pars_fragment>
+				#include <normalmap_pars_fragment>
+				#include <roughnessmap_pars_fragment>
+				#include <metalnessmap_pars_fragment>
+				#include <logdepthbuf_pars_fragment>
+				#include <clipping_planes_pars_fragment>
+				void main() {
+					#include <clipping_planes_fragment>
+					vec4 diffuseColor = vec4( diffuse, opacity );
+					ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+					vec3 totalEmissiveRadiance = emissive;
+					#include <logdepthbuf_fragment>
+					#include <map_fragment>
+					#include <color_fragment>
+					#include <alphamap_fragment>
+					#include <alphatest_fragment>
+					#include <roughnessmap_fragment>
+					#include <metalnessmap_fragment>
+					#include <normal_fragment_begin>
+					#include <normal_fragment_maps>
+					#include <emissivemap_fragment>
+					#include <lights_physical_fragment>
+					#include <lights_fragment_begin>
+					#include <lights_fragment_maps>
+					#include <lights_fragment_end>
+					#include <aomap_fragment>
+					vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+					gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+					#include <tonemapping_fragment>
+					#include <encodings_fragment>
+					#include <fog_fragment>
+					#include <premultiplied_alpha_fragment>
+					#include <dithering_fragment>
+
+					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, metalnessFactor);
 				}
 			`
 
@@ -326,7 +453,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 				stride: { value: 10 },
 				resolution: { value: new THREE.Vector2() },
-				thickness: { value: 1.5 },
+				thickness: { value: 0.5 },
 				jitter: { value: 1 },
 				maxDistance: { value: 100 }
 			},
@@ -387,9 +514,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec4 result = texture2D(sourceBuffer, vUv);
 					vec4 dataSample = texture2D(packedBuffer, vUv);
+					float depthSample = texture2D(depthBuffer, vUv).r;
 
 					// view space information
-					float vdepth = dataSample.w;
+					float vdepth = depthSample;
 					vec3 vpos =  vdepth * ray;
 					vec3 vnorm = UnpackNormal(dataSample);
 
@@ -434,21 +562,18 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					float end = P1.x * stepDir;
 
-					float k = k0, stepCount = 0.0, prevZMaxEstimate = csOrig.z;
+					float k = k0, prevZMaxEstimate = csOrig.z;
 					float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 					float sceneZMax = rayZMax + 100.0;
-					vec2 hitPixel;
+					vec2 hitUV;
 
 					float maxSteps = float(MAX_STEPS);
 					vec2 P = P0;
 					float zThickness = thickness;
-					for (int stepCount = 1; stepCount <= MAX_STEPS; stepCount ++) {
+					float stepped = 0.0;
+					for (float stepCount = 1.0; stepCount <= float(MAX_STEPS); stepCount ++) {
 
-						if (!(
-							((P.x * stepDir) <= end) && (float(stepCount) < maxSteps)
-							&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
-							// && (sceneZMax != 0.0)
-						)) break;
+						P += dP, Q.z += dQ.z, k += dk;
 
 						rayZMin = prevZMaxEstimate;
 						rayZMax = (dQ.z * 0.5 + Q.z) / (dk * 0.5 + k);
@@ -457,18 +582,40 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 							float t = rayZMin; rayZMin = rayZMax; rayZMax = t;
 						}
 
-						hitPixel = permute ? P.yx: P;
+						vec2 newUV = (permute ? P.yx: P) / resolution;
 
-						sceneZMax = texture2D(packedBuffer, hitPixel / resolution).w;
+						if (
+							newUV.y < 0.0 || newUV.y > 1.0 ||
+							newUV.x < 0.0 || newUV.x > 1.0
+						) break;
 
-						P += dP, Q.z += dQ.z, k += dk;
+						hitUV = newUV;
+						sceneZMax = texture2D(depthBuffer, hitUV).r;
+
+						stepped = stepCount;
+						if (!(
+							((P.x * stepDir) <= end) && (float(stepCount) < maxSteps)
+							&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
+							// && (sceneZMax != 0.0)
+
+						)) break;
+
 					}
 
-					Q.xy += dQ.xy * stepCount;
+					Q.xy += dQ.xy * stepped;
 
 					if ((rayZMax >= sceneZMax - zThickness) && (rayZMin < sceneZMax)) {
-						vec4 col = texture2D(sourceBuffer, hitPixel / resolution);
-						col.a = 0.5;
+						vec4 col = texture2D(sourceBuffer, hitUV, 10.);
+
+						vec2 ndc = abs(hitUV * 2.0 - 1.0);
+						float maxndc = max(ndc.x, ndc.y);
+						float fadeVal =
+							(1.0 - (max( 0.0, maxndc - 0.4) / (1.0 - 0.4)  )) *
+							(1.0 - (stepped / float(MAX_STEPS)));
+
+						// TODO: Add z fade towards camera
+
+						col.a = 1. * fadeVal;
 						result = mix(result, col, col.a);
 					}
 
