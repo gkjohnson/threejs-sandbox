@@ -451,9 +451,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
-				stride: { value: 10 },
+				stride: { value: 20 },
 				resolution: { value: new THREE.Vector2() },
-				thickness: { value: 0.5 },
+				thickness: { value: 1.5 },
 				jitter: { value: 1 },
 				maxDistance: { value: 100 }
 			},
@@ -502,7 +502,16 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					return res;
 				}
 
-				float distanceSquared( vec2 a, vec2 b) { a -= b; return dot(a, a); }
+				float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
+				void swapIfBigger(inout float a, inout float b) {
+					if (a > b) {
+						float t = a;
+						a = b;
+						b = a;
+					}
+				}
+				bool isOutsideUvBounds(float x) { return x < 0.0 || x > 1.0; }
+				bool isOutsideUvBounds(vec2 uv) { return isOutsideUvBounds(uv.x) || isOutsideUvBounds(uv.y); }
 
 				void main() {
 
@@ -555,8 +564,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float dk = (k1 - k0) * invdx;
 					vec2 dP = vec2(stepDir, delta.y * invdx);
 
+					float c = (gl_FragCoord.x + gl_FragCoord.y) * 0.25;
+					float j = mod(c, 1.0);
+
+					// float j = 1.0;//rand(gl_FragCoord.xy) - 0.5;
 					dP *= stride; dQ *= stride; dk *= stride;
-					P0 += dP * jitter; Q0 += dQ * jitter; k0 += dk * jitter;
+					P0 += dP * j; Q0 += dQ * j; k0 += dk * j;
 
 					vec3 Q = Q0;
 
@@ -571,40 +584,71 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 P = P0;
 					float zThickness = thickness;
 					float stepped = 0.0;
+
+					vec4 PQK = vec4(P, Q.z, k);
+					vec4 dPQK = vec4(dP, dQ.z, dk);
+					bool intersected = false;
 					for (float stepCount = 1.0; stepCount <= float(MAX_STEPS); stepCount ++) {
 
-						P += dP, Q.z += dQ.z, k += dk;
+						PQK += dPQK;
 
 						rayZMin = prevZMaxEstimate;
-						rayZMax = (dQ.z * 0.5 + Q.z) / (dk * 0.5 + k);
+						rayZMax = (dPQK.z * 0.5 + PQK.z) / (dPQK.w * 0.5 + PQK.w);
 						prevZMaxEstimate = rayZMax;
-						if (rayZMin > rayZMax) {
-							float t = rayZMin; rayZMin = rayZMax; rayZMax = t;
-						}
-
-						vec2 newUV = (permute ? P.yx: P) / resolution;
-
-						if (
-							newUV.y < 0.0 || newUV.y > 1.0 ||
-							newUV.x < 0.0 || newUV.x > 1.0
-						) break;
-
-						hitUV = newUV;
-						sceneZMax = texture2D(depthBuffer, hitUV).r;
+						swapIfBigger(rayZMin, rayZMax);
 
 						stepped = stepCount;
-						if (!(
-							((P.x * stepDir) <= end) && (float(stepCount) < maxSteps)
+						hitUV = (permute ? PQK.yx: PQK.xy) / resolution;
+						if (isOutsideUvBounds(hitUV)) break;
+
+						sceneZMax = texture2D(depthBuffer, hitUV).r;
+						intersected = !(
+							((P.x * stepDir) <= end)
 							&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
 							// && (sceneZMax != 0.0)
+						);
 
-						)) break;
-
+						if (intersected) break;
 					}
 
-					Q.xy += dQ.xy * stepped;
+					// TODO: binary search
+					if (intersected && stride > 1.0) {
 
-					if ((rayZMax >= sceneZMax - zThickness) && (rayZMin < sceneZMax)) {
+						PQK -= dPQK;
+						dPQK /= stride;
+						float ogStride = stride * 0.5;
+						float currStride = stride;
+
+						for(float j = 0.0; j < 5.0; j ++) {
+							PQK += dPQK * currStride;
+
+							rayZMin = prevZMaxEstimate;
+							rayZMax = (dPQK.z * 0.5 + PQK.z) / (dPQK.w * 0.5 + PQK.w);
+							prevZMaxEstimate = rayZMax;
+							swapIfBigger(rayZMin, rayZMax);
+
+							vec2 newUV = (permute ? PQK.yx: PQK.xy) / resolution;
+							sceneZMax = texture2D(depthBuffer, newUV).r;
+							bool didIntersect = !(
+								((P.x * stepDir) <= end)
+								&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
+								// && (sceneZMax != 0.0)
+							);
+
+							ogStride *= 0.5;
+							if (didIntersect) {
+								hitUV = newUV;
+								currStride = -ogStride;
+							} else {
+								currStride = ogStride;
+							}
+							// currStride = didIntersect ? -ogStride : ogStride;
+
+						}
+					}
+
+					// Found, blending
+					if (intersected) {
 						vec4 col = texture2D(sourceBuffer, hitUV, 10.);
 
 						vec2 ndc = abs(hitUV * 2.0 - 1.0);
@@ -615,7 +659,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 						// TODO: Add z fade towards camera
 
-						col.a = 1. * fadeVal;
+						col.a = 0.5 * fadeVal;
 						result = mix(result, col, col.a);
 					}
 
