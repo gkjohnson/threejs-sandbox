@@ -25,13 +25,12 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
-			format: THREE.RGBFormat,
+			format: THREE.AlphaFormat,
 			type: THREE.FloatType
 		} );
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
 	this._depthBuffer.texture.generateMipmaps = false;
 	this._depthMaterial = new THREE.MeshDepthMaterial();
-	// this._depthMaterial.depthPacking = THREE.RGBADepthPacking;
 
 	this._packedBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
@@ -48,8 +47,6 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this._compositeCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 	this._compositeScene = new THREE.Scene();
 	this._compositeMaterial = this.getCompositeMaterial();
-
-	console.log(this.camera)
 
 	this._quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
 	this._quad.frustumCulled = false;
@@ -172,6 +169,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	},
 
+	createLinearDepthMaterial() {
+
+	},
+
 	createPackedMaterial() {
 
 		return new THREE.ShaderMaterial( {
@@ -189,7 +190,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 			},
 
 			vertexShader: `
-				#define PHYSICAL
 				varying vec3 vViewPosition;
 				#ifndef FLAT_SHADED
 					varying vec3 vNormal;
@@ -224,7 +224,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <project_vertex>
 					#include <logdepthbuf_vertex>
 					#include <clipping_planes_vertex>
-					vViewPosition = - mvPosition.xyz;
+					vViewPosition = mvPosition.xyz;
 					#include <worldpos_vertex>
 					#include <shadowmap_vertex>
 					#include <fog_vertex>
@@ -327,7 +327,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				stride: { value: 10 },
 				resolution: { value: new THREE.Vector2() },
 				thickness: { value: 1.5 },
-				jitter: { value: 1 }
+				jitter: { value: 1 },
+				maxDistance: { value: 100 }
 			},
 
 			vertexShader:
@@ -354,6 +355,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform float thickness;
 				uniform float stride;
 				uniform float jitter;
+				uniform float maxDistance;
 
 				vec3 Deproject(vec3 p) {
 					vec4 res = invProjectionMatrix * vec4(p, 1);
@@ -381,8 +383,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 screenCoord = vUv * 2.0 - vec2(1, 1);
 					vec3 ray = Deproject(vec3(screenCoord, -1));
 					float nearClip = Deproject(vec3(0, 0, -1)).z;
-					float farClip = Deproject(vec3(0, 0, 1)).z;
-					ray /= -ray.z;
+					ray /= ray.z;
 
 					vec4 result = texture2D(sourceBuffer, vUv);
 					vec4 dataSample = texture2D(packedBuffer, vUv);
@@ -394,17 +395,17 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 
-					float maxDist = 1000.0;
+					float maxDist = maxDistance;
 					float rayLength = (vpos.z + dir.z * maxDist) > nearClip ? (nearClip - vpos.z) / dir.z : maxDist;
-					vec3 V0 = vpos;
-					vec3 V1 = V0 + dir * rayLength;
+					vec3 csOrig = vpos;
+					vec3 csEndPoint = csOrig + dir * rayLength;
 
-					vec4 H0 = projMatrix * vec4(V0, 1.0);
-					vec4 H1 = projMatrix * vec4(V1, 1.0);
+					vec4 H0 = projMatrix * vec4(csOrig, 1.0);
+					vec4 H1 = projMatrix * vec4(csEndPoint, 1.0);
 
 					float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;
 
-					vec3 Q0 = V0.xyz * k0, Q1 = V1.xyz * k1;
+					vec3 Q0 = csOrig.xyz * k0, Q1 = csEndPoint.xyz * k1;
 
 					vec2 P0 = H0.xy * k0, P1 = H1.xy * k1;
 					P0 = P0 * 0.5 + vec2(0.5), P1 = P1 * 0.5 + vec2(0.5);
@@ -433,7 +434,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					float end = P1.x * stepDir;
 
-					float k = k0, stepCount = 0.0, prevZMaxEstimate = V0.z;
+					float k = k0, stepCount = 0.0, prevZMaxEstimate = csOrig.z;
 					float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 					float sceneZMax = rayZMax + 100.0;
 					vec2 hitPixel;
@@ -458,7 +459,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 						hitPixel = permute ? P.yx: P;
 
-						sceneZMax = -texture2D(packedBuffer, hitPixel / resolution).w;
+						sceneZMax = texture2D(packedBuffer, hitPixel / resolution).w;
 
 						P += dP, Q.z += dQ.z, k += dk;
 					}
