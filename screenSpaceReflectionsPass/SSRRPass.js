@@ -159,11 +159,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._compositeMaterial.uniforms.depthBuffer.value = this._depthBuffer.texture;
 		this._compositeMaterial.uniforms.packedBuffer.value = this._packedBuffer.texture;
 		this._compositeMaterial.uniforms.sourceBuffer.value = readBuffer.texture;
-		this._compositeMaterial.uniforms.stepSize.value = window.stepSize || 0.05;
 		this._compositeMaterial.uniforms.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
 		this._compositeMaterial.uniforms.projMatrix.value.copy( this.camera.projectionMatrix );
 
-		this._compositeMaterial.uniforms.resolution.value.set( readBuffer.width, readBuffer.height );
+		this._compositeMaterial.uniforms.resolution.value.set( this._packedBuffer.width, this._packedBuffer.height );
 
 		this._quad.material = this._compositeMaterial;
 
@@ -312,14 +311,23 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 		return new THREE.ShaderMaterial( {
 
+			defines: {
+
+				MAX_STEPS: 100
+
+			},
+
 			uniforms: {
 				sourceBuffer: { value: null },
 				packedBuffer: { value: null },
 				depthBuffer: { value: null },
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
-				stepSize: { value: 0.05 },
+
+				stride: { value: 5 },
 				resolution: { value: new THREE.Vector2() },
+				thickness: { value: 0.5 },
+				jitter: { value: 2 }
 			},
 
 			vertexShader:
@@ -342,8 +350,11 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform sampler2D depthBuffer;
 				uniform mat4 invProjectionMatrix;
 				uniform mat4 projMatrix;
-				uniform float stepSize;
 				uniform vec2 resolution;
+
+				uniform float thickness;
+				uniform float stride;
+				uniform float jitter;
 
 				vec3 Deproject(vec3 p) {
 					vec4 res = invProjectionMatrix * vec4(p, 1);
@@ -362,6 +373,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					res.z = sqrt(1.0 - res.x * res.x - res.y * res.y);
 					return res;
 				}
+
+				float distanceSquared( vec2 a, vec2 b) { a -= b; return dot(a, a); }
 
 				void main() {
 
@@ -383,12 +396,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 					float thickness = 0.5;
 
-					#define MAX_STEPS 50
-					#define MAX_DIST 100.0
-
-					float dist = (vpos.z + dir.z * MAX_DIST) > nearClip ? (nearClip - vpos.z) / dir.z : MAX_DIST;
+					float maxDist = 1000.0;
+					float rayLength = (vpos.z + dir.z * maxDist) > nearClip ? (nearClip - vpos.z) / dir.z : maxDist;
 					vec3 V0 = vpos;
-					vec3 V1 = V0 + dir * dist;
+					vec3 V1 = V0 + dir * rayLength;
 
 					vec4 H0 = projMatrix * vec4(V0, 1.0);
 					vec4 H1 = projMatrix * vec4(V1, 1.0);
@@ -405,16 +416,26 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 UV0 = C0.xy * 0.5 + vec2(0.5);
 					vec2 UV1 = C1.xy * 0.5 + vec2(0.5);
 
-					vec3 delta = C1 - C0;
+					vec2 P0 = UV0 * resolution;
+					vec2 P1 = UV1 * resolution;
+					P1 += vec2((distanceSquared(P0, P1) < 0.0001) ? 0.01 : 0.0);
 
-					float prevRayDepth = vdepth;
+					vec2 delta = P1 - P0;
+					if (abs(delta.x) < abs(delta.y)) {
+						delta.xy = delta.yx;
+						P0.xy = P0.yx;
+						P1.xy = P1.yx;
+					}
+
+					float stepDir = sign(delta.x);
+					float invdx = stepDir / delta.x;
 
 					// derivatives
-					float div = max(abs(resolution.x * delta.x), abs(resolution.y * delta.y));
-					vec3 dC = delta / div;
-					vec3 dQ = (Q1 - Q0) / div;
-					vec2 dUV = (UV1 - UV0) / div;
-					float dk = (k1 - k0) / div;
+					vec3 dC = (C1 - C0) * invdx;
+					vec3 dQ = (Q1 - Q0) * invdx;
+					vec2 dUV = (UV1 - UV0) * invdx;
+					float dk = (k1 - k0) * invdx;
+					vec2 dP = (P1 - P0) * invdx;
 
 					// step values
 					vec3 C = C0;
@@ -422,14 +443,14 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 UV = UV0;
 					float k = k0;
 
-
 					vec4 T = vec4(UV.xy, Q.z, k);
-					vec4 dT = vec4(dUV.xy, dQ.z, dk);
+					vec4 dT = vec4(dUV.xy, dQ.z, dk) * 5.;
+					T += dT * (rand(gl_FragCoord.xy) - 1.0) * jitter;
+					float prevRayDepth = vdepth;
 
-					float scale = 50.0;
 					bool hit = false;
 					for (int stepCount = 1; stepCount <= MAX_STEPS; stepCount ++) {
-						T += dT * scale;
+						T += dT * stride;
 
 						if (T.x > 1.0 || T.x < 0.0) break;
 						if (T.y > 1.0 || T.y < 0.0) break;
