@@ -632,23 +632,22 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 				void main() {
 
-					// [-1, -2000]
+					// Screen position information
 					vec2 screenCoord = vUv * 2.0 - vec2(1, 1);
-					vec3 ray = Deproject(vec3(screenCoord, -1));
 					float nearClip = Deproject(vec3(0, 0, -1)).z;
+					vec3 ray = Deproject(vec3(screenCoord, -1));
 					ray /= ray.z;
 
-					vec4 result = texture2D(sourceBuffer, vUv, 120.);
+					// Samples
 					vec4 dataSample = texture2D(packedBuffer, vUv);
-					float depthSample = sampleDepth(vUv); // sampleDepth(hitUV); //texture2D(depthBuffer, vUv).r;
+					float depthSample = sampleDepth(vUv);
 
-					// view space information
-					float vdepth = depthSample;
-					vec3 vpos =  vdepth * ray;
+					// View space information
+					vec3 vpos =  depthSample * ray;
 					vec3 vnorm = UnpackNormal(dataSample);
-
 					vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 
+					// Define view space values
 					float maxDist = maxDistance;
 					float rayLength = (vpos.z + dir.z * maxDist) > nearClip ? (nearClip - vpos.z) / dir.z : maxDist;
 					vec3 csOrig = vpos;
@@ -668,6 +667,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					P1 += vec2((distanceSquared(P0, P1) < 0.0001) ? 0.01 : 0.0);
 					vec2 delta = P1 - P0;
 
+					// TODO: Try to get rid of this permute
 					bool permute = false;
 					if (abs(delta.x) < abs(delta.y)) {
 						permute = true; delta = delta.yx; P0 = P0.yx; P1 = P1.yx;
@@ -676,34 +676,29 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float stepDir = sign(delta.x);
 					float invdx = stepDir / delta.x;
 
-					// derivatives
+					// Derivatives
 					vec3 dQ = (Q1 - Q0) * invdx;
 					float dk = (k1 - k0) * invdx;
 					vec2 dP = vec2(stepDir, delta.y * invdx);
 
-					float c = (gl_FragCoord.x + gl_FragCoord.y) * 0.25;
-					float j = mod(c, 1.0);
+					// Track all values in a vector
+					float jitterMod = (gl_FragCoord.x + gl_FragCoord.y) * 0.25;
+					vec4 PQK = vec4(P0, Q0.z, k0);
+					vec4 dPQK = vec4(dP, dQ.z, dk);
+					dPQK *= stride;
+					PQK += dPQK * (1.0 - mod(jitterMod, 1.0) * jitter);
 
-					// float j = 1.0;//rand(gl_FragCoord.xy) - 0.5;
-					dP *= stride; dQ *= stride; dk *= stride;
-					P0 += dP * j; Q0 += dQ * j; k0 += dk * j;
-
-					vec3 Q = Q0;
-
+					// Variables for completion condition
 					float end = P1.x * stepDir;
-
-					float k = k0, prevZMaxEstimate = csOrig.z;
+					float prevZMaxEstimate = csOrig.z;
 					float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 					float sceneZMax = rayZMax + 100.0;
-					vec2 hitUV;
 
 					float maxSteps = float(MAX_STEPS);
-					vec2 P = P0;
 					float zThickness = thickness;
 					float stepped = 0.0;
 
-					vec4 PQK = vec4(P, Q.z, k);
-					vec4 dPQK = vec4(dP, dQ.z, dk);
+					vec2 hitUV;
 					bool intersected = false;
 					for (float stepCount = 1.0; stepCount <= float(MAX_STEPS); stepCount ++) {
 
@@ -720,7 +715,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 						sceneZMax = sampleDepth(hitUV); //texture2D(depthBuffer, hitUV).r;
 						intersected = !(
-							((P.x * stepDir) <= end)
+							// TODO: P0 is being used here when it SHOULD be PQK, but there are
+							// artifacts when zooming with PQK
+							((P0.x * stepDir) <= end)
 							&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
 							// && (sceneZMax != 0.0)
 						);
@@ -728,7 +725,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						if (intersected) break;
 					}
 
-					// binary search
+					// Binary search
 					if (intersected && stride > 1.0) {
 
 						PQK -= dPQK;
@@ -757,12 +754,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 							} else {
 								currStride = ogStride;
 							}
-							// currStride = didIntersect ? -ogStride : ogStride;
 
 						}
 					}
 
 					// Found, blending
+					vec4 result = texture2D(sourceBuffer, vUv);
 					if (intersected) {
 						vec4 col = texture2D(sourceBuffer, hitUV, 10.);
 
