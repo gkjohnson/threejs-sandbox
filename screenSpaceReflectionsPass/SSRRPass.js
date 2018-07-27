@@ -39,6 +39,10 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this._depthMipmaps = [];
 	this._depthPyramidMaterial = this.createCustomDepthDownsample();
 
+	this._backfaceDepthBuffer = this._depthBuffer.clone();
+	this._backfaceDepthMaterial = this.createLinearDepthMaterial();
+	this._backfaceDepthMaterial.side = THREE.BackSide;
+
 	this._packedBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.NearestFilter,
@@ -74,7 +78,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	setSize: function ( width, height ) {
 
-		this._depthBuffer.setSize( THREE.Math.floorPowerOfTwo( width ), THREE.Math.floorPowerOfTwo( height ) );
+		var wp2 = THREE.Math.floorPowerOfTwo( width );
+		var hp2 = THREE.Math.floorPowerOfTwo( height );
+		this._depthBuffer.setSize( wp2, hp2 );
+		this._backfaceDepthBuffer.setSize( wp2, hp2 );
 		this._packedBuffer.setSize( width, height );
 
 	},
@@ -195,14 +202,19 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		var prevOverride = this.scene.overrideMaterial;
 		this.scene.overrideMaterial = this._depthMaterial;
 		renderer.render( this.scene, this.camera, this._depthBuffer, true );
+
+		this.scene.overrideMaterial = this._backfaceDepthMaterial;
+		renderer.render( this.scene, this.camera, this._backfaceDepthBuffer, true );
 		this.scene.overrideMaterial = prevOverride;
 		this.updateDepthPyramid( renderer );
 
 		// Composite
 		const cm = this._compositeMaterial;
 		const uni = cm.uniforms;
+		uni.sourceBuffer.value = readBuffer.texture;
 		uni.depthBuffer.value = this._depthBuffer.texture;
 		uni.depthPyramid.value = [ this._depthBuffer, ...this._depthMipmaps ];
+		uni.backfaceDepthBuffer.value = this._backfaceDepthBuffer.texture;
 
 		if ( cm.defines.PYRAMID_DEPTH !== this._depthMipmaps.length + 1 ) {
 
@@ -212,7 +224,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		}
 
 		uni.packedBuffer.value = this._packedBuffer.texture;
-		uni.sourceBuffer.value = readBuffer.texture;
 		uni.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
 		uni.projMatrix.value.copy( this.camera.projectionMatrix );
 
@@ -540,7 +551,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 			defines: {
 
-				MAX_STEPS: 100,
+				MAX_STEPS: 20,
 				BINARY_SEARCH_ITERATIONS: 10,
 				PYRAMID_DEPTH: 1
 
@@ -551,12 +562,13 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				packedBuffer: { value: null },
 				depthBuffer: { value: null },
 				depthPyramid: { type: 'ta', value: null },
+				backfaceDepthBuffer: { value: null },
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
 				stride: { value: 20 },
 				resolution: { value: new THREE.Vector2() },
-				thickness: { value: 1.5 },
+				thickness: { value: 0.01 },
 				jitter: { value: 1 },
 				maxDistance: { value: 100 }
 			},
@@ -577,6 +589,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform sampler2D sourceBuffer;
 				uniform sampler2D packedBuffer;
 				uniform sampler2D depthPyramid[PYRAMID_DEPTH];
+				uniform sampler2D depthBuffer;
+				uniform sampler2D backfaceDepthBuffer;
 				uniform mat4 invProjectionMatrix;
 				uniform mat4 projMatrix;
 				uniform vec2 resolution;
@@ -632,6 +646,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 				void main() {
 
+					float pixelStride = stride;
+
 					// Screen position information
 					vec2 screenCoord = vUv * 2.0 - vec2(1, 1);
 					float nearClip = Deproject(vec3(0, 0, -1)).z;
@@ -685,7 +701,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float jitterMod = (gl_FragCoord.x + gl_FragCoord.y) * 0.25;
 					vec4 PQK = vec4(P0, Q0.z, k0);
 					vec4 dPQK = vec4(dP, dQ.z, dk);
-					dPQK *= stride;
+					dPQK *= pixelStride;
 					PQK += dPQK * (1.0 - mod(jitterMod, 1.0) * jitter);
 
 					// Variables for completion condition
@@ -726,12 +742,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					}
 
 					// Binary search
-					if (intersected && stride > 1.0) {
+					if (intersected && pixelStride > 1.0) {
 
 						PQK -= dPQK;
 						dPQK /= stride;
-						float ogStride = stride * 0.5;
-						float currStride = stride;
+						float ogStride = pixelStride * 0.5;
+						float currStride = pixelStride;
 
 						for(int j = 0; j < int(0); j ++) {
 							PQK += dPQK * currStride;
