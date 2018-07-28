@@ -9,7 +9,23 @@ _sponza scene from GLTF 2.0 example models_
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
-## TODO
+## Options
+#### stride
+The number of screen space pixels to step over per iteration in the down sampled depth texture.
+
+#### steps
+The number of steps to take along the cast ray.
+
+#### binarySearchSteps
+The number of extra iterations to take to search for the intersected surface.
+
+#### intensity
+The intensity of the reflection.
+
+#### renderTargetScale
+The per
+
+## TODO / Issues
 - Add blur based on roughness
 - Support animations, normal, and roughness maps
 - Add z fade
@@ -17,4 +33,5 @@ _sponza scene from GLTF 2.0 example models_
 - Improve the connected-ness of the reflections to the ground
 - Perform raytracing on a downscaled buffer instead of just rendering depth and normals to downscaled buffers
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
+- Objects with zero thickness create incorrect stretched reflections
 - Blur with mipmaps and step through depth pyramid a la http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
