@@ -36,8 +36,6 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
 	this._depthBuffer.texture.generateMipmaps = false;
 	this._depthMaterial = this.createLinearDepthMaterial();
-	this._depthMipmaps = [];
-	this._depthPyramidMaterial = this.createCustomDepthDownsample();
 
 	this._backfaceDepthBuffer = this._depthBuffer.clone();
 	this._backfaceDepthMaterial = this.createLinearDepthMaterial();
@@ -83,45 +81,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._depthBuffer.setSize( wp2, hp2 );
 		this._backfaceDepthBuffer.setSize( wp2, hp2 );
 		this._packedBuffer.setSize( width, height );
-
-	},
-
-	updateDepthPyramid: function ( renderer ) {
-
-		var mips = this._depthMipmaps;
-		var w = THREE.Math.floorPowerOfTwo( this._depthBuffer.width ) / 2;
-		var h = THREE.Math.floorPowerOfTwo( this._depthBuffer.height ) / 2;
-		var ct = Math.min( Math.log2( h ), Math.log2( w ), 6 );
-
-		while ( mips.length < ct ) {
-
-			mips.push( this._depthBuffer.clone() );
-
-		}
-
-		while ( mips.length > ct ) {
-
-			mips.pop().dispose();
-
-		}
-
-		var lastTex = this._depthBuffer;
-		for ( var i = 0; i < mips.length; i ++ ) {
-
-			mips[ i ].setSize( w, h );
-			w /= 2;
-			h /= 2;
-
-			this._depthPyramidMaterial.uniforms.sourceBuffer.value = lastTex.texture;
-			this._depthPyramidMaterial.uniforms.resolution.value.set( lastTex.width, lastTex.height );
-
-			this._quad.material = this._depthPyramidMaterial;
-			renderer.setClearColor( 0 );
-			renderer.render( this._compositeScene, this._compositeCamera, i === mips.length - 1 ? null : mips[ i ], true );
-
-			lastTex = mips[ i ];
-
-		}
 
 	},
 
@@ -206,22 +165,13 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this.scene.overrideMaterial = this._backfaceDepthMaterial;
 		renderer.render( this.scene, this.camera, this._backfaceDepthBuffer, true );
 		this.scene.overrideMaterial = prevOverride;
-		this.updateDepthPyramid( renderer );
 
 		// Composite
 		const cm = this._compositeMaterial;
 		const uni = cm.uniforms;
 		uni.sourceBuffer.value = readBuffer.texture;
 		uni.depthBuffer.value = this._depthBuffer.texture;
-		uni.depthPyramid.value = [ this._depthBuffer, ...this._depthMipmaps ].map( t => t.texture );
 		uni.backfaceDepthBuffer.value = this._backfaceDepthBuffer.texture;
-
-		if ( cm.defines.PYRAMID_DEPTH !== this._depthMipmaps.length + 1 ) {
-
-			cm.defines.PYRAMID_DEPTH = this._depthMipmaps.length + 1;
-			cm.needsUpdate = true;
-
-		}
 
 		uni.packedBuffer.value = this._packedBuffer.texture;
 		uni.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
@@ -561,7 +511,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				sourceBuffer: { value: null },
 				packedBuffer: { value: null },
 				depthBuffer: { value: null },
-				depthPyramid: { type: 'ta', value: null },
 				backfaceDepthBuffer: { value: null },
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
@@ -588,7 +537,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				varying vec2 vUv;
 				uniform sampler2D sourceBuffer;
 				uniform sampler2D packedBuffer;
-				uniform sampler2D depthPyramid[PYRAMID_DEPTH];
 				uniform sampler2D depthBuffer;
 				uniform sampler2D backfaceDepthBuffer;
 				uniform mat4 invProjectionMatrix;
@@ -614,25 +562,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					return d.xyz * 2.0 - 1.0;
 				}
 
-				float sampleDepth(vec2 uv, int lod) {
-
-					for ( int i = 0; i < PYRAMID_DEPTH; i ++ ) {
-
-						if (i == lod) return texture2D(depthPyramid[i], uv).r;
-
-					}
-
-					return 0.0;
-				}
-
-				float sampleDepth(vec2 uv) {
-					return sampleDepth(uv, 0);
-				}
-
 				bool doesIntersect(float rayzmax, float rayzmin, vec2 uv) {
 
 					float sceneZMax = texture2D(backfaceDepthBuffer, uv).r;
-					float sceneZMin = sampleDepth(uv);
+					float sceneZMin = texture2D(depthBuffer, uv).r;
 
 					return (rayzmin >= sceneZMax) && rayzmax <= sceneZMin - thickness;
 
@@ -664,7 +597,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					// Samples
 					vec4 dataSample = texture2D(packedBuffer, vUv);
-					float depthSample = sampleDepth(vUv);
+					float depthSample = texture2D(depthBuffer, vUv).r;
 
 					// View space information
 					vec3 vpos =  depthSample * ray;
