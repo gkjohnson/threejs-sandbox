@@ -130,35 +130,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		renderer.autoClear = true;
 		renderer.setClearColor( new THREE.Color( 0, 0, 0 ), 0 );
 
-		// Render normals
-		var self = this;
-		function recurse( obj ) {
+		var prevOverride = this.scene.overrideMaterial;
 
-			if ( obj.visible === false ) return;
-
-			if ( obj.type === 'Mesh' || obj.type === 'SkinnedMesh' ) {
-
-				var material = self.getNormalMaterial( obj.material );
-				renderer.renderBufferDirect( self.camera, null, obj.geometry, material, obj, null );
-
-			}
-
-			for ( var i = 0, l = obj.children.length; i < l; i ++ ) {
-
-				recurse( obj.children[ i ] );
-
-			}
-
-		}
-
-		renderer.compile( this.scene, this.camera );
-		renderer.setRenderTarget( this._packedBuffer );
-		renderer.clear( true, true, true );
-		recurse( this.scene );
-		renderer.setRenderTarget( null );
+		this.scene.overrideMaterial = this.createPackedMaterial();
+		renderer.render( this.scene, this.camera, this._packedBuffer, true );
 
 		// Render depth
-		var prevOverride = this.scene.overrideMaterial;
 		this.scene.overrideMaterial = this._depthMaterial;
 		renderer.render( this.scene, this.camera, this._depthBuffer, true );
 
@@ -467,7 +444,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 				stride: { value: 30 },
 				resolution: { value: new THREE.Vector2() },
-				thickness: { value: 0.01 },
+				thickness: { value: 1 },
 				jitter: { value: 1 },
 				maxDistance: { value: 100 }
 			},
@@ -517,7 +494,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float sceneZMax = texture2D(backfaceDepthBuffer, uv).r;
 					float sceneZMin = texture2D(depthBuffer, uv).r;
 
-					return (rayzmin >= sceneZMax) && rayzmax <= sceneZMin - thickness;
+					return rayzmin >= sceneZMax - thickness && rayzmax <= sceneZMin;
 
 				}
 
@@ -536,8 +513,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				bool isOutsideUvBounds(vec2 uv) { return isOutsideUvBounds(uv.x) || isOutsideUvBounds(uv.y); }
 
 				void main() {
-
-					float pixelStride = stride;
 
 					// Screen position information
 					vec2 screenCoord = vUv * 2.0 - vec2(1, 1);
@@ -589,11 +564,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec2 dP = vec2(stepDir, delta.y * invdx);
 
 					// Track all values in a vector
+					float pixelStride = stride;
 					float jitterMod = (gl_FragCoord.x + gl_FragCoord.y) * 0.25;
 					vec4 PQK = vec4(P0, Q0.z, k0);
 					vec4 dPQK = vec4(dP, dQ.z, dk);
 					dPQK *= pixelStride;
-					PQK += dPQK * (1.0 - mod(jitterMod, 1.0) * jitter);
+					PQK -= dPQK * mod(jitterMod, 1.0) * jitter;
 
 					// Variables for completion condition
 					float end = P1.x * stepDir;

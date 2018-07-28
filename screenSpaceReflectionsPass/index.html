@@ -61,10 +61,6 @@
 			var camera, scene, renderer, controls;
 			var composer;
 			var FXAAPass, motionPass, renderPass;
-			var torusMesh1, torusMesh2, torusMesh3;
-
-			var spheres = [];
-			var mixer, clock, animTime = 0;
 
 			init();
 			animate();
@@ -95,7 +91,7 @@
 
 
 				// Lights
-				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.1 ) );
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
 				directionalLight.position.set( 50, 100, 50 );
@@ -109,14 +105,33 @@
 				scene.add( directionalLight );
 
 				// Shadow
-				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0 }));
+				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.multiplyScalar( 2000 );
+				plane.scale.set( 2000, 2000, 0.1 );
 				plane.position.y = -4;
 				scene.add( plane );
 
-				var geom = new THREE.SphereBufferGeometry(4, 30, 30);
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 50, 50 );
+					plane.material.roughnessMap = map;
+					plane.material.map = map;
+					plane.material.needsUpdate = true;
+				} );
+				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Normal.jpg', function ( map ) {
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 50, 50 );
+					plane.material.normalMap = map;
+					plane.material.needsUpdate = true;
+				} );
+
+				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
 				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
@@ -135,12 +150,17 @@
 				sphere.position.x = 10;
 				scene.add(sphere);
 
-				var mirror = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-				mirror.rotation.set( 0, -Math.PI / 2, 0 );
-				mirror.scale.multiplyScalar( 20 );
+				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+				mirror.rotation.set( 0, 0, 0 );
+				mirror.scale.set(60, 20, 0.5);
 				mirror.position.y = -4;
+				mirror.position.z = -15;
 				scene.add(mirror);
 
+				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
+				box.position.x = -20;
+				box.scale.set( 2, 10, 2 );
+				scene.add(box);
 
 				// Render Pass Setup
 				renderPass = new THREE.RenderPass( scene, camera );
@@ -199,13 +219,8 @@
 
 			}
 
-			// flag indicating that we've animated on frame past the
-			// point that we stopped animation
-			var animatedOneFramePast = false;
 			function render() {
-
 				camera.lookAt( scene.position );
-
 				composer.render();
 
 			}
