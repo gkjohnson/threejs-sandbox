@@ -213,7 +213,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		const uni = cm.uniforms;
 		uni.sourceBuffer.value = readBuffer.texture;
 		uni.depthBuffer.value = this._depthBuffer.texture;
-		uni.depthPyramid.value = [ this._depthBuffer, ...this._depthMipmaps ];
+		uni.depthPyramid.value = [ this._depthBuffer, ...this._depthMipmaps ].map( t => t.texture );
 		uni.backfaceDepthBuffer.value = this._backfaceDepthBuffer.texture;
 
 		if ( cm.defines.PYRAMID_DEPTH !== this._depthMipmaps.length + 1 ) {
@@ -633,12 +633,22 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					return sampleDepth(uv, 0);
 				}
 
+				bool doesIntersect(float rayzmax, float rayzmin, vec2 uv) {
+
+					float sceneZMax = texture2D(backfaceDepthBuffer, uv).r;
+					float sceneZMin = sampleDepth(uv);
+
+					return (rayzmax >= sceneZMax - thickness) && (rayzmin <= sceneZMin);
+					// return (rayzmin >= sceneZMin) && rayzmax <= sceneZMax - thickness;
+
+				}
+
 				float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
 				void swapIfBigger(inout float a, inout float b) {
 					if (a > b) {
 						float t = a;
 						a = b;
-						b = a;
+						b = t;
 					}
 				}
 				bool isOutsideUvBounds(float x) { return x < 0.0 || x > 1.0; }
@@ -729,20 +739,13 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						hitUV = (permute ? PQK.yx: PQK.xy) / resolution;
 						if (isOutsideUvBounds(hitUV)) break;
 
-						sceneZMax = sampleDepth(hitUV); //texture2D(depthBuffer, hitUV).r;
-						intersected = !(
-							// TODO: P0 is being used here when it SHOULD be PQK, but there are
-							// artifacts when zooming with PQK
-							((P0.x * stepDir) <= end)
-							&& ((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax))
-							// && (sceneZMax != 0.0)
-						);
+						intersected = doesIntersect(rayZMax, rayZMin, hitUV);
 
-						if (intersected) break;
+						if (intersected || (P0.x * stepDir) > end) break;
 					}
 
 					// Binary search
-					if (intersected && pixelStride > 1.0) {
+					if (false && intersected && pixelStride > 1.0) {
 
 						PQK -= dPQK;
 						dPQK /= stride;
@@ -754,17 +757,11 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 							rayZMin = prevZMaxEstimate;
 							rayZMax = (dPQK.z * 0.5 + PQK.z) / (dPQK.w * 0.5 + PQK.w);
-							prevZMaxEstimate = rayZMax;
 							swapIfBigger(rayZMin, rayZMax);
 
 							vec2 newUV = (permute ? PQK.yx: PQK.xy) / resolution;
-							sceneZMax = sampleDepth(newUV); //texture2D(depthBuffer, newUV).r;
-							bool didIntersect = !(
-								(rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax)
-							);
-
 							ogStride *= 0.5;
-							if (didIntersect) {
+							if (doesIntersect(rayZMax, rayZMin, newUV)) {
 								hitUV = newUV;
 								currStride = -ogStride;
 							} else {
