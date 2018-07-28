@@ -537,7 +537,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>
 
-					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, metalnessFactor);
 					gl_FragColor = vec4( normal.xyz * 0.5 + 0.5, roughnessFactor);
 				}
 			`
@@ -552,8 +551,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 			defines: {
 
-				MAX_STEPS: 20,
-				BINARY_SEARCH_ITERATIONS: 10,
+				MAX_STEPS: 10,
+				BINARY_SEARCH_ITERATIONS: 4,
 				PYRAMID_DEPTH: 1
 
 			},
@@ -567,7 +566,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
-				stride: { value: 20 },
+				stride: { value: 40 },
 				resolution: { value: new THREE.Vector2() },
 				thickness: { value: 0.01 },
 				jitter: { value: 1 },
@@ -613,12 +612,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 				vec3 UnpackNormal(vec4 d) {
 					return d.xyz * 2.0 - 1.0;
-
-					vec3 res = vec3(d.xy, 0.0);
-					res.xy *= 2.0;
-					res.xy -= vec2(1.0, 1.0);
-					res.z = sqrt(1.0 - res.x * res.x - res.y * res.y);
-					return res;
 				}
 
 				float sampleDepth(vec2 uv, int lod) {
@@ -641,8 +634,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float sceneZMax = texture2D(backfaceDepthBuffer, uv).r;
 					float sceneZMin = sampleDepth(uv);
 
-					return (rayzmax >= sceneZMax - thickness) && (rayzmin <= sceneZMin);
-					// return (rayzmin >= sceneZMin) && rayzmax <= sceneZMax - thickness;
+					return (rayzmin >= sceneZMax) && rayzmax <= sceneZMin - thickness;
 
 				}
 
@@ -656,6 +648,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						b = t;
 					}
 				}
+
 				bool isOutsideUvBounds(float x) { return x < 0.0 || x > 1.0; }
 				bool isOutsideUvBounds(vec2 uv) { return isOutsideUvBounds(uv.x) || isOutsideUvBounds(uv.y); }
 
@@ -721,7 +714,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 					// Variables for completion condition
 					float end = P1.x * stepDir;
-					float prevZMaxEstimate = csOrig.z;
+					float prevZMaxEstimate = PQK.z / PQK.w;
 					float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 					float sceneZMax = rayZMax + 100.0;
 
@@ -738,7 +731,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						rayZMin = prevZMaxEstimate;
 						rayZMax = (dPQK.z * 0.5 + PQK.z) / (dPQK.w * 0.5 + PQK.w);
 						prevZMaxEstimate = rayZMax;
-						swapIfBigger(rayZMin, rayZMax);
+
+						// "furter" is "more negative", so max should be further away,
+						// or the smaller number
+						swapIfBigger(rayZMax, rayZMin);
 
 						stepped = stepCount;
 						hitUV = (permute ? PQK.yx: PQK.xy) / resolution;
@@ -762,7 +758,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 							rayZMin = prevZMaxEstimate;
 							rayZMax = (dPQK.z * 0.5 + PQK.z) / (dPQK.w * 0.5 + PQK.w);
-							swapIfBigger(rayZMin, rayZMax);
+							prevZMaxEstimate = rayZMax;
+
+							swapIfBigger(rayZMax, rayZMin);
 
 							vec2 newUV = (permute ? PQK.yx: PQK.xy) / resolution;
 							ogStride *= 0.5;
