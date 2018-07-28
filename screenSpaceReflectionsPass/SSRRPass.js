@@ -12,10 +12,11 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this.enabled = true;
 	this.needsSwap = true;
 
-	// stride
-	// thickness
-	// fade
-	// scale
+	this.intensity = options.intensity || 0.5;
+	this.steps = options.steps || 10;
+	this.binarySearchSteps = options.binarySearchSteps || 4;
+	this.stride = options.stride || 30;
+	this.renderTargetScale = options.renderTargetScale || 0.5;
 
 	this.scene = scene;
 	this.camera = camera;
@@ -72,13 +73,11 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	setSize: function ( width, height ) {
 
-		width /= 2.0;
-		height /= 2.0;
+		width *= this.renderTargetScale;
+		height *= this.renderTargetScale;
 
-		var wp2 = THREE.Math.floorPowerOfTwo( width );
-		var hp2 = THREE.Math.floorPowerOfTwo( height );
-		this._depthBuffer.setSize( wp2, hp2 );
-		this._backfaceDepthBuffer.setSize( wp2, hp2 );
+		this._depthBuffer.setSize( width, height );
+		this._backfaceDepthBuffer.setSize( width, height );
 		this._packedBuffer.setSize( width, height );
 
 	},
@@ -86,7 +85,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
-		var prevClearColor = this._prevClearColor.copy( renderer.getClearColor() );
+		this._prevClearColor.copy( renderer.getClearColor() );
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = true;
@@ -94,6 +93,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 		var prevOverride = this.scene.overrideMaterial;
 
+		// Normal pass
 		this.scene.overrideMaterial = this.createPackedMaterial();
 		renderer.render( this.scene, this.camera, this._packedBuffer, true );
 
@@ -115,8 +115,26 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		uni.packedBuffer.value = this._packedBuffer.texture;
 		uni.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
 		uni.projMatrix.value.copy( this.camera.projectionMatrix );
-
 		uni.resolution.value.set( this._packedBuffer.width, this._packedBuffer.height );
+
+		uni.intensity.value = this.intensity;
+		uni.stride.value = this.stride;
+
+		if ( cm.defines.MAX_STEPS !== this.steps ) {
+
+			cm.defines.MAX_STEPS = Math.floor( this.steps );
+			cm.needsUpdate = true;
+
+		}
+
+		if ( cm.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
+
+			cm.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
+			cm.needsUpdate = true;
+
+		}
+
+
 
 		this._quad.material = this._compositeMaterial;
 		renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
@@ -284,7 +302,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>
 
-					gl_FragColor = vec4( normal.xyz * 0.5 + 0.5, roughnessFactor);
+					gl_FragColor = vec4(normal.xyz * 0.5 + 0.5, roughnessFactor);
 				}
 			`
 
@@ -312,6 +330,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
+				intensity: { value: 0.5 },
 				stride: { value: 20 },
 				resolution: { value: new THREE.Vector2() },
 				thickness: { value: 1 },
@@ -344,6 +363,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				uniform float stride;
 				uniform float jitter;
 				uniform float maxDistance;
+				uniform float intensity;
 
 				vec3 Deproject(vec3 p) {
 					vec4 res = invProjectionMatrix * vec4(p, 1);
@@ -515,7 +535,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 						// TODO: Add z fade towards camera
 
-						col.a = 0.5 * fadeVal;
+						col.a = intensity * fadeVal;
 						result = mix(result, col, col.a);
 					}
 

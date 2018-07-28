@@ -60,6 +60,11 @@
 			// globals
 			var stats;
 			var params = {
+				steps: 10,
+				binarySearchSteps: 4,
+				stride: 30,
+				intensity: 0.5,
+				renderTargetScale: 0.5
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -207,10 +212,23 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
-				// // dat gui
-				// var gui = new dat.GUI();
-				// gui.width = 300;
-				// gui.open();
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add(params, 'stride', 1, 60);
+				gui.add(params, 'steps', 2, 200);
+				gui.add(params, 'binarySearchSteps', 0, 20);
+				gui.add(params, 'intensity', 0, 1);
+				gui.add(params, 'renderTargetScale', 0.1, 1)
+					.onChange( v => {
+
+						ssrrPass.renderTargetScale = v;
+						onWindowResize();
+
+					} );
+
+				gui.open();
 
 			}
 
@@ -240,8 +258,13 @@
 
 			function render() {
 				camera.lookAt( scene.position );
-				composer.render();
 
+				ssrrPass.intensity = params.intensity;
+				ssrrPass.steps = params.steps;
+				ssrrPass.stride = params.stride;
+				ssrrPass.binarySearchSteps = params.binarySearchSteps;
+
+				composer.render();
 			}
 
 		</script>
