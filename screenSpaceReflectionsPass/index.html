@@ -103,17 +103,17 @@
 
 
 				// Lights
-				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.4 ) );
 
-				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				directionalLight.position.set( 50, 100, 50 );
+				directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				directionalLight.position.set( 30, 200, 230 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
-				shadowCam.left = shadowCam.bottom = -15;
-				shadowCam.right = shadowCam.top = 15;
-				directionalLight.shadow.mapSize.width = 1024;
-				directionalLight.shadow.mapSize.height = 1024;
+				shadowCam.left = shadowCam.bottom = -400;
+				shadowCam.right = shadowCam.top = 400;
+				directionalLight.shadow.mapSize.width = 2048;
+				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
 
@@ -126,6 +126,11 @@
 						o.position.y = -20;
 						o.rotation.set(0, Math.PI / 2, 0);
 						o.scale.multiplyScalar(30);
+
+						o.traverse(c => {
+							c.castShadow = true;
+							c.receiveShadow = true;
+						})
 						scene.add(o);
 					}
 				);
