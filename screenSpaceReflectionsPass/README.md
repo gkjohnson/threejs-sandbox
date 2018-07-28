@@ -16,4 +16,5 @@ _sponza scene from GLTF 2.0 example models_
 - Add controls
 - Improve the connected-ness of the reflections to the ground
 - Perform raytracing on a downscaled buffer instead of just rendering depth and normals to downscaled buffers
+- Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
 - Blur with mipmaps and step through depth pyramid a la http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
