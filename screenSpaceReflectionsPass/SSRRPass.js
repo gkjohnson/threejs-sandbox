@@ -538,6 +538,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					#include <dithering_fragment>
 
 					gl_FragColor = vec4( (normal.xy + vec2(1.0, 1.0)) * 0.5, roughnessFactor, metalnessFactor);
+					gl_FragColor = vec4( normal.xyz * 0.5 + 0.5, roughnessFactor);
 				}
 			`
 
@@ -611,6 +612,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				}
 
 				vec3 UnpackNormal(vec4 d) {
+					return d.xyz * 2.0 - 1.0;
+
 					vec3 res = vec3(d.xy, 0.0);
 					res.xy *= 2.0;
 					res.xy -= vec2(1.0, 1.0);
@@ -644,6 +647,8 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				}
 
 				float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
+
+				// NOTE: "further" is actually "more negative"
 				void swapIfBigger(inout float a, inout float b) {
 					if (a > b) {
 						float t = a;
@@ -745,14 +750,14 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					}
 
 					// Binary search
-					if (false && intersected && pixelStride > 1.0) {
+					if (intersected && pixelStride > 1.0) {
 
 						PQK -= dPQK;
 						dPQK /= stride;
 						float ogStride = pixelStride * 0.5;
 						float currStride = pixelStride;
 
-						for(int j = 0; j < int(0); j ++) {
+						for(int j = 0; j < int(BINARY_SEARCH_ITERATIONS); j ++) {
 							PQK += dPQK * currStride;
 
 							rayZMin = prevZMaxEstimate;
