@@ -5,6 +5,8 @@ A rough screen space reflections implementation based on [Morgan McGuire's scree
 
 [![](./docs/example.png)](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
+_sponza scene from GLTF 2.0 example models_
+
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
 ## TODO
@@ -13,3 +15,4 @@ A rough screen space reflections implementation based on [Morgan McGuire's scree
 - Add z fade
 - Add controls
 - Improve the connected-ness of the reflections to the ground
+- Blur with mipmaps and step through depth pyramid a la http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
