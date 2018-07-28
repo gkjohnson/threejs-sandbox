@@ -1,7 +1,9 @@
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
  *
- *  Approach from http://jcgt.org/published/0003/04/04/paper.pdf
+ * Approach from
+ * http://jcgt.org/published/0003/04/04/paper.pdf
+ * https://github.com/kode80/kode80SSR
  */
 THREE.SSRRPass = function ( scene, camera, options = {} ) {
 
@@ -10,27 +12,22 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this.enabled = true;
 	this.needsSwap = true;
 
+	// stride
 	// thickness
-	// jitter
 	// fade
 	// scale
 
 	this.scene = scene;
 	this.camera = camera;
 
-	this.debug = {
-
-		display: THREE.SSRRPass.DEFAULT,
-		dontUpdateState: false
-
-	};
+	this._prevClearColor = new THREE.Color();
 
 	// render targets
 	this._depthBuffer =
 		new THREE.WebGLRenderTarget( 256, 256, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
-			format: THREE.RGBFormat,
+			format: THREE.RGBAFormat,
 			type: THREE.FloatType
 		} );
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
@@ -38,6 +35,7 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this._depthMaterial = this.createLinearDepthMaterial();
 
 	this._backfaceDepthBuffer = this._depthBuffer.clone();
+	this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
 	this._backfaceDepthMaterial = this.createLinearDepthMaterial();
 	this._backfaceDepthMaterial.side = THREE.BackSide;
 
@@ -50,8 +48,6 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 		} );
 	this._packedBuffer.texture.name = "SSRRPass.Packed";
 	this._packedBuffer.texture.generateMipmaps = false;
-	this._packedMaterialPool = [];
-	this._nextMaterialIndex = 0;
 
 	this._compositeCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 	this._compositeScene = new THREE.Scene();
@@ -76,6 +72,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	setSize: function ( width, height ) {
 
+		width /= 2.0;
+		height /= 2.0;
+
 		var wp2 = THREE.Math.floorPowerOfTwo( width );
 		var hp2 = THREE.Math.floorPowerOfTwo( height );
 		this._depthBuffer.setSize( wp2, hp2 );
@@ -84,47 +83,10 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	},
 
-	getNormalMaterial: function ( m ) {
-
-		if ( this._nextMaterialIndex >= this._packedMaterialPool.length ) {
-
-			this._packedMaterialPool.push( this.createPackedMaterial() );
-
-		}
-		var nmat = this._packedMaterialPool[ this._nextMaterialIndex ];
-
-		// setup
-		nmat.uniforms.roughnessMap.value = m.roughnessMap || null;
-		nmat.uniforms.roughness.value = m.roughness || 0;
-
-		nmat.uniforms.metalnessMap.value = m.metalnessMap || null;
-		nmat.uniforms.metalness.value = m.metalness || 0;
-
-		nmat.uniforms.normalMap.value = m.normalMap || null;
-
-		nmat.uniforms.skinning = m.skinning || false;
-
-		this._nextMaterialIndex ++;
-		return nmat;
-
-	},
-
-	resetMaterialPool: function () {
-
-		while ( this._packedMaterialPool.length > this._nextMaterialIndex ) {
-
-			this._packedMaterialPool.pop().dispose();
-
-		}
-
-		this._nextMaterialIndex = 0;
-
-	},
-
 	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
-		var prevClearColor = renderer.getClearColor().clone();
+		var prevClearColor = this._prevClearColor.copy( renderer.getClearColor() );
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = true;
@@ -159,7 +121,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		this._quad.material = this._compositeMaterial;
 		renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
 
-		this.resetMaterialPool();
+		// Restore renderer settings
+		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
+		renderer.autoClear = prevAutoClear;
 
 	},
 
@@ -442,7 +406,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
-				stride: { value: 30 },
+				stride: { value: 20 },
 				resolution: { value: new THREE.Vector2() },
 				thickness: { value: 1 },
 				jitter: { value: 1 },
@@ -494,7 +458,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float sceneZMax = texture2D(backfaceDepthBuffer, uv).r;
 					float sceneZMin = texture2D(depthBuffer, uv).r;
 
-					return rayzmin >= sceneZMax - thickness && rayzmax <= sceneZMin;
+					return rayzmin >= sceneZMax && rayzmax <= sceneZMin;
 
 				}
 
@@ -569,7 +533,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					vec4 PQK = vec4(P0, Q0.z, k0);
 					vec4 dPQK = vec4(dP, dQ.z, dk);
 					dPQK *= pixelStride;
-					PQK -= dPQK * mod(jitterMod, 1.0) * jitter;
+					PQK += dPQK * mod(jitterMod, 1.0) * jitter;
 
 					// Variables for completion condition
 					float end = P1.x * stepDir;
@@ -659,10 +623,3 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 	}
 
 } );
-
-THREE.SSRRPass.DEFAULT = 0;
-THREE.SSRRPass.NORMAL = 1;
-THREE.SSRRPass.DEPTH = 2;
-THREE.SSRRPass.ROUGHNESS = 3;
-THREE.SSRRPass.METALNESS = 4;
-THREE.SSRRPass.REFLECTION = 5;

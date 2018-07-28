@@ -7,3 +7,4 @@ A rough screen space reflections implementation based on [Morgan McGuire's scree
 - Support animations, normal, and roughness maps
 - Add z fade
 - Add controls
+- Improve the connected-ness of the reflections to the ground
