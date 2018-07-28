@@ -186,56 +186,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	},
 
-	createCustomDepthDownsample() {
-
-		return new THREE.ShaderMaterial( {
-
-			uniforms: {
-
-				sourceBuffer: { value: null },
-				resolution: { value: new THREE.Vector2() }
-
-			},
-
-			vertexShader: `
-				varying vec2 vUv;
-				void main() {
-					vUv = uv;
-					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-				}
-			`,
-
-			fragmentShader: `
-				uniform sampler2D sourceBuffer;
-				uniform vec2 resolution;
-				varying vec2 vUv;
-				void main() {
-
-					vec2 uv = vUv - 1e-7;
-					vec2 texel = uv * resolution;
-					vec2 clampedTexel = floor( texel / 2.0 ) * 2.0 + 1.0;
-					vec2 cuv = clampedTexel / resolution;
-					vec2 offset = 1.0 / resolution;
-
-					gl_FragColor = vec4(min(
-						min(
-							texture2D(sourceBuffer, cuv + vec2(0.5, 0.5) * offset),
-							texture2D(sourceBuffer, cuv + vec2(0.5, -0.5) * offset)
-						), min(
-							texture2D(sourceBuffer, cuv + vec2(-0.5, 0.5) * offset),
-							texture2D(sourceBuffer, cuv + vec2(-0.5, -0.5) * offset)
-						)
-					));
-
-				}
-
-			`
-
-		} );
-
-
-	},
-
 	createLinearDepthMaterial: function () {
 
 		return new THREE.ShaderMaterial( {
@@ -515,7 +465,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				invProjectionMatrix: { value: new THREE.Matrix4() },
 				projMatrix: { value: new THREE.Matrix4() },
 
-				stride: { value: 40 },
+				stride: { value: 30 },
 				resolution: { value: new THREE.Vector2() },
 				thickness: { value: 0.01 },
 				jitter: { value: 1 },
@@ -649,10 +599,6 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 					float end = P1.x * stepDir;
 					float prevZMaxEstimate = PQK.z / PQK.w;
 					float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
-					float sceneZMax = rayZMax + 100.0;
-
-					float maxSteps = float(MAX_STEPS);
-					float zThickness = thickness;
 					float stepped = 0.0;
 
 					vec2 hitUV;
@@ -685,6 +631,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 						dPQK /= stride;
 						float ogStride = pixelStride * 0.5;
 						float currStride = pixelStride;
+
+						prevZMaxEstimate = PQK.z / PQK.w;
+						rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 
 						for(int j = 0; j < int(BINARY_SEARCH_ITERATIONS); j ++) {
 							PQK += dPQK * currStride;
