@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r95/build/three.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r95/examples/js/BufferGeometryUtils.js"></script>
+    <script type="text/javascript" src="./mergeVertices.js"></script>
+</head>
+<body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #output {
+            position: absolute;
+            width: 100%;
+            color: white;
+            text-align: center;
+            font-family: sans-serif;
+            padding: 10px;
+        }
+
+    </style>
+
+    <div id="output"><h3>Animated Geometry vs Animated BufferGeometry<h3></div>
+
+    <script>
+
+        const outputel = document.getElementById( 'output' );
+        function addOutput( s ) {
+
+ 			outputel.innerHTML += `<br>${ s }`;
+
+        }
+
+		// Initialize Scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 2000 );
+        camera.position.set( 0, 3, 6.5 );
+        camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+        const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
+        scene.add( ambientLight );
+
+        const directionalLight = new THREE.DirectionalLight();
+        directionalLight.position.set( 10, 10, 0 );
+        scene.add( directionalLight );
+
+        const renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setClearColor( 0xFF3D00 );
+        document.body.appendChild( renderer.domElement );
+
+		let buffMixer = null;
+		let geomMixer = null;
+		const loader = new THREE.JSONLoader();
+		loader.load( 'https://rawgit.com/mrdoob/three.js/r95/examples/models/animated/sittingBox.js', function( geometry ) {
+
+			var morphMaterial = new THREE.MeshPhongMaterial( {
+				color: 0x333333,
+				shininess: 50,
+				morphTargets: true,
+				side: THREE.DoubleSide,
+				flatShading: true
+			} );
+
+			// Regular Geometry
+			var mesh = new THREE.Mesh( geometry, morphMaterial );
+			geomMixer = new THREE.AnimationMixer( mesh );
+			geomMixer.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
+			mesh.scale.set( 3, 3, 3 );
+			mesh.position.x = -2;
+			mesh.position.y = -1;
+			scene.add( mesh );
+			console.log( 'geometry', geometry );
+
+
+			// Buffer Geometry
+			var bufferGeometry = new THREE.BufferGeometry();
+			bufferGeometry.fromGeometry( geometry );
+			bufferGeometry.removeAttribute( 'normal' );
+			if ( geometry.colors.length === 0 ) bufferGeometry.removeAttribute( 'color' );
+
+			var bmesh = new THREE.Mesh( bufferGeometry, morphMaterial.clone() );
+			buffMixer = new THREE.AnimationMixer( bmesh );
+			buffMixer.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
+			bmesh.scale.set( 3, 3, 3 );
+			bmesh.position.x = 2;
+			bmesh.position.y = -1;
+			scene.add( bmesh );
+			console.log( 'bufferGeometry', bufferGeometry );
+
+		} );
+
+        window.addEventListener( 'resize', () => {
+
+        	camera.aspect = window.innerWidth / window.innerHeight;
+        	camera.updateProjectionMatrix();
+        	renderer.setSize( window.innerWidth, window.innerHeight );
+
+        } );
+
+		const clock = new THREE.Clock();
+        ( function renderLoop() {
+
+			const delta = clock.getDelta();
+			if ( buffMixer ) buffMixer.update( delta );
+			if ( geomMixer ) geomMixer.update( delta );
+
+        	renderer.render( scene, camera );
+        	requestAnimationFrame( renderLoop );
+
+        } )();
+
+    </script>
+</body>
+</html>

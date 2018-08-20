@@ -163,7 +163,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 				var newMorphArrays = null;
 				if ( morphAttr.length ) {
 
-					newMorphArrays = new Array( morphAttr.length ).map( () => [] );
+					newMorphArrays = new Array( morphAttr.length ).fill().map( () => [] );
 					morphAttrsArrays[ name ] = newMorphArrays;
 
 				}
