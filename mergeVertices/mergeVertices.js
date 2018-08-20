@@ -112,6 +112,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 	// attributes and new attribute arrays
 	var attributeNames = Object.keys( this.attributes );
 	var attrArrays = {};
+	var morphAttrsArrays = {};
 	var newIndices = [];
 	var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
 
@@ -152,13 +153,31 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 				var name = attributeNames[ j ];
 				var attribute = this.getAttribute( name );
+				var morphAttr = this.morphAttributes[ name ] || [];
 				var itemSize = attribute.itemSize;
 
 				attrArrays[ name ] = attrArrays[ name ] || [];
 				var newarray = attrArrays[ name ];
+
+				// If there's an array of morph attributes then initialize them here
+				var newMorphArrays = null;
+				if ( morphAttr.length ) {
+
+					newMorphArrays = new Array( morphAttr.length ).map( () => [] );
+					morphAttrsArrays[ name ] = newMorphArrays;
+
+				}
+
 				for ( var k = 0; k < itemSize; k ++ ) {
 
-					newarray.push( attribute[ getters[ k ] ]( index ) );
+					var getterFunc = getters[ k ];
+					newarray.push( attribute[ getterFunc ]( index ) );
+
+					for ( var m = 0, ml = morphAttr.length; m < ml; m ++ ) {
+
+						newMorphArrays[ m ].push( morphAttr[ m ][ getterFunc ]( index ) );
+
+					}
 
 				}
 
@@ -193,6 +212,18 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 		}
 
 		this.addAttribute( name, attribute );
+
+		if ( name in morphAttrsArrays ) {
+
+			for ( var j = 0; j < morphAttrsArrays[ name ].length; j ++ ) {
+
+				var morphAttribute = this.morphAttributes[ name ][ j ].clone();
+				morphAttribute.setArray( new morphAttribute.array.constructor( morphAttrsArrays[ name ][ j ] ) );
+				this.morphAttributes[ name ][ j ] = morphAttribute;
+
+			}
+
+		}
 
 	}
 
