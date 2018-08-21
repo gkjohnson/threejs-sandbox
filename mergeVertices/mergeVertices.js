@@ -116,6 +116,21 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 	var newIndices = [];
 	var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
 
+	// initialize the arrays
+	for ( var name of attributeNames ) {
+
+		attrArrays[ name ] = [];
+
+		var morphAttr = this.morphAttributes[ name ];
+		if ( morphAttr ) {
+
+			morphAttrsArrays[ name ] = new Array( morphAttr.length ).fill().map( () => [] );
+
+		}
+
+	}
+
+
 	// convert the error tolerance to an amount of decimal places to truncate to
 	var decimalShift = Math.log10( 1 / tolerance );
 	var shiftMultiplier = Math.pow( 10, decimalShift );
@@ -153,29 +168,23 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 				var name = attributeNames[ j ];
 				var attribute = this.getAttribute( name );
-				var morphAttr = this.morphAttributes[ name ] || [];
+				var morphAttr = this.morphAttributes[ name ];
 				var itemSize = attribute.itemSize;
-
-				attrArrays[ name ] = attrArrays[ name ] || [];
 				var newarray = attrArrays[ name ];
-
-				// If there's an array of morph attributes then initialize them here
-				var newMorphArrays = null;
-				if ( morphAttr.length ) {
-
-					newMorphArrays = new Array( morphAttr.length ).fill().map( () => [] );
-					morphAttrsArrays[ name ] = newMorphArrays;
-
-				}
+				var newMorphArrays = morphAttrsArrays[ name ];
 
 				for ( var k = 0; k < itemSize; k ++ ) {
 
 					var getterFunc = getters[ k ];
 					newarray.push( attribute[ getterFunc ]( index ) );
 
-					for ( var m = 0, ml = morphAttr.length; m < ml; m ++ ) {
+					if ( morphAttr ) {
 
-						newMorphArrays[ m ].push( morphAttr[ m ][ getterFunc ]( index ) );
+						for ( var m = 0, ml = morphAttr.length; m < ml; m ++ ) {
+
+							newMorphArrays[ m ].push( morphAttr[ m ][ getterFunc ]( index ) );
+
+						}
 
 					}
 
@@ -213,6 +222,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 		this.addAttribute( name, attribute );
 
+		// Update the attribute arrays
 		if ( name in morphAttrsArrays ) {
 
 			for ( var j = 0; j < morphAttrsArrays[ name ].length; j ++ ) {
