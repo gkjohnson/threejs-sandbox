@@ -26,7 +26,7 @@
 
     </style>
 
-    <div id="output"><h3>Animated Geometry vs Animated BufferGeometry<h3></div>
+    <div id="output"><h3>Animated BufferGeometry vs Merged Animated BufferGeometry</h3></div>
 
     <script>
 
@@ -56,8 +56,8 @@
         renderer.setClearColor( 0xFF3D00 );
         document.body.appendChild( renderer.domElement );
 
-		let buffMixer = null;
-		let geomMixer = null;
+		let mixer1 = null;
+		let mixer2 = null;
 		const loader = new THREE.JSONLoader();
 		loader.load( 'https://rawgit.com/mrdoob/three.js/r95/examples/models/animated/sittingBox.js', function( geometry ) {
 
@@ -71,13 +71,13 @@
 
 			// Regular Geometry
 			var mesh = new THREE.Mesh( geometry, morphMaterial );
-			geomMixer = new THREE.AnimationMixer( mesh );
-			geomMixer.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
-			mesh.scale.set( 3, 3, 3 );
-			mesh.position.x = -2;
-			mesh.position.y = -1;
-			scene.add( mesh );
-			console.log( 'geometry', geometry );
+			// mixer2 = new THREE.AnimationMixer( mesh );
+			// mixer2.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
+			// mesh.scale.set( 3, 3, 3 );
+			// mesh.position.x = -2;
+			// mesh.position.y = -1;
+			// scene.add( mesh );
+			// console.log( 'geometry', geometry );
 
 
 			// Buffer Geometry
@@ -87,13 +87,54 @@
 			if ( geometry.colors.length === 0 ) bufferGeometry.removeAttribute( 'color' );
 
 			var bmesh = new THREE.Mesh( bufferGeometry, morphMaterial.clone() );
-			buffMixer = new THREE.AnimationMixer( bmesh );
-			buffMixer.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
+
+			// conversion hack so the animations work
+			bmesh.morphTargetDictionary = mesh.morphTargetDictionary;
+			for ( var key in bmesh.morphTargetDictionary ) {
+				var index = bmesh.morphTargetDictionary[key];
+				bmesh.geometry.morphAttributes.position[+index].name = key;
+			}
+
+			mixer1 = new THREE.AnimationMixer( bmesh );
+			mixer1.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
 			bmesh.scale.set( 3, 3, 3 );
-			bmesh.position.x = 2;
+			bmesh.position.x = -2;
 			bmesh.position.y = -1;
 			scene.add( bmesh );
 			console.log( 'bufferGeometry', bufferGeometry );
+
+			// Merged Geometry
+			var bufferGeometry2 = new THREE.BufferGeometry();
+			bufferGeometry2.fromGeometry( geometry );
+			bufferGeometry2.removeAttribute( 'normal' );
+			if ( geometry.colors.length === 0 ) bufferGeometry2.removeAttribute( 'color' );
+
+			var mmesh = new THREE.Mesh( bufferGeometry2, morphMaterial.clone() );
+			// conversion hack so the animations work
+			mmesh.morphTargetDictionary = mesh.morphTargetDictionary;
+			for ( var key in mmesh.morphTargetDictionary ) {
+				var index = mmesh.morphTargetDictionary[key];
+				mmesh.geometry.morphAttributes.position[+index].name = key;
+			}
+
+			mixer2 = new THREE.AnimationMixer( mmesh );
+			mixer2.clipAction( geometry.animations[0] ).setDuration( 10 ).play();
+			mmesh.scale.set( 3, 3, 3 );
+			mmesh.position.x = 2;
+			mmesh.position.y = -1;
+			mmesh.geometry.mergeVertices();
+
+			scene.add( mmesh );
+			console.log( 'merged bufferGeometry', bufferGeometry2 );
+
+			addOutput( `${ bufferGeometry.attributes.position.count } vs ${ bufferGeometry2.attributes.position.count } position attribute length` );
+
+			const bg = bufferGeometry.morphAttributes.position.filter( a => a.count !== bufferGeometry.attributes.position.count ).length === 0;
+			if ( bg ) addOutput( 'Morph targets are the same length as position originally' );
+
+			const bg2 = bufferGeometry2.morphAttributes.position.filter( a => a.count !== bufferGeometry2.attributes.position.count ).length === 0;
+			if ( bg2 ) addOutput( 'Morph targets are the same length as position after' );
+
 
 		} );
 
@@ -109,8 +150,8 @@
         ( function renderLoop() {
 
 			const delta = clock.getDelta();
-			if ( buffMixer ) buffMixer.update( delta );
-			if ( geomMixer ) geomMixer.update( delta );
+			if ( mixer1 ) mixer1.update( delta );
+			if ( mixer2 ) mixer2.update( delta );
 
         	renderer.render( scene, camera );
         	requestAnimationFrame( renderLoop );
