@@ -26,6 +26,7 @@ The intensity of the reflection.
 The per
 
 ## TODO / Issues
+- Reflections can make a surface appear _darker_, which is incorrect
 - Add blur based on roughness
 - Support animations, normal, and roughness maps
 - Add z fade
