@@ -122,7 +122,8 @@
 			mmesh.scale.set( 3, 3, 3 );
 			mmesh.position.x = 2;
 			mmesh.position.y = -1;
-			mmesh.geometry.mergeVertices();
+			mmesh.geometry = THREE.BufferGeometryUtils.mergeVertices( mmesh.geometry );
+			bufferGeometry2 = mmesh.geometry;
 
 			scene.add( mmesh );
 			console.log( 'merged bufferGeometry', bufferGeometry2 );

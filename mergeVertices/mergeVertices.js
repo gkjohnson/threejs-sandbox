@@ -95,22 +95,22 @@ THREE.InterleavedBufferAttribute.prototype.clone = function () {
 
 };
 
-THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
+THREE.BufferGeometryUtils.mergeVertices = function ( geometry, tolerance = 1e-4 ) {
 
 	tolerance = Math.max( tolerance, Number.EPSILON );
 
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
 	var hashToIndex = {};
-	var indices = this.getIndex();
-	var positions = this.getAttribute( 'position' );
+	var indices = geometry.getIndex();
+	var positions = geometry.getAttribute( 'position' );
 	var vertexCount = indices ? indices.count : positions.count;
 
 	// next value for triangle indices
 	var nextIndex = 0;
 
 	// attributes and new attribute arrays
-	var attributeNames = Object.keys( this.attributes );
+	var attributeNames = Object.keys( geometry.attributes );
 	var attrArrays = {};
 	var morphAttrsArrays = {};
 	var newIndices = [];
@@ -121,7 +121,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 		attrArrays[ name ] = [];
 
-		var morphAttr = this.morphAttributes[ name ];
+		var morphAttr = geometry.morphAttributes[ name ];
 		if ( morphAttr ) {
 
 			morphAttrsArrays[ name ] = new Array( morphAttr.length ).fill().map( () => [] );
@@ -129,7 +129,6 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 		}
 
 	}
-
 
 	// convert the error tolerance to an amount of decimal places to truncate to
 	var decimalShift = Math.log10( 1 / tolerance );
@@ -143,7 +142,7 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 		for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
 
 			var name = attributeNames[ j ];
-			var attribute = this.getAttribute( name );
+			var attribute = geometry.getAttribute( name );
 			var itemSize = attribute.itemSize;
 
 			for ( var k = 0; k < itemSize; k ++ ) {
@@ -167,8 +166,8 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 			for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
 
 				var name = attributeNames[ j ];
-				var attribute = this.getAttribute( name );
-				var morphAttr = this.morphAttributes[ name ];
+				var attribute = geometry.getAttribute( name );
+				var morphAttr = geometry.morphAttributes[ name ];
 				var itemSize = attribute.itemSize;
 				var newarray = attrArrays[ name ];
 				var newMorphArrays = morphAttrsArrays[ name ];
@@ -202,34 +201,35 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 	// Generate typed arrays from new attribute arrays and update
 	// the attributeBuffers
+	const result = geometry.clone();
 	for ( var i = 0, l = attributeNames.length; i < l; i ++ ) {
 
 		var name = attributeNames[ i ];
-		var oldAttribute = this.getAttribute( name );
+		var oldAttribute = geometry.getAttribute( name );
 		var attribute;
 
-		var buffer = new attribute.array.constructor( attrArrays[ name ] );
+		var buffer = new oldAttribute.array.constructor( attrArrays[ name ] );
 		if ( oldAttribute.isInterleavedBufferAttribute ) {
 
 			attribute = new THREE.BufferAttribute( buffer, oldAttribute.itemSize, oldAttribute.itemSize );
 
 		} else {
 
-			attribute = this.getAttribute( name ).clone();
+			attribute = geometry.getAttribute( name ).clone();
 			attribute.setArray( buffer );
 
 		}
 
-		this.addAttribute( name, attribute );
+		result.addAttribute( name, attribute );
 
 		// Update the attribute arrays
 		if ( name in morphAttrsArrays ) {
 
 			for ( var j = 0; j < morphAttrsArrays[ name ].length; j ++ ) {
 
-				var morphAttribute = this.morphAttributes[ name ][ j ].clone();
+				var morphAttribute = geometry.morphAttributes[ name ][ j ].clone();
 				morphAttribute.setArray( new morphAttribute.array.constructor( morphAttrsArrays[ name ][ j ] ) );
-				this.morphAttributes[ name ][ j ] = morphAttribute;
+				result.morphAttributes[ name ][ j ] = morphAttribute;
 
 			}
 
@@ -250,13 +250,13 @@ THREE.BufferGeometry.prototype.mergeVertices = function ( tolerance = 1e-4 ) {
 
 	} else {
 
-		newIndices = this.getIndex().clone();
+		newIndices = geometry.getIndex().clone();
 		newIndices.setArray( newIndexBuffer );
 
 	}
 
-	this.setIndex( newIndices );
+	result.setIndex( newIndices );
 
-	return this;
+	return result;
 
 };

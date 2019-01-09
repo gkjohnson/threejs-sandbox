@@ -84,15 +84,15 @@
         const bgeom = geom.clone();
         const bmesh = new THREE.Mesh( bgeom, materials );
 
-        const origmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
+        const origmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bmesh.geometry ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
 
         starttime = performance.now();
-        bgeom.mergeVertices();
+        bmesh.geometry = THREE.BufferGeometryUtils.mergeVertices( bmesh.geometry );
 
-        const finalmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bgeom ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
+        const finalmem = `${ ( THREE.BufferGeometryUtils.estimateBytesUsed( bmesh.geometry ) / Math.pow( 10, 6 ) ).toFixed( 2 ) }mb`;
         addOutput( `Optimized from ${ origmem } to ${ finalmem } in ${ ~ ~ ( performance.now() - starttime ) }ms` );
 
-		bgeom.mergeVertices();
+        bmesh.geometry = THREE.BufferGeometryUtils.mergeVertices( bmesh.geometry );
 
         bmesh.position.x = 0;
         scene.add( bmesh );
@@ -109,8 +109,8 @@
         const ilgeom = geom.clone();
         const ilmesh = new THREE.Mesh( ilgeom, materials );
 
-        ilgeom.mergeVertices();
-        ilgeom.mergeVertices();
+        ilmesh.geometry = THREE.BufferGeometryUtils.mergeVertices( ilmesh.geometry );
+        ilmesh.geometry = THREE.BufferGeometryUtils.mergeVertices( ilmesh.geometry );
 
         ilmesh.position.x = 2;
         scene.add( ilmesh );
