@@ -6,7 +6,7 @@ A hacked in implementation of [NVidia's Percentage Closer Soft Shadows](http://d
 
 [Demo Here!](https://gkjohnson.github.io/threejs-sandbox/pcss/index.html)
 
-### Possible Improvments
+### Possible Improvements
 - Cleanly implement so it can be reused / used in multiple lights (area lights cannot cast shadows at the moment, though)
 - Afford control over PCF and blocker sample counts
 - Optimize the blocker search by using a depth mip map pyramid
