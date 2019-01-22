@@ -50,14 +50,23 @@
 			var stats;
 			var params = {
 				useShadowVolumes: true,
-				showVolume: false,
-				usePointLight: true,
-				speed: 1.0,
-				animationSpeed: 1.0,
-				lightDistance: 15.0,
-				shadowDistance: 100,
-				shadowBias: 0.01,
-				display: 0
+
+				light: {
+					speed: 1.0,
+					distance: 15.0,
+					pointLight: true,
+				},
+
+				shadows: {
+					showVolume: false,
+					distance: 400,
+					bias: 0.01,
+				},
+
+				object: {
+					display: 0,
+					speed: 1.0,
+				}
 			};
 			var camera, scene, renderer, controls;
 			var ground, shadowVolumes = [], visibleShadowVolumes = [];
@@ -115,7 +124,7 @@
 			function initGeometry() {
 
 				var torusMaterial = new THREE.MeshStandardMaterial( {
-					color: 0xf42222,
+					color: 0xff1111,
 					metalness: 0.5,
 					roughness: 0.1
 				} );
@@ -165,8 +174,6 @@
 
 				directionalLight = new THREE.DirectionalLight();
 				directionalLight.castShadow = true;
- 				// directionalLight.shadow.mapSize.width = 1024;
-				// directionalLight.shadow.mapSize.height = 1024;
 
 				var dlShadowCam = directionalLight.shadow.camera;
 				dlShadowCam.left = dlShadowCam.bottom = -15;
@@ -175,14 +182,10 @@
 
 				pointLight = new THREE.PointLight();
 				pointLight.castShadow = true;
- 				// pointLight.shadow.mapSize.width = 1024;
-				// pointLight.shadow.mapSize.height = 1024;
 				scene.add( pointLight );
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
-
-
 
 				lightSphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.25, 10, 10 ), new THREE.MeshBasicMaterial( { color: 0x90A4AE } ) );
 				scene.add( lightSphere );
@@ -193,7 +196,7 @@
 					metalness: 0.1,
 					roughness: 0.75,
 				} );
-				var plane = new THREE.BoxBufferGeometry();
+				var plane = new THREE.BoxBufferGeometry( 3, 1, 3 );
 				ground = new THREE.Mesh( plane, groundMaterial );
 				ground.scale.multiplyScalar( 50 );
 				ground.position.y += 10;
@@ -216,14 +219,23 @@
 				gui.width = 300;
 
 				gui.add(params, 'useShadowVolumes');
-				gui.add(params, 'showVolume');
-				gui.add(params, 'usePointLight');
-				gui.add(params, 'lightDistance', 0, 30);
-				gui.add(params, 'speed', 0, 2);
-				gui.add(params, 'animationSpeed', 0, 2.0);
-				gui.add(params, 'shadowDistance', 0, 200);
-				gui.add(params, 'shadowBias', -0.01, 0.01);
-				gui.add(params, 'display', { 'Torus': 0, 'Dancer': 1 });
+
+				var lightFolder = gui.addFolder( 'light' );
+				lightFolder.add(params.light, 'pointLight');
+				lightFolder.add(params.light, 'speed', 0, 2);
+				lightFolder.add(params.light, 'distance', 0, 30);
+				lightFolder.open();
+
+				var shadowFolder = gui.addFolder( 'shadow' );
+				shadowFolder.add(params.shadows, 'showVolume');
+				shadowFolder.add(params.shadows, 'distance', 0, 600);
+				shadowFolder.add(params.shadows, 'bias',-0.05, 0.05);
+				shadowFolder.open();
+
+				var objectFolder = gui.addFolder( 'object' );
+				objectFolder.add(params.object, 'speed', 0, 2.0);
+				objectFolder.add(params.object, 'display', { 'Torus': 0, 'Dancer': 1 });
+				objectFolder.open();
 				gui.open();
 
 			}
@@ -252,37 +264,37 @@
 			function render() {
 
 				const delta = window.performance.now() - lastTime;
-				time += delta * 0.001 * params.speed;
+				time += delta * 0.001 * params.light.speed;
 				lastTime = window.performance.now();
 
-				directionalLight.visible = !params.usePointLight;
+				directionalLight.visible = !params.light.pointLight;
 				directionalLight.castShadow = !params.useShadowVolumes;
 
-				pointLight.visible = params.usePointLight;
+				pointLight.visible = params.light.pointLight;
 				pointLight.castShadow = !params.useShadowVolumes;
 
-				directionalLight.position.x = Math.sin( time ) * params.lightDistance;
-				directionalLight.position.z = Math.cos( time ) * params.lightDistance;
-				directionalLight.position.y = params.lightDistance;
+				directionalLight.position.x = Math.sin( time ) * params.light.distance;
+				directionalLight.position.z = Math.cos( time ) * params.light.distance;
+				directionalLight.position.y = params.light.distance;
 				pointLight.position.copy( directionalLight.position );
 				lightSphere.position.copy( directionalLight.position );
 
 				shadowVolumes.forEach( c => {
 
-					c.visible = !params.showVolume && params.useShadowVolumes;
-					c.setLight( params.usePointLight ? pointLight : directionalLight );
-					c.setShadowDistance( params.shadowDistance );
-					c.setShadowBias( params.shadowBias );
+					c.visible = !params.shadows.showVolume && params.useShadowVolumes;
+					c.setLight( params.light.pointLight ? pointLight : directionalLight );
+					c.setShadowDistance( params.shadows.distance );
+					c.setShadowBias( params.shadows.bias );
 
 				} );
 
 				visibleShadowVolumes.forEach(c => {
 
-					c.material.setLight( params.usePointLight ? pointLight : directionalLight );
-					c.material.setShadowDistance( params.shadowDistance );
-					c.material.setShadowBias( params.shadowBias );
+					c.material.setLight( params.light.pointLight ? pointLight : directionalLight );
+					c.material.setShadowDistance( params.shadows.distance );
+					c.material.setShadowBias( params.shadows.bias );
 
-					c.visible = params.showVolume;
+					c.visible = params.shadows.showVolume;
 					c.scale.copy( c.__ogMesh.scale );
 					c.rotation.copy( c.__ogMesh.rotation );
 					c.position.copy( c.__ogMesh.position );
@@ -291,9 +303,9 @@
 
 				displayOptions.forEach( c => {
 					c.visible = false;
-					c.update && c.update( delta * 0.001 * params.animationSpeed );
+					c.update && c.update( delta * 0.001 * params.object.speed );
 				} );
-				displayOptions[ params.display ].visible = true;
+				displayOptions[ params.object.display ].visible = true;
 
 				controls.update();
 				renderer.render( scene, camera );
