@@ -175,6 +175,10 @@ function shadowVolumeShaderMixin( shader ) {
 					projVec.w = 0.0;
 					projVec = -projVec;
 
+					#ifdef FLIP_SIDED
+						transformedNormal *= -1.0;
+					#endif
+
 					float facing = dot(projVec.xyz, transformedNormal);
 					float dist = step(0.0, facing) * shadowDistance + shadowBias;
 					mvPosition.xyz += dist * projVec.xyz;
@@ -219,6 +223,7 @@ function constructVolume( geometry, renderer ) {
 	const stencilBuffer = renderer.state.buffers.stencil;
 	const gl = renderer.context;
 
+	// Materials
 	const tintMaterial = getShadowVolumeMaterial();
 	tintMaterial.depthWrite = false;
 	tintMaterial.depthTest = false;
@@ -227,16 +232,19 @@ function constructVolume( geometry, renderer ) {
 	tintMaterial.uniforms.opacity.value = 0.25;
 	tintMaterial.transparent = true;
 
-
-
-
-
 	const frontMaterial = getShadowVolumeMaterial();
 	frontMaterial.side = THREE.FrontSide;
 	frontMaterial.colorWrite = false;
 	frontMaterial.depthWrite = false;
 	frontMaterial.depthTest = true;
 
+	const backMaterial = getShadowVolumeMaterial();
+	frontMaterial.side = THREE.BackSide;
+	backMaterial.colorWrite = false;
+	backMaterial.depthWrite = false;
+	backMaterial.depthTest = true;
+
+	// Meshes
 	const frontMesh = new THREE.Mesh( geometry, frontMaterial );
 	frontMesh.renderOrder = 1;
 	frontMesh.onBeforeRender = () => {
@@ -251,21 +259,10 @@ function constructVolume( geometry, renderer ) {
 		stencilBuffer.setTest( false );
 
 	};
-	shadowGroup.add( frontMesh );
 
-
-	const backMaterial = getShadowVolumeMaterial();
-	backMaterial.colorWrite = false;
-	backMaterial.depthWrite = false;
-	backMaterial.depthTest = true;
 	const backMesh = new THREE.Mesh( geometry, backMaterial );
 	backMesh.renderOrder = 1;
-
-	let rendered = false;
 	backMesh.onBeforeRender = () => {
-
-		if ( rendered ) backMaterial.side = THREE.BackSide;
-		rendered = true;
 
 		stencilBuffer.setTest( true );
 		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
@@ -277,9 +274,6 @@ function constructVolume( geometry, renderer ) {
 		stencilBuffer.setTest( false );
 
 	};
-	shadowGroup.add( backMesh );
-
-
 
 	const tintMesh = new THREE.Mesh( geometry, tintMaterial );
 	tintMesh.renderOrder = 2;
@@ -295,8 +289,11 @@ function constructVolume( geometry, renderer ) {
 		stencilBuffer.setTest( false );
 
 	};
-	shadowGroup.add( tintMesh );
 
+	// Add meshes to group
+	shadowGroup.add( frontMesh );
+	shadowGroup.add( backMesh );
+	shadowGroup.add( tintMesh );
 
 	shadowGroup.setLight = light => {
 
