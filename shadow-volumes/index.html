@@ -29,12 +29,11 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/controls/OrbitControls.js"></script>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
 
 		<script type="text/javascript" src="./ShadowVolume.js"></script>
 
@@ -45,57 +44,78 @@
 
 		<script>
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
 			// globals
 			var stats;
 			var params = {
-				steps: 10,
-				binarySearchSteps: 4,
-				stride: 30,
-				intensity: 0.5,
-				renderTargetScale: 0.5
+				showVolume: false,
+				usePointLight: false,
+				speed: 0.0,
 			};
 			var camera, scene, renderer, controls;
+			var mesh, ground, shadowMesh, visibleShadowMesh;
+			var directionalLight, pointLight, ambientLight;
+			var shadowVolMat, visibleShadowVolMat;
 
 			init();
 			animate();
 
 			function init() {
 
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0xffffff );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				document.body.appendChild( renderer.domElement );
+
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
 				camera.position.set( 0.0, 50, 50 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xeeeeee );
-				scene.add( new THREE.DirectionalLight() );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
-				document.body.appendChild( renderer.domElement );
+				directionalLight = new THREE.DirectionalLight();
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				scene.add( ambientLight );
+
+				pointLight = new THREE.PointLight();
+				scene.add( pointLight );
+				scene.add( new THREE.PointLightHelper( pointLight ) );
 
 				// geometry
-				var standardMaterial = new THREE.MeshStandardMaterial( {
+				var standardMaterial = new THREE.MeshPhongMaterial( {
 					map: null,
-					color: 0xffffff,
-					metalness: 0.5,
+					color: 0xffffff
 				} );
 
-				var torus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
-				var mesh = new THREE.Mesh( shadowVolume, standardMaterial );
-
-
-				var shadowVolume = getDynamicShadowVolumeGeometry( torus );
-				var shadowVolMat = getShadowVolumeMaterial();
-				console.log(shadowVolMat)
-				var mesh = new THREE.Mesh( shadowVolume, shadowVolMat );
-
+				var torus = new THREE.TorusKnotBufferGeometry( 10, 3, 200, 25 );
+				mesh = new THREE.Mesh( torus, standardMaterial );
 				scene.add( mesh );
 
+				var shadowGeometry = getDynamicShadowVolumeGeometry( torus );
+				shadowMesh = constructVolume( shadowGeometry, renderer );
+				scene.add( shadowMesh );
+
+				visibleShadowVolMat = getShadowVolumeMaterial( THREE.ShaderLib.phong );
+				visibleShadowVolMat.lights = true;
+				visibleShadowVolMat.colorWrite = true;
+				visibleShadowVolMat.depthWrite = true;
+				visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
+				visibleShadowVolMat.flatShading = true;
+				visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
+				visibleShadowVolMat.uniforms.shadowBias = -0.01;
+				visibleShadowMesh = new THREE.Mesh( shadowGeometry, visibleShadowVolMat );
+				scene.add( visibleShadowMesh );
+
+				var plane = new THREE.PlaneBufferGeometry();
+				ground = new THREE.Mesh( plane, standardMaterial );
+				ground.scale.multiplyScalar( 1000 );
+				ground.rotation.set( -Math.PI / 2, 0, 0 );
+				ground.position.set( 0, -50, 0 );
+				scene.add( ground );
 
 				// stats
 				stats = new Stats();
@@ -104,7 +124,7 @@
 				// camera controls
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
-				controls.maxDistance = 200;
+				controls.maxDistance = 1000;
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -112,18 +132,9 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add(params, 'stride', 1, 60);
-				gui.add(params, 'steps', 2, 200);
-				gui.add(params, 'binarySearchSteps', 0, 20);
-				gui.add(params, 'intensity', 0, 1);
-				gui.add(params, 'renderTargetScale', 0.1, 1)
-					.onChange( v => {
-
-						ssrrPass.renderTargetScale = v;
-						onWindowResize();
-
-					} );
-
+				gui.add(params, 'showVolume');
+				gui.add(params, 'usePointLight');
+				gui.add(params, 'speed', 0, 2);
 				gui.open();
 
 			}
@@ -150,7 +161,37 @@
 
 			}
 
+			var time = 0;
+			var lastTime = 0;
 			function render() {
+
+
+				time += ( window.performance.now() - lastTime ) * 0.001 * params.speed;
+				lastTime = window.performance.now();
+
+				directionalLight.visible = !params.usePointLight;
+				pointLight.visible = params.usePointLight;
+
+				directionalLight.position.x = Math.sin( time ) * 40;
+				directionalLight.position.z = Math.cos( time ) * 40;
+				directionalLight.position.y = 40;
+				pointLight.position.copy( directionalLight.position );
+
+				// set light info
+				shadowMesh.visible = !params.showVolume;
+				shadowMesh.setLight( params.usePointLight ? pointLight : directionalLight );
+
+				visibleShadowMesh.visible = params.showVolume;
+				visibleShadowVolMat.setLight( params.usePointLight ? pointLight : directionalLight );
+
+				// animate meshes
+				shadowMesh.scale.copy( mesh.scale );
+				shadowMesh.rotation.copy( mesh.rotation );
+				shadowMesh.position.copy( mesh.position );
+
+				visibleShadowMesh.scale.copy( mesh.scale );
+				visibleShadowMesh.rotation.copy( mesh.rotation );
+				visibleShadowMesh.position.copy( mesh.position );
 
 				controls.update();
 				renderer.render( scene, camera );
