@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="./ShadowVolume.js"></script>
+
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shadow Volumes by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			// globals
+			var stats;
+			var params = {
+				steps: 10,
+				binarySearchSteps: 4,
+				stride: 30,
+				intensity: 0.5,
+				renderTargetScale: 0.5
+			};
+			var camera, scene, renderer, controls;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 50, 50 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xeeeeee );
+				scene.add( new THREE.DirectionalLight() );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var standardMaterial = new THREE.MeshStandardMaterial( {
+					map: null,
+					color: 0xffffff,
+					metalness: 0.5,
+				} );
+
+				var torus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
+				var mesh = new THREE.Mesh( shadowVolume, standardMaterial );
+
+
+				var shadowVolume = getDynamicShadowVolumeGeometry( torus );
+				var shadowVolMat = getShadowVolumeMaterial();
+				console.log(shadowVolMat)
+				var mesh = new THREE.Mesh( shadowVolume, shadowVolMat );
+
+				scene.add( mesh );
+
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add(params, 'stride', 1, 60);
+				gui.add(params, 'steps', 2, 200);
+				gui.add(params, 'binarySearchSteps', 0, 20);
+				gui.add(params, 'intensity', 0, 1);
+				gui.add(params, 'renderTargetScale', 0.1, 1)
+					.onChange( v => {
+
+						ssrrPass.renderTargetScale = v;
+						onWindowResize();
+
+					} );
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				controls.update();
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
