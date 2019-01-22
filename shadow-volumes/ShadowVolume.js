@@ -175,7 +175,7 @@ function shadowVolumeShaderMixin( shader ) {
 					projVec.w = 0.0;
 					projVec = -projVec;
 
-					#ifdef FLIP_SIDED
+					#ifndef FLIP_SIDED
 						transformedNormal *= -1.0;
 					#endif
 
