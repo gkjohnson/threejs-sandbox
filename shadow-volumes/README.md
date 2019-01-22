@@ -25,3 +25,5 @@ _The resultant shadow rendered from the shadow volume._
 - Fix the tinting of the geometry that is casting shadows itself (and causing stepped artifacts).
 - Support morph targets.
 - Render a full screen quad to tint the shadows after all the volumes have been stenciled instead of rendering each geometry a fifth time.
+- Provide a cpu-based implementation of the shadow volumes.
+- Provide an option to _not_ perform two of the unnecessary renders of the volume if there's no risk of the camera being inside the volume.
