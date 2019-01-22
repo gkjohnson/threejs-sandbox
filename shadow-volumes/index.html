@@ -32,6 +32,8 @@
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/build/three.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/controls/OrbitControls.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/loaders/GLTFLoader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/loaders/FBXLoader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/inflate.min.js"></script>
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
@@ -50,56 +52,90 @@
 				showVolume: false,
 				usePointLight: true,
 				speed: 1.0,
-				lightDistance: 4.0,
+				lightDistance: 15.0,
 				shadowDistance: 100,
-				shadowBias: 0
+				shadowBias: 0.01,
+				display: 0
 			};
 			var camera, scene, renderer, controls;
-			var mesh, ground, shadowMesh, visibleShadowMesh;
+			var ground, shadowVolumes = [], visibleShadowVolumes = [];
 			var directionalLight, pointLight, ambientLight;
 			var shadowVolMat, visibleShadowVolMat;
 			var lightSphere;
+			var displayOptions = [];
+
+			var mixer;
+			var time = 0;
+			var lastTime = 0;
 
 			init();
 			initGeometry();
 			animate();
 
+			function addMesh( mesh, container = scene ) {
+
+				// geometry
+				container.add( mesh );
+				mesh.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						var sm = new ShadowVolumeMesh( c, c.geometry, renderer );
+						sm.__ogMesh = c;
+						shadowVolumes.push( sm );
+						container.add( sm );
+
+						var mat = new ShadowVolumeMaterial( THREE.ShaderLib.phong );
+						mat.lights = true;
+						mat.colorWrite = true;
+						mat.depthWrite = true;
+						mat.depthFunc = THREE.LessEqualDepth;
+						mat.flatShading = true;
+						mat.uniforms.diffuse.value.set( 0xff0000 );
+						mat.uniforms.shadowBias.value = -0.01;
+						mat.skinning = c.isSkinnedMesh;
+
+						var vsm = new c.constructor( c.geometry, mat );
+						vsm.__ogMesh = c;
+						vsm.skeleton = c.skeleton;
+						visibleShadowVolumes.push( vsm );
+						container.add( vsm );
+
+					}
+
+				});
+
+			}
 
 			function initGeometry() {
 
-				const url = 'https://rawgit.com/mrdoob/three.js/r100/examples/models/gltf/RobotExpressive/RobotExpressive.glb';
-				new THREE.GLTFLoader().load( url, model => {
-					var torusMaterial = new THREE.MeshStandardMaterial( {
-						color: 0xf42222,
-						metalness: 0.5,
-						roughness: 0.1
-					} );
-					var torus = new THREE.TorusKnotBufferGeometry( 2, 0.75, 200, 25 );
-					mesh = new THREE.Mesh( torus, torusMaterial );
+				var torusMaterial = new THREE.MeshStandardMaterial( {
+					color: 0xf42222,
+					metalness: 0.5,
+					roughness: 0.1
+				} );
+				var torus = new THREE.TorusKnotBufferGeometry( 4, 1.5, 200, 25 );
+				var mesh = new THREE.Mesh( torus, torusMaterial );
+				var torusContainer = new THREE.Object3D();
+				torusContainer.update = delta => torusContainer.rotation.y += delta;
+				addMesh( mesh, torusContainer );
+				displayOptions.push( torusContainer );
+				scene.add( torusContainer );
 
+				const url = 'https://rawgit.com/mrdoob/three.js/r100/examples/models/fbx/Samba Dancing.fbx';
+				new THREE.FBXLoader().load( url, mesh => {
 
-					console.log(model.scene)
-					// mesh = model.scene.children[ 0 ];
-					// scene.add(mesh);
+					mixer = new THREE.AnimationMixer( mesh );
+					mixer.clipAction( mesh.animations[ 0 ] ).play();
 
+					mesh.scale.multiplyScalar(0.2);
+					mesh.position.y = -15	;
 
-					// geometry
-
-					scene.add( mesh );
-
-					shadowMesh = new ShadowVolumeMesh( mesh, mesh.geometry, renderer );
-					scene.add( shadowMesh );
-
-					visibleShadowVolMat = new ShadowVolumeMaterial( THREE.ShaderLib.phong );
-					visibleShadowVolMat.lights = true;
-					visibleShadowVolMat.colorWrite = true;
-					visibleShadowVolMat.depthWrite = true;
-					visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
-					visibleShadowVolMat.flatShading = true;
-					visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
-					visibleShadowVolMat.uniforms.shadowBias.value = -0.01;
-					visibleShadowMesh = new THREE.Mesh( shadowMesh.shadowGeometry, visibleShadowVolMat );
-					scene.add( visibleShadowMesh );
+					var container = new THREE.Group();
+					container.update = delta => mixer.update( delta );
+					addMesh( mesh, container );
+					displayOptions.push( container );
+					scene.add( container );
 
 				});
 
@@ -142,6 +178,7 @@
 				var plane = new THREE.BoxBufferGeometry();
 				ground = new THREE.Mesh( plane, groundMaterial );
 				ground.scale.multiplyScalar( 50 );
+				ground.position.y += 10;
 				scene.add( ground );
 
 				// stats
@@ -161,10 +198,11 @@
 
 				gui.add(params, 'showVolume');
 				gui.add(params, 'usePointLight');
-				gui.add(params, 'lightDistance', 0, 10);
+				gui.add(params, 'lightDistance', 0, 30);
 				gui.add(params, 'speed', 0, 2);
 				gui.add(params, 'shadowDistance', 0, 200);
-				gui.add(params, 'shadowBias', -1, 1);
+				gui.add(params, 'shadowBias', -0.01, 0.01);
+				gui.add(params, 'display', { 'Torus': 0, 'Dancer': 1 });
 				gui.open();
 
 			}
@@ -191,12 +229,10 @@
 
 			}
 
-			var time = 0;
-			var lastTime = 0;
 			function render() {
 
-
-				time += ( window.performance.now() - lastTime ) * 0.001 * params.speed;
+				const delta = window.performance.now() - lastTime;
+				time += delta * 0.001 * params.speed;
 				lastTime = window.performance.now();
 
 				directionalLight.visible = !params.usePointLight;
@@ -208,24 +244,34 @@
 				pointLight.position.copy( directionalLight.position );
 				lightSphere.position.copy( directionalLight.position );
 
-				if (shadowMesh) {
 
-					// set light info
-					shadowMesh.visible = !params.showVolume;
-					shadowMesh.setLight( params.usePointLight ? pointLight : directionalLight );
-					shadowMesh.setShadowDistance( params.shadowDistance );
-					shadowMesh.setShadowBias( params.shadowBias );
+				shadowVolumes.forEach( c => {
 
-					visibleShadowMesh.visible = params.showVolume;
-					visibleShadowVolMat.setLight( params.usePointLight ? pointLight : directionalLight );
-					visibleShadowVolMat.setShadowDistance( params.shadowDistance );
-					visibleShadowVolMat.setShadowBias( params.shadowBias );
+					c.visible = !params.showVolume;
+					c.setLight( params.usePointLight ? pointLight : directionalLight );
+					c.setShadowDistance( params.shadowDistance );
+					c.setShadowBias( params.shadowBias );
 
-					visibleShadowMesh.scale.copy( mesh.scale );
-					visibleShadowMesh.rotation.copy( mesh.rotation );
-					visibleShadowMesh.position.copy( mesh.position );
+				} );
 
-				}
+				visibleShadowVolumes.forEach(c => {
+
+					c.material.setLight( params.usePointLight ? pointLight : directionalLight );
+					c.material.setShadowDistance( params.shadowDistance );
+					c.material.setShadowBias( params.shadowBias );
+
+					c.visible = params.showVolume;
+					c.scale.copy( c.__ogMesh.scale );
+					c.rotation.copy( c.__ogMesh.rotation );
+					c.position.copy( c.__ogMesh.position );
+
+				} );
+
+				displayOptions.forEach( c => {
+					c.visible = false;
+					c.update && c.update( delta * 0.001 );
+				} );
+				displayOptions[ params.display ].visible = true;
 
 				controls.update();
 				renderer.render( scene, camera );

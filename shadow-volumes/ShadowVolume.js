@@ -175,7 +175,7 @@ function shadowVolumeShaderMixin( shader ) {
 					projVec.w = 0.0;
 					projVec = -projVec;
 
-					#ifndef FLIP_SIDED
+					#ifdef FLIP_SIDED
 						transformedNormal *= -1.0;
 					#endif
 
@@ -252,7 +252,7 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		function incrFunc() {
 
-			this.matrixWorld.copy( target.matrixWorld );
+			if ( ! target.isSkinnedMesh ) this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
@@ -261,7 +261,7 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		function decrFunc() {
 
-			this.matrixWorld.copy( target.matrixWorld );
+			if ( ! target.isSkinnedMesh ) this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
@@ -270,7 +270,7 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		function noteqFunc() {
 
-			this.matrixWorld.copy( target.matrixWorld );
+			if ( ! target.isSkinnedMesh ) this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
 			stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
@@ -294,6 +294,7 @@ class ShadowVolumeMesh extends THREE.Group {
 		tintMaterial.uniforms.diffuse.value.set( 0 );
 		tintMaterial.uniforms.opacity.value = 0.25;
 		tintMaterial.transparent = true;
+		tintMaterial.skinning = target.isSkinnedMesh;
 
 		const frontMaterial = new ShadowVolumeMaterial();
 		frontMaterial.side = THREE.FrontSide;
@@ -301,6 +302,7 @@ class ShadowVolumeMesh extends THREE.Group {
 		frontMaterial.depthWrite = false;
 		frontMaterial.depthTest = true;
 		frontMaterial.depthFunc = THREE.LessDepth;
+		frontMaterial.skinning = target.isSkinnedMesh;
 
 		const backMaterial = new ShadowVolumeMaterial();
 		frontMaterial.side = THREE.BackSide;
@@ -308,25 +310,29 @@ class ShadowVolumeMesh extends THREE.Group {
 		backMaterial.depthWrite = false;
 		backMaterial.depthTest = true;
 		backMaterial.depthFunc = THREE.LessDepth;
+		backMaterial.skinning = target.isSkinnedMesh;
 
 		// Meshes
-		const frontMesh = new THREE.Mesh( shadowVolumeGeometry, frontMaterial );
+		const frontMesh = new target.constructor( shadowVolumeGeometry, frontMaterial );
 		frontMesh.renderOrder = 1;
 		frontMesh.onBeforeRender = incrFunc;
 		frontMesh.onAfterRender = disableFunc;
 		frontMesh.autoUpdateMatrixWorld = false;
+		frontMesh.skeleton = target.skeleton;
 
-		const backMesh = new THREE.Mesh( shadowVolumeGeometry, backMaterial );
+		const backMesh = new target.constructor( shadowVolumeGeometry, backMaterial );
 		backMesh.renderOrder = 1;
 		backMesh.onBeforeRender = decrFunc;
 		backMesh.onAfterRender = disableFunc;
-		frontMesh.autoUpdateMatrixWorld = false;
+		backMesh.autoUpdateMatrixWorld = false;
+		backMesh.skeleton = target.skeleton;
 
-		const tintMesh = new THREE.Mesh( shadowVolumeGeometry, tintMaterial );
+		const tintMesh = new target.constructor( shadowVolumeGeometry, tintMaterial );
 		tintMesh.renderOrder = 2;
 		tintMesh.onBeforeRender = noteqFunc;
 		tintMesh.onAfterRender = disableFunc;
-		frontMesh.autoUpdateMatrixWorld = false;
+		tintMesh.autoUpdateMatrixWorld = false;
+		tintMesh.skeleton = target.skeleton;
 
 		// Add meshes to group
 		this.add( frontMesh );
