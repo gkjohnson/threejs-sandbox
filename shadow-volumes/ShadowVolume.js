@@ -250,12 +250,9 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		super();
 
-		this.target = target;
-		this.autoMatrixUpdate = false;
-		this.matrixWorldNeedsUpdate = false;
-
 		function incrFunc() {
 
+			this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
@@ -264,6 +261,7 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		function decrFunc() {
 
+			this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
@@ -272,6 +270,7 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		function noteqFunc() {
 
+			this.matrixWorld.copy( target.matrixWorld );
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
 			stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
@@ -315,16 +314,19 @@ class ShadowVolumeMesh extends THREE.Group {
 		frontMesh.renderOrder = 1;
 		frontMesh.onBeforeRender = incrFunc;
 		frontMesh.onAfterRender = disableFunc;
+		frontMesh.autoUpdateMatrixWorld = false;
 
 		const backMesh = new THREE.Mesh( shadowVolumeGeometry, backMaterial );
 		backMesh.renderOrder = 1;
 		backMesh.onBeforeRender = decrFunc;
 		backMesh.onAfterRender = disableFunc;
+		frontMesh.autoUpdateMatrixWorld = false;
 
 		const tintMesh = new THREE.Mesh( shadowVolumeGeometry, tintMaterial );
 		tintMesh.renderOrder = 2;
 		tintMesh.onBeforeRender = noteqFunc;
 		tintMesh.onAfterRender = disableFunc;
+		frontMesh.autoUpdateMatrixWorld = false;
 
 		// Add meshes to group
 		this.add( frontMesh );
@@ -354,12 +356,6 @@ class ShadowVolumeMesh extends THREE.Group {
 	setIntensity( intensity ) {
 
 		this.children[ 2 ].material.uniforms.opacity.value = intensity;
-
-	}
-
-	onBeforeRender() {
-
-		this.matrixWorld.copy( target.matrixWorld );
 
 	}
 

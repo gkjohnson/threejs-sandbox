@@ -64,31 +64,44 @@
 			initGeometry();
 			animate();
 
+
 			function initGeometry() {
 
-				// geometry
-				var torusMaterial = new THREE.MeshStandardMaterial( {
-					color: 0xf42222,
-					metalness: 0.5,
-					roughness: 0.1
-				} );
-				var torus = new THREE.TorusKnotBufferGeometry( 2, 0.75, 200, 25 );
-				mesh = new THREE.Mesh( torus, torusMaterial );
-				scene.add( mesh );
+				const url = 'https://rawgit.com/mrdoob/three.js/r100/examples/models/gltf/RobotExpressive/RobotExpressive.glb';
+				new THREE.GLTFLoader().load( url, model => {
+					var torusMaterial = new THREE.MeshStandardMaterial( {
+						color: 0xf42222,
+						metalness: 0.5,
+						roughness: 0.1
+					} );
+					var torus = new THREE.TorusKnotBufferGeometry( 2, 0.75, 200, 25 );
+					mesh = new THREE.Mesh( torus, torusMaterial );
 
-				shadowMesh = new ShadowVolumeMesh( mesh, torus, renderer );
-				scene.add( shadowMesh );
 
-				visibleShadowVolMat = new ShadowVolumeMaterial( THREE.ShaderLib.phong );
-				visibleShadowVolMat.lights = true;
-				visibleShadowVolMat.colorWrite = true;
-				visibleShadowVolMat.depthWrite = true;
-				visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
-				visibleShadowVolMat.flatShading = true;
-				visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
-				visibleShadowVolMat.uniforms.shadowBias.value = -0.01;
-				visibleShadowMesh = new THREE.Mesh( shadowMesh.shadowGeometry, visibleShadowVolMat );
-				scene.add( visibleShadowMesh );
+					console.log(model.scene)
+					// mesh = model.scene.children[ 0 ];
+					// scene.add(mesh);
+
+
+					// geometry
+
+					scene.add( mesh );
+
+					shadowMesh = new ShadowVolumeMesh( mesh, mesh.geometry, renderer );
+					scene.add( shadowMesh );
+
+					visibleShadowVolMat = new ShadowVolumeMaterial( THREE.ShaderLib.phong );
+					visibleShadowVolMat.lights = true;
+					visibleShadowVolMat.colorWrite = true;
+					visibleShadowVolMat.depthWrite = true;
+					visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
+					visibleShadowVolMat.flatShading = true;
+					visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
+					visibleShadowVolMat.uniforms.shadowBias.value = -0.01;
+					visibleShadowMesh = new THREE.Mesh( shadowMesh.shadowGeometry, visibleShadowVolMat );
+					scene.add( visibleShadowMesh );
+
+				});
 
 			}
 
@@ -208,7 +221,6 @@
 					visibleShadowVolMat.setShadowDistance( params.shadowDistance );
 					visibleShadowVolMat.setShadowBias( params.shadowBias );
 
-					// animate meshes
 					visibleShadowMesh.scale.copy( mesh.scale );
 					visibleShadowMesh.rotation.copy( mesh.rotation );
 					visibleShadowMesh.position.copy( mesh.position );
