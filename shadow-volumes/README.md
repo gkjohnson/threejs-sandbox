@@ -24,3 +24,4 @@ _The resultant shadow rendered from the shadow volume._
 - Geometry is tinted after the fact meaning lighting effects have already been applied so specular highlights will show up dimmed in the shadows. This could be solved with a deferred render pipeline.
 - Fix the tinting of the geometry that is casting shadows itself (and causing stepped artifacts).
 - Support morph targets.
+- Render a full screen quad to tint the shadows after all the volumes have been stenciled instead of rendering each geometry a fifth time.
