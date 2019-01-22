@@ -49,6 +49,7 @@
 			// globals
 			var stats;
 			var params = {
+				useShadowVolumes: true,
 				showVolume: false,
 				usePointLight: true,
 				speed: 1.0,
@@ -80,6 +81,9 @@
 				mesh.traverse( c => {
 
 					if ( c.isMesh ) {
+
+						c.castShadow = true;
+						c.receiveShadow = true;
 
 						var sm = new ShadowVolumeMesh( c, c.geometry, renderer );
 						sm.__ogMesh = c;
@@ -150,6 +154,7 @@
 				renderer.setClearColor( 0x263238 );
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
 				document.body.appendChild( renderer.domElement );
 
 				// initialize renderer, scene, camera
@@ -159,13 +164,25 @@
 				scene = new THREE.Scene();
 
 				directionalLight = new THREE.DirectionalLight();
+				directionalLight.castShadow = true;
+ 				// directionalLight.shadow.mapSize.width = 1024;
+				// directionalLight.shadow.mapSize.height = 1024;
+
+				var dlShadowCam = directionalLight.shadow.camera;
+				dlShadowCam.left = dlShadowCam.bottom = -15;
+				dlShadowCam.top = dlShadowCam.right = 15;
 				scene.add( directionalLight );
+
+				pointLight = new THREE.PointLight();
+				pointLight.castShadow = true;
+ 				// pointLight.shadow.mapSize.width = 1024;
+				// pointLight.shadow.mapSize.height = 1024;
+				scene.add( pointLight );
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
 
-				pointLight = new THREE.PointLight();
-				scene.add( pointLight );
+
 
 				lightSphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.25, 10, 10 ), new THREE.MeshBasicMaterial( { color: 0x90A4AE } ) );
 				scene.add( lightSphere );
@@ -180,6 +197,7 @@
 				ground = new THREE.Mesh( plane, groundMaterial );
 				ground.scale.multiplyScalar( 50 );
 				ground.position.y += 10;
+				ground.receiveShadow = true;
 				scene.add( ground );
 
 				// stats
@@ -197,6 +215,7 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add(params, 'useShadowVolumes');
 				gui.add(params, 'showVolume');
 				gui.add(params, 'usePointLight');
 				gui.add(params, 'lightDistance', 0, 30);
@@ -237,7 +256,10 @@
 				lastTime = window.performance.now();
 
 				directionalLight.visible = !params.usePointLight;
+				directionalLight.castShadow = !params.useShadowVolumes;
+
 				pointLight.visible = params.usePointLight;
+				pointLight.castShadow = !params.useShadowVolumes;
 
 				directionalLight.position.x = Math.sin( time ) * params.lightDistance;
 				directionalLight.position.z = Math.cos( time ) * params.lightDistance;
@@ -245,10 +267,9 @@
 				pointLight.position.copy( directionalLight.position );
 				lightSphere.position.copy( directionalLight.position );
 
-
 				shadowVolumes.forEach( c => {
 
-					c.visible = !params.showVolume;
+					c.visible = !params.showVolume && params.useShadowVolumes;
 					c.setLight( params.usePointLight ? pointLight : directionalLight );
 					c.setShadowDistance( params.shadowDistance );
 					c.setShadowBias( params.shadowBias );
