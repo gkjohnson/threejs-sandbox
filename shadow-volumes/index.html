@@ -31,6 +31,7 @@
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/build/three.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/controls/OrbitControls.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/loaders/GLTFLoader.js"></script>
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
@@ -49,7 +50,9 @@
 				showVolume: false,
 				usePointLight: true,
 				speed: 1.0,
-				lightDistance: 4.0
+				lightDistance: 4.0,
+				shadowDistance: 100,
+				shadowBias: 0
 			};
 			var camera, scene, renderer, controls;
 			var mesh, ground, shadowMesh, visibleShadowMesh;
@@ -58,7 +61,36 @@
 			var lightSphere;
 
 			init();
+			initGeometry();
 			animate();
+
+			function initGeometry() {
+
+				// geometry
+				var torusMaterial = new THREE.MeshStandardMaterial( {
+					color: 0xf42222,
+					metalness: 0.5,
+					roughness: 0.1
+				} );
+				var torus = new THREE.TorusKnotBufferGeometry( 2, 0.75, 200, 25 );
+				mesh = new THREE.Mesh( torus, torusMaterial );
+				scene.add( mesh );
+
+				shadowMesh = new ShadowVolumeMesh( mesh, torus, renderer );
+				scene.add( shadowMesh );
+
+				visibleShadowVolMat = new ShadowVolumeMaterial( THREE.ShaderLib.phong );
+				visibleShadowVolMat.lights = true;
+				visibleShadowVolMat.colorWrite = true;
+				visibleShadowVolMat.depthWrite = true;
+				visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
+				visibleShadowVolMat.flatShading = true;
+				visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
+				visibleShadowVolMat.uniforms.shadowBias.value = -0.01;
+				visibleShadowMesh = new THREE.Mesh( shadowMesh.shadowGeometry, visibleShadowVolMat );
+				scene.add( visibleShadowMesh );
+
+			}
 
 			function init() {
 
@@ -72,7 +104,7 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 50, 50 * 3.5 );
+				camera.position.set( 60, 30, 60 );
 
 				scene = new THREE.Scene();
 
@@ -88,33 +120,16 @@
 				lightSphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.25, 10, 10 ), new THREE.MeshBasicMaterial( { color: 0x90A4AE } ) );
 				scene.add( lightSphere );
 
-				// geometry
-				var torusMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
-				var torus = new THREE.TorusKnotBufferGeometry( 1, .3, 200, 25 );
-				mesh = new THREE.Mesh( torus, torusMaterial );
-				scene.add( mesh );
-
-				var shadowGeometry = getDynamicShadowVolumeGeometry( torus );
-				shadowMesh = constructVolume( shadowGeometry, renderer );
-				scene.add( shadowMesh );
-
-				visibleShadowVolMat = getShadowVolumeMaterial( THREE.ShaderLib.phong );
-				visibleShadowVolMat.lights = true;
-				visibleShadowVolMat.colorWrite = true;
-				visibleShadowVolMat.depthWrite = true;
-				visibleShadowVolMat.depthFunc = THREE.LessEqualDepth;
-				visibleShadowVolMat.flatShading = true;
-				visibleShadowVolMat.uniforms.diffuse.value.set( 0xff0000 );
-				visibleShadowVolMat.uniforms.shadowBias = -0.01;
-				visibleShadowMesh = new THREE.Mesh( shadowGeometry, visibleShadowVolMat );
-				scene.add( visibleShadowMesh );
-
-				var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xCFD8DC, side: THREE.BackSide } );
+				var groundMaterial = new THREE.MeshStandardMaterial( {
+					color: 0xCFD8DC,
+					side: THREE.BackSide,
+					metalness: 0.1,
+					roughness: 0.75,
+				} );
 				var plane = new THREE.BoxBufferGeometry();
 				ground = new THREE.Mesh( plane, groundMaterial );
 				ground.scale.multiplyScalar( 50 );
 				scene.add( ground );
-
 
 				// stats
 				stats = new Stats();
@@ -135,6 +150,8 @@
 				gui.add(params, 'usePointLight');
 				gui.add(params, 'lightDistance', 0, 10);
 				gui.add(params, 'speed', 0, 2);
+				gui.add(params, 'shadowDistance', 0, 200);
+				gui.add(params, 'shadowBias', -1, 1);
 				gui.open();
 
 			}
@@ -178,21 +195,25 @@
 				pointLight.position.copy( directionalLight.position );
 				lightSphere.position.copy( directionalLight.position );
 
-				// set light info
-				shadowMesh.visible = !params.showVolume;
-				shadowMesh.setLight( params.usePointLight ? pointLight : directionalLight );
+				if (shadowMesh) {
 
-				visibleShadowMesh.visible = params.showVolume;
-				visibleShadowVolMat.setLight( params.usePointLight ? pointLight : directionalLight );
+					// set light info
+					shadowMesh.visible = !params.showVolume;
+					shadowMesh.setLight( params.usePointLight ? pointLight : directionalLight );
+					shadowMesh.setShadowDistance( params.shadowDistance );
+					shadowMesh.setShadowBias( params.shadowBias );
 
-				// animate meshes
-				shadowMesh.scale.copy( mesh.scale );
-				shadowMesh.rotation.copy( mesh.rotation );
-				shadowMesh.position.copy( mesh.position );
+					visibleShadowMesh.visible = params.showVolume;
+					visibleShadowVolMat.setLight( params.usePointLight ? pointLight : directionalLight );
+					visibleShadowVolMat.setShadowDistance( params.shadowDistance );
+					visibleShadowVolMat.setShadowBias( params.shadowBias );
 
-				visibleShadowMesh.scale.copy( mesh.scale );
-				visibleShadowMesh.rotation.copy( mesh.rotation );
-				visibleShadowMesh.position.copy( mesh.position );
+					// animate meshes
+					visibleShadowMesh.scale.copy( mesh.scale );
+					visibleShadowMesh.rotation.copy( mesh.rotation );
+					visibleShadowMesh.position.copy( mesh.position );
+
+				}
 
 				controls.update();
 				renderer.render( scene, camera );

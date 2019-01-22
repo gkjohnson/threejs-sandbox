@@ -190,11 +190,15 @@ function shadowVolumeShaderMixin( shader ) {
 
 }
 
-function getShadowVolumeMaterial( source = THREE.ShaderLib.basic ) {
+class ShadowVolumeMaterial extends THREE.ShaderMaterial {
 
-	const shader = shadowVolumeShaderMixin( source );
-	const material = new THREE.ShaderMaterial( shader );
-	material.setLight = function ( light ) {
+	constructor( source = THREE.ShaderLib.basic ) {
+
+		super( shadowVolumeShaderMixin( source ) );
+
+	}
+
+	setLight( light ) {
 
 		// TODO: get position in world space
 		const vec = this.uniforms.lightInfo.value;
@@ -210,99 +214,153 @@ function getShadowVolumeMaterial( source = THREE.ShaderLib.basic ) {
 
 		}
 
-	};
+	}
 
-	return material;
+	setShadowDistance( dist ) {
+
+		this.uniforms.shadowDistance.value = dist;
+
+	}
+
+	setShadowBias( bias ) {
+
+		this.uniforms.shadowBias.value = bias;
+
+	}
+
+	clone() {
+
+		const newMat = new ShadowVolumeMaterial();
+		newMat.copy( this );
+		return newMat;
+
+	}
 
 }
 
-function constructVolume( geometry, renderer ) {
+class ShadowVolumeMesh extends THREE.Group {
 
-	function incrFunc() {
+	get shadowGeometry() {
 
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
-		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
+		return this.children[ 0 ].geometry;
 
 	}
 
-	function decrFunc() {
+	constructor( target, geometry, renderer ) {
 
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
-		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
+		super();
+
+		this.target = target;
+		this.autoMatrixUpdate = false;
+		this.matrixWorldNeedsUpdate = false;
+
+		function incrFunc() {
+
+			stencilBuffer.setTest( true );
+			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
+			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
+
+		}
+
+		function decrFunc() {
+
+			stencilBuffer.setTest( true );
+			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
+			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
+
+		}
+
+		function noteqFunc() {
+
+			stencilBuffer.setTest( true );
+			stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
+			stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
+
+		}
+
+		function disableFunc() {
+
+			stencilBuffer.setTest( false );
+
+		}
+
+		const stencilBuffer = renderer.state.buffers.stencil;
+		const gl = renderer.context;
+		const shadowVolumeGeometry = getDynamicShadowVolumeGeometry( geometry );
+
+		// Materials
+		const tintMaterial = new ShadowVolumeMaterial();
+		tintMaterial.depthWrite = false;
+		tintMaterial.depthTest = false;
+		tintMaterial.uniforms.diffuse.value.set( 0 );
+		tintMaterial.uniforms.opacity.value = 0.25;
+		tintMaterial.transparent = true;
+
+		const frontMaterial = new ShadowVolumeMaterial();
+		frontMaterial.side = THREE.FrontSide;
+		frontMaterial.colorWrite = false;
+		frontMaterial.depthWrite = false;
+		frontMaterial.depthTest = true;
+		frontMaterial.depthFunc = THREE.LessDepth;
+
+		const backMaterial = new ShadowVolumeMaterial();
+		frontMaterial.side = THREE.BackSide;
+		backMaterial.colorWrite = false;
+		backMaterial.depthWrite = false;
+		backMaterial.depthTest = true;
+		backMaterial.depthFunc = THREE.LessDepth;
+
+		// Meshes
+		const frontMesh = new THREE.Mesh( shadowVolumeGeometry, frontMaterial );
+		frontMesh.renderOrder = 1;
+		frontMesh.onBeforeRender = incrFunc;
+		frontMesh.onAfterRender = disableFunc;
+
+		const backMesh = new THREE.Mesh( shadowVolumeGeometry, backMaterial );
+		backMesh.renderOrder = 1;
+		backMesh.onBeforeRender = decrFunc;
+		backMesh.onAfterRender = disableFunc;
+
+		const tintMesh = new THREE.Mesh( shadowVolumeGeometry, tintMaterial );
+		tintMesh.renderOrder = 2;
+		tintMesh.onBeforeRender = noteqFunc;
+		tintMesh.onAfterRender = disableFunc;
+
+		// Add meshes to group
+		this.add( frontMesh );
+		this.add( backMesh );
+		this.add( tintMesh );
 
 	}
 
-	function noteqFunc() {
+	setLight( light ) {
 
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
-		stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
+		this.children.forEach( c => c.material.setLight( light ) );
 
 	}
 
-	function disableFunc() {
+	setShadowDistance( distance ) {
 
-		stencilBuffer.setTest( false );
+		this.children.forEach( c => c.material.setShadowDistance( distance ) );
 
 	}
 
-	const shadowGroup = new THREE.Group();
+	setShadowBias( bias ) {
 
-	const stencilBuffer = renderer.state.buffers.stencil;
-	const gl = renderer.context;
+		this.children.forEach( c => c.material.setShadowBias( bias ) );
 
-	// Materials
-	const tintMaterial = getShadowVolumeMaterial();
-	tintMaterial.depthWrite = false;
-	tintMaterial.depthTest = false;
-	tintMaterial.uniforms.diffuse.value.set( 0 );
-	window.tintMaterial = tintMaterial;
-	tintMaterial.uniforms.opacity.value = 0.25;
-	tintMaterial.transparent = true;
+	}
 
-	const frontMaterial = getShadowVolumeMaterial();
-	frontMaterial.side = THREE.FrontSide;
-	frontMaterial.colorWrite = false;
-	frontMaterial.depthWrite = false;
-	frontMaterial.depthTest = true;
+	setIntensity( intensity ) {
 
-	const backMaterial = getShadowVolumeMaterial();
-	frontMaterial.side = THREE.BackSide;
-	backMaterial.colorWrite = false;
-	backMaterial.depthWrite = false;
-	backMaterial.depthTest = true;
+		this.children[ 2 ].material.uniforms.opacity.value = intensity;
 
-	// Meshes
-	const frontMesh = new THREE.Mesh( geometry, frontMaterial );
-	frontMesh.renderOrder = 1;
-	frontMesh.onBeforeRender = incrFunc;
-	frontMesh.onAfterRender = disableFunc;
+	}
 
-	const backMesh = new THREE.Mesh( geometry, backMaterial );
-	backMesh.renderOrder = 1;
-	backMesh.onBeforeRender = decrFunc;
-	backMesh.onAfterRender = disableFunc;
+	onBeforeRender() {
 
-	const tintMesh = new THREE.Mesh( geometry, tintMaterial );
-	tintMesh.renderOrder = 2;
-	tintMesh.onBeforeRender = noteqFunc;
-	tintMesh.onAfterRender = disableFunc;
+		this.matrixWorld.copy( target.matrixWorld );
 
-	// Add meshes to group
-	shadowGroup.add( frontMesh );
-	shadowGroup.add( backMesh );
-	shadowGroup.add( tintMesh );
-
-	shadowGroup.setLight = light => {
-
-		tintMaterial.setLight( light );
-		frontMaterial.setLight( light );
-		backMaterial.setLight( light );
-
-	};
-
-	return shadowGroup;
+	}
 
 }
