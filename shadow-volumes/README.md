@@ -2,7 +2,7 @@
 
 A shader-based approach to rendering shadow volumes with THREE js to enable crisp (never soft...) shadows. Shadow volume reference available [here](http://nuclear.mutantstargoat.com/articles/volume_shadows_tutorial_nuclear.pdf).
 
-[Demo Here!](./index.html)
+[Demo Here!](https://gkjohnson.github.io/threejs-sandbox/shadow-volumes/index.html)
 
 ![](./docs/visible-volume.png)
 
