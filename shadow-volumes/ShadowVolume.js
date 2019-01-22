@@ -288,14 +288,6 @@ class ShadowVolumeMesh extends THREE.Group {
 		const shadowVolumeGeometry = getDynamicShadowVolumeGeometry( geometry );
 
 		// Materials
-		const tintMaterial = new ShadowVolumeMaterial();
-		tintMaterial.depthWrite = false;
-		tintMaterial.depthTest = false;
-		tintMaterial.uniforms.diffuse.value.set( 0 );
-		tintMaterial.uniforms.opacity.value = 0.25;
-		tintMaterial.transparent = true;
-		tintMaterial.skinning = target.isSkinnedMesh;
-
 		const frontMaterial = new ShadowVolumeMaterial();
 		frontMaterial.side = THREE.FrontSide;
 		frontMaterial.colorWrite = false;
@@ -311,6 +303,15 @@ class ShadowVolumeMesh extends THREE.Group {
 		backMaterial.depthTest = true;
 		backMaterial.depthFunc = THREE.LessDepth;
 		backMaterial.skinning = target.isSkinnedMesh;
+
+		const tintMaterial = new ShadowVolumeMaterial();
+		tintMaterial.side = THREE.BackSide;
+		tintMaterial.depthWrite = false;
+		tintMaterial.depthTest = false;
+		tintMaterial.uniforms.diffuse.value.set( 0 );
+		tintMaterial.uniforms.opacity.value = 0.25;
+		tintMaterial.transparent = true;
+		tintMaterial.skinning = target.isSkinnedMesh;
 
 		// Meshes
 		const frontMesh = new target.constructor( shadowVolumeGeometry, frontMaterial );
@@ -338,6 +339,30 @@ class ShadowVolumeMesh extends THREE.Group {
 		this.add( frontMesh );
 		this.add( backMesh );
 		this.add( tintMesh );
+
+		// Intersect Cap
+		const frontMaterial2 = frontMaterial.clone();
+		frontMaterial2.depthTest = false;
+
+		const backMaterial2 = backMaterial.clone();
+		backMaterial2.depthTest = false;
+
+		const frontMesh2 = new target.constructor( shadowVolumeGeometry, frontMaterial2 );
+		frontMesh2.renderOrder = 1;
+		frontMesh2.onBeforeRender = decrFunc;
+		frontMesh2.onAfterRender = disableFunc;
+		frontMesh2.autoUpdateMatrixWorld = false;
+		frontMesh2.skeleton = target.skeleton;
+
+		const backMesh2 = new target.constructor( shadowVolumeGeometry, backMaterial2 );
+		backMesh2.renderOrder = 1;
+		backMesh2.onBeforeRender = incrFunc;
+		backMesh2.onAfterRender = disableFunc;
+		backMesh2.autoUpdateMatrixWorld = false;
+		backMesh2.skeleton = target.skeleton;
+
+		this.add( frontMesh2 );
+		this.add( backMesh2 );
 
 	}
 

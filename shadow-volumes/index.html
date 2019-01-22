@@ -52,6 +52,7 @@
 				showVolume: false,
 				usePointLight: true,
 				speed: 1.0,
+				animationSpeed: 1.0,
 				lightDistance: 15.0,
 				shadowDistance: 100,
 				shadowBias: 0.01,
@@ -117,7 +118,7 @@
 				var torus = new THREE.TorusKnotBufferGeometry( 4, 1.5, 200, 25 );
 				var mesh = new THREE.Mesh( torus, torusMaterial );
 				var torusContainer = new THREE.Object3D();
-				torusContainer.update = delta => torusContainer.rotation.y += delta;
+				torusContainer.update = delta => torusContainer.rotation.y -= delta;
 				addMesh( mesh, torusContainer );
 				displayOptions.push( torusContainer );
 				scene.add( torusContainer );
@@ -200,6 +201,7 @@
 				gui.add(params, 'usePointLight');
 				gui.add(params, 'lightDistance', 0, 30);
 				gui.add(params, 'speed', 0, 2);
+				gui.add(params, 'animationSpeed', 0, 2.0);
 				gui.add(params, 'shadowDistance', 0, 200);
 				gui.add(params, 'shadowBias', -0.01, 0.01);
 				gui.add(params, 'display', { 'Torus': 0, 'Dancer': 1 });
@@ -223,9 +225,8 @@
 
 				requestAnimationFrame( animate );
 
-				stats.begin();
+				stats.update();
 				render();
-				stats.end();
 
 			}
 
@@ -269,7 +270,7 @@
 
 				displayOptions.forEach( c => {
 					c.visible = false;
-					c.update && c.update( delta * 0.001 );
+					c.update && c.update( delta * 0.001 * params.animationSpeed );
 				} );
 				displayOptions[ params.display ].visible = true;
 
