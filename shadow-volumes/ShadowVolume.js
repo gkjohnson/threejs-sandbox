@@ -218,6 +218,36 @@ function getShadowVolumeMaterial( source = THREE.ShaderLib.basic ) {
 
 function constructVolume( geometry, renderer ) {
 
+	function incrFunc() {
+
+		stencilBuffer.setTest( true );
+		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
+		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
+
+	}
+
+	function decrFunc() {
+
+		stencilBuffer.setTest( true );
+		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
+		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
+
+	}
+
+	function noteqFunc() {
+
+		stencilBuffer.setTest( true );
+		stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
+		stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
+
+	}
+
+	function disableFunc() {
+
+		stencilBuffer.setTest( false );
+
+	}
+
 	const shadowGroup = new THREE.Group();
 
 	const stencilBuffer = renderer.state.buffers.stencil;
@@ -247,48 +277,18 @@ function constructVolume( geometry, renderer ) {
 	// Meshes
 	const frontMesh = new THREE.Mesh( geometry, frontMaterial );
 	frontMesh.renderOrder = 1;
-	frontMesh.onBeforeRender = () => {
-
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
-		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
-
-	};
-	frontMesh.onAfterRender = () =>{
-
-		stencilBuffer.setTest( false );
-
-	};
+	frontMesh.onBeforeRender = incrFunc;
+	frontMesh.onAfterRender = disableFunc;
 
 	const backMesh = new THREE.Mesh( geometry, backMaterial );
 	backMesh.renderOrder = 1;
-	backMesh.onBeforeRender = () => {
-
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
-		stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
-
-	};
-	backMesh.onAfterRender = () =>{
-
-		stencilBuffer.setTest( false );
-
-	};
+	backMesh.onBeforeRender = decrFunc;
+	backMesh.onAfterRender = disableFunc;
 
 	const tintMesh = new THREE.Mesh( geometry, tintMaterial );
 	tintMesh.renderOrder = 2;
-	tintMesh.onBeforeRender = () => {
-
-		stencilBuffer.setTest( true );
-		stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
-		stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
-
-	};
-	tintMesh.onAfterRender = () =>{
-
-		stencilBuffer.setTest( false );
-
-	};
+	tintMesh.onBeforeRender = noteqFunc;
+	tintMesh.onAfterRender = disableFunc;
 
 	// Add meshes to group
 	shadowGroup.add( frontMesh );
