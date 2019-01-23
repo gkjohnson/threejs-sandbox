@@ -20,3 +20,4 @@ A small effort to try to decode and load valve 3d file formats. The formats are 
 ## Other References
 
 - https://www.unknowncheats.me/forum/counterstrike-global-offensive/163599-source-external-mdl-parser.html
+- https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/public/studio.h

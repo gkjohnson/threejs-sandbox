@@ -26,6 +26,7 @@ const lines =
 				case 'byte':
 					result.push( `var ${ name } = dataView.getUint8( i, true );` );
 					result.push( `i += 1;` );
+					break;
 
 				case 'float':
 					result.push( `var ${ name } = dataView.getFloat32( i, true );` );

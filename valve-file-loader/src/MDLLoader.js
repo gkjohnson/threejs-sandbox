@@ -1,9 +1,4 @@
-// VTF: https://developer.valvesoftware.com/wiki/Valve_Texture_Format
-// VMT: https://developer.valvesoftware.com/wiki/Material
-// VTX: https://developer.valvesoftware.com/wiki/VTX
-// VVD: https://developer.valvesoftware.com/wiki/VVD
 // MDL: https://developer.valvesoftware.com/wiki/MDL
-// PHY: https://developer.valvesoftware.com/wiki/PHY
 
 THREE.MDLLoader = function ( manager ) {
 
@@ -32,6 +27,22 @@ THREE.MDLLoader.prototype = {
 
 	parse: function ( buffer, loadMipmaps ) {
 
+		function readString( dataView, offset, count ) {
+
+			var str = '';
+			for ( var j = 0; j < count; j ++ ) {
+
+				var c = dataView.getUint8( j + offset );
+				if ( c === 0 ) break;
+
+				str += String.fromCharCode( c );
+
+			}
+
+			return str;
+
+		}
+
 		function parseHeader( buffer ) {
 
 			var dataView = new DataView( buffer );
@@ -50,14 +61,8 @@ THREE.MDLLoader.prototype = {
 			i += 4;
 
 			// char[64]
-			var name = '';
-			for ( var j = 0; j < 64; j ++ ) {
-
-				var c = dataView.getUint8( i );
-				if ( c !== 0 ) name += String.fromCharCode( c );
-				i ++;
-
-			}
+			var name = readString( dataView, i, 64 );
+			i += 64;
 
 			// int
 			var dataLength = dataView.getInt32( i, true );
@@ -282,6 +287,8 @@ THREE.MDLLoader.prototype = {
 			i += 4;
 
 			// float
+			var mass = dataView.getFloat32( i, true );
+			i += 4;
 
 			// int
 			var contents = dataView.getInt32( i, true );
@@ -330,38 +337,18 @@ THREE.MDLLoader.prototype = {
 			// byte
 			var directionaldotproduct = dataView.getUint8( i, true );
 			i += 1;
-			var directionaldotproduct = new THREE.Vector3();
-			directionaldotproduct.x = dataView.getFloat32( i + 0, true );
-			directionaldotproduct.y = dataView.getFloat32( i + 4, true );
-			directionaldotproduct.z = dataView.getFloat32( i + 8, true );
-			i += 12;
 
 			// byte
 			var rootLod = dataView.getUint8( i, true );
 			i += 1;
-			var rootLod = new THREE.Vector3();
-			rootLod.x = dataView.getFloat32( i + 0, true );
-			rootLod.y = dataView.getFloat32( i + 4, true );
-			rootLod.z = dataView.getFloat32( i + 8, true );
-			i += 12;
 
 			// byte
 			var numAllowedRootLods = dataView.getUint8( i, true );
 			i += 1;
-			var numAllowedRootLods = new THREE.Vector3();
-			numAllowedRootLods.x = dataView.getFloat32( i + 0, true );
-			numAllowedRootLods.y = dataView.getFloat32( i + 4, true );
-			numAllowedRootLods.z = dataView.getFloat32( i + 8, true );
-			i += 12;
 
 			// byte
 			var unused = dataView.getUint8( i, true );
 			i += 1;
-			var unused = new THREE.Vector3();
-			unused.x = dataView.getFloat32( i + 0, true );
-			unused.y = dataView.getFloat32( i + 4, true );
-			unused.z = dataView.getFloat32( i + 8, true );
-			i += 12;
 
 			// int
 			var unused = dataView.getInt32( i, true );
@@ -382,6 +369,8 @@ THREE.MDLLoader.prototype = {
 			// int
 			var unused = dataView.getInt32( i, true );
 			i += 4;
+
+			// TODO i === 400 and not 408 like the docs imply?
 
 			return {
 				id,
@@ -508,6 +497,26 @@ THREE.MDLLoader.prototype = {
 		}
 
 		function readData( header, header2, buffer ) {
+
+			var dataView = new DataView( buffer );
+			var textures = [];
+			for ( var i = 0; i < header.textureCount; i ++ ) {
+
+				var offset = header.textureOffset + i * 16 * 4;
+				var ptr = offset + dataView.getInt32( offset, true );
+				textures.push( readString( dataView, ptr, 100 ) );
+
+			}
+
+			var textureDirectories = [];
+			for ( var i = 0; i < header.texturedirCount; i ++ ) {
+
+				var offset = header.texturedirOffset + i * 4;
+				var ptr = dataView.getInt32( offset, true );
+				textureDirectories.push( readString( dataView, ptr, 100 ) );
+
+			}
+
 
 		}
 
