@@ -16,3 +16,7 @@ A small effort to try to decode and load valve 3d file formats. The formats are 
   - Physics and ragdoll information
 - [ ] **MDL** https://developer.valvesoftware.com/wiki/MDL
   - The high level information for defining the structure of a model
+
+## Other References
+
+- https://www.unknowncheats.me/forum/counterstrike-global-offensive/163599-source-external-mdl-parser.html
