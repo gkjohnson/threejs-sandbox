@@ -1,9 +1,4 @@
 // VTF: https://developer.valvesoftware.com/wiki/Valve_Texture_Format
-// VMT: https://developer.valvesoftware.com/wiki/Material
-// VTX: https://developer.valvesoftware.com/wiki/VTX
-// VVD: https://developer.valvesoftware.com/wiki/VVD
-// MDL: https://developer.valvesoftware.com/wiki/MDL
-// PHY: https://developer.valvesoftware.com/wiki/PHY
 
 // TODO: The mipmap filter type needs to be updated to LinearFilter for some reason
 // TODO: get cube maps, animations, volume textures
@@ -19,6 +14,19 @@ THREE.VTFLoader.prototype = Object.create( THREE.CompressedTextureLoader.prototy
 THREE.VTFLoader.prototype.constructor = THREE.VTFLoader;
 
 THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
+
+	function bgrToRgb( buffer, stride ) {
+
+		for ( var i = 0, l = buffer.length; i < l; i += stride ) {
+
+			var b = buffer[ i ];
+			var r = buffer[ i + 2 ];
+			buffer[ i ] = r;
+			buffer[ i + 2 ] = b;
+
+		}
+
+	}
 
 	function parseHeader( buffer ) {
 
@@ -129,8 +137,14 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 			case 3: // BGR888
 				var dataLength = width * height * 3;
 				byteArray = new Uint8Array( buffer, offset, dataLength );
+				bgrToRgb( byteArray, 3 );
 				threeFormat = THREE.RGBFormat;
 				break;
+			case 12: // BGRA8888
+				var dataLength = width * height * 4;
+				byteArray = new Uint8Array( buffer, offset, dataLength );
+				bgrToRgb( byteArray, 4 );
+				threeFormat = THREE.RGBAFormat;
 			case 13: // DXT1
 				var dataLength = dxtSz * 8; // 8 blockBytes
 				byteArray = new Uint8Array( buffer, offset, dataLength );
@@ -147,7 +161,8 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 				threeFormat = THREE.RGB_S3TC_DXT5_Format;
 				break;
 			default:
-				console.error( 'VTFLoader: Format is unsupported' );
+				console.error( `VTFLoader: Format variant ${ format } is unsupported.` );
+				return null;
 
 		}
 
@@ -199,7 +214,7 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 			width: header.width,
 			height: header.height,
 			format: mipmaps[ 0 ].format,
-			mipmapCount: header.mipmapCount
+			mipmapCount: mipmaps.length
 
 		};
 
@@ -207,5 +222,14 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 
 	var header = parseHeader( buffer );
 	return parseMipMaps( buffer, header );
+
+};
+
+THREE.VTFLoader.prototype.load = function ( ...args ) {
+
+	const tex = THREE.CompressedTextureLoader.prototype.load.call( this, ...args );
+	tex.minFilter = THREE.LinearFilter;
+	tex.maxFilter = THREE.LinearFilter;
+	return tex;
 
 };
