@@ -1,0 +1,12 @@
+	// ??
+	int		srcbonetransform_count;
+	int		srcbonetransform_index;
+
+	int		illumpositionattachmentindex;
+
+	float		flMaxEyeDeflection;	//  If set to 0, then equivalent to cos(30)
+
+	// mstudiolinearbone_t
+	int		linearbone_index;
+
+	int[64] 	unknown;

@@ -208,6 +208,4 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 	var header = parseHeader( buffer );
 	return parseMipMaps( buffer, header );
 
-}
-
-
+};
