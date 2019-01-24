@@ -15,10 +15,11 @@ const lines =
 			const name = tokens[ 3 ].replace( /_(\w)/g, ( match, c ) => c.toUpperCase() );
 
 			const result = [ `// ${ type }` ];
+			let func;
 			switch ( type ) {
 
 				case 'int':
-					const func = unsigned ? 'getUint32' : 'getInt32';
+					func = unsigned ? 'getUint32' : 'getInt32';
 					result.push( `var ${ name } = dataView.${ func }( i, true );` );
 					result.push( `i += 4;` );
 					break;
@@ -31,6 +32,17 @@ const lines =
 				case 'float':
 					result.push( `var ${ name } = dataView.getFloat32( i, true );` );
 					result.push( `i += 4;` );
+					break;
+
+				case 'short':
+					func = unsigned ? 'getUint16' : 'getInt16';
+					result.push( `var ${ name } = dataView.${ func }( i, true );` );
+					result.push( `i += 2;` );
+					break;
+
+				case 'long':
+					result.push( `var ${ name } = dataView.getBigInt64( i, true );` );
+					result.push( `i += 8;` );
 					break;
 
 				case 'Vector':

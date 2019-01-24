@@ -25,7 +25,7 @@ THREE.MDLLoader.prototype = {
 
 	},
 
-	parse: function ( buffer, loadMipmaps ) {
+	parse: function ( buffer ) {
 
 		function readString( dataView, offset, count ) {
 
@@ -517,12 +517,13 @@ THREE.MDLLoader.prototype = {
 
 			}
 
+			return { textures, textureDirectories };
 
 		}
 
 		var header = parseHeader( buffer );
 		var header2 = parseSecondaryHeader( header.studiohdr2index, buffer );
-		return readData( header, header2, buffer );
+		return Object.assign( { header, header2, buffer }, readData( header, header2, buffer ) );
 
 	}
 
