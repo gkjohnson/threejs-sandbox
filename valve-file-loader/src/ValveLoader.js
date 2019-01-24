@@ -71,7 +71,6 @@ THREE.ValveLoader.prototype = {
 					mdl.textures.forEach( t => {
 
 						const vmtUrl = `${ path }${ f }${ t }.vmt`;
-						console.log(vmtUrl)
 						const pr = new Promise( resolve => {
 
 							vmtLoader.load( vmtUrl, material => {
@@ -128,11 +127,13 @@ THREE.ValveLoader.prototype = {
 										// TODO: for some reason the indices seem to be garbage?
 										// Probably because we're not using the strip index and vert offsets
 										var geometry = new THREE.BufferGeometry();
-										// geometry.setIndex( sg.indexAttribute );
 										geometry.setIndex( toGeometryInfo( vtx.buffer, s, sg ) );
 										geometry.addAttribute( 'position', vvd.attributes.position );
 										geometry.addAttribute( 'uv', vvd.attributes.uv );
 										geometry.addAttribute( 'normal', vvd.attributes.normal );
+
+										// TODO : Winding order seems incorrect causing normals to face the wrong direction
+										// the and faces to be inverted
 
 										// geometry.addGroup( s.numIndices, s.indexOffset, 0 );
 
