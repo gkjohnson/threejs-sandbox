@@ -1,0 +1,135 @@
+// VMT: https://developer.valvesoftware.com/wiki/VMT
+
+THREE.VMTLoader = function ( manager ) {
+
+	this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+
+};
+
+THREE.VMTLoader.prototype = {
+
+	constructor: THREE.VMTLoader,
+
+	load: function ( url, onLoad, onProgress, onError ) {
+
+		var scope = this;
+
+		var loader = new THREE.FileLoader( this.manager );
+		loader.setPath( this.path );
+		loader.setResponseType( 'text' );
+		loader.load( url, function ( text ) {
+
+			onLoad( scope.parse( text, url ) );
+
+		}, onProgress, onError );
+
+	},
+
+	// TODO: Fix this url use and follow the "path" pattern of other loaders
+	parse: function ( string, url ) {
+
+		let type = null;
+		let root = null;
+		const objects = [];
+		let currData = '';
+		for ( let i = 0, l = string.length; i < l; i ++ ) {
+
+			const c = string[ i ];
+			if ( c === '{' ) {
+
+				const newObj = {};
+				if ( objects.length === 0 ) {
+
+					type += currData;
+
+				} else {
+
+					objects[ objects.length - 1 ][ currData.trim() ] = newObj;
+
+				}
+
+				objects.push( newObj );
+				if ( root === null ) root = newObj;
+
+				currData = '';
+
+			} else if ( c === '}' ) {
+
+				objects.pop();
+
+			} else if ( c === '\n' ) {
+
+				if ( objects.length === 0 ) {
+
+					type += currData;
+
+				} else {
+
+					const tokens = currData.trim().split( /\s+/ );
+					if ( tokens.length >= 2 ) {
+
+						let [ name, contents ] = tokens.map( t => t.replace( /"/g, '' ) );
+
+						if ( /^\[/.test( contents ) ) {
+
+							contents = contents
+								.replace( /[\[\]]/g, '' )
+								.split( /\s+/g )
+								.map( n => parseFloat( n ) );
+
+						} else if ( /^\d*\.?\d*$/.test( contents ) ) {
+
+							contents = parseFloat( contents );
+
+						}
+
+						objects[ objects.length - 1 ][ name ] = contents;
+
+
+					}
+
+				}
+				currData = '';
+
+			} else {
+
+				currData += c;
+
+			}
+
+		}
+
+		// TODO: Repeat wrapping should be handled in the VFT loads
+
+		const urlTokens = url.split( 'models' );
+		urlTokens.pop();
+		const path = urlTokens.join( 'models' );
+		const material = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );
+		const vftLoader = new THREE.VTFLoader( this.manager );
+		for ( const key in root ) {
+
+			const field = root[ key ];
+			switch ( key ) {
+
+				case '$basetexture':
+					console.log( `${ path }${ field }.vtf` );
+					material.map = vftLoader.load( `${ path }${ field }.vtf` );
+					material.map.wrapS = THREE.RepeatWrapping;
+					material.map.wrapT = THREE.RepeatWrapping;
+					break;
+				case '$bumpmap':
+					console.log( `${ path }${ field }.vtf` );
+					material.bumpMap = vftLoader.load( `${ path }${ field }.vtf` );
+					material.bumpMap.wrapS = THREE.RepeatWrapping;
+					material.bumpMap.wrapT = THREE.RepeatWrapping;
+					break;
+
+			}
+
+		}
+
+		return material;
+
+	}
+
+};

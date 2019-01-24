@@ -60,12 +60,51 @@ THREE.ValveLoader.prototype = {
 			.all( [ mdlpr, vvdpr, vtxpr ] )
 			.then( ( [ mdl, vvd, vtx ] ) => {
 
+				const promises = [];
+				const vmtLoader = new THREE.VMTLoader( this.manager );
+				const tokens = url.split( 'models' );
+				tokens.pop();
+
+				const path = tokens.join( 'models' ) + 'materials/';
+				mdl.textureDirectories.forEach( f => {
+
+					mdl.textures.forEach( t => {
+
+						const vmtUrl = `${ path }${ f }${ t }.vmt`;
+						console.log(vmtUrl)
+						const pr = new Promise( resolve => {
+
+							vmtLoader.load( vmtUrl, material => {
+
+								material.name = t;
+								resolve( material );
+
+							}, undefined, () => resolve( null ) );
+
+						} );
+						promises.push( pr );
+
+					} );
+
+				} );
+
+				return Promise
+					.all( promises )
+					.then( materials => {
+
+						materials = materials.filter( m => ! ! m );
+						return { materials, mdl, vvd, vtx };
+
+					} );
+
+			} )
+			.then( ( { mdl, vvd, vtx, materials } ) => {
+
 				if ( mdl.header.checksum !== vvd.header.checksum || mdl.header.checksum !== vtx.header.checksum ) {
 
 					console.warn( 'ValveLoader: File checksums do not match' );
 
 				}
-				console.log( mdl, vvd, vtx )
 
 				const group = new THREE.Group();
 
@@ -98,7 +137,7 @@ THREE.ValveLoader.prototype = {
 										// geometry.addGroup( s.numIndices, s.indexOffset, 0 );
 
 										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );
-										var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { flatShading: true, side: THREE.DoubleSide } ) );
+										var mesh = new THREE.Mesh( geometry, materials[ 0 ] );
 										if ( s.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
 
 										// console.log(mesh)
