@@ -1,21 +1,27 @@
 # Valve File Loaders
 
-A small effort to try to decode and load valve 3d file formats. The formats are not very well-documented and only texture loading has been implemented.
+A small effort to try to decode and load valve 3d file formats.
 
 ## Formats
 
-- [X] **VTF** https://developer.valvesoftware.com/wiki/Valve_Texture_Format
+- **VTF** https://developer.valvesoftware.com/wiki/Valve_Texture_Format
   - Texture Format
-- [ ] **VMT** https://developer.valvesoftware.com/wiki/Material
+- **VMT** https://developer.valvesoftware.com/wiki/Material
   - Material Format
-- [ ] **VTX** https://developer.valvesoftware.com/wiki/VTX
-  - Per-target optimized representations of vertex indices (?)
-- [ ] **VVD** https://developer.valvesoftware.com/wiki/VVD
-  - Bone, normal, vertex, attribute information
-- [ ] **PHY** https://developer.valvesoftware.com/wiki/PHY
+- **VTX** https://developer.valvesoftware.com/wiki/VTX
+  - Per-target optimized representations of vertex indices
+- **VVD** https://developer.valvesoftware.com/wiki/VVD
+  - Bone, normal, position, uv, attribute information
+- **PHY** https://developer.valvesoftware.com/wiki/PHY
   - Physics and ragdoll information
-- [ ] **MDL** https://developer.valvesoftware.com/wiki/MDL
+- **MDL** https://developer.valvesoftware.com/wiki/MDL
   - The high level information for defining the structure of a model
+
+## Open Questions
+- How do you use the `vertOffset` field in the `strips` objects?
+- How large are the strides for the structs? Why do some seem to be longer than others?
+- Mark the beginning and ends of structs in memory to make sure everything lines up as expected.
+- Build against the source sdk and measure the structs to see how large they are.
 
 ## Other References
 
