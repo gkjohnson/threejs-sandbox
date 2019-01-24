@@ -46,7 +46,7 @@ THREE.ValveLoader.prototype = {
 
 						model.lods.forEach( lod => {
 
-							lod.meshes.forEach( ( mesh, i ) => {
+							lod.meshes.forEach( mesh => {
 
 								mesh.stripGroups.forEach( sg => {
 
@@ -56,7 +56,7 @@ THREE.ValveLoader.prototype = {
 
 										// TODO: for some reason the indices seem to be garbage?
 										var geometry = new THREE.BufferGeometry();
-										// geometry.setIndex( sg.indexAttribute );
+										geometry.setIndex( sg.indexAttribute );
 										geometry.addAttribute( 'position', vvd.attributes.position );
 										geometry.addAttribute( 'uv', vvd.attributes.uv );
 										geometry.addAttribute( 'normal', vvd.attributes.normal );
@@ -64,7 +64,7 @@ THREE.ValveLoader.prototype = {
 										geometry.addGroup( s.numIndices, s.indexOffset, 0 );
 
 										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );//, new THREE.MeshPhongMaterial() );
-										var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { flatShading: true } ) );
+										var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { flatShading: true, side: THREE.DoubleSide } ) );
 										if ( s.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
 
 										obj.add( mesh );

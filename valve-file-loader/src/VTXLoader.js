@@ -88,6 +88,44 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		function getStripGroupBuffers( buffer, initialOffset, stripGroup ) {
+
+			const dataView = new DataView( buffer );
+
+			const {
+				numIndices,
+				indexOffset,
+				numVerts,
+				vertOffset
+			} = stripGroup;
+
+			// copy over the indices
+			var indices = new Uint16Array( new ArrayBuffer( numIndices * 2 ) );
+			new Uint8Array( indices.buffer ).set( new Uint8Array( buffer, initialOffset + indexOffset, stripGroup.numIndices * 2 ) );
+
+			for ( var i = 0, l = indices.length; i < l; i ++ ) {
+
+				var index = indices[ i ];
+				var offset = initialOffset + vertOffset + index * 9;
+
+				// TODO: Why is this needed? How are the indices being indexed into
+				// this array?
+				if ( offset < dataView.byteLength ) {
+
+					var origMeshVertID = dataView.getUint16( offset + 4, true );
+					indices[ i ] = origMeshVertID;
+
+				}
+
+			}
+
+			var indexAttribute = new THREE.BufferAttribute( indices, 1, false );
+
+			return { indices, indexAttribute };
+
+
+		}
+
 		function parseStrips( buffer, numStrips, stripOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -105,7 +143,7 @@ THREE.VTXLoader.prototype = {
 				strip.numBones = dataView.getInt16( offset + 16, true );
 
 				strip.flags = dataView.getUint8( offset + 18, true );
-				console.log('hERE', strip.flags)
+
 				// TODO: parse these into an array
 				strip.numBoneStateChanges = dataView.getInt32( offset + 19, true );
 				strip.boneStateChangeOffset = dataView.getInt32( offset + 23, true );
@@ -141,11 +179,11 @@ THREE.VTXLoader.prototype = {
 
 				stripGroup.strips = parseStrips( buffer, stripGroup.numStrips, offset + stripGroup.stripOffset );
 
-				var indices = new Uint16Array( new ArrayBuffer( stripGroup.numIndices * 2 ) );
-				new Uint8Array( indices.buffer ).set( new Uint8Array( buffer, offset + stripGroup.indexOffset, stripGroup.numIndices * 2 ) );
+				var bufferData = getStripGroupBuffers( buffer, offset, stripGroup );
+				stripGroup.indices = bufferData.indices;
+				stripGroup.indexAttribute = bufferData.indexAttribute;
 
-				stripGroup.indices = indices;
-				stripGroup.indexAttribute = new THREE.BufferAttribute( indices, 1, false );
+
 
 
 				offset += 25;
