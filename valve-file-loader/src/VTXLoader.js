@@ -138,7 +138,9 @@ THREE.VTXLoader.prototype = {
 
 				stripGroup.flags = dataView.getUint8( offset + 24, true );
 
-				// stripGroup.indices = new Uint16Array( buffer, offset + stripGroup.indexOffset, stripGroup.numIndices );
+				stripGroup.indices = new Uint16Array( new ArrayBuffer( stripGroup.numIndices * 2 ) );
+				new Uint8Array( stripGroup.indices.buffer ).set( new Uint8Array( buffer, stripGroup.indexOffset, stripGroup.numIndices * 2 ) );
+
 				stripGroup.strips = parseStrips( buffer, stripGroup.numStrips, offset + stripGroup.stripOffset );
 
 				offset += 25;
