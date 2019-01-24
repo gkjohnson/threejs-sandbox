@@ -101,7 +101,7 @@ THREE.VMTLoader.prototype = {
 
 		// TODO: Repeat wrapping should be handled in the VFT loads
 
-		const urlTokens = url.split( 'models' );
+		const urlTokens = url.split( /models/gi );
 		urlTokens.pop();
 		const path = urlTokens.join( 'models' );
 		const material = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );

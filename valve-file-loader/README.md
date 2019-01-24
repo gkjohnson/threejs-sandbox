@@ -23,6 +23,9 @@ A small effort to try to decode and load valve 3d file formats.
 - Mark the beginning and ends of structs in memory to make sure everything lines up as expected.
 - Build against the source sdk and measure the structs to see how large they are.
 
+## TODO
+- Parse Bone Structure
+
 ## Other References
 
 - https://www.unknowncheats.me/forum/counterstrike-global-offensive/163599-source-external-mdl-parser.html
