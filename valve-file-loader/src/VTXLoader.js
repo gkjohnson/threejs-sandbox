@@ -27,6 +27,22 @@ THREE.VTXLoader.prototype = {
 
 	parse: function ( buffer ) {
 
+		function readString( dataView, offset, count = Infinity ) {
+
+			var str = '';
+			for ( var j = 0; j < count; j ++ ) {
+
+				var c = dataView.getUint8( j + offset );
+				if ( c === 0 ) break;
+
+				str += String.fromCharCode( c );
+
+			}
+
+			return str;
+
+		}
+
 		function parseHeader( buffer ) {
 
 			var dataView = new DataView( buffer );
@@ -88,44 +104,6 @@ THREE.VTXLoader.prototype = {
 
 		}
 
-		function getStripGroupBuffers( buffer, initialOffset, stripGroup ) {
-
-			const dataView = new DataView( buffer );
-
-			const {
-				numIndices,
-				indexOffset,
-				numVerts,
-				vertOffset
-			} = stripGroup;
-
-			// copy over the indices
-			var indices = new Uint16Array( new ArrayBuffer( numIndices * 2 ) );
-			new Uint8Array( indices.buffer ).set( new Uint8Array( buffer, initialOffset + indexOffset, stripGroup.numIndices * 2 ) );
-
-			for ( var i = 0, l = indices.length; i < l; i ++ ) {
-
-				var index = indices[ i ];
-				var offset = initialOffset + vertOffset + index * 9;
-
-				// TODO: Why is this needed? How are the indices being indexed into
-				// this array?
-				if ( offset < dataView.byteLength ) {
-
-					var origMeshVertID = dataView.getUint16( offset + 4, true );
-					indices[ i ] = origMeshVertID;
-
-				}
-
-			}
-
-			var indexAttribute = new THREE.BufferAttribute( indices, 1, false );
-
-			return { indices, indexAttribute };
-
-
-		}
-
 		function parseStrips( buffer, numStrips, stripOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -148,7 +126,10 @@ THREE.VTXLoader.prototype = {
 				strip.numBoneStateChanges = dataView.getInt32( offset + 19, true );
 				strip.boneStateChangeOffset = dataView.getInt32( offset + 23, true );
 
-				offset += 27;
+				// TODO: This offset seems to make things work correctly for the ball and chain
+				// but it's unclear why... padding?
+				// offset += 27;
+				offset += 35;
 
 				res.push( strip );
 
@@ -179,11 +160,8 @@ THREE.VTXLoader.prototype = {
 
 				stripGroup.strips = parseStrips( buffer, stripGroup.numStrips, offset + stripGroup.stripOffset );
 
-				var bufferData = getStripGroupBuffers( buffer, offset, stripGroup );
-				stripGroup.indices = bufferData.indices;
-				stripGroup.indexAttribute = bufferData.indexAttribute;
-
-
+				stripGroup.indexDataStart = offset + stripGroup.indexOffset;
+				stripGroup.vertexDataStart = offset + stripGroup.vertOffset;
 
 
 				offset += 25;
@@ -282,10 +260,43 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		function parseMaterialReplacement( buffer, matReplacementNum, matReplacementOffset ) {
+
+			var dataView = new DataView( buffer );
+			var offset = matReplacementOffset;
+			var res = [];
+			for ( var i = 0; i < matReplacementNum; i ++ ) {
+
+				var replaceMaterial = {};
+				replaceMaterial.numReplacements = dataView.getInt32( offset + 0, true );
+				replaceMaterial.replacementOffset = dataView.getInt32( offset + 4, true );
+				replaceMaterial.replacements = [];
+
+				var offset2 = replaceMaterial.replacementOffset;
+				for ( var j = 0; j < replaceMaterial.numReplacements; j ++ ) {
+
+					var replacement = {};
+					replacement.materialID = dataView.getInt16( offset2 + 0, true );
+					replacement.name = readString( dataView, dataView.getInt32( offset2 + 2, true ) );
+					offset2 += 6;
+
+				}
+
+				offset += 8;
+
+				res.push( replaceMaterial );
+
+			}
+
+			return res;
+
+		}
+
 		var header = parseHeader( buffer );
 		var bodyParts = parseBodyParts( buffer, header.numBodyParts, header.bodyPartOffset );
+		var materialReplacements = parseMaterialReplacement( buffer, header.numLODs, header.materialReplacementListOffset );
 
-		return { header, bodyParts, buffer };
+		return { header, bodyParts, materialReplacements, buffer };
 
 	}
 

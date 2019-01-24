@@ -24,8 +24,10 @@ const lines =
 					result.push( `i += 4;` );
 					break;
 
+				case 'char':
 				case 'byte':
-					result.push( `var ${ name } = dataView.getUint8( i, true );` );
+					func = ( unsigned || type === 'byte' ) ? 'getUint8' : 'getInt8';
+					result.push( `var ${ name } = dataView.${ func }( i, true );` );
 					result.push( `i += 1;` );
 					break;
 
