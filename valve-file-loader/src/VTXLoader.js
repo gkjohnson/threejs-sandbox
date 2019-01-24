@@ -109,6 +109,7 @@ THREE.VTXLoader.prototype = {
 			var dataView = new DataView( buffer );
 			var offset = stripOffset;
 			var res = [];
+
 			for ( var i = 0; i < numStrips; i ++ ) {
 
 				var strip = {};
@@ -163,8 +164,10 @@ THREE.VTXLoader.prototype = {
 				stripGroup.indexDataStart = offset + stripGroup.indexOffset;
 				stripGroup.vertexDataStart = offset + stripGroup.vertOffset;
 
-
-				offset += 25;
+				// TODO: Looking at the padding offsets in the MGSBox model it looks like
+				// this struct has as stride of 33 but counting up yields 25?
+				// offset += 25;
+				offset += 33;
 
 				res.push( stripGroup );
 

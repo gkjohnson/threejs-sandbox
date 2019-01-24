@@ -97,9 +97,9 @@ THREE.ValveLoader.prototype = {
 
 										// geometry.addGroup( s.numIndices, s.indexOffset, 0 );
 
-										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );//, new THREE.MeshPhongMaterial() );
+										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );
 										var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { flatShading: true, side: THREE.DoubleSide } ) );
-										// if ( s.flags & 2  ) mesh.drawMode = THREE.TriangleStripDrawMode;
+										if ( s.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
 
 										// console.log(mesh)
 										obj.add( mesh );
