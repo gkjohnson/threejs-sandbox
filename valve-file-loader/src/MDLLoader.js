@@ -530,7 +530,9 @@ THREE.MDLLoader.prototype = {
 
 			}
 
-			return { textures, textureDirectories, includeModels };
+			var surfaceProp = readString( dataView, header.surfacepropIndex );
+
+			return { textures, textureDirectories, includeModels, surfaceProp };
 
 		}
 

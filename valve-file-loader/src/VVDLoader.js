@@ -115,8 +115,7 @@ THREE.VVDLoader.prototype = {
 
 		function getBufferAttribute( buffer, header ) {
 
-			const len = header.tangentDataStart - header.vertexDataStart;
-
+			var len = header.tangentDataStart - header.vertexDataStart;
 			var interleavedFloat32Array = new Float32Array( buffer, header.vertexDataStart, len / 4 );
 			var interleavedFloat32Buffer = new THREE.InterleavedBuffer( interleavedFloat32Array, 48 / 4 );
 			// var interleavedUint8Array = new Uint8Array( buffer, header.vertexDataStart, len );
