@@ -53,7 +53,7 @@ THREE.VTXLoader.prototype = {
 			i += 4;
 
 			// int
-			var checkSum = dataView.getInt32( i, true );
+			var checksum = dataView.getInt32( i, true );
 			i += 4;
 
 			// int
@@ -78,7 +78,7 @@ THREE.VTXLoader.prototype = {
 				maxBonesPerStrip,
 				maxBonesPerTri,
 				maxBonesPerVert,
-				checkSum,
+				checksum,
 				numLODs,
 				materialReplacementListOffset,
 				numBodyParts,
@@ -105,7 +105,8 @@ THREE.VTXLoader.prototype = {
 				strip.numBones = dataView.getInt16( offset + 16, true );
 
 				strip.flags = dataView.getUint8( offset + 18, true );
-
+				console.log('hERE', strip.flags)
+				// TODO: parse these into an array
 				strip.numBoneStateChanges = dataView.getInt32( offset + 19, true );
 				strip.boneStateChangeOffset = dataView.getInt32( offset + 23, true );
 
@@ -138,10 +139,14 @@ THREE.VTXLoader.prototype = {
 
 				stripGroup.flags = dataView.getUint8( offset + 24, true );
 
-				stripGroup.indices = new Uint16Array( new ArrayBuffer( stripGroup.numIndices * 2 ) );
-				new Uint8Array( stripGroup.indices.buffer ).set( new Uint8Array( buffer, stripGroup.indexOffset, stripGroup.numIndices * 2 ) );
-
 				stripGroup.strips = parseStrips( buffer, stripGroup.numStrips, offset + stripGroup.stripOffset );
+
+				var indices = new Uint16Array( new ArrayBuffer( stripGroup.numIndices * 2 ) );
+				new Uint8Array( indices.buffer ).set( new Uint8Array( buffer, offset + stripGroup.indexOffset, stripGroup.numIndices * 2 ) );
+
+				stripGroup.indices = indices;
+				stripGroup.indexAttribute = new THREE.BufferAttribute( indices, 1, false );
+
 
 				offset += 25;
 

@@ -27,7 +27,7 @@ THREE.MDLLoader.prototype = {
 
 	parse: function ( buffer ) {
 
-		function readString( dataView, offset, count ) {
+		function readString( dataView, offset, count = Infinity ) {
 
 			var str = '';
 			for ( var j = 0; j < count; j ++ ) {
@@ -362,6 +362,10 @@ THREE.MDLLoader.prototype = {
 			var flexcontrolleruiIndex = dataView.getInt32( i, true );
 			i += 4;
 
+			// TODO: Why do we have to do this? Why is this missing?
+			// without this i === 400 and not 408 like the docs imply?
+			i += 8;
+
 			// int
 			var studiohdr2index = dataView.getInt32( i, true );
 			i += 4;
@@ -370,7 +374,6 @@ THREE.MDLLoader.prototype = {
 			var unused = dataView.getInt32( i, true );
 			i += 4;
 
-			// TODO i === 400 and not 408 like the docs imply?
 
 			return {
 				id,
@@ -453,7 +456,7 @@ THREE.MDLLoader.prototype = {
 
 		}
 
-		function parseSecondaryHeader( offset, buffer ) {
+		function parseSecondaryHeader( buffer, offset ) {
 
 			if ( offset === 0 ) return null;
 
@@ -504,7 +507,7 @@ THREE.MDLLoader.prototype = {
 
 				var offset = header.textureOffset + i * 16 * 4;
 				var ptr = offset + dataView.getInt32( offset, true );
-				textures.push( readString( dataView, ptr, 100 ) );
+				textures.push( readString( dataView, ptr ) );
 
 			}
 
@@ -513,16 +516,26 @@ THREE.MDLLoader.prototype = {
 
 				var offset = header.texturedirOffset + i * 4;
 				var ptr = dataView.getInt32( offset, true );
-				textureDirectories.push( readString( dataView, ptr, 100 ) );
+				textureDirectories.push( readString( dataView, ptr ) );
 
 			}
 
-			return { textures, textureDirectories };
+			var includeModels = [];
+			for ( var i = 0; i < header.includemodelCount; i ++ ) {
+
+				var offset = header.includemodelIndex + i * 8;
+				var model = {};
+				model.label = readString( dataView, dataView.getInt32( offset + 0, true ) );
+				model.name = readString( dataView, dataView.getInt32( offset + 4, true ) );
+
+			}
+
+			return { textures, textureDirectories, includeModels };
 
 		}
 
 		var header = parseHeader( buffer );
-		var header2 = parseSecondaryHeader( header.studiohdr2index, buffer );
+		var header2 = parseSecondaryHeader( buffer, header.studiohdr2index );
 		return Object.assign( { header, header2, buffer }, readData( header, header2, buffer ) );
 
 	}

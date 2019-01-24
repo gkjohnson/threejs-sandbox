@@ -113,10 +113,30 @@ THREE.VVDLoader.prototype = {
 
 		}
 
+		function getBufferAttribute( buffer, header ) {
+
+			const len = header.tangentDataStart - header.vertexDataStart;
+
+			var interleavedFloat32Array = new Float32Array( buffer, header.vertexDataStart, len / 4 );
+			var interleavedFloat32Buffer = new THREE.InterleavedBuffer( interleavedFloat32Array, 48 / 4 );
+			// var interleavedUint8Array = new Uint8Array( buffer, header.vertexDataStart, len );
+			// var interleavedFloat32Buffer = new THREE.interleavedFloat32Buffer( interleavedFloat32Array, 48 / 4 );
+
+			return {
+
+				position: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 3, 4, false ),
+				normal: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 3, 7, false ),
+				uv: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 2, 10, false ),
+
+			};
+
+		}
+
 		var header = parseHeader( buffer );
 		var fixups = parseFixups( buffer, header.numFixups, header.fixupTableStart );
+		var attributes = getBufferAttribute( buffer, header );
 
-		return { header, fixups, buffer };
+		return { header, fixups, attributes, buffer };
 
 	}
 
