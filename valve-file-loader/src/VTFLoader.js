@@ -145,6 +145,7 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 				byteArray = new Uint8Array( buffer, offset, dataLength );
 				bgrToRgb( byteArray, 4 );
 				threeFormat = THREE.RGBAFormat;
+				break;
 			case 13: // DXT1
 				var dataLength = dxtSz * 8; // 8 blockBytes
 				byteArray = new Uint8Array( buffer, offset, dataLength );
@@ -180,15 +181,18 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 	function parseMipMaps( buffer, header ) {
 
 		var offset = 80;
-		const lowResMap = getMipMap( buffer, offset, header.lowResImageFormat, header.lowResImageWidth, header.lowResImageHeight );
-		offset += lowResMap.data.length;
+		if ( header.lowResImageHeight !== 0 ) {
 
-		if ( header.version[ 0 ] > 7 || header.version[ 1 ] >= 3 ) {
+			const lowResMap = getMipMap( buffer, offset, header.lowResImageFormat, header.lowResImageWidth, header.lowResImageHeight );
+			offset += lowResMap.data.length;
 
-			offset += header.headerSize - 80;
+			if ( header.version[ 0 ] > 7 || header.version[ 1 ] >= 3 ) {
+
+				offset += header.headerSize - 80;
+
+			}
 
 		}
-
 
 		var width = header.width >> ( header.mipmapCount - 1 );
 		var height = header.height >> ( header.mipmapCount - 1 );
