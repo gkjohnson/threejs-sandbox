@@ -118,7 +118,6 @@ THREE.VMTLoader.prototype = {
 					material.map.wrapT = THREE.RepeatWrapping;
 					break;
 				case '$bumpmap':
-					console.log( `${ path }${ field }.vtf` );
 					material.bumpMap = vftLoader.load( `${ path }${ field }.vtf` );
 					material.bumpMap.wrapS = THREE.RepeatWrapping;
 					material.bumpMap.wrapT = THREE.RepeatWrapping;
