@@ -369,7 +369,7 @@ THREE.MDLLoader.prototype = {
 
 			// int unused2[1];
 			i += 4;
-			
+
 			return {
 				id,
 				version,
@@ -399,11 +399,9 @@ THREE.MDLLoader.prototype = {
 				textureindex,
 				numcdtextures,
 				cdtextureindex,
-				char,
 				numskinref,
 				numskinfamilies,
 				skinindex,
-				short,
 				numbodyparts,
 				bodypartindex,
 				numlocalattachments,
@@ -432,25 +430,25 @@ THREE.MDLLoader.prototype = {
 				contents,
 				numincludemodels,
 				includemodelindex,
-				virtualModel,
+				// virtualModel,
 				szanimblocknameindex,
 				numanimblocks,
 				animblockindex,
-				animblockModel,
+				// animblockModel,
 				bonetablebynameindex,
-				pVertexBase,
-				pIndexBase,
+				// pVertexBase,
+				// pIndexBase,
 				constdirectionallightdot,
 				rootLOD,
 				numAllowedRootLODs,
-				unused,
-				unused4,
+				// unused,
+				// unused4,
 				numflexcontrollerui,
 				flexcontrolleruiindex,
 				flVertAnimFixedPointScale,
-				unused3,
+				// unused3,
 				studiohdr2index,
-				unused2
+				// unused2
 			};
 
 		}
@@ -502,30 +500,31 @@ THREE.MDLLoader.prototype = {
 
 			var dataView = new DataView( buffer );
 			var textures = [];
-			for ( var i = 0; i < header.textureCount; i ++ ) {
+			for ( var i = 0; i < header.numtextures; i ++ ) {
 
-				var offset = header.textureOffset + i * 16 * 4;
+				var offset = header.textureindex + i * 16 * 4;
 				var ptr = offset + dataView.getInt32( offset, true );
 				textures.push( readString( dataView, ptr ) );
 
 			}
 
 			var textureDirectories = [];
-			for ( var i = 0; i < header.texturedirCount; i ++ ) {
+			for ( var i = 0; i < header.numcdtextures; i ++ ) {
 
-				var offset = header.texturedirOffset + i * 4;
+				var offset = header.cdtextureindex + i * 4;
 				var ptr = dataView.getInt32( offset, true );
 				textureDirectories.push( readString( dataView, ptr ) );
 
 			}
 
 			var includeModels = [];
-			for ( var i = 0; i < header.includemodelCount; i ++ ) {
+			for ( var i = 0; i < header.numincludemodels; i ++ ) {
 
-				var offset = header.includemodelIndex + i * 8;
+				var offset = header.includemodelindex + i * 8;
 				var model = {};
 				model.label = readString( dataView, dataView.getInt32( offset + 0, true ) );
 				model.name = readString( dataView, dataView.getInt32( offset + 4, true ) );
+				includeModels.push( model );
 
 			}
 
@@ -609,9 +608,9 @@ THREE.MDLLoader.prototype = {
 
 
 
-			var boneControllers = [];
+			// var boneControllers = [];
 
-			var surfaceProp = readString( dataView, header.surfacepropIndex );
+			var surfaceProp = readString( dataView, header.surfacepropindex );
 
 			return { textures, textureDirectories, includeModels, surfaceProp };
 

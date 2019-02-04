@@ -25,6 +25,7 @@ const lines =
 			} else if ( isArray ) {
 
 				result.push( `var ${ name } = UNHANDLED_ARRAY;` );
+				fields.push( name );
 
 			} else {
 
@@ -73,9 +74,10 @@ const lines =
 
 				}
 
+				fields.push( name );
+
 			}
 
-			fields.push( name );
 
 			return result.join( '\n' );
 
