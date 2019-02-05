@@ -151,6 +151,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="shared.h" />
+    <ClInclude Include="optimize.h" />
+    <ClInclude Include="studio.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="structs.h" />
   </ItemGroup>
