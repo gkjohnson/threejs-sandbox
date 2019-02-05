@@ -104,6 +104,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct StripHeader_t
 		function parseStrips( buffer, numStrips, stripOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -140,6 +141,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct StripGroupHeader_t
 		function parseStripGroups( buffer, numStripGroups, stripGroupHeaderOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -177,6 +179,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct MeshHeader_t
 		function parseMeshes( buffer, numMeshes, meshOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -199,6 +202,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct ModelLODHeader_t
 		function parseLods( buffer, numLODs, lodOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -221,6 +225,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct ModelHeader_t
 		function parseModels( buffer, numModels, modelOffset ) {
 
 			var dataView = new DataView( buffer );
@@ -242,6 +247,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct BodyPartHeader_t
 		function parseBodyParts( buffer, numBodyParts, bodyPartOffset ) {
 
 			var dataView = new DataView( buffer );

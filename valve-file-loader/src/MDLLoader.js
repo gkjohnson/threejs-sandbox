@@ -43,6 +43,7 @@ THREE.MDLLoader.prototype = {
 
 		}
 
+		// studiohdr_t
 		function parseHeader( buffer ) {
 
 			var dataView = new DataView( buffer );
