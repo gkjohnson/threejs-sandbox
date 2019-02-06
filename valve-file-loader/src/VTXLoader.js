@@ -213,7 +213,7 @@ THREE.VTXLoader.prototype = {
 				var lod = {};
 				lod.numMeshes = dataView.getInt32( offset + 0, true );
 				lod.meshOffset = dataView.getInt32( offset + 4, true );
-				lod.switchPoint = dataView.getInt32( offset + 8, true );
+				lod.switchPoint = dataView.getFloat32( offset + 8, true );
 				lod.meshes = parseMeshes( buffer, lod.numMeshes, offset + lod.meshOffset );
 				offset += 12;
 

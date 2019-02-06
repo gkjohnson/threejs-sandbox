@@ -19,9 +19,10 @@ A small effort to try to decode and load valve 3d file formats.
 
 ## Open Questions
 - How do you use the `vertOffset` field in the `strips` objects?
-- How large are the strides for the structs? Why do some seem to be longer than others?
 - Mark the beginning and ends of structs in memory to make sure everything lines up as expected.
-- Build against the source sdk and measure the structs to see how large they are.
+- How large are the strides for the structs? Why do some seem to be longer than others?
+	- The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
+- Read in a file and use the structs to read the data and make sure it makes sense and lines up
 
 ## TODO
 - Parse Bone Structure
