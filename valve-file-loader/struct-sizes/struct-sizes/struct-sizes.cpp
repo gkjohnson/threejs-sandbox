@@ -30,7 +30,54 @@ int main()
 	file.read(buffer, length);
 
 	FileHeader_t* ptr = (FileHeader_t*)buffer;
-	cout << ptr->version<< endl;
+
+	for (int i = 0; i < ptr->numBodyParts; i++) {
+
+		BodyPartHeader_t* bh = ptr->pBodyPart(i);
+		for (int i2 = 0; i2 < bh->numModels; i2++) {
+
+			ModelHeader_t* mh = bh->pModel(i2);
+			for (int i3 = 0; i3 < mh->numLODs; i3++) {
+
+				ModelLODHeader_t* lod = mh->pLOD(i3);
+				for (int i4 = 0; i4 < lod->numMeshes; i4++) {
+
+					MeshHeader_t* mesh = lod->pMesh(i4);
+					for (int i5 = 0; i5 < mesh->numStripGroups; i5++) {
+
+						StripGroupHeader_t* sg = mesh->pStripGroup(i5);
+						cout << endl << "STRIP GROUPS -- " << endl;
+						cout << "numStrips: " << sg->numStrips << endl;
+
+						cout << "numVerts: " << sg->numVerts << endl;
+						cout << "vertOffset: " << sg->vertOffset << endl;
+
+						cout << "numIndices: " << sg->numIndices << endl;
+						cout << "indexOffset: " << sg->indexOffset << endl;
+
+
+						for (int i6 = 0; i6 < sg->numStrips; i6++) {
+
+							StripHeader_t* sh = sg->pStrip(i6);
+							//cout << "num verts: " << sg->numVerts << endl;
+							cout << endl << "STRIPS -- " << endl;
+							cout << "numIndices: " << sh->numIndices << endl;
+							cout << "indexOffset: " << sh->indexOffset << endl;
+
+							cout << "numVerts: " << sh->numVerts << endl;
+							cout << "vertOffset: " << sh->vertOffset << endl;
+
+							cout << "numBones: " << sh->numBones << endl;
+							cout << "numBoneStateChanges: " << sh->numBoneStateChanges << endl;
+							cout << "boneStateChangeOffset: " << sh->boneStateChangeOffset << endl;
+							cout << "flags: " << (unsigned int) sh->flags << endl;
+
+						}
+					}
+				}
+			}
+		}
+	}
 
 	delete[] buffer;
 }
