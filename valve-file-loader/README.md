@@ -25,6 +25,8 @@ A small effort to try to decode and load valve 3d file formats.
   - The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
 - Read in a file and use the structs to read the data and make sure it makes sense and lines up
 - Understand how vertices and vertex data is indirectly accessed and used.
+- The number of meshes in the MDL models does not always line up with the vtx meshes? Or is sometimes a HUGE number?
+- Try with a file from a valve game?
 
 ## TODO
 - Parse Bone Structure
@@ -91,8 +93,6 @@ Defined in `optimize.h`
 Defines indices and render approaches for the model in a set of bodyparts, meshes, strips, etc that mirrors the structure of the data in the MDL file.
 
 ### Putting it all together
-
-TODO: How does the offset, vert, index data in the MDL models / meshes work in conjunction with the data in the VTX strips and strip groups?
 
 From the loop linked to above the order to go from strip to final vertex is as follows:
 
