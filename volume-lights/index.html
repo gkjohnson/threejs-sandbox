@@ -36,9 +36,11 @@
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
 
 		<script type="text/javascript" src="./VolumeLight.js"></script>
+		<script type="text/javascript" src="./Blit.js"></script>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shadow Volumes by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Accumulated Shading by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<div id="iterations"></div>
 		</div>
 
 		<script>
@@ -68,14 +70,22 @@
 			var camera, scene, renderer, controls;
 			var volumeLight, directionalLight, ambientLight;
 			var plane;
-			var backBuffer, frontBuffer;
+			var renderBuffer, backBuffer, frontBuffer;
+
+			var blendMat = getBlendMaterial();
+			var finalMat = new THREE.MeshBasicMaterial();
 
 			init();
+			onWindowResize();
 			animate();
 
 			function init() {
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				frontBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
+				backBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
+				renderBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
+
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x263238 );
@@ -90,7 +100,7 @@
 
 				scene = new THREE.Scene();
 
-				volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 50, 50 ) );
+				volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 20, 20 ) );
 				volumeLight.scale.set( 2, 2, 2 );
 				volumeLight.position.set( 15, 15, 15 );
 				volumeLight.light.castShadow = true;
@@ -98,14 +108,14 @@
 				volumeLight.light.shadow.radius = 0;
 				scene.add( volumeLight );
 
-				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
 				scene.add( ambientLight );
 
-				var ground = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial() );
-				ground.rotation.x = -Math.PI / 2;
-				ground.scale.set( 500, 500, 500 );
-				ground.receiveShadow = true;
-				scene.add(ground);
+				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial() );
+				plane.rotation.x = -Math.PI / 2;
+				plane.scale.set( 500, 500, 500 );
+				plane.receiveShadow = true;
+				scene.add(plane);
 
 				var mesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 10, 1 ), new THREE.MeshStandardMaterial() );
 				mesh.castShadow = true;
@@ -120,6 +130,7 @@
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 3000;
+				controls.addEventListener( 'change', () => volumeLight.iteration = 0 );
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -158,6 +169,11 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				backBuffer.setSize( width, height );
+				frontBuffer.setSize( width, height );
+				renderBuffer.setSize( width, height );
+
+				volumeLight.iteration = 0;
 
 			}
 
@@ -170,11 +186,28 @@
 
 			}
 
+
 			function render() {
 
-				volumeLight.setIteration( volumeLight.iteration + 1 );
 				controls.update();
-				renderer.render( scene, camera );
+
+				for (var i = 0; i < 1; i ++) {
+					volumeLight.setIteration( volumeLight.iteration + 1 );
+					renderer.render( scene, camera, renderBuffer );
+
+					blendMat.uniforms.texture2.value = renderBuffer.texture;
+					blendMat.uniforms.texture1.value = frontBuffer.texture;
+					blendMat.uniforms.iterations.value = volumeLight.iteration;
+
+					blit( renderer, blendMat, backBuffer );
+
+					[ backBuffer, frontBuffer ] = [ frontBuffer, backBuffer ];
+				}
+
+				finalMat.map = backBuffer.texture;
+				blit( renderer, finalMat );
+
+				document.getElementById( 'iterations' ).innerText = `iterations: ${ volumeLight.iteration }`;
 
 			}
 
