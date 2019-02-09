@@ -42,3 +42,8 @@ Source with struct definitions used in the `vtx` files.
 Source with some file loading vertex reading logic.
 
 Especially the loop defined at [lines 1504-1688](https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp#L1504-L1688), which shows the relationship between the MDL and VTX file data.
+
+## Things To Note
+- THREE assumes counter clockwise triangle winding order while DirectX (and probably the vtx files) [assume clockwise order](https://stackoverflow.com/questions/23790272/vertex-winding-order-in-dx11).
+- The vertex list in the strips objects seems to not be used.
+- There's a lot of indirection in the way vertex data is defined. Look in the loop and at the `mstudio_meshvertexdata_t` struct in `studio.h` to unpack it.
