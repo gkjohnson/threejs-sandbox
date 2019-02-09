@@ -115,16 +115,14 @@ THREE.ValveLoader.prototype = {
 
 				}
 
-				const group = new THREE.Group();
-
 				// https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp#L1504-L1688
-				
 				if ( mdl.numbodyparts !== vtx.numBodyParts ) {
 				
 					console.warn( 'ValveLoader: Number of body parts does not match.' );						
 				
 				}
 
+				const group = new THREE.Group();				
 				vtx.bodyParts.forEach( ( vtxBodyPart, i ) => {
 
 					var mdlBodyPart = mdl.bodyParts[ i ];
@@ -195,7 +193,6 @@ THREE.ValveLoader.prototype = {
 				} );
 
 				onLoad( group );
-
 
 			} );
 
