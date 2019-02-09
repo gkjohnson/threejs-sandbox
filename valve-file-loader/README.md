@@ -18,11 +18,13 @@ A small effort to try to decode and load valve 3d file formats.
   - The high level information for defining the structure of a model
 
 ## Open Questions
-- How do you use the `vertOffset` field in the `strips` objects?
+- ~How do you use the `vertOffset` field in the `strips` objects?~
+  - Seem to not be used.
 - Mark the beginning and ends of structs in memory to make sure everything lines up as expected.
 - How large are the strides for the structs? Why do some seem to be longer than others?
-	- The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
+  - The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
 - Read in a file and use the structs to read the data and make sure it makes sense and lines up
+- Understand how vertices and vertex data is indirectly accessed and used.
 
 ## TODO
 - Parse Bone Structure
