@@ -10,29 +10,41 @@ THREE.ValveLoader.prototype = {
 
 	load: function ( url, onLoad, onProgress, onError ) {
 
-		function toGeometryInfo( buffer, strip, stripGroup ) {
+		function reverseInPlace( array ) {
 
-			const dataView = new DataView( buffer );
-			const indexCount = strip.numIndices ? strip.numIndices : strip.numVerts;
-			const indexArray = new Uint16Array( indexCount );
+			const halfLen = array.length / 2;
+			for ( let i = 0, i2 = array.length - 1; i < halfLen; i ++, i2 -- ) {
 
-			for ( let i = 0; i < indexCount; i ++ ) {
-
-				let index = i;
-				if ( strip.numIndices ) {
-
-					index = dataView.getUint16( stripGroup.indexDataStart + ( strip.indexOffset + index ) * 2, true );
-
-				}
-
-				// TODO: What do we do with vert offset?
-				// const offset = stripGroup.vertexDataStart + ( strip.vertOffset + index ) * 9;
-				const offset = stripGroup.vertexDataStart + ( index ) * 9;
-				const origMeshVertID = dataView.getUint16( offset + 4, true );
-				indexArray[ i ] = origMeshVertID;
+				const tmp = array[ i ];
+				array[ i ] = array[ i2 ];
+				array[ i2 ] = tmp;
 
 			}
 
+			return array;
+
+		}
+
+		function toGeometryIndex( vtxBuffer, model, mesh, stripGroup, strip ) {
+
+			const vtxDataView = new DataView( vtxBuffer );
+			const indexArray = new Uint32Array( indexCount );
+
+			for ( let i = 0, l = strip.numIndices; i < l; i ++ ) {
+
+				const index = strip.indexOffset + i;
+				const index2 = vtxDataView.getUint16( stripGroup.indexDataStart + index * 2, true );
+				const index3 = vtxDataView.getUint16( stripGroup.vertexDataStart + index2 * 9 + 4, true );
+				const index4 = mesh.vertexOffset + index3;
+
+				indexArray[ i ] = index4;
+
+			}
+
+			// vertex buffer start
+			// model.vertexOffset -- cached from something but what? The VVD file? If from VVD then it's not relevant
+
+			reverseInPlace( indexArray );
 
 			return new THREE.BufferAttribute( indexArray, 1, false );
 
@@ -127,6 +139,13 @@ THREE.ValveLoader.prototype = {
 					vtxBodyPart.models.forEach( ( vtxModel, i2 ) => {
 
 						var mdlModel = mdlBodyPart.models[ i2 ];
+
+						if ( vvd.vertexDataStart !== mdlModel.vertexOffset ) {
+
+							console.warn( 'ValveLoader: Cached MDL model vertex offset does not match VVD vertex data start.' );
+
+						}
+
 						vtxModel.lods.forEach( ( vtxLod, i3 ) => {
 
 							if ( i3 !== 0 ) return;
@@ -147,12 +166,15 @@ THREE.ValveLoader.prototype = {
 									vtxStripGroup.strips.forEach( vtxStrip => {
 
 										// if ( s.indexOffset !== 0 || s.numIndices === 0 ) return;
-										console.log( vtxStrip.flags, vtxStrip );
+										// console.log( vtxStrip.flags, vtxStrip );
+
+
 
 										// TODO: for some reason the indices seem to be garbage?
 										// Probably because we're not using the strip index and vert offsets
+										var indexAttr = toGeometryIndex( vtx.buffer, mdlModel, mdlMesh, vtxStripGroup, vtxStrip );
 										var geometry = new THREE.BufferGeometry();
-										geometry.setIndex( toGeometryInfo( vtx.buffer, vtxStrip, vtxStripGroup ) );
+										geometry.setIndex( indexAttr );
 										geometry.addAttribute( 'position', vvd.attributes.position );
 										geometry.addAttribute( 'uv', vvd.attributes.uv );
 										geometry.addAttribute( 'normal', vvd.attributes.normal );
