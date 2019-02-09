@@ -29,10 +29,14 @@ A small effort to try to decode and load valve 3d file formats.
 
 ## Other References
 
-### [Studio.h](https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/public/studio.h)
+### [Studio.h](https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/public/studio.h)
 
 Source with struct definitions used in the `mdl` and other files.
 
-### [Optimize.h](https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/public/optimize.h)
+### [Optimize.h](https://github.com/ValveSoftware/source-sdk-2013/blob/master/mp/src/public/optimize.h)
 
 Source with struct definitions used in the `vtx` files.
+
+### [Vradstaticprops.cpp](https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp)
+
+Source with some file loading vertex reading logic.
