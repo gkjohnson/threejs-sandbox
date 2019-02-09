@@ -154,12 +154,12 @@ THREE.VTFLoader.parse = function ( buffer, loadMipmaps ) {
 			case 14: // DXT3
 				var dataLength = dxtSz * 16; // 16 blockBytes
 				byteArray = new Uint8Array( buffer, offset, dataLength );
-				threeFormat = THREE.RGB_S3TC_DXT3_Format;
+				threeFormat = THREE.RGBA_S3TC_DXT3_Format;
 				break;
 			case 15: // DXT5
 				var dataLength = dxtSz * 16; // 16 blockBytes
 				byteArray = new Uint8Array( buffer, offset, dataLength );
-				threeFormat = THREE.RGB_S3TC_DXT5_Format;
+				threeFormat = THREE.RGBA_S3TC_DXT5_Format;
 				break;
 			default:
 				console.error( `VTFLoader: Format variant ${ format } is unsupported.` );
@@ -233,7 +233,7 @@ THREE.VTFLoader.prototype.load = function ( ...args ) {
 
 	const tex = THREE.CompressedTextureLoader.prototype.load.call( this, ...args );
 	tex.minFilter = THREE.LinearFilter;
-	tex.maxFilter = THREE.LinearFilter;
+	tex.magFilter = THREE.LinearFilter;
 	return tex;
 
 };
