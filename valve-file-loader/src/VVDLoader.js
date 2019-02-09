@@ -31,6 +31,7 @@ THREE.VVDLoader.prototype = {
 		const MAX_NUM_LODS = 8;
 		const MAX_NUM_BONES_PER_VERT = 3;
 
+		// struct vertexFileHeader_t
 		function parseHeader( buffer ) {
 
 			var dataView = new DataView( buffer );

@@ -47,5 +47,49 @@ Especially the loop defined at [lines 1504-1688](https://github.com/ValveSoftwar
 
 ## Things To Note
 - THREE assumes counter clockwise triangle winding order while DirectX (and probably the vtx files) [assume clockwise order](https://stackoverflow.com/questions/23790272/vertex-winding-order-in-dx11).
-- The vertex list in the strips objects seems to not be used.
 - There's a lot of indirection in the way vertex data is defined. Look in the loop and at the `mstudio_meshvertexdata_t` struct in `studio.h` to unpack it.
+
+## Understanding Vertices
+### Key Structs and Functions
+#### .VVD
+Defined in `studio.h`.
+
+##### struct vertexFileHeader_t
+The header provides a pointer to a buffer of interlaced bone weight, position, normal, and uv data.
+
+##### struct mstudiovertex_t
+Defines the data layout for the vertex data buffer.
+
+##### struct mstudio_modelvertexdata_t
+The struct to access all the vertex data in the given buffer via functions like `Position(i)`, `Normal(i)`, `Vertex(i)`, etc.
+
+TODO: To get the vertex index the function `GetGlobalVertexIndex` is used.
+
+#### .MDL
+Defined in `studio.h`.
+
+##### struct studiohdr_t
+Provides pointers to various model data including texture data and "body parts".
+
+##### struct mstudiobodyparts_t
+Defines a groups of models.
+
+##### struct mstudiomodel_t
+Defines a group of meshes and contains a handle to the `mstudio_modelvertexdata_t` from the VVD class (right??).
+
+##### struct mstudiomesh_t
+Defines a mesh to be rendered and contains a handle to `mstudio_meshvertexdata_t` (_NOT_ model), which indirectly accesses data in the `mstudio_modelvertexdata_t` struct of the meshes parent model.
+
+This struct defines `vertoffset` and `vertindex` to index into the model data. Possibly this is cached or duplicated data from the VTX strip data?
+
+##### struct mstudio_meshvertexdata_t
+Defines accessors into the model vertex data for vertices using the `vertOffset` field (see `getModelVertexIndex` function).
+
+#### .VTX
+Defined in `optimize.h`
+
+Defines indices and render approaches for the model in a set of bodyparts, meshes, strips, etc that mirrors the structure of the data in the MDL file.
+
+### Putting it all together
+
+TODO
