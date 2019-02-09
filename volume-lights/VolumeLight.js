@@ -67,6 +67,7 @@ class MeshLight extends VolumeLight {
 
         }
 
+        // TODO: Interpolate along the surface of the triangle
         tri.a.fromBufferAttribute( positionAttr, i0 ).multiplyScalar( 0.3333 );
         tri.b.fromBufferAttribute( positionAttr, i1 ).multiplyScalar( 0.3333 );
         tri.c.fromBufferAttribute( positionAttr, i2 ).multiplyScalar( 0.3333 );
