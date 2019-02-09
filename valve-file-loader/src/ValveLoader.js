@@ -101,12 +101,7 @@ THREE.ValveLoader.prototype = {
 
 				return Promise
 					.all( promises )
-					.then( materials => {
-
-						materials = materials.filter( m => ! ! m );
-						return { materials, mdl, vvd, vtx };
-
-					} );
+					.then( materials => ( { materials, mdl, vvd, vtx } ) );
 
 			} )
 			.then( ( { mdl, vvd, vtx, materials } ) => {
@@ -159,6 +154,7 @@ THREE.ValveLoader.prototype = {
 							vtxLod.meshes.forEach( ( vtxMesh, i4 ) => {
 
 								var mdlMesh = mdlModel.meshes[ i4 ];
+								var material = materials[ mdlMesh.material ];
 								vtxMesh.stripGroups.forEach( vtxStripGroup => {
 
 									var obj = new THREE.Object3D();
@@ -168,10 +164,6 @@ THREE.ValveLoader.prototype = {
 										// if ( s.indexOffset !== 0 || s.numIndices === 0 ) return;
 										// console.log( vtxStrip.flags, vtxStrip );
 
-
-
-										// TODO: for some reason the indices seem to be garbage?
-										// Probably because we're not using the strip index and vert offsets
 										var indexAttr = toGeometryIndex( vtx.buffer, mdlModel, mdlMesh, vtxStripGroup, vtxStrip );
 										var geometry = new THREE.BufferGeometry();
 										geometry.setIndex( indexAttr );
@@ -185,7 +177,7 @@ THREE.ValveLoader.prototype = {
 										// geometry.addGroup( s.numIndices, s.indexOffset, 0 );
 
 										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );
-										var mesh = new THREE.Mesh( geometry, materials[ 0 ] );
+										var mesh = new THREE.Mesh( geometry, material );
 										if ( vtxStrip.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
 
 										// console.log(mesh)
