@@ -57,3 +57,5 @@ typings/
 # dotenv environment variables file
 .env
 
+# ignore local model testing
+valve-file-loader/models/**/*.*
