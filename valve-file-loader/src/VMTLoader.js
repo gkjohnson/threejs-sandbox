@@ -121,6 +121,13 @@ THREE.VMTLoader.prototype = {
 					material.bumpMap.wrapS = THREE.RepeatWrapping;
 					material.bumpMap.wrapT = THREE.RepeatWrapping;
 					break;
+				case '$phongexponenttexture':
+					// NOTE: This doesn't quite map appropriately to a specular map
+					material.specularMap = vtfLoader.load( `${ path }${ field }.vtf` );
+					material.specularMap.wrapS = THREE.RepeatWrapping;
+					material.specularMap.wrapT = THREE.RepeatWrapping;
+					break;
+
 
 			}
 
