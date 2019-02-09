@@ -109,7 +109,7 @@ THREE.VMTLoader.prototype = {
 		for ( const key in root ) {
 
 			const field = root[ key ];
-			switch ( key ) {
+			switch ( key.toLowerCase() ) {
 
 				case '$basetexture':
 					material.map = vtfLoader.load( `${ path }${ field }.vtf` );
@@ -117,9 +117,9 @@ THREE.VMTLoader.prototype = {
 					material.map.wrapT = THREE.RepeatWrapping;
 					break;
 				case '$bumpmap':
-					material.bumpMap = vtfLoader.load( `${ path }${ field }.vtf` );
-					material.bumpMap.wrapS = THREE.RepeatWrapping;
-					material.bumpMap.wrapT = THREE.RepeatWrapping;
+					material.normalMap = vtfLoader.load( `${ path }${ field }.vtf` );
+					material.normalMap.wrapS = THREE.RepeatWrapping;
+					material.normalMap.wrapT = THREE.RepeatWrapping;
 					break;
 				case '$phongexponenttexture':
 					// NOTE: This doesn't quite map appropriately to a specular map
