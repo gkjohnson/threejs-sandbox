@@ -28,7 +28,7 @@ THREE.ValveLoader.prototype = {
 		function toGeometryIndex( vtxBuffer, model, mesh, stripGroup, strip ) {
 
 			const vtxDataView = new DataView( vtxBuffer );
-			const indexArray = new Uint32Array( strip.numIndices );
+			const indexArray = new Uint16Array( strip.numIndices );
 
 			for ( let i = 0, l = strip.numIndices; i < l; i ++ ) {
 
@@ -76,9 +76,10 @@ THREE.ValveLoader.prototype = {
 				tokens.pop();
 
 				const path = tokens.join( 'models' ) + 'materials/';
-				mdl.textureDirectories.forEach( f => {
+				mdl.textures.forEach( t => {
 
-					mdl.textures.forEach( t => {
+					const matPromises = [];
+					mdl.textureDirectories.forEach( f => {
 
 						const vmtUrl = `${ path }${ f }${ t }.vmt`;
 						const pr = new Promise( resolve => {
@@ -91,9 +92,11 @@ THREE.ValveLoader.prototype = {
 							}, undefined, () => resolve( null ) );
 
 						} );
-						promises.push( pr );
+						matPromises.push( pr );
 
 					} );
+
+					promises.push( Promise.all( matPromises ).then( materials => materials.filter( m => ! ! m )[ 0 ] ) );
 
 				} );
 
@@ -101,7 +104,6 @@ THREE.ValveLoader.prototype = {
 				// in which the materials are specified
 				return Promise
 					.all( promises )
-					.then( materials => materials.filter( m => ! ! m ) )
 					.then( materials => ( { materials, mdl, vvd, vtx } ) );
 
 			} )
