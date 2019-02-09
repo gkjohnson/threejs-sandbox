@@ -101,33 +101,58 @@ THREE.ValveLoader.prototype = {
 
 				if ( mdl.header.checksum !== vvd.header.checksum || mdl.header.checksum !== vtx.header.checksum ) {
 
-					console.warn( 'ValveLoader: File checksums do not match' );
+					console.warn( 'ValveLoader: File checksums do not match.' );
 
 				}
 
 				const group = new THREE.Group();
 
-				vtx.bodyParts.forEach( bp => {
+				// https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp#L1504-L1688
+				
+				if ( mdl.numbodyparts !== vtx.numBodyParts ) {
+				
+					console.warn( 'ValveLoader: Number of body parts does not match.' );						
+				
+				}
 
-					bp.models.forEach( model => {
+				vtx.bodyParts.forEach( ( vtxBodyPart, i ) => {
 
-						model.lods.forEach( lod => {
+					var mdlBodyPart = mdl.bodyParts[ i ];
+					if ( mdlBodyPart.nummodels !== vtxBodyPart.numModels ) {
+				
+						console.warn( 'ValveLoader: Number of models does not match.' );						
+					
+					}
+					
+					vtxBodyPart.models.forEach( ( vtxModel, i2 ) => {
 
-							lod.meshes.forEach( mesh => {
+						var mdlModel = mdlBodyPart.models[ i2 ];
+						vtxModel.lods.forEach( ( vtxLod, i3 ) => {
 
-								mesh.stripGroups.forEach( sg => {
+							if ( i3 !== 0 ) return;
 
-									const obj = new THREE.Object3D();
+							if ( mdlModel.nummeshes !== vtxLod.numMeshes ) {
+				
+								console.warn( 'ValveLoader: Number of meshes does not match.' );						
+							
+							}
 
-									sg.strips.forEach( s => {
+							vtxLod.meshes.forEach( ( vtxMesh, i4 ) => {
+
+								var mdlMesh = mdlModel.meshes[ i4 ];
+								vtxMesh.stripGroups.forEach( vtxStripGroup => {
+
+									var obj = new THREE.Object3D();
+
+									vtxStripGroup.strips.forEach( vtxStrip => {
 
 										// if ( s.indexOffset !== 0 || s.numIndices === 0 ) return;
-										console.log( s.flags, s );
+										console.log( vtxStrip.flags, vtxStrip );
 
 										// TODO: for some reason the indices seem to be garbage?
 										// Probably because we're not using the strip index and vert offsets
 										var geometry = new THREE.BufferGeometry();
-										geometry.setIndex( toGeometryInfo( vtx.buffer, s, sg ) );
+										geometry.setIndex( toGeometryInfo( vtx.buffer, vtxStrip, vtxStripGroup ) );
 										geometry.addAttribute( 'position', vvd.attributes.position );
 										geometry.addAttribute( 'uv', vvd.attributes.uv );
 										geometry.addAttribute( 'normal', vvd.attributes.normal );
@@ -139,7 +164,7 @@ THREE.ValveLoader.prototype = {
 
 										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );
 										var mesh = new THREE.Mesh( geometry, materials[ 0 ] );
-										if ( s.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
+										if ( vtxStrip.flags & 2 ) mesh.drawMode = THREE.TriangleStripDrawMode;
 
 										// console.log(mesh)
 										obj.add( mesh );
