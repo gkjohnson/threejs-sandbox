@@ -45,8 +45,6 @@ class MeshLight extends VolumeLight {
         i *= 3;
 
         const tri = new THREE.Triangle();
-        const barycoord = new THREE.Vector3();
-        const barypoint = new THREE.Vector3( 1, 0, 0 );
 
         const geometry = this.geometry;
         const positionAttr = geometry.attributes.position;
