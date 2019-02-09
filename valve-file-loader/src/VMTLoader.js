@@ -100,25 +100,24 @@ THREE.VMTLoader.prototype = {
 		}
 
 		// TODO: Repeat wrapping should be handled in the VFT loads
-
-		const urlTokens = url.split( /models/gi );
+		const urlTokens = url.split( /materials/i );
 		urlTokens.pop();
-		const path = urlTokens.join( 'models' );
-		const material = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );
-		const vftLoader = new THREE.VTFLoader( this.manager );
+
+		const path = `${ urlTokens.join( 'materials' ) }materials/`;
+		const material = new THREE.MeshPhongMaterial();
+		const vtfLoader = new THREE.VTFLoader( this.manager );
 		for ( const key in root ) {
 
 			const field = root[ key ];
 			switch ( key ) {
 
 				case '$basetexture':
-					console.log( `${ path }${ field }.vtf` );
-					material.map = vftLoader.load( `${ path }${ field }.vtf` );
+					material.map = vtfLoader.load( `${ path }${ field }.vtf` );
 					material.map.wrapS = THREE.RepeatWrapping;
 					material.map.wrapT = THREE.RepeatWrapping;
 					break;
 				case '$bumpmap':
-					material.bumpMap = vftLoader.load( `${ path }${ field }.vtf` );
+					material.bumpMap = vtfLoader.load( `${ path }${ field }.vtf` );
 					material.bumpMap.wrapS = THREE.RepeatWrapping;
 					material.bumpMap.wrapT = THREE.RepeatWrapping;
 					break;

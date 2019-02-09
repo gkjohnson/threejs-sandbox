@@ -28,14 +28,14 @@ THREE.ValveLoader.prototype = {
 		function toGeometryIndex( vtxBuffer, model, mesh, stripGroup, strip ) {
 
 			const vtxDataView = new DataView( vtxBuffer );
-			const indexArray = new Uint32Array( indexCount );
+			const indexArray = new Uint32Array( strip.numIndices );
 
 			for ( let i = 0, l = strip.numIndices; i < l; i ++ ) {
 
 				const index = strip.indexOffset + i;
 				const index2 = vtxDataView.getUint16( stripGroup.indexDataStart + index * 2, true );
 				const index3 = vtxDataView.getUint16( stripGroup.vertexDataStart + index2 * 9 + 4, true );
-				const index4 = mesh.vertexOffset + index3;
+				const index4 = mesh.vertexoffset + index3;
 
 				indexArray[ i ] = index4;
 
@@ -135,9 +135,9 @@ THREE.ValveLoader.prototype = {
 
 						var mdlModel = mdlBodyPart.models[ i2 ];
 
-						if ( vvd.vertexDataStart !== mdlModel.vertexOffset ) {
+						if ( vvd.header.vertexDataStart !== mdlModel.vertexindex ) {
 
-							console.warn( 'ValveLoader: Cached MDL model vertex offset does not match VVD vertex data start.' );
+							console.warn( 'ValveLoader: Cached MDL model vertex offset does not match VVD vertex data start.', vvd.header.vertexDataStart, mdlModel.vertexindex );
 
 						}
 

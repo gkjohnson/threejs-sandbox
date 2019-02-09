@@ -539,62 +539,62 @@ THREE.MDLLoader.prototype = {
 				bodyPart.nummodels = dataView.getInt32( offset + 4, true );
 				bodyPart.base = dataView.getInt32( offset + 8, true );
 				bodyPart.modelindex = dataView.getInt32( offset + 12, true );
-				bodyParts.models = [];
+				bodyPart.models = [];
 				bodyParts.push( bodyPart );
 
 				// struct mstudiomodel_t
 				for ( var i2 = 0; i2 < bodyPart.nummodels; i2 ++ ) {
 
-					var offset2 = offset + bodyPart.modelindex;
+					var offset2 = offset + bodyPart.modelindex + i2 * 104;
 					var model = {};
-					model.name = readString( dataView, offset2 + 0 );
-					model.type = dataView.getInt32( offset2 + 64 * 4 );
-					model.boundingradius = dataView.getFloat32( offset2 + 64 * 4 + 4 );
+					model.name = readString( dataView, offset2 + 0);
+					model.type = dataView.getInt32( offset2 + 64, true );
+					model.boundingradius = dataView.getFloat32( offset2 + 64 + 4, true );
 
-					model.nummeshes = dataView.getInt32( offset2 + 64 * 4 + 8 );
-					model.meshindex = dataView.getInt32( offset2 + 64 * 4 + 12 );
+					model.nummeshes = dataView.getInt32( offset2 + 64 + 8, true );
+					model.meshindex = dataView.getInt32( offset2 + 64 + 12, true );
 
-					model.numvertices = dataView.getInt32( offset2 + 64 * 4 + 16 );
-					model.vertexindex = dataView.getInt32( offset2 + 64 * 4 + 20 );
-					model.tangentsindex = dataView.getInt32( offset2 + 64 * 4 + 24 );
+					model.numvertices = dataView.getInt32( offset2 + 64 + 16, true );
+					model.vertexindex = dataView.getInt32( offset2 + 64 + 20, true );
+					model.tangentsindex = dataView.getInt32( offset2 + 64 + 24, true );
 
-					model.numattachments = dataView.getInt32( offset2 + 64 * 4 + 28 );
-					model.attachmentindex = dataView.getInt32( offset2 + 64 * 4 + 32 );
-					model.numeyeballs = dataView.getInt32( offset2 + 64 * 4 + 36 );
-					model.eyeballindex = dataView.getInt32( offset2 + 64 * 4 + 40 );
-
-					model.meshes = [];
-
-					bodyPart.models.push( model );
+					model.numattachments = dataView.getInt32( offset2 + 64 + 28, true );
+					model.attachmentindex = dataView.getInt32( offset2 + 64 + 32, true );
+					model.numeyeballs = dataView.getInt32( offset2 + 64 + 36, true );
+					model.eyeballindex = dataView.getInt32( offset2 + 64 + 40, true );
 					// mstudio_modelvertexdata_t
 					// int unused[8]
+
+					model.meshes = [];
+					bodyPart.models.push( model );
 
 					// struct mstudiomesh_t
 					for ( var i3 = 0; i3 < model.nummeshes; i3 ++ ) {
 
 						var offset3 = offset2 + model.meshindex;
 						var mesh = {};
-						mesh.material = dataView.getInt32( offset3 + 0 );
-						mesh.modelindex = dataView.getInt32( offset3 + 4 );
+						mesh.material = dataView.getInt32( offset3 + 0, true );
+						mesh.modelindex = dataView.getInt32( offset3 + 4, true );
 
-						mesh.numvertices = dataView.getInt32( offset3 + 8 );
-						mesh.vertexoffset = dataView.getInt32( offset3 + 12 );
+						mesh.numvertices = dataView.getInt32( offset3 + 8, true );
+						mesh.vertexoffset = dataView.getInt32( offset3 + 12, true );
 						
-						mesh.numflexes = dataView.getInt32( offset3 + 16 );
-						mesh.flexindex = dataView.getInt32( offset3 + 20 );
+						mesh.numflexes = dataView.getInt32( offset3 + 16, true );
+						mesh.flexindex = dataView.getInt32( offset3 + 20, true );
 						
-						mesh.materialtype = dataView.getInt32( offset3 + 24 );
-						mesh.materialparam = dataView.getInt32( offset3 + 28 );
+						mesh.materialtype = dataView.getInt32( offset3 + 24, true );
+						mesh.materialparam = dataView.getInt32( offset3 + 28, true );
 
-						mesh.meshid = dataView.getInt32( offset3 + 32 );
+						mesh.meshid = dataView.getInt32( offset3 + 32, true );
 						mesh.center = new THREE.Vector3(
-							dataView.getFloat32( offset3 + 36 ),
-							dataView.getFloat32( offset3 + 40 ),
-							dataView.getFloat32( offset3 + 44 ),
+							dataView.getFloat32( offset3 + 36, true ),
+							dataView.getFloat32( offset3 + 40, true ),
+							dataView.getFloat32( offset3 + 44, true ),
 						);
 
 						// mstudio_modelvertexdata_t vertexdata
 						// int unused[8]
+						model.meshes.push( mesh );
 
 					}
 
@@ -686,7 +686,7 @@ THREE.MDLLoader.prototype = {
 
 			var surfaceProp = readString( dataView, header.surfacepropindex );
 
-			return { textures, textureDirectories, includeModels, surfaceProp };
+			return { textures, textureDirectories, includeModels, surfaceProp, bodyParts };
 
 		}
 
