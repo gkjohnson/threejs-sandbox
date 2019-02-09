@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - Source Film Maker Loader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="./VolumeLight.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shadow Volumes by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script>
+
+			// globals
+			var stats;
+			var params = {
+				useShadowVolumes: true,
+
+				light: {
+					speed: 1.0,
+					distance: 15.0,
+					pointLight: true,
+				},
+
+				shadows: {
+					showVolume: false,
+					distance: 400,
+					bias: 0.01,
+				},
+
+				object: {
+					display: 0,
+					speed: 1.0,
+				}
+			};
+			var camera, scene, renderer, controls;
+			var volumeLight, directionalLight, ambientLight;
+			var plane;
+			var backBuffer, frontBuffer;
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x263238 );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
+				camera.position.set( 60, 30, 60 );
+
+				scene = new THREE.Scene();
+
+				volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 50, 50 ) );
+				volumeLight.scale.set( 2, 2, 2 );
+				volumeLight.position.set( 15, 15, 15 );
+				volumeLight.light.castShadow = true;
+				volumeLight.light.shadow.mapSize.set( 1024, 1024 );
+				volumeLight.light.shadow.radius = 0;
+				scene.add( volumeLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				scene.add( ambientLight );
+
+				var ground = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial() );
+				ground.rotation.x = -Math.PI / 2;
+				ground.scale.set( 500, 500, 500 );
+				ground.receiveShadow = true;
+				scene.add(ground);
+
+				var mesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 10, 1 ), new THREE.MeshStandardMaterial() );
+				mesh.castShadow = true;
+				mesh.position.y = 5;
+				scene.add( mesh );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 3000;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				// gui.add(params, 'useShadowVolumes');
+
+				// var lightFolder = gui.addFolder( 'light' );
+				// lightFolder.add(params.light, 'pointLight');
+				// lightFolder.add(params.light, 'speed', 0, 2);
+				// lightFolder.add(params.light, 'distance', 0, 30);
+				// lightFolder.open();
+
+				// var shadowFolder = gui.addFolder( 'shadow' );
+				// shadowFolder.add(params.shadows, 'showVolume');
+				// shadowFolder.add(params.shadows, 'distance', 0, 600);
+				// shadowFolder.add(params.shadows, 'bias',-0.05, 0.05);
+				// shadowFolder.open();
+
+				// var objectFolder = gui.addFolder( 'object' );
+				// objectFolder.add(params.object, 'speed', 0, 2.0);
+				// objectFolder.add(params.object, 'display', { 'Torus': 0, 'Dancer': 1 });
+				// objectFolder.open();
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.update();
+				render();
+
+			}
+
+			function render() {
+
+				volumeLight.setIteration( volumeLight.iteration + 1 );
+				controls.update();
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
