@@ -92,4 +92,30 @@ Defines indices and render approaches for the model in a set of bodyparts, meshe
 
 ### Putting it all together
 
-TODO
+TODO: How does the offset, vert, index data in the MDL models / meshes work in conjunction with the data in the VTX strips and strip groups?
+
+From the loop linked to above the order to go from strip to final vertex is as follows:
+
+```c
+// From Strip
+// iterate over every index in the strip
+index = pStrip -> indexOffset + i;
+
+// From StripGroup
+// index into the strip group's index buffer (defined as `(byte*)this + this.indexoffset)`)
+// see stripGroup -> pIndex
+index2 = pStripGroup -> indexBuffer[ index ];
+
+// index into the group's vertex buffer (defined as `(byte*)this + this.vertoffset)`)
+// see stripGroup -> pVertex
+index3 = pStripGroup -> vertexBuffer[ index2 ] -> origMeshVertID;
+
+// From mstudiomesh_t
+// index into the meshes indices
+// see mstudio_meshvertexdata_t::Position and mstudio_meshvertexdata_t::GetModelVertexIndex
+index4 = pMesh -> vertexoffset + index3;
+
+// From mstudiomodel_t
+// see mstudio_modelvertexdata_t::Position and mstudio_modelvertexdata_t::GetGlobalVertexIndex
+index5 = index4 + pModel -> vertexindex / sizeof( vertex );
+```
