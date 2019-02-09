@@ -40,3 +40,5 @@ Source with struct definitions used in the `vtx` files.
 ### [Vradstaticprops.cpp](https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp)
 
 Source with some file loading vertex reading logic.
+
+Especially the loop defined at [lines 1504-1688](https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp#L1504-L1688), which shows the relationship between the MDL and VTX file data.
