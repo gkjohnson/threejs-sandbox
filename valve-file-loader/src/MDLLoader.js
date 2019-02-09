@@ -568,6 +568,9 @@ THREE.MDLLoader.prototype = {
 					model.meshes = [];
 					bodyPart.models.push( model );
 
+					// TODO: Some times the amount of meshes here is (seemingly incorrectly) huge
+					// and causes an out of memory crash
+
 					// struct mstudiomesh_t
 					for ( var i3 = 0; i3 < model.nummeshes; i3 ++ ) {
 

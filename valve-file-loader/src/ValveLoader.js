@@ -36,13 +36,11 @@ THREE.ValveLoader.prototype = {
 				const index2 = vtxDataView.getUint16( stripGroup.indexDataStart + index * 2, true );
 				const index3 = vtxDataView.getUint16( stripGroup.vertexDataStart + index2 * 9 + 4, true );
 				const index4 = mesh.vertexoffset + index3;
+				const index5 = index4 + model.vertexindex / 48;
 
-				indexArray[ i ] = index4;
+				indexArray[ i ] = index5;
 
 			}
-
-			// vertex buffer start
-			// model.vertexOffset -- cached from something but what? The VVD file? If from VVD then it's not relevant
 
 			reverseInPlace( indexArray );
 
@@ -99,8 +97,11 @@ THREE.ValveLoader.prototype = {
 
 				} );
 
+				// TODO: Order is important here so it would be best to guarantee the order
+				// in which the materials are specified
 				return Promise
 					.all( promises )
+					.then( materials => materials.filter( m => ! ! m ) )
 					.then( materials => ( { materials, mdl, vvd, vtx } ) );
 
 			} )
@@ -134,20 +135,14 @@ THREE.ValveLoader.prototype = {
 					vtxBodyPart.models.forEach( ( vtxModel, i2 ) => {
 
 						var mdlModel = mdlBodyPart.models[ i2 ];
-
-						if ( vvd.header.vertexDataStart !== mdlModel.vertexindex ) {
-
-							console.warn( 'ValveLoader: Cached MDL model vertex offset does not match VVD vertex data start.', vvd.header.vertexDataStart, mdlModel.vertexindex );
-
-						}
-
 						vtxModel.lods.forEach( ( vtxLod, i3 ) => {
 
 							if ( i3 !== 0 ) return;
 
 							if ( mdlModel.nummeshes !== vtxLod.numMeshes ) {
 				
-								console.warn( 'ValveLoader: Number of meshes does not match.' );						
+								console.warn( 'ValveLoader: Number of meshes does not match.', mdlModel.nummeshes, vtxLod.numMeshes );
+								return;						
 							
 							}
 
