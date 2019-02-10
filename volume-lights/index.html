@@ -100,7 +100,8 @@
 
 				scene = new THREE.Scene();
 
-				volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 20, 20 ) );
+				volumeLight = new MeshLight( new THREE.TorusKnotBufferGeometry( 1, .3, 50, 8 ) );
+				// volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 20, 20 ) );
 				volumeLight.scale.set( 2, 2, 2 );
 				volumeLight.position.set( 15, 15, 15 );
 				volumeLight.light.castShadow = true;
@@ -111,7 +112,7 @@
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
 				scene.add( ambientLight );
 
-				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial() );
+				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial( { roughness: 0.025 } ) );
 				plane.rotation.x = -Math.PI / 2;
 				plane.scale.set( 500, 500, 500 );
 				plane.receiveShadow = true;
