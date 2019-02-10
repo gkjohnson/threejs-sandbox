@@ -75,6 +75,19 @@
 			var blendMat = getBlendMaterial();
 			var finalMat = new THREE.MeshBasicMaterial();
 
+			// https://docs.microsoft.com/en-us/windows/desktop/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
+			// https://github.com/mrdoob/three.js/blob/master/examples/js/postprocessing/SSAARenderPass.js
+			const jitterOffsets = [
+				[ - 4, - 7 ], [ - 7, - 5 ], [ - 3, - 5 ], [ - 5, - 4 ],
+				[ - 1, - 4 ], [ - 2, - 2 ], [ - 6, - 1 ], [ - 4, 0 ],
+				[ - 7, 1 ], [ - 1, 2 ], [ - 6, 3 ], [ - 3, 3 ],
+				[ - 7, 6 ], [ - 3, 6 ], [ - 5, 7 ], [ - 1, 7 ],
+				[ 5, - 7 ], [ 1, - 6 ], [ 6, - 5 ], [ 4, - 4 ],
+				[ 2, - 3 ], [ 7, - 2 ], [ 1, - 1 ], [ 4, - 1 ],
+				[ 2, 1 ], [ 6, 2 ], [ 0, 4 ], [ 4, 4 ],
+				[ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
+			];
+
 			init();
 			onWindowResize();
 			animate();
@@ -170,6 +183,9 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+
+				width *= window.devicePixelRatio;
+				height *= window.devicePixelRatio;
 				backBuffer.setSize( width, height );
 				frontBuffer.setSize( width, height );
 				renderBuffer.setSize( width, height );
@@ -187,7 +203,6 @@
 
 			}
 
-
 			function render() {
 
 				controls.update();
@@ -195,6 +210,13 @@
 				// TODO: jitter the camera to get AA
 				for (var i = 0; i < 1; i ++) {
 					volumeLight.setIteration( volumeLight.iteration + 1 );
+					
+					const offset = jitterOffsets[ volumeLight.iteration % jitterOffsets.length ];
+					camera.setViewOffset(
+						renderBuffer.width, renderBuffer.height,
+						offset[ 0 ] * 1 / 16, offset[ 1 ] * 1 / 16,
+						renderBuffer.width, renderBuffer.height,
+					);
 					renderer.render( scene, camera, renderBuffer );
 
 					blendMat.uniforms.texture2.value = renderBuffer.texture;
