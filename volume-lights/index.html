@@ -34,6 +34,7 @@
 
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/loaders/FBXLoader.js"></script>
 
 		<script type="text/javascript" src="./VolumeLight.js"></script>
 		<script type="text/javascript" src="./Blit.js"></script>
@@ -134,7 +135,29 @@
 				var mesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 10, 1 ), new THREE.MeshStandardMaterial() );
 				mesh.castShadow = true;
 				mesh.position.y = 5;
+				mesh.position.x = 8;
+				mesh.position.z = -5;
 				scene.add( mesh );
+
+				var mesh2 = new THREE.Mesh( new THREE.TorusKnotBufferGeometry( 2, 3 / 5, 100, 16 ), new THREE.MeshStandardMaterial() );
+				mesh2.castShadow = true;
+				mesh2.position.y = 5;
+				mesh2.position.x = -8;
+				mesh2.position.z = 11;
+				mesh2.rotation.y = Math.PI / 2;
+				scene.add( mesh2 );
+
+				new THREE.FBXLoader().load( 'https://rawgit.com/mrdoob/three.js/r100/examples/models/fbx/stanford-bunny.fbx', obj => {
+
+					scene.add( obj );
+					obj.scale.multiplyScalar( 0.00025 );
+					obj.position.y += 6;
+					obj.children[ 0 ].castShadow = true;
+					obj.children[ 0 ].receiveShadow = true;
+					obj.children[ 0 ].material = new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0.5, metalness: 0.1 });
+					volumeLight.iteration = 0;
+
+				} );
 
 				// stats
 				stats = new Stats();
