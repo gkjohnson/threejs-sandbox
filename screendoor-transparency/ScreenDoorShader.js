@@ -34,13 +34,15 @@ function createDitherTexture() {
 	return ditherTex;
 }
 
-function cloneShader(shader, uniforms) {
+function cloneShader(shader, uniforms, defines) {
 
 	const newShader = Object.assign({}, shader);
 	newShader.uniforms = THREE.UniformsUtils.merge([
 		newShader.uniforms,
 		uniforms
 	]);
+	newShader.defines = Object.assign({}, defines);
+
 	return newShader;
 
 }
@@ -65,9 +67,9 @@ function DitheredTransparencyShaderMixin(shader) {
 			/main\(\) {/,
 			v => `
 			${v}
-			// #if ${defineKeyword}
+			#if ${defineKeyword}
 			if(texture2D(ditherTex, gl_FragCoord.xy / 4.0).r > opacity) discard;
-			// #endif
+			#endif
 			`,
 		);
 
