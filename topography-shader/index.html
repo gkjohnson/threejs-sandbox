@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - Screendoor Transparency</title>
+		<title>threejs webgl - Topographic Lines Shader</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -35,10 +35,14 @@
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/stats.min.js"></script>
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/dat.gui.min.js"></script>
 
-		<script type="text/javascript" src="./ScreenDoorShader.js"></script>
+		<script type="text/javascript" src="./lib/perlin.js"></script>
+		<script type="text/javascript" src="./TopographyShader.js"></script>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen door transparency shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Topographics Lines Shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<div>
+				<a href="https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material">https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material</a>
+			</div>
 		</div>
 
 		<script>
@@ -47,9 +51,13 @@
 			var stats;
 			var camera, scene, renderer, controls;
 			var directionalLight, ambientLight;
-			var spheres = [];
+			var plane = null;
 			var params = {
-				useScreendoor: true,
+				emphasis: 10,
+				thickness: 0.005,
+				offset: 0,
+				spacing: 0.1,
+				flatShading: false
 			};
 
 			init();
@@ -57,7 +65,7 @@
 
 			function init() {
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x263238 );
@@ -74,7 +82,6 @@
 
 				directionalLight = new THREE.DirectionalLight();
 				directionalLight.position.set( 1, 1, 1 );
-				directionalLight.castShadow = true;
 
 				var dlShadowCam = directionalLight.shadow.camera;
 				dlShadowCam.left = dlShadowCam.bottom = -15;
@@ -84,41 +91,32 @@
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
 
-				const ditherTex = createDitherTexture();
-				const sphere = new THREE.SphereBufferGeometry(1, 40, 40);
-				for (let i = 0; i < 100; i ++) {
+				const w = 500;
+				const h = 500;
+				const scale = 50;
+				const geom = new THREE.PlaneBufferGeometry(200, 200, w, h);
+				const posAttr = geom.attributes.position;
 
-					const opacity = Math.random() * 0.75 + 0.25;
-					const color = 0xffffff * Math.random();
-					const shader = DitheredTransparencyShaderMixin(THREE.ShaderLib.phong);
-					const ditherMat = new THREE.ShaderMaterial(shader);
-					ditherMat.uniforms.ditherTex.value = ditherTex;
-					ditherMat.uniforms.opacity.value = opacity;
-					ditherMat.uniforms.diffuse.value.set(color);
-					ditherMat.lights = true;
+				noise.seed(Math.random());
+				for( let i = 0; i < posAttr.count; i ++ ) {
 
-					const transparentMat = new THREE.MeshPhongMaterial();
-					transparentMat.color.set(color)
-					transparentMat.transparent = true;
-					transparentMat.opacity = opacity;
+					let vx = posAttr.getX( i ) / scale;
+					let vy = posAttr.getY( i ) / scale;
+					let vz = noise.perlin2( vx, vy );
+					posAttr.setZ( i, vz * 20 );
 
-					const mesh = new THREE.Mesh(sphere, transparentMat);
-					mesh.position
-						.set(
-							Math.random() - 0.5,
-							Math.random() - 0.5,
-							Math.random() - 0.5,
-						)
-						.normalize()
-						.multiplyScalar(Math.random() * 16);
-					mesh.scale.multiplyScalar(Math.random() * 4 + 1);
-
-					scene.add(mesh);
-
-					mesh._ditherMat = ditherMat;
-					mesh._transparentMat = transparentMat;
-					spheres.push(mesh);
 				}
+				geom.computeVertexNormals();
+
+				const shader = TopoLineShaderMixin( THREE.ShaderLib.phong );
+				const material = new THREE.ShaderMaterial( shader );
+				material.uniforms.topoLineColor.value.set( 0x666666 );
+				material.lights = true;
+				material.side = THREE.DoubleSide;
+
+				plane = new THREE.Mesh(geom, material);
+				plane.rotation.x = -Math.PI / 2;
+				scene.add(plane);
 
 
 				// stats
@@ -134,7 +132,11 @@
 
 				var gui = new dat.GUI();
 				gui.width = 300;
-				gui.add(params, 'useScreendoor');
+				gui.add( params, 'offset', 0, 10 );
+				gui.add( params, 'spacing', 0, 1 );
+				gui.add( params, 'thickness', 0, 0.05 );
+				gui.add( params, 'emphasis', 0, 50 );
+				gui.add( params, 'flatShading' );
 
 			}
 
@@ -161,7 +163,13 @@
 
 			function render() {
 
-				spheres.forEach(s => s.material = params.useScreendoor ? s._ditherMat : s._transparentMat);
+				plane.material.uniforms.topoLineThickness.value = params.thickness;
+				plane.material.uniforms.topoLineSpacing.value = params.spacing;
+				plane.material.uniforms.topoLineOffset.value = params.offset;
+				plane.material.uniforms.topoLineEmphasisMod.value = params.emphasis;
+
+				plane.material.needsUpdate = plane.material.flatShading !== params.flatShading;
+				plane.material.flatShading = params.flatShading;
 
 				controls.update();
 				renderer.render( scene, camera );
