@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - Source Film Maker Loader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="./ScreenDoorShader.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen door transparency shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script>
+
+			// globals
+			var stats;
+			var camera, scene, renderer, controls;
+			var directionalLight, ambientLight;
+			var spheres = [];
+			var params = {
+				useScreendoor: true,
+			};
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x263238 );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
+				camera.position.set( 60, 30, 60 );
+
+				scene = new THREE.Scene();
+
+				directionalLight = new THREE.DirectionalLight();
+				directionalLight.position.set( 1, 1, 1 );
+				directionalLight.castShadow = true;
+
+				var dlShadowCam = directionalLight.shadow.camera;
+				dlShadowCam.left = dlShadowCam.bottom = -15;
+				dlShadowCam.top = dlShadowCam.right = 15;
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				scene.add( ambientLight );
+
+				const ditherTex = createDitherTexture();
+				const sphere = new THREE.SphereBufferGeometry(1, 40, 40);
+				for (let i = 0; i < 100; i ++) {
+
+					const opacity = Math.random() * 0.75 + 0.25;
+					const color = 0xffffff * Math.random();
+					const shader = DitheredTransparencyShaderMixin(THREE.ShaderLib.phong);
+					const ditherMat = new THREE.ShaderMaterial(shader);
+					ditherMat.uniforms.ditherTex.value = ditherTex;
+					ditherMat.uniforms.opacity.value = opacity;
+					ditherMat.uniforms.diffuse.value.set(color);
+					ditherMat.lights = true;
+
+					const transparentMat = new THREE.MeshPhongMaterial();
+					transparentMat.color.set(color)
+					transparentMat.transparent = true;
+					transparentMat.opacity = opacity;
+
+					const mesh = new THREE.Mesh(sphere, transparentMat);
+					mesh.position
+						.set(
+							Math.random() - 0.5,
+							Math.random() - 0.5,
+							Math.random() - 0.5,
+						)
+						.normalize()
+						.multiplyScalar(Math.random() * 16);
+					mesh.scale.multiplyScalar(Math.random() * 4 + 1);
+
+					scene.add(mesh);
+
+					mesh._ditherMat = ditherMat;
+					mesh._transparentMat = transparentMat;
+					spheres.push(mesh);
+				}
+
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 3000;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				var gui = new dat.GUI();
+				gui.width = 300;
+				gui.add(params, 'useScreendoor');
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.update();
+				render();
+
+			}
+
+			function render() {
+
+				spheres.forEach(s => s.material = params.useScreendoor ? s._ditherMat : s._transparentMat);
+
+				controls.update();
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
