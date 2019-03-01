@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - Topographic Lines Shader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="./lib/perlin.js"></script>
+		<script type="text/javascript" src="./TopographyShader.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Topographics Lines Shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<div>
+				<a href="https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material">https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material</a>
+			</div>
+		</div>
+
+		<script>
+
+			// globals
+			var stats;
+			var camera, scene, renderer, controls;
+			var directionalLight, ambientLight;
+			var plane = null;
+			var params = {
+				emphasis: 10,
+				thickness: 0.005,
+				offset: 0,
+				spacing: 0.1,
+				flatShading: false
+			};
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x263238 );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
+				document.body.appendChild( renderer.domElement );
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
+				camera.position.set( 60, 30, 60 );
+
+				scene = new THREE.Scene();
+
+				directionalLight = new THREE.DirectionalLight();
+				directionalLight.position.set( 1, 1, 1 );
+
+				var dlShadowCam = directionalLight.shadow.camera;
+				dlShadowCam.left = dlShadowCam.bottom = -15;
+				dlShadowCam.top = dlShadowCam.right = 15;
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				scene.add( ambientLight );
+
+				const w = 500;
+				const h = 500;
+				const scale = 50;
+				const geom = new THREE.PlaneBufferGeometry(200, 200, w, h);
+				const posAttr = geom.attributes.position;
+
+				noise.seed(Math.random());
+				for( let i = 0; i < posAttr.count; i ++ ) {
+
+					let vx = posAttr.getX( i ) / scale;
+					let vy = posAttr.getY( i ) / scale;
+					let vz = noise.perlin2( vx, vy );
+					posAttr.setZ( i, vz * 20 );
+
+				}
+				geom.computeVertexNormals();
+
+				const shader = TopoLineShaderMixin( THREE.ShaderLib.phong );
+				const material = new THREE.ShaderMaterial( shader );
+				material.uniforms.topoLineColor.value.set( 0x666666 );
+				material.lights = true;
+				material.side = THREE.DoubleSide;
+
+				plane = new THREE.Mesh(geom, material);
+				plane.rotation.x = -Math.PI / 2;
+				scene.add(plane);
+
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 3000;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				var gui = new dat.GUI();
+				gui.width = 300;
+				gui.add( params, 'offset', 0, 10 );
+				gui.add( params, 'spacing', 0, 1 );
+				gui.add( params, 'thickness', 0, 0.05 );
+				gui.add( params, 'emphasis', 0, 50 );
+				gui.add( params, 'flatShading' );
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.update();
+				render();
+
+			}
+
+			function render() {
+
+				plane.material.uniforms.topoLineThickness.value = params.thickness;
+				plane.material.uniforms.topoLineSpacing.value = params.spacing;
+				plane.material.uniforms.topoLineOffset.value = params.offset;
+				plane.material.uniforms.topoLineEmphasisMod.value = params.emphasis;
+
+				plane.material.needsUpdate = plane.material.flatShading !== params.flatShading;
+				plane.material.flatShading = params.flatShading;
+
+				controls.update();
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
