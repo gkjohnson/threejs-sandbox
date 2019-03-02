@@ -1,10 +1,10 @@
-class CubeTerrainGeometry extends THREE.BufferGeometry {
+class BinnedTerrainBufferGeometry extends THREE.BufferGeometry {
 
 	constructor( width = 1, height = 1, widthSegments = 1, heightSegments = 1, cellScale = 1 ) {
 
 		super();
 
-		this.type = 'CubeTerrainGeometry';
+		this.type = 'BinnedTerrainBufferGeometry';
 
 		this.parameters = {
 

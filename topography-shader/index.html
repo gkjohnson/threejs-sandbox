@@ -37,7 +37,7 @@
 
 		<script type="text/javascript" src="./lib/perlin.js"></script>
 		<script type="text/javascript" src="./TopographyShader.js"></script>
-		<script type="text/javascript" src="./CubeTerrainGeometry.js"></script>
+		<script type="text/javascript" src="./BinnedTerrainBufferGeometry.js"></script>
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Topographics Lines Shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
@@ -102,7 +102,7 @@
 				// Subtract 1 because the width segments refers to the number of squares in the grid
 				// Subtract 1 cells worth of width / height to position the vertices at the center of the binned towers
 				const geom = new THREE.PlaneBufferGeometry( dim - dim / widthSegments, dim - dim / heightSegments, widthSegments - 1, heightSegments - 1);
-				const heightGeom = new CubeTerrainGeometry( dim, dim, widthSegments, heightSegments );
+				const heightGeom = new BinnedTerrainBufferGeometry( dim, dim, widthSegments, heightSegments );
 				const posAttr = geom.attributes.position;
 
 				// TODO: Modify a plane instead because creating tons of
