@@ -37,6 +37,7 @@
 
 		<script type="text/javascript" src="./lib/perlin.js"></script>
 		<script type="text/javascript" src="./TopographyShader.js"></script>
+		<script type="text/javascript" src="./CubeTerrainGeometry.js"></script>
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Topographics Lines Shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
@@ -51,13 +52,14 @@
 			var stats;
 			var camera, scene, renderer, controls;
 			var directionalLight, ambientLight;
-			var plane = null;
+			var plane, binnedPlane;
 			var params = {
 				emphasis: 10,
 				thickness: 0.005,
 				offset: 0,
 				spacing: 0.1,
-				flatShading: false
+				flatShading: false,
+				binnedHeight: false
 			};
 
 			init();
@@ -91,21 +93,33 @@
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
 
-				const w = 500;
-				const h = 500;
+				const w = 200;
+				const h = 200;
 				const scale = 50;
-				const geom = new THREE.PlaneBufferGeometry(200, 200, w, h);
+				const geom = new THREE.PlaneBufferGeometry(200, 200, w - 1, h - 1);
+				const heightGeom = new CubeTerrainGeometry( 200, 200, w, h );
 				const posAttr = geom.attributes.position;
 
+				// TODO: line up the maps appropriately
+				// TODO: Modify a plane instead because creating tons of
+				// cubes seems intensive
 				noise.seed(Math.random());
-				for( let i = 0; i < posAttr.count; i ++ ) {
+				for( let x = 0; x < w; x ++ ) {
 
-					let vx = posAttr.getX( i ) / scale;
-					let vy = posAttr.getY( i ) / scale;
-					let vz = noise.perlin2( vx, vy );
-					posAttr.setZ( i, vz * 20 );
+					for( let y = 0; y < h; y ++ ) {
+
+						const i = y * w + x;
+						const vx = x / scale;
+						const vy = y / scale;
+						const vz = noise.perlin2( vx, vy ) + 1;
+						posAttr.setZ( i, vz * 20 );
+
+						heightGeom.setZ( x, h - y, vz * 20 );
+
+					}
 
 				}
+
 				geom.computeVertexNormals();
 
 				const shader = TopoLineShaderMixin( THREE.ShaderLib.phong );
@@ -114,10 +128,14 @@
 				material.lights = true;
 				material.side = THREE.DoubleSide;
 
-				plane = new THREE.Mesh(geom, material);
+				plane = new THREE.Mesh( geom, material );
 				plane.rotation.x = -Math.PI / 2;
-				scene.add(plane);
+				scene.add( plane );
 
+				binnedPlane = new THREE.Mesh( heightGeom, material.clone() );
+				binnedPlane.rotation.x = -Math.PI / 2;
+				binnedPlane.material.flatShading = true;
+				scene.add( binnedPlane );
 
 				// stats
 				stats = new Stats();
@@ -136,7 +154,7 @@
 				gui.add( params, 'spacing', 0, 1 );
 				gui.add( params, 'thickness', 0, 0.05 );
 				gui.add( params, 'emphasis', 0, 50 );
-				gui.add( params, 'flatShading' );
+				gui.add( params, 'binnedHeight' );
 
 			}
 
@@ -168,8 +186,16 @@
 				plane.material.uniforms.topoLineOffset.value = params.offset;
 				plane.material.uniforms.topoLineEmphasisMod.value = params.emphasis;
 
+				binnedPlane.material.uniforms.topoLineThickness.value = params.thickness;
+				binnedPlane.material.uniforms.topoLineSpacing.value = params.spacing;
+				binnedPlane.material.uniforms.topoLineOffset.value = params.offset;
+				binnedPlane.material.uniforms.topoLineEmphasisMod.value = params.emphasis;
+
 				plane.material.needsUpdate = plane.material.flatShading !== params.flatShading;
 				plane.material.flatShading = params.flatShading;
+
+				plane.visible = ! params.binnedHeight;
+				binnedPlane.visible = params.binnedHeight;
 
 				controls.update();
 				renderer.render( scene, camera );
