@@ -211,7 +211,8 @@
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 1000;
-
+				controls.autoRotate = true;
+				
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				// dat gui
