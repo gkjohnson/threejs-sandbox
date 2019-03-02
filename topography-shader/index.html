@@ -98,11 +98,13 @@
 				const dim = 50;
 				const scale = 50;
 				const zScale = 5;
+
+				// Subtract 1 because the width segments refers to the number of squares in the grid
+				// Subtract 1 cells worth of width / height to position the vertices at the center of the binned towers
 				const geom = new THREE.PlaneBufferGeometry( dim - dim / widthSegments, dim - dim / heightSegments, widthSegments - 1, heightSegments - 1);
 				const heightGeom = new CubeTerrainGeometry( dim, dim, widthSegments, heightSegments );
 				const posAttr = geom.attributes.position;
 
-				// TODO: line up the maps appropriately
 				// TODO: Modify a plane instead because creating tons of
 				// cubes seems intensive
 				noise.seed(Math.random());
