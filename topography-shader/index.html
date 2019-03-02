@@ -93,32 +93,35 @@
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
 
-				const w = 200;
-				const h = 200;
+				const widthSegments = 200;
+				const heightSegments = 200;
+				const dim = 50;
 				const scale = 50;
-				const geom = new THREE.PlaneBufferGeometry(200, 200, w - 1, h - 1);
-				const heightGeom = new CubeTerrainGeometry( 200, 200, w, h );
+				const zScale = 5;
+				const geom = new THREE.PlaneBufferGeometry( dim - dim / widthSegments, dim - dim / heightSegments, widthSegments - 1, heightSegments - 1);
+				const heightGeom = new CubeTerrainGeometry( dim, dim, widthSegments, heightSegments );
 				const posAttr = geom.attributes.position;
 
 				// TODO: line up the maps appropriately
 				// TODO: Modify a plane instead because creating tons of
 				// cubes seems intensive
 				noise.seed(Math.random());
-				for( let x = 0; x < w; x ++ ) {
+				for( let x = 0; x < widthSegments; x ++ ) {
 
-					for( let y = 0; y < h; y ++ ) {
+					for( let y = 0; y < heightSegments; y ++ ) {
 
-						const i = y * w + x;
+						const i = y * widthSegments + x;
 						const vx = x / scale;
 						const vy = y / scale;
 						const vz = noise.perlin2( vx, vy ) + 1;
-						posAttr.setZ( i, vz * 20 );
 
-						heightGeom.setZ( x, h - y, vz * 20 );
+						posAttr.setZ( i, vz * zScale );
+						heightGeom.setZ( x, heightSegments - y - 1, vz * zScale );
 
 					}
 
 				}
+
 
 				geom.computeVertexNormals();
 

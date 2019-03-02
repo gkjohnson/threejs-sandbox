@@ -1,6 +1,6 @@
 class CubeTerrainGeometry extends THREE.BufferGeometry {
 
-	constructor(width = 1, height = 1, widthSegments = 1, heightSegments = 1) {
+	constructor( width = 1, height = 1, widthSegments = 1, heightSegments = 1, cellScale = 1 ) {
 
 		super();
 
@@ -12,14 +12,15 @@ class CubeTerrainGeometry extends THREE.BufferGeometry {
 			height,
 			widthSegments,
 			heightSegments,
+			cellScale,
 
 		};
 
 		const w = width / widthSegments;
 		const h = height / heightSegments;
 
-		const w2 = w / 2;
-		const h2 = h / 2;
+		const w2 = cellScale * w / 2;
+		const h2 = cellScale * h / 2;
 
 		const posAttr = new THREE.BufferAttribute( new Float32Array( 3 * 8 * widthSegments * heightSegments ), 3, false );
 		const indexAttr = new THREE.BufferAttribute( new Uint32Array( 3 * 6 * 2 * widthSegments * heightSegments ), 1, false );
@@ -31,8 +32,8 @@ class CubeTerrainGeometry extends THREE.BufferGeometry {
 
 				// Generate the cube positions
 				const index = y * widthSegments + x;
-				const cx = x * w;
-				const cy = y * h;
+				const cx = x * w + w / 2 - width / 2;
+				const cy = y * h + h / 2 - height / 2;
 				let posIndex = index * 8;
 
 				for ( let bz = -1; bz <= 1; bz += 2 ) {
@@ -43,8 +44,8 @@ class CubeTerrainGeometry extends THREE.BufferGeometry {
 
 							posAttr.setXYZ(
 								posIndex,
-								cx + w2 * bx - width / 2,
-								cy + h2 * by - height / 2,
+								cx + w2 * bx,
+								cy + h2 * by,
 								bz
 							);
 
