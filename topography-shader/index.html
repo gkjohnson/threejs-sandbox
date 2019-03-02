@@ -81,6 +81,7 @@
 				camera.position.set( 60, 30, 60 );
 
 				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0x263238, 0.015 );
 
 				directionalLight = new THREE.DirectionalLight();
 				directionalLight.position.set( 1, 1, 1 );
@@ -132,6 +133,7 @@
 				material.uniforms.topoLineColor.value.set( 0x666666 );
 				material.lights = true;
 				material.side = THREE.DoubleSide;
+				material.fog = true;
 
 				plane = new THREE.Mesh( geom, material );
 				plane.rotation.x = -Math.PI / 2;
