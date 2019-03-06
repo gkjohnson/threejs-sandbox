@@ -27,6 +27,7 @@ A small effort to try to decode and load valve 3d file formats.
 - Understand how vertices and vertex data is indirectly accessed and used.
 - The number of meshes in the MDL models does not always line up with the vtx meshes? Or is sometimes a HUGE number?
 - Try with a file from a valve game?
+- With multiple triangle strips being used it might be best to use the primitive restart approach: https://stackoverflow.com/questions/4386861/opengl-jogl-multiple-triangle-fans-in-a-vertex-array
 
 ## TODO
 - Parse Bone Structure
