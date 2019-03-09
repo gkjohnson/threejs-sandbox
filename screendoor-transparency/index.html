@@ -47,6 +47,7 @@
 			var stats;
 			var camera, scene, renderer, controls;
 			var directionalLight, ambientLight;
+			var container;
 			var spheres = [];
 			var params = {
 				useScreendoor: true,
@@ -75,7 +76,7 @@
 				scene = new THREE.Scene();
 
 				directionalLight = new THREE.DirectionalLight();
-				directionalLight.position.set( 1, 1, - 1 );
+				directionalLight.position.set( 10, 10, - 10 );
 				directionalLight.castShadow = true;
 
 				var dlShadowCam = directionalLight.shadow.camera;
@@ -85,6 +86,9 @@
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
+
+				container = new THREE.Group();
+				scene.add( container );
 
 				const ditherTex = createDitherTexture();
 				const sphere = new THREE.SphereBufferGeometry(1, 40, 40);
@@ -127,10 +131,10 @@
 
 					mesh.customDepthMaterial = depthMat;
 					mesh._depthMat = depthMat;
-					scene.add(mesh);
 
 					mesh._ditherMat = ditherMat;
 					mesh._transparentMat = transparentMat;
+					container.add(mesh);
 					spheres.push(mesh);
 				}
 
@@ -187,6 +191,7 @@
 				spheres.forEach(s => s.customDepthMaterial = params.transparentShadows ? s._depthMat : null);
 
 				controls.update();
+				container.rotation.y = window.performance.now() * 0.0002
 				renderer.render( scene, camera );
 
 			}
