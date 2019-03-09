@@ -57,7 +57,7 @@ function DitheredTransparencyShaderMixin(shader) {
  		},
  		{
  			[defineKeyword]: 1,
- 		},
+ 		}
 	);
 
 	newShader.fragmentShader = `

@@ -50,6 +50,7 @@
 			var spheres = [];
 			var params = {
 				useScreendoor: true,
+				transparentShadows: true
 			};
 
 			init();
@@ -64,6 +65,7 @@
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
 				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				document.body.appendChild( renderer.domElement );
 
 				// initialize renderer, scene, camera
@@ -73,12 +75,12 @@
 				scene = new THREE.Scene();
 
 				directionalLight = new THREE.DirectionalLight();
-				directionalLight.position.set( 1, 1, 1 );
+				directionalLight.position.set( 1, 1, - 1 );
 				directionalLight.castShadow = true;
 
 				var dlShadowCam = directionalLight.shadow.camera;
-				dlShadowCam.left = dlShadowCam.bottom = -15;
-				dlShadowCam.top = dlShadowCam.right = 15;
+				dlShadowCam.left = dlShadowCam.bottom = -25;
+				dlShadowCam.top = dlShadowCam.right = 25;
 				scene.add( directionalLight );
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
@@ -97,6 +99,15 @@
 					ditherMat.uniforms.diffuse.value.set(color);
 					ditherMat.lights = true;
 
+					// opacity is not available in the shader by default
+					const depthShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.depth);
+					depthShader.fragmentShader = `uniform float opacity;\n${ depthShader.fragmentShader }`;
+
+					const depthMat = new THREE.ShaderMaterial(depthShader);
+					depthMat.defines.DEPTH_PACKING = THREE.RGBADepthPacking;
+					depthMat.uniforms.ditherTex.value = ditherTex;
+					depthMat.uniforms.opacity.value = opacity;
+
 					const transparentMat = new THREE.MeshPhongMaterial();
 					transparentMat.color.set(color)
 					transparentMat.transparent = true;
@@ -112,7 +123,10 @@
 						.normalize()
 						.multiplyScalar(Math.random() * 16);
 					mesh.scale.multiplyScalar(Math.random() * 4 + 1);
+					mesh.castShadow = true;
 
+					mesh.customDepthMaterial = depthMat;
+					mesh._depthMat = depthMat;
 					scene.add(mesh);
 
 					mesh._ditherMat = ditherMat;
@@ -120,6 +134,13 @@
 					spheres.push(mesh);
 				}
 
+
+				const plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshPhongMaterial() );
+				plane.scale.multiplyScalar( 100 );
+				plane.rotation.x = - Math.PI / 2;
+				plane.position.y = - 20;
+				plane.receiveShadow = true;
+				scene.add( plane );
 
 				// stats
 				stats = new Stats();
@@ -135,6 +156,7 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 				gui.add(params, 'useScreendoor');
+				gui.add(params, 'transparentShadows');
 
 			}
 
@@ -162,6 +184,7 @@
 			function render() {
 
 				spheres.forEach(s => s.material = params.useScreendoor ? s._ditherMat : s._transparentMat);
+				spheres.forEach(s => s.customDepthMaterial = params.transparentShadows ? s._depthMat : null);
 
 				controls.update();
 				renderer.render( scene, camera );
