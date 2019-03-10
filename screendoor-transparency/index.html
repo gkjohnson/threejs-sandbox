@@ -51,7 +51,8 @@
 			var spheres = [];
 			var params = {
 				useScreendoor: true,
-				transparentShadows: true
+				transparentShadows: true,
+				selfShadowing: true,
 			};
 
 			init();
@@ -77,6 +78,7 @@
 
 				directionalLight = new THREE.DirectionalLight();
 				directionalLight.position.set( 10, 10, - 10 );
+				directionalLight.shadow.mapSize.set( 1024, 1024 );
 				directionalLight.castShadow = true;
 
 				var dlShadowCam = directionalLight.shadow.camera;
@@ -128,6 +130,7 @@
 						.multiplyScalar(Math.random() * 16);
 					mesh.scale.multiplyScalar(Math.random() * 4 + 1);
 					mesh.castShadow = true;
+					mesh.receiveShadow = true;
 
 					mesh.customDepthMaterial = depthMat;
 					mesh._depthMat = depthMat;
@@ -161,6 +164,13 @@
 				gui.width = 300;
 				gui.add(params, 'useScreendoor');
 				gui.add(params, 'transparentShadows');
+				gui.add(params, 'selfShadowing').onChange( val => {
+
+					spheres.forEach(s => s.receiveShadow = val);
+					spheres.forEach(s => s.material.needsUpdate = true);
+
+
+				} );
 
 			}
 
