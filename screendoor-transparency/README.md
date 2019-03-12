@@ -1,6 +1,6 @@
 # screendoor-transparency
 
-A shader mixin to add screendoor or dithered transparency to THREE shaders to enable stable, order-independent transparent rendering as the camera moves.
+A shader mixin to add screendoor or dithered transparency to THREE shaders to enable stable, order-independent transparent rendering as the camera moves and lighter, tinted shadows for transparent objects.
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screendoor-transparency/)
 
@@ -12,3 +12,5 @@ A shader mixin to add screendoor or dithered transparency to THREE shaders to en
 
 - Limited transparent object overlap.
 - Screen door artifacts which can be partially overcome with anti aliasing techniques.
+- Transparent object shadows have dithering artifacts.
+- Tinted shadows suffer from the same order issues that rendering suffers from.
