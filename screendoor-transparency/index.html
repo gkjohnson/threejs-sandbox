@@ -104,6 +104,7 @@
 					ditherMat.uniforms.opacity.value = opacity;
 					ditherMat.uniforms.diffuse.value.set(color);
 					ditherMat.lights = true;
+					ditherMat.premultipliedAlpha = true;
 
 					// opacity is not available in the shader by default
 					const depthShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.depth);
@@ -118,6 +119,7 @@
 					transparentMat.color.set(color)
 					transparentMat.transparent = true;
 					transparentMat.opacity = opacity;
+					transparentMat.premultipliedAlpha = true;
 
 					const mesh = new THREE.Mesh(sphere, transparentMat);
 					mesh.position
