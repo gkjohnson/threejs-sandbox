@@ -10,3 +10,4 @@ Defines a light based on a mesh and renders by moving a point light along the su
 - Create an interesting scene.
 - Add velocity buffer to reproject existing accumulated effects.
 - Add screen space reflections.
+- Add god rays and light fot / atmosphere
