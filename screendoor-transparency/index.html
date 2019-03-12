@@ -36,6 +36,7 @@
 		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/dat.gui.min.js"></script>
 
 		<script type="text/javascript" src="./ScreenDoorShader.js"></script>
+		<script type="text/javascript" src="./AddShadowColor.js"></script>
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen door transparency shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
@@ -49,62 +50,35 @@
 			var directionalLight, ambientLight;
 			var container;
 			var spheres = [];
+			var shadowColorTarget;
+			var ditherTex, sphereGeom;
 			var params = {
 				useScreendoor: true,
 				transparentShadows: true,
+				coloredShadows: true,
 				selfShadowing: true,
+				shadowRadius: 1.4,
+				count: 100
 			};
 
 			init();
 			animate();
 
-			function init() {
+			function setSphereCount( count ) {
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.setClearColor( 0x263238 );
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
-				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-				document.body.appendChild( renderer.domElement );
+				container.remove(...spheres);
+				spheres = [];
 
-				// initialize renderer, scene, camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
-				camera.position.set( 60, 30, 60 );
-
-				scene = new THREE.Scene();
-
-				directionalLight = new THREE.DirectionalLight();
-				directionalLight.position.set( 10, 10, - 10 );
-				directionalLight.shadow.mapSize.set( 1024, 1024 );
-				directionalLight.castShadow = true;
-
-				var dlShadowCam = directionalLight.shadow.camera;
-				dlShadowCam.left = dlShadowCam.bottom = -25;
-				dlShadowCam.top = dlShadowCam.right = 25;
-				scene.add( directionalLight );
-
-				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
-				scene.add( ambientLight );
-
-				container = new THREE.Group();
-				scene.add( container );
-
-				const ditherTex = createDitherTexture();
-				const sphere = new THREE.SphereBufferGeometry(1, 40, 40);
-				for (let i = 0; i < 100; i ++) {
+				for (let i = 0; i < count; i ++) {
 
 					const opacity = Math.random() * 0.75 + 0.25;
-					const color = 0xffffff * Math.random();
-					const shader = DitheredTransparencyShaderMixin(THREE.ShaderLib.phong);
-					const ditherMat = new THREE.ShaderMaterial(shader);
+					const color = new THREE.Color( 0xffffff * Math.random() );
+					const ditherShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.phong);
+					const ditherMat = new THREE.ShaderMaterial(ditherShader);
 					ditherMat.uniforms.ditherTex.value = ditherTex;
 					ditherMat.uniforms.opacity.value = opacity;
-					ditherMat.uniforms.diffuse.value.set(color);
+					ditherMat.uniforms.diffuse.value.copy(color);
 					ditherMat.lights = true;
-					ditherMat.premultipliedAlpha = true;
 
 					// opacity is not available in the shader by default
 					const depthShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.depth);
@@ -115,13 +89,22 @@
 					depthMat.uniforms.ditherTex.value = ditherTex;
 					depthMat.uniforms.opacity.value = opacity;
 
+					// render the shadow color to a target
+					const shadowColorShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.basic);
+					const shadowColorMat = new THREE.ShaderMaterial(shadowColorShader);
+					const hsl = {};
+					color.getHSL( hsl );
+					shadowColorMat.uniforms.ditherTex.value = ditherTex;
+					shadowColorMat.uniforms.opacity.value = 1;
+					shadowColorMat.uniforms.diffuse.value.setHSL( hsl.h, hsl.s,  hsl.l  );
+
 					const transparentMat = new THREE.MeshPhongMaterial();
-					transparentMat.color.set(color)
+					transparentMat.color.copy(color)
 					transparentMat.transparent = true;
 					transparentMat.opacity = opacity;
 					transparentMat.premultipliedAlpha = true;
 
-					const mesh = new THREE.Mesh(sphere, transparentMat);
+					const mesh = new THREE.Mesh(sphereGeom, transparentMat);
 					mesh.position
 						.set(
 							Math.random() - 0.5,
@@ -136,19 +119,71 @@
 
 					mesh.customDepthMaterial = depthMat;
 					mesh._depthMat = depthMat;
+					mesh._shadowColorMat = shadowColorMat;
+					mesh._originalMat = ditherMat;
 
 					mesh._ditherMat = ditherMat;
 					mesh._transparentMat = transparentMat;
 					container.add(mesh);
 					spheres.push(mesh);
+
 				}
 
+			}
 
-				const plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshPhongMaterial() );
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x263238 );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				document.body.appendChild(renderer.domElement);
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
+				camera.position.set( 60, 30, 60 );
+
+				scene = new THREE.Scene();
+
+				directionalLight = new THREE.DirectionalLight();
+				directionalLight.position.set( 20, 20, - 20 );
+				directionalLight.shadow.mapSize.set( 1024, 1024 );
+				directionalLight.castShadow = true;
+
+				shadowColorTarget = new THREE.WebGLRenderTarget( 1024, 1024, { format: THREE.RGBFormat } );
+
+
+				var dlShadowCam = directionalLight.shadow.camera;
+				dlShadowCam.left = dlShadowCam.bottom = -25;
+				dlShadowCam.top = dlShadowCam.right = 25;
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
+				scene.add( ambientLight );
+
+				container = new THREE.Group();
+				scene.add( container );
+
+				ditherTex = createDitherTexture();
+				sphereGeom = new THREE.SphereBufferGeometry(1, 40, 40);
+
+
+				const planeMat = new THREE.ShaderMaterial(THREE.ShaderLib.phong);
+				planeMat.uniforms.shadowColorMap = { value: shadowColorTarget.texture };
+				planeMat.lights = true;
+				planeMat.uniforms.map.value = shadowColorTarget.texture;
+
+				const plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), planeMat );
 				plane.scale.multiplyScalar( 100 );
 				plane.rotation.x = - Math.PI / 2;
 				plane.position.y = - 20;
 				plane.receiveShadow = true;
+				plane._shadowColorMat = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+				plane._originalMat = plane.material;
 				scene.add( plane );
 
 				// stats
@@ -160,19 +195,23 @@
 				controls.minDistance = 5;
 				controls.maxDistance = 3000;
 
+				setSphereCount( 100 );
+
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				var gui = new dat.GUI();
 				gui.width = 300;
 				gui.add(params, 'useScreendoor');
 				gui.add(params, 'transparentShadows');
+				gui.add(params, 'coloredShadows');
 				gui.add(params, 'selfShadowing').onChange( val => {
 
 					spheres.forEach(s => s.receiveShadow = val);
 					spheres.forEach(s => s.material.needsUpdate = true);
 
-
 				} );
+				gui.add(params, 'shadowRadius').min(0).max(10);
+				gui.add(params, 'count').min(1).max(300).onChange(val => setSphereCount(val))
 
 			}
 
@@ -199,11 +238,35 @@
 
 			function render() {
 
+				if (params.coloredShadows) {
+
+					// render the shadow color material
+					renderer.setClearColor( 0xffffff );
+					scene.traverse( c => c.isMesh && (c.material = c._shadowColorMat) );
+					renderer.setRenderTarget( shadowColorTarget );
+					renderer.render( scene, directionalLight.shadow.camera );
+					renderer.setRenderTarget( null );
+					scene.traverse( c => c.isMesh && (c.material = c._originalMat) );
+
+				} else {
+
+					renderer.setClearColor( 0 );
+					renderer.setRenderTarget( shadowColorTarget );
+					renderer.clearColor();
+					renderer.setRenderTarget( null );
+
+				}
+
+				directionalLight.shadow.radius = params.shadowRadius;
+
+				// update the sphere textures
 				spheres.forEach(s => s.material = params.useScreendoor ? s._ditherMat : s._transparentMat);
 				spheres.forEach(s => s.customDepthMaterial = params.transparentShadows ? s._depthMat : null);
 
 				controls.update();
 				container.rotation.y = window.performance.now() * 0.0002
+
+				renderer.setClearColor( 0x263238 );
 				renderer.render( scene, camera );
 
 			}
