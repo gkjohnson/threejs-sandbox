@@ -6,3 +6,4 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Tinted transparent shadows
 - 3D model diff
 - Translucent object rendering (rendering back faces with depth buffer)
+- 3D flow lines
