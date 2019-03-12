@@ -80,12 +80,6 @@ ${ THREE.ShaderChunk.shadowmap_pars_fragment }
 #endif
 `;
 
-// THREE.ShaderChunk.lights_fragment_begin =
-// 	THREE.ShaderChunk.lights_fragment_begin.replace(
-// 		'directLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;',
-// 		'directLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadowWithColor( directionalShadowMap[ i ], shadowColorMap, directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : vec3( 1.0, 1.0, 1.0 );'
-// 	);
-
 THREE.ShaderChunk.lights_fragment_begin =
 	THREE.ShaderChunk.lights_fragment_begin.replace(
 		'directLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;',
@@ -93,7 +87,6 @@ THREE.ShaderChunk.lights_fragment_begin =
 			all( bvec2( directionalLight.shadow, directLight.visible ) ) ?
 				(
 					getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] )
-					// 1.0
 				) * getShadowWithColor( directionalShadowMap[ i ], shadowColorMap, directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ):
 
 				vec3( 1.0, 1.0, 1.0 );`

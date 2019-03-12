@@ -92,11 +92,9 @@
 					// render the shadow color to a target
 					const shadowColorShader = DitheredTransparencyShaderMixin(THREE.ShaderLib.basic);
 					const shadowColorMat = new THREE.ShaderMaterial(shadowColorShader);
-					const hsl = {};
-					color.getHSL( hsl );
 					shadowColorMat.uniforms.ditherTex.value = ditherTex;
 					shadowColorMat.uniforms.opacity.value = 1;
-					shadowColorMat.uniforms.diffuse.value.setHSL( hsl.h, hsl.s,  hsl.l  );
+					shadowColorMat.uniforms.diffuse.value.copy( color );
 
 					const transparentMat = new THREE.MeshPhongMaterial();
 					transparentMat.color.copy(color)
@@ -156,7 +154,6 @@
 
 				shadowColorTarget = new THREE.WebGLRenderTarget( 1024, 1024, { format: THREE.RGBFormat } );
 
-
 				var dlShadowCam = directionalLight.shadow.camera;
 				dlShadowCam.left = dlShadowCam.bottom = -25;
 				dlShadowCam.top = dlShadowCam.right = 25;
@@ -170,7 +167,6 @@
 
 				ditherTex = createDitherTexture();
 				sphereGeom = new THREE.SphereBufferGeometry(1, 40, 40);
-
 
 				const planeMat = new THREE.ShaderMaterial(THREE.ShaderLib.phong);
 				planeMat.uniforms.shadowColorMap = { value: shadowColorTarget.texture };
