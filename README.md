@@ -16,3 +16,6 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - 3D LUT Tone Mapping
 - Water-tight geometry detection using solid angles (https://math.stackexchange.com/questions/1205927/how-to-calculate-the-area-covered-by-any-spherical-rectangle)
 - 3D Bin Packing Algorithm
+- Separate velocity buffer
+- Subsurface Scattering and Transparency / glass
+- GPU Particles
