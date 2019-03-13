@@ -4,6 +4,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 
 ## Project Ideas
 - Pin designer / visualizer
+- High quality product rendering with jittered light, soft shadows, refraction, etc
 - 3D model diff
 - Translucent object rendering (rendering back faces with depth buffer)
 - 3D flow lines
