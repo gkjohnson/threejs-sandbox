@@ -4,6 +4,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 
 ## Project Ideas
 - Pin designer / visualizer
+  - JSClipper may be relevant: https://github.com/Delapouite/JsClipper
 - High quality product rendering with jittered light, soft shadows, refraction, etc
 - 3D model diff
 - Translucent object rendering (rendering back faces with depth buffer)
