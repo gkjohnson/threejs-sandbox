@@ -20,3 +20,5 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Separate velocity buffer
 - Subsurface Scattering and Transparency / glass
 - GPU Particles
+- voxel-based global illumination
+- light probes-based GI
