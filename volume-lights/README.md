@@ -12,3 +12,4 @@ Defines a light based on a mesh and renders by moving a point light along the su
 - Add screen space reflections.
 - Add god rays and light fot / atmosphere
 - Support emissive materials
+- Step evenly throughout the index array so the light positions are likely more evenly spread out
