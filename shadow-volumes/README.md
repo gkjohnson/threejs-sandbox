@@ -29,3 +29,4 @@ _The resultant shadow rendered from the shadow volume._
 - Provide an option to _not_ perform two of the unnecessary renders of the volume if there's no risk of the camera being inside the volume.
 - Provide a warning if not all edges are bridged
 - Support spot lights
+- Add quads between all the bridges so no light leaking occurs.
