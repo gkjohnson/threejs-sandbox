@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - per-object motion blur</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
+
+		<script type="text/javascript" src="./LMSColor.js"></script>
+		<script type="text/javascript" src="./ColorBlindShader.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Per Object Motion Blur by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Using a technique similar to the one described <a href="http://john-chapman-graphics.blogspot.com/2013/01/per-object-motion-blur.html">here</a>.
+			</br>
+			A velocity buffer is rendered using the previous and current frame positions for each object </br> which is then used to smear the final frame.
+		</div>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			// globals
+			var stats;
+			var params = {
+				mode: 0.0
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var FXAAPass, motionPass, renderPass, colorBlindPass;
+			var torusMesh1, torusMesh2, torusMesh3;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x263238 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.gammaInput = false;
+				renderer.gammaOutput = false;
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( './images/pencils.jpg', function ( map ) {
+
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					material.map = map;
+					material.needsUpdate = true;
+
+				} );
+
+				var mesh = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					material
+				);
+				mesh.scale.set(7.5, 7.5, 7.5);
+				scene.add(mesh);
+
+				// Render Pass Setup
+				renderPass = new THREE.RenderPass( scene, camera );
+				colorBlindPass = new THREE.ShaderPass( ColorBlindShader );
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( colorBlindPass );
+				colorBlindPass.renderToScreen = true;
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add(params, 'mode', {
+					'none': 0,
+					'deuteranope': 1,
+					'protanope': 2,
+					'tritanope': 3
+				});
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				if (colorBlindPass.material.defines.MODE !== params.mode) {
+					colorBlindPass.material.defines.MODE = params.mode;
+					colorBlindPass.material.needsUpdate = true;
+				}
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

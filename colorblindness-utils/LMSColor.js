@@ -1,25 +1,26 @@
 // http://moinmo.in/AccessibleMoin?action=AttachFile&do=view&target=daltonize.py
 // http://www.daltonize.org/search/label/Daltonize
 
+// TODO: Verify these calculations
 // TODO: Do the RGB colors need to be in linear colorspace?
-const rgb2lms = new THREE.Matrix3(
+const rgb2lms = new THREE.Matrix3().set(
 	17.8824, 43.5161, 4.11935,
 	3.45565, 27.1554, 3.86714,
 	0.0299566, 0.184309, 1.46709
 );
 
 const lms2rgb = new THREE.Matrix3().getInverse(rgb2lms);
-const deuteranopeMat = new THREE.Matrix3(
+const deuteranopeMat = new THREE.Matrix3().set(
 	1, 0, 0,
 	0.494207, 0, 1.24827,
 	0, 0, 1
 );
-const protanopeMat = new THREE.Matrix3(
-	0, 2.02344,-2.52581,
+const protanopeMat = new THREE.Matrix3().set(
+	0, 2.02344, -2.52581,
 	0, 1, 0,
 	0, 0, 1
 );
-const tritanopeMat = new THREE.Matrix3(
+const tritanopeMat = new THREE.Matrix3().set(
 	1, 0, 0,
 	0, 1, 0,
 	-0.395913, 0.801109, 0
