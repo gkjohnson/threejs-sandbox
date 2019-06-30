@@ -2,6 +2,8 @@
 
 Javascript and shader code color utilities for converting between the RGB and LMS color space and varying kinds color blindness.
 
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/colorblindness-utils/index.html);
+
 Pencil images from http://www.colourblindawareness.org/.
 
 ## References
