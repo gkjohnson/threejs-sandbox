@@ -23,6 +23,7 @@ var ColorBlindShader = {
 
 	fragmentShader: `
 		varying vec2 vUv;
+		uniform sampler2D tDiffuse;
 
 		void main() {
 
