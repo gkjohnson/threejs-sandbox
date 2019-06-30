@@ -89,8 +89,6 @@
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( './images/pencils.jpg', function ( map ) {
 
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
 					material.map = map;
 					material.needsUpdate = true;
 
