@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - per-object motion blur</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r106/build/three.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r106/examples/js/controls/OrbitControls.js"></script>
+
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r106/examples/js/libs/stats.min.js"></script>
+		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r106/examples/js/libs/dat.gui.min.js"></script>
+
+		<script type="text/javascript" src="./binned-cube-shader.js"></script>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Colorblindness Simulation Pass <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Bin the point positions and render them as cubes.
+		</div>
+
+		<script>
+
+			// globals
+			var stats;
+			var params = {
+				scale: 1.0,
+				showPoints: false,
+				offset: new THREE.Vector3()
+			};
+			var camera, scene, renderer, controls;
+			var points, instanceMesh;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x263238 );
+				scene.fog = new THREE.Fog(0x263238, 0, 60);
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.gammaInput = false;
+				renderer.gammaOutput = false;
+				document.body.appendChild( renderer.domElement );
+
+
+				var pointsArr = new Float32Array(3 * 1000);
+				var tempVec = new THREE.Vector3();
+				for (var i = 0; i < 1000; i += 3) {
+
+					tempVec.x = Math.random() - 0.5;
+					tempVec.y = Math.random() - 0.5;
+					tempVec.z = Math.random() - 0.5;
+					tempVec.multiplyScalar(15);
+
+					pointsArr[i + 0] = tempVec.x;
+					pointsArr[i + 1] = tempVec.y;
+					pointsArr[i + 2] = tempVec.z;
+
+				}
+
+				var pointsGeometry = new THREE.BufferGeometry();
+				pointsGeometry.addAttribute('position', new THREE.BufferAttribute(pointsArr, 3, false));
+
+				points = new THREE.Points(pointsGeometry, new THREE.PointsMaterial());
+				scene.add(points);
+
+				var cubeGeometry = new THREE.BoxBufferGeometry();
+				var instancedGeometry = new THREE.InstancedBufferGeometry();
+				instancedGeometry.addAttribute('position', cubeGeometry.attributes.position.clone());
+				instancedGeometry.addAttribute('normal', cubeGeometry.attributes.normal.clone());
+				instancedGeometry.setIndex(cubeGeometry.index);
+				instancedGeometry.addAttribute('instancePosition', new THREE.InstancedBufferAttribute(pointsArr, 3, false));
+				instancedGeometry.needsUpdate = true;
+
+				var instanceMat = new THREE.ShaderMaterial(addInstancePosition(THREE.ShaderLib.standard));
+				instanceMat.lights = true;
+				instanceMat.fog = true;
+				instanceMesh = new THREE.Mesh(instancedGeometry, instanceMat);
+				scene.add(instanceMesh);
+
+				var dirLight = new THREE.DirectionalLight();
+				dirLight.position.set(1, 2, 3);
+				scene.add(dirLight);
+
+				var ambientLight = new THREE.AmbientLight(0xffffff);
+				scene.add(ambientLight);
+
+				// camera controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add(params, 'scale').min(0.25).max(3);
+				gui.add(params, 'showPoints');
+
+				var folder = gui.addFolder('offset');
+				folder.add(params.offset, 'x').min(-3).max(3).step(0.01);
+				folder.add(params.offset, 'y').min(-3).max(3).step(0.01);
+				folder.add(params.offset, 'z').min(-3).max(3).step(0.01);
+				folder.open();
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				instanceMesh.material.uniforms.offset.value.copy(params.offset);
+				instanceMesh.material.uniforms.scale.value = params.scale;
+				instanceMesh.visible = !params.showPoints;
+				points.visible = params.showPoints;
+				renderer.render(scene, camera);
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
