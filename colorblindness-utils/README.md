@@ -1,6 +1,9 @@
 # Colorblindness Utils
 
-Javascript and shader code color utilities for converting between the RGB and LMS color space and varying kinds color blindness.
+Javascript and shader code color utilities for converting RGB colors to simulate blind vision.
+
+<img src="./images/pencils.jpg" width="420px"/> <img src="./images/pencils_d.jpg" width="420px"/>
+<img src="./images/pencils_p.jpg" width="420px"/> <img src="./images/pencils_t.jpg" width="420px"/>
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/colorblindness-utils/index.html);
 
