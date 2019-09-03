@@ -26,7 +26,8 @@ const WorldUnitsPointsShader = {
 				v2 /= v2.w;
 
 				// Measure the distance between two points that are 1
-				// unit apart after being projected.
+				// unit apart after being projected. This works for
+				// both orthographic and perspective cameras.
 				float worldWidth = distance(v1.xyz, v2.xyz);
 
 				// divide by 2.0 because NDC is [-1, 1]

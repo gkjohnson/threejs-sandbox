@@ -139,6 +139,8 @@
 				orthographicCamera.left *= -1
 				orthographicCamera.bottom *= -1
 
+				orthographicCamera.updateProjectionMatrix();
+
 				renderer.setSize( width, height );
 
 			}
