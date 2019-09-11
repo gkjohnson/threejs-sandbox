@@ -2,6 +2,8 @@
 
 Defines a light based on a mesh and renders by moving a point light along the surface of the mesh and accumulating the result over multiple frames.
 
+![](./volumetric-lights.png)
+
 [Demo Here!](https://gkjohnson.github.io/threejs-sandbox/volume-lights/)
 
 ## TODO
