@@ -27,6 +27,7 @@ Get models from [SFMLab](SFMLab.com).
   - The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
 - Read in a file and use the structs to read the data and make sure it makes sense and lines up
 - With multiple triangle strips being used it might be best to use the primitive restart approach: https://stackoverflow.com/questions/4386861/opengl-jogl-multiple-triangle-fans-in-a-vertex-array
+- When animating bones: https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/public/bone_setup.cpp
 
 ## TODO
 - Parse Bone Structure
