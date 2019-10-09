@@ -2,6 +2,8 @@
 
 A small effort to try to decode and load valve 3d file formats.
 
+Get models from [SFMLab](SFMLab.com).
+
 ## Formats
 
 - **VTF** https://developer.valvesoftware.com/wiki/Valve_Texture_Format
@@ -24,9 +26,6 @@ A small effort to try to decode and load valve 3d file formats.
 - How large are the strides for the structs? Why do some seem to be longer than others?
   - The size of in the structs seems to be what was expected but it doesn't explain the apparent need for padding
 - Read in a file and use the structs to read the data and make sure it makes sense and lines up
-- Understand how vertices and vertex data is indirectly accessed and used.
-- The number of meshes in the MDL models does not always line up with the vtx meshes? Or is sometimes a HUGE number?
-- Try with a file from a valve game?
 - With multiple triangle strips being used it might be best to use the primitive restart approach: https://stackoverflow.com/questions/4386861/opengl-jogl-multiple-triangle-fans-in-a-vertex-array
 
 ## TODO
