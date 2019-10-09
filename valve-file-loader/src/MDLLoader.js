@@ -1,4 +1,5 @@
 // MDL: https://developer.valvesoftware.com/wiki/MDL
+// https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/public/studio.h
 
 THREE.MDLLoader = function ( manager ) {
 
@@ -501,11 +502,20 @@ THREE.MDLLoader.prototype = {
 
 			var dataView = new DataView( buffer );
 			var textures = [];
+			// struct mstudiotexture_t
 			for ( var i = 0; i < header.numtextures; i ++ ) {
 
 				var offset = header.textureindex + i * 16 * 4;
-				var ptr = offset + dataView.getInt32( offset, true );
-				textures.push( readString( dataView, ptr ) );
+				var sznameindex = dataView.getInt32( offset, true );
+				// var flags = dataView.getInt32( offset + 4, true );
+				// var used = dataView.getInt32( offset + 8, true );
+
+				// int unused1
+				// void* material
+				// void* clientmaterial
+				// int unused[10]
+
+				textures.push( readString( dataView, offset + sznameindex ) );
 
 			}
 
@@ -519,6 +529,7 @@ THREE.MDLLoader.prototype = {
 			}
 
 			var includeModels = [];
+			// struct mstudiomodelgroup_t
 			for ( var i = 0; i < header.numincludemodels; i ++ ) {
 
 				var offset = header.includemodelindex + i * 8;
@@ -545,7 +556,7 @@ THREE.MDLLoader.prototype = {
 				// struct mstudiomodel_t
 				for ( var i2 = 0; i2 < bodyPart.nummodels; i2 ++ ) {
 
-					var offset2 = offset + bodyPart.modelindex + i2 * 104;
+					var offset2 = offset + bodyPart.modelindex + i2 * 148;
 					var model = {};
 					model.name = readString( dataView, offset2 + 0);
 					model.type = dataView.getInt32( offset2 + 64, true );
@@ -562,8 +573,14 @@ THREE.MDLLoader.prototype = {
 					model.attachmentindex = dataView.getInt32( offset2 + 64 + 32, true );
 					model.numeyeballs = dataView.getInt32( offset2 + 64 + 36, true );
 					model.eyeballindex = dataView.getInt32( offset2 + 64 + 40, true );
-					// mstudio_modelvertexdata_t
+
+					// 108 bytes so far
+
+					// mstudio_modelvertexdata_t -- contains two void pointers
+
 					// int unused[8]
+
+					// 108 + 8 + 8 * 4 = 148 bytes
 
 					model.meshes = [];
 					bodyPart.models.push( model );
@@ -574,17 +591,17 @@ THREE.MDLLoader.prototype = {
 					// struct mstudiomesh_t
 					for ( var i3 = 0; i3 < model.nummeshes; i3 ++ ) {
 
-						var offset3 = offset2 + model.meshindex;
+						var offset3 = offset2 + model.meshindex + i3 * 80;
 						var mesh = {};
 						mesh.material = dataView.getInt32( offset3 + 0, true );
 						mesh.modelindex = dataView.getInt32( offset3 + 4, true );
 
 						mesh.numvertices = dataView.getInt32( offset3 + 8, true );
 						mesh.vertexoffset = dataView.getInt32( offset3 + 12, true );
-						
+
 						mesh.numflexes = dataView.getInt32( offset3 + 16, true );
 						mesh.flexindex = dataView.getInt32( offset3 + 20, true );
-						
+
 						mesh.materialtype = dataView.getInt32( offset3 + 24, true );
 						mesh.materialparam = dataView.getInt32( offset3 + 28, true );
 

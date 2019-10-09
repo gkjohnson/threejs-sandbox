@@ -117,21 +117,21 @@ THREE.ValveLoader.prototype = {
 
 				// https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/utils/vrad/vradstaticprops.cpp#L1504-L1688
 				if ( mdl.numbodyparts !== vtx.numBodyParts ) {
-				
-					console.warn( 'ValveLoader: Number of body parts does not match.' );						
-				
+
+					console.warn( 'ValveLoader: Number of body parts does not match.' );
+
 				}
 
-				const group = new THREE.Group();				
+				const group = new THREE.Group();
 				vtx.bodyParts.forEach( ( vtxBodyPart, i ) => {
 
 					var mdlBodyPart = mdl.bodyParts[ i ];
 					if ( mdlBodyPart.nummodels !== vtxBodyPart.numModels ) {
-				
-						console.warn( 'ValveLoader: Number of models does not match.' );						
-					
+
+						console.warn( 'ValveLoader: Number of models does not match.' );
+
 					}
-					
+
 					vtxBodyPart.models.forEach( ( vtxModel, i2 ) => {
 
 						var mdlModel = mdlBodyPart.models[ i2 ];
@@ -140,7 +140,7 @@ THREE.ValveLoader.prototype = {
 							if ( i3 !== 0 ) return;
 
 							if ( mdlModel.nummeshes !== vtxLod.numMeshes ) {
-				
+
 								console.warn( 'ValveLoader: Number of meshes does not match.', mdlModel.nummeshes, vtxLod.numMeshes );
 								return;						
 							

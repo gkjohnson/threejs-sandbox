@@ -43,6 +43,7 @@ THREE.VTXLoader.prototype = {
 
 		}
 
+		// struct FileHeader_t
 		function parseHeader( buffer ) {
 
 			var dataView = new DataView( buffer );
