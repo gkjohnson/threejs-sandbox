@@ -106,8 +106,11 @@ THREE.VMTLoader.prototype = {
 		const path = `${ urlTokens.join( 'materials' ) }materials/`;
 		const material = new THREE.MeshPhongMaterial();
 		const vtfLoader = new THREE.VTFLoader( this.manager );
+		console.log(root)
 		for ( const key in root ) {
 
+			// TODO: Use more keys
+			// TODO: bump map is causing all normals to disappear here
 			const field = root[ key ];
 			switch ( key.toLowerCase() ) {
 
@@ -127,7 +130,6 @@ THREE.VMTLoader.prototype = {
 					material.specularMap.wrapS = THREE.RepeatWrapping;
 					material.specularMap.wrapT = THREE.RepeatWrapping;
 					break;
-
 
 			}
 

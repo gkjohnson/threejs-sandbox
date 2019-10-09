@@ -591,7 +591,7 @@ THREE.MDLLoader.prototype = {
 					// struct mstudiomesh_t
 					for ( var i3 = 0; i3 < model.nummeshes; i3 ++ ) {
 
-						var offset3 = offset2 + model.meshindex + i3 * 80;
+						var offset3 = offset2 + model.meshindex + i3 * 116;
 						var mesh = {};
 						mesh.material = dataView.getInt32( offset3 + 0, true );
 						mesh.modelindex = dataView.getInt32( offset3 + 4, true );
@@ -612,8 +612,19 @@ THREE.MDLLoader.prototype = {
 							dataView.getFloat32( offset3 + 44, true ),
 						);
 
-						// mstudio_modelvertexdata_t vertexdata
+						// 48 bytes total
+
+						// TODO: should we parse this?
+						// mstudio_modelvertexdata_t vertexdata (36 bytes)
+						//     mstudio_modelvertexdata_t    *modelvertexdata; -- 4
+						//     int                           numLODVertexes[MAX_NUM_LODS]; -- 4 * 8
+
+						// 84 bytes total
+
 						// int unused[8]
+
+						// 116 total
+
 						model.meshes.push( mesh );
 
 					}

@@ -142,8 +142,8 @@ THREE.ValveLoader.prototype = {
 							if ( mdlModel.nummeshes !== vtxLod.numMeshes ) {
 
 								console.warn( 'ValveLoader: Number of meshes does not match.', mdlModel.nummeshes, vtxLod.numMeshes );
-								return;						
-							
+								return;
+
 							}
 
 							vtxLod.meshes.forEach( ( vtxMesh, i4 ) => {
@@ -169,7 +169,7 @@ THREE.ValveLoader.prototype = {
 										// TODO : Winding order seems incorrect causing normals to face the wrong direction
 										// the and faces to be inverted
 
-										// geometry.addGroup( s.numIndices, s.indexOffset, 0 );
+										geometry.addGroup( vtxStrip.numIndices, vtxStrip.indexOffset, 0 );
 
 										// var mesh = new THREE.Points( geometry, new THREE.PointsMaterial( { size: .1 } ) );
 										var mesh = new THREE.Mesh( geometry, material );
