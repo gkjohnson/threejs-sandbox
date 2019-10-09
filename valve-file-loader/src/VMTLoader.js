@@ -106,7 +106,6 @@ THREE.VMTLoader.prototype = {
 		const path = `${ urlTokens.join( 'materials' ) }materials/`;
 		const material = new THREE.MeshPhongMaterial();
 		const vtfLoader = new THREE.VTFLoader( this.manager );
-		console.log(root)
 		for ( const key in root ) {
 
 			// TODO: Use more keys

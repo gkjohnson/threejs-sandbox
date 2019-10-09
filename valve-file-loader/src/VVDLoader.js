@@ -119,10 +119,14 @@ THREE.VVDLoader.prototype = {
 			var len = header.tangentDataStart - header.vertexDataStart;
 			var interleavedFloat32Array = new Float32Array( buffer, header.vertexDataStart, len / 4 );
 			var interleavedFloat32Buffer = new THREE.InterleavedBuffer( interleavedFloat32Array, 48 / 4 );
-			// var interleavedUint8Array = new Uint8Array( buffer, header.vertexDataStart, len );
-			// var interleavedFloat32Buffer = new THREE.interleavedFloat32Buffer( interleavedFloat32Array, 48 / 4 );
+			var interleavedUint8Array = new Uint8Array( buffer, header.vertexDataStart, len );
+			var interleavedUint8Buffer = new THREE.InterleavedBuffer( interleavedUint8Array, 48 );
 
 			return {
+
+				skinWeight: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 3, 0, false ),
+				skinIndex: new THREE.InterleavedBufferAttribute( interleavedUint8Buffer, 3, 12, false ),
+				numBones: new THREE.InterleavedBufferAttribute( interleavedUint8Buffer, 1, 15, false ),
 
 				position: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 3, 4, false ),
 				normal: new THREE.InterleavedBufferAttribute( interleavedFloat32Buffer, 3, 7, false ),

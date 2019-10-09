@@ -633,91 +633,98 @@ THREE.MDLLoader.prototype = {
 
 			}
 
-			// // mstudiobone_t
-			// var bones = [];
-			// for ( var i = 0; i < header.boneCount; i ++ ) {
+			// mstudiobone_t
+			var bones = [];
+			for ( var i = 0; i < header.numbones; i ++ ) {
 
-			// 	var offset = header.boneOffset + i * 208;
-			// 	var bone = {};
-			// 	bone.name = readString( dataView, dataView.getInt32( offset + 0, true ) );
+				var offset = header.boneindex + i * 216;
+				var bone = {};
 
-			// 	console.log(bone.name)
-			// 	bone.parent = dataView.getInt32( offset + 4, true );
+				bone.name = readString( dataView, dataView.getInt32( offset + 0, true ) );
 
-			// 	var bonecontroller = new Array( 6 );
-			// 	for ( let i = 0; i < 6; i ++ ) {
+				console.log(bone.name)
+				bone.parent = dataView.getInt32( offset + 4, true );
 
-			// 		bonecontroller[ i ] = dataView.getInt32( offset + 8 + i * 4, true );
+				var bonecontroller = new Array( 6 );
+				for ( let i = 0; i < 6; i ++ ) {
 
-			// 	}
-			// 	bone.bonecontroller = bonecontroller;
+					bonecontroller[ i ] = dataView.getInt32( offset + 8 + i * 4, true );
 
-			// 	bone.pos = new THREE.Vector3();
-			// 	bone.pos.x = dataView.getFloat32( offset + 32, true );
-			// 	bone.pos.y = dataView.getFloat32( offset + 36, true );
-			// 	bone.pos.z = dataView.getFloat32( offset + 40, true );
+				}
+				bone.bonecontroller = bonecontroller;
 
-			// 	bone.quaternion = new THREE.Quaternion();
-			// 	bone.quaternion.x = dataView.getFloat32( offset + 44, true );
-			// 	bone.quaternion.y = dataView.getFloat32( offset + 48, true );
-			// 	bone.quaternion.z = dataView.getFloat32( offset + 52, true );
-			// 	bone.quaternion.w = dataView.getFloat32( offset + 56, true );
+				// 6 * 4 = 24
+				// 8 + 24 = 32
 
-			// 	bone.radianEuler = new THREE.Euler();
-			// 	bone.radianEuler.x = dataView.getFloat32( offset + 60, true );
-			// 	bone.radianEuler.y = dataView.getFloat32( offset + 64, true );
-			// 	bone.radianEuler.z = dataView.getFloat32( offset + 68, true );
+				bone.pos = new THREE.Vector3();
+				bone.pos.x = dataView.getFloat32( offset + 32, true );
+				bone.pos.y = dataView.getFloat32( offset + 36, true );
+				bone.pos.z = dataView.getFloat32( offset + 40, true );
 
-			// 	bone.posscale = new THREE.Vector3();
-			// 	bone.posscale.x = dataView.getFloat32( offset + 72, true );
-			// 	bone.posscale.y = dataView.getFloat32( offset + 76, true );
-			// 	bone.posscale.z = dataView.getFloat32( offset + 80, true );
+				bone.quaternion = new THREE.Quaternion();
+				bone.quaternion.x = dataView.getFloat32( offset + 44, true );
+				bone.quaternion.y = dataView.getFloat32( offset + 48, true );
+				bone.quaternion.z = dataView.getFloat32( offset + 52, true );
+				bone.quaternion.w = dataView.getFloat32( offset + 56, true );
 
-			// 	bone.rotscale = new THREE.Vector3();
-			// 	bone.rotscale.x = dataView.getFloat32( offset + 84, true );
-			// 	bone.rotscale.y = dataView.getFloat32( offset + 88, true );
-			// 	bone.rotscale.z = dataView.getFloat32( offset + 92, true );
+				bone.radianEuler = new THREE.Euler();
+				bone.radianEuler.x = dataView.getFloat32( offset + 60, true );
+				bone.radianEuler.y = dataView.getFloat32( offset + 64, true );
+				bone.radianEuler.z = dataView.getFloat32( offset + 68, true );
 
-			// 	const posToBone = new THREE.Matrix4();
-			// 	posToBone.identity();
-			// 	for ( let i = 0; i < 12; i ++ ) {
+				bone.posscale = new THREE.Vector3();
+				bone.posscale.x = dataView.getFloat32( offset + 72, true );
+				bone.posscale.y = dataView.getFloat32( offset + 76, true );
+				bone.posscale.z = dataView.getFloat32( offset + 80, true );
 
-			// 		posToBone.elements[ i ] = dataView.getFloat32( offset + 96 + i * 4, true );
+				bone.rotscale = new THREE.Vector3();
+				bone.rotscale.x = dataView.getFloat32( offset + 84, true );
+				bone.rotscale.y = dataView.getFloat32( offset + 88, true );
+				bone.rotscale.z = dataView.getFloat32( offset + 92, true );
 
-			// 	}
-			// 	bone.posToBone = posToBone;
-			// 	// console.log( posToBone.elements )
+				const posToBone = new THREE.Matrix4();
+				posToBone.identity();
+				for ( let i = 0; i < 12; i ++ ) {
 
-			// 	// postobone
-			// 	// 3 * 4 * 4 bytes = 48
-			// 	// 92 + 48 = 140
+					posToBone.elements[ i ] = dataView.getFloat32( offset + 96 + i * 4, true );
 
-			// 	bone.qAlignment = new THREE.Quaternion();
-			// 	bone.qAlignment.x = dataView.getFloat32( offset + 140, true );
-			// 	bone.qAlignment.y = dataView.getFloat32( offset + 144, true );
-			// 	bone.qAlignment.z = dataView.getFloat32( offset + 148, true );
-			// 	bone.qAlignment.w = dataView.getFloat32( offset + 152, true );
+				}
+				bone.posToBone = posToBone;
+				// console.log( posToBone.elements )
 
-			// 	bone.flags = dataView.getInt32( offset + 156, true );
-			// 	bone.proctype = dataView.getInt32( offset + 160, true );
-			// 	bone.procindex = dataView.getInt32( offset + 164, true );
-			// 	bone.physicsbone = dataView.getInt32( offset + 168, true );
-			// 	bone.surfacepropidx = dataView.getInt32( offset + 172, true );
-			// 	bone.contents = dataView.getInt32( offset + 176, true );
+				// postobone
+				// 3 * 4 * 4 bytes = 48
+				// 96 + 48 = 144
 
-			// 	// unused
-			// 	// 4 * 8 bytes = 32
-			// 	// 176 + 32 = 208
+				bone.qAlignment = new THREE.Quaternion();
+				bone.qAlignment.x = dataView.getFloat32( offset + 144, true );
+				bone.qAlignment.y = dataView.getFloat32( offset + 148, true );
+				bone.qAlignment.z = dataView.getFloat32( offset + 152, true );
+				bone.qAlignment.w = dataView.getFloat32( offset + 156, true );
 
-			// }
+				bone.flags = dataView.getInt32( offset + 160, true );
+				bone.proctype = dataView.getInt32( offset + 164, true );
+				bone.procindex = dataView.getInt32( offset + 168, true );
+				bone.physicsbone = dataView.getInt32( offset + 172, true );
+				bone.surfacepropidx = dataView.getInt32( offset + 176, true );
+				bone.contents = dataView.getInt32( offset + 180, true );
+
+				// unused
+				// 4 * 8 bytes = 32
+				// 184 + 32 = 216
+
+				bones.push( bone );
+			}
 
 
 
-			// var boneControllers = [];
+			var boneControllers = [];
 
 			var surfaceProp = readString( dataView, header.surfacepropindex );
 
-			return { textures, textureDirectories, includeModels, surfaceProp, bodyParts };
+			console.log(bones);
+
+			return { textures, textureDirectories, includeModels, surfaceProp, bodyParts, bones, boneControllers };
 
 		}
 
