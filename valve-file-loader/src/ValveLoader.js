@@ -123,6 +123,44 @@ THREE.ValveLoader.prototype = {
 				}
 
 				const group = new THREE.Group();
+				const bones = mdl.bones.map( b => {
+
+					const bone = new THREE.Bone();
+					bone.position.set(b.pos.x, b.pos.y, b.pos.z);
+					bone.quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
+					return bone;
+
+				} );
+
+				bones.forEach( ( b, i ) => {
+
+					const parent = mdl.bones[ i ].parent;
+					if ( parent !== -1 ) {
+
+						bones[ parent ].add( b );
+
+					}
+
+				} );
+
+				if ( bones.filter( b => b.parent === null ) ) {
+
+					console.warn( 'ValveLoader: There are multiple skeleton roots.' );
+
+				}
+
+				const skeleton = new THREE.Skeleton( bones );
+				group.add( bones[ 0 ] );
+
+				const sm = new THREE.SkinnedMesh();
+				sm.add( bones[ 0 ] );
+				sm.bind( skeleton );
+				group.add( sm );
+				sm.material.skinning = true;
+
+				window.sh = new THREE.SkeletonHelper( sm )
+				scene.add(sh)
+
 				vtx.bodyParts.forEach( ( vtxBodyPart, i ) => {
 
 					var mdlBodyPart = mdl.bodyParts[ i ];

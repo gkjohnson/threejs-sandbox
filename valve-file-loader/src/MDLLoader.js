@@ -722,8 +722,6 @@ THREE.MDLLoader.prototype = {
 
 			var surfaceProp = readString( dataView, header.surfacepropindex );
 
-			console.log(bones);
-
 			return { textures, textureDirectories, includeModels, surfaceProp, bodyParts, bones, boneControllers };
 
 		}

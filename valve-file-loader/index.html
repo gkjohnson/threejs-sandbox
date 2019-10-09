@@ -95,20 +95,20 @@
 				scene = new THREE.Scene();
 
 				directionalLight = new THREE.DirectionalLight();
-				directionalLight.position.set( 1, 1, 1 );
+				directionalLight.position.set( 1, 3, -2 ).multiplyScalar( 100 );
 				directionalLight.castShadow = true;
 
 				var dlShadowCam = directionalLight.shadow.camera;
-				dlShadowCam.left = dlShadowCam.bottom = -15;
-				dlShadowCam.top = dlShadowCam.right = 15;
+				dlShadowCam.left = dlShadowCam.bottom = -100;
+				dlShadowCam.top = dlShadowCam.right = 100;
 				scene.add( directionalLight );
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 				scene.add( ambientLight );
 
-				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10, 10 ), new THREE.MeshBasicMaterial() );
-				plane.material.map = new THREE.VTFLoader().load( './models/Link_-_Hyrule_Warriors_IpV1rRa/materials/models/hyrulewarriors/link/equipment/balls_and_chains/ball_and_chain_lvl2.vtf' );
-				scene.add( plane );
+				// plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10, 10 ), new THREE.MeshBasicMaterial() );
+				// plane.material.map = new THREE.VTFLoader().load( './models/Link_-_Hyrule_Warriors_IpV1rRa/materials/models/hyrulewarriors/link/equipment/balls_and_chains/ball_and_chain_lvl2.vtf' );
+				// scene.add( plane );
 
 				new THREE
 					.ValveLoader()
@@ -135,6 +135,22 @@
 
 							scene.add( group );
 							group.rotation.x = -Math.PI / 2;
+							group.traverse(c => {
+								c.castShadow = true;
+								c.receiveShadow = true;
+							});
+
+							const bb = new THREE.Box3();
+							bb.setFromObject( group );
+							bb.getCenter( controls.target );
+
+							const ground = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+							ground.material = new THREE.ShadowMaterial( { opacity: 0.5, transparent: true } );
+							ground.receiveShadow = true;
+							ground.scale.multiplyScalar( 1000 );
+							ground.rotation.x = -Math.PI / 2;
+							ground.position.y = bb.min.y;
+							scene.add( ground );
 
 						} );
 
