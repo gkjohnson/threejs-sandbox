@@ -25,3 +25,5 @@ Fired when a deep child is removed from teh scene.
 ```js
 allObjects : Set
 ```
+
+Set of all the objects in the scene.
