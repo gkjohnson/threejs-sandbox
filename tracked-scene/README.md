@@ -23,7 +23,7 @@ Fired when a deep child is removed from teh scene.
 ### .allObjects
 
 ```js
-allObjects : Set
+allObjects : Set< Object3D >
 ```
 
 Set of all the objects in the scene.
