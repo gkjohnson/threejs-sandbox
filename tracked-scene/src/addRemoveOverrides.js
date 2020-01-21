@@ -25,4 +25,4 @@ function remove( ...args ) {
 
 };
 
-export { add, remove }
+export { add, remove };
