@@ -1,5 +1,6 @@
-const { ShaderChunk, ShaderLib, UniformsUtils, Vector2 } = THREE;
-const WorldUnitsPointsShader = {
+import { ShaderChunk, ShaderLib, UniformsUtils, Vector2 } from '//unpkg.com/three@0.106.0/build/three.module.js';
+
+export const WorldUnitsPointsShader = {
 	vertexShader: `
 	uniform float size;
 	uniform float scale;
