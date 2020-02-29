@@ -1,4 +1,6 @@
-class BinnedTerrainBufferGeometry extends THREE.BufferGeometry {
+import { BufferGeometry, BufferAttribute } from '//unpkg.com/three@0.112.0/build/three.module.js';
+
+export class BinnedTerrainBufferGeometry extends BufferGeometry {
 
 	constructor( width = 1, height = 1, widthSegments = 1, heightSegments = 1, cellScale = 1 ) {
 
@@ -22,8 +24,8 @@ class BinnedTerrainBufferGeometry extends THREE.BufferGeometry {
 		const w2 = cellScale * w / 2;
 		const h2 = cellScale * h / 2;
 
-		const posAttr = new THREE.BufferAttribute( new Float32Array( 3 * 8 * widthSegments * heightSegments ), 3, false );
-		const indexAttr = new THREE.BufferAttribute( new Uint32Array( 3 * 6 * 2 * widthSegments * heightSegments ), 1, false );
+		const posAttr = new BufferAttribute( new Float32Array( 3 * 8 * widthSegments * heightSegments ), 3, false );
+		const indexAttr = new BufferAttribute( new Uint32Array( 3 * 6 * 2 * widthSegments * heightSegments ), 1, false );
 		const indexArr = indexAttr.array;
 
 		for ( let x = 0; x < widthSegments; x ++ ) {
@@ -139,8 +141,8 @@ class BinnedTerrainBufferGeometry extends THREE.BufferGeometry {
 		}
 
 		this.setIndex( indexAttr );
-		this.addAttribute( 'position', posAttr );
-		this.removeAttribute( 'normal' );
+		this.setAttribute( 'position', posAttr );
+		this.deleteAttribute( 'normal' );
 
 		this.setZ = function( x, y, z ) {
 

@@ -1,8 +1,10 @@
+import { UniformsUtils, Color } from '//unpkg.com/three@0.112.0/build/three.module.js';
+
 
 function cloneShader(shader, uniforms, defines) {
 
 	const newShader = Object.assign({}, shader);
-	newShader.uniforms = THREE.UniformsUtils.merge([
+	newShader.uniforms = UniformsUtils.merge([
 		newShader.uniforms,
 		uniforms
 	]);
@@ -35,12 +37,12 @@ function addWorldPosition(shader) {
 	return shader;
 }
 
-function TopoLineShaderMixin(shader) {
+export function TopoLineShaderMixin(shader) {
 	const defineKeyword = 'ENABLE_TOPO_LINES';
 	const newShader = cloneShader(
 		shader,
 		{
-			topoLineColor: { value: new THREE.Color() },
+			topoLineColor: { value: new Color() },
 			topoLineThickness: { value: 0.005 },
 			topoLineSpacing: { value: 0.1 },
 			topoLineOffset: { value: 0 },

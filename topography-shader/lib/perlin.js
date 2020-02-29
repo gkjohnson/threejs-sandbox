@@ -1,3 +1,6 @@
+// original repo
+// https://github.com/josephg/noisejs
+
 /*
  * A speed-improved perlin and simplex noise algorithms for 2D.
  *
@@ -14,13 +17,14 @@
  *
  */
 
+const obj = {};
 (function(global){
   var module = global.noise = {};
 
   function Grad(x, y, z) {
     this.x = x; this.y = y; this.z = z;
   }
-  
+
   Grad.prototype.dot2 = function(x, y) {
     return this.x*x + this.y*y;
   };
@@ -307,4 +311,6 @@
        v);
   };
 
-})(this);
+})(obj);
+
+export const noise = obj.noise;
