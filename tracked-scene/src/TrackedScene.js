@@ -17,7 +17,7 @@ addChildCb = function( e ) {
 
     });
 
-}.bind( this );
+};
 
 removeChildCb = function( e ) {
 
@@ -36,16 +36,16 @@ removeChildCb = function( e ) {
 
     } );
 
-}.bind( this );
+};
 
 class TrackedScene extends THREE.Scene {
 
     constructor( ...args ) {
-  
+
         super( ...args );
         this.addEventListener( 'childadded', addChildCb );
         this.addEventListener( 'childremoved', removeChildCb );
-		
+
     }
 
 }

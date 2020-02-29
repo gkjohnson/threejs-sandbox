@@ -8,18 +8,18 @@ function add( ...args ) {
 
     if (args.length === 1) {
 
-        this.dispatchEvent({ type: 'childadded', child: args[0] });
+        this.dispatchEvent( { type: 'childadded', child: args[ 0 ] } );
 
     }
 };
 
 function remove( ...args ) {
 
-    _ogRemove.apply(this, args);
+    _ogRemove.apply( this, args );
 
-    if (args.length === 1) {
+    if ( args.length === 1 ) {
 
-        this.dispatchEvent({ type: 'childremoved', child: args[0] });
+        this.dispatchEvent( { type: 'childremoved', child: args[ 0 ] } );
 
     }
 
