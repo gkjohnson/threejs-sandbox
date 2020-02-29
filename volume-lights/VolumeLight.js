@@ -23,7 +23,7 @@ export class VolumeLight extends Object3D {
 		this.lightCount = 1;
         this.lights = [];
 		this.iteration = 0;
-		this.randomSample = false;
+		this.randomSample = true;
 
     }
 

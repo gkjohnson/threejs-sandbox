@@ -46,13 +46,20 @@
 			import { MeshLight } from './VolumeLight.js'
 			import { blit, getBlendMaterial } from './Blit.js'
 
+			// Use a random seed function to guarantee consisten point light positioning
+			var seed = 1;
+			Math.random = function random() {
+				var x = Math.sin( seed ++ ) * 10000;
+				return x - Math.floor( x );
+			};
+
 			// globals
 			var stats;
 			var params = {
 
 				intensity: 1.0,
 				lightCount: 1,
-				randomSample: false,
+				randomSample: true,
 
 			};
 			var camera, scene, renderer, controls;
@@ -90,8 +97,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x263238 );
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+				renderer.outputEncoding = THREE.GammaEncoding;
 				renderer.shadowMap.enabled = true;
 				document.body.appendChild( renderer.domElement );
 
@@ -100,6 +106,7 @@
 				camera.position.set( 60, 30, 60 );
 
 				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
 
 				volumeLight = new MeshLight( new THREE.TorusKnotBufferGeometry( 1, .3, 50, 8 ) );
 				volumeLight.scale.set( 2, 2, 2 );
@@ -220,6 +227,12 @@
 			}
 
 			function render() {
+
+				if ( volumeLight.iteration === 0 ) {
+
+					seed = 1;
+
+				}
 
 				volumeLight.lights.forEach( light => {
 
