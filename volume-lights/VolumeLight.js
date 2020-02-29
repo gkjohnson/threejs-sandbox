@@ -1,12 +1,21 @@
-class VolumeLight extends THREE.Object3D {
+import {
+	Object3D,
+	PointLight,
+	SphereBufferGeometry,
+	Mesh,
+	MeshBasicMaterial,
+	Triangle
+} from '//unpkg.com/three@0.112.0/build/three.module.js';
+
+export class VolumeLight extends Object3D {
 
     constructor() {
 
         super();
 
-        const light = new THREE.PointLight();
+        const light = new PointLight();
 
-        // const debugLight = new THREE.Mesh( new THREE.SphereBufferGeometry() );
+        // const debugLight = new Mesh( new SphereBufferGeometry() );
         // light.add( debugLight );
         // debugLight.scale.set( 0.1, 0.1, 0.1 );
 
@@ -14,7 +23,7 @@ class VolumeLight extends THREE.Object3D {
 
         this.light = light;
         this.iteration = 0;
-    
+
     }
 
     setIteration( i ) {
@@ -25,12 +34,12 @@ class VolumeLight extends THREE.Object3D {
 
 }
 
-class MeshLight extends VolumeLight {
+export class MeshLight extends VolumeLight {
 
     constructor( geometry ) {
 
         super();
-        const lightGeom = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial() );
+        const lightGeom = new Mesh( geometry, new MeshBasicMaterial() );
         this.add( lightGeom );
 
         this.geometry = geometry;
@@ -39,12 +48,12 @@ class MeshLight extends VolumeLight {
     }
 
     setIteration( i ) {
-        
+
         super.setIteration( i );
 
         i *= 3;
 
-        const tri = new THREE.Triangle();
+        const tri = new Triangle();
 
         const geometry = this.geometry;
         const positionAttr = geometry.attributes.position;
@@ -52,7 +61,7 @@ class MeshLight extends VolumeLight {
         const triCount = indexAttr ? indexAttr.count : positionAttr.count / 3;
 
         const loopi = ~ ~ ( i / triCount );
-        const modi = i % triCount; 
+        const modi = i % triCount;
         let i0 = modi + 0;
         let i1 = modi + 1;
         let i2 = modi + 2;
@@ -75,7 +84,7 @@ class MeshLight extends VolumeLight {
             .add( tri.a )
             .add( tri.b )
             .add( tri.c );
-        
+
     }
 
 }

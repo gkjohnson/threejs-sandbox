@@ -1,23 +1,33 @@
-window.blit = ( function() {
+import {
+	Scene,
+	OrthographicCamera,
+	Mesh,
+	PlaneBufferGeometry,
+	ShaderMaterial,
+} from '//unpkg.com/three@0.112.0/build/three.module.js';
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera( -0.5, 0.5, 0.5, -0.5, -0.5, 0.5 );
-    const quad = new THREE.Mesh( new THREE.PlaneBufferGeometry(), null );
+export const blit = ( function() {
+
+    const scene = new Scene();
+    const camera = new OrthographicCamera( -0.5, 0.5, 0.5, -0.5, -0.5, 0.5 );
+    const quad = new Mesh( new PlaneBufferGeometry(), null );
 
     scene.add( quad );
 
-    return function( renderer, material, renderTarget ) {
+    return function( renderer, material, renderTarget = null ) {
 
-        quad.material = material;
-        renderer.render( scene, camera, renderTarget );
+		quad.material = material;
+		renderer.setRenderTarget( renderTarget );
+        renderer.render( scene, camera );
+		renderer.setRenderTarget( null );
 
     };
 
 } )();
 
-window.getBlendMaterial = function() {
+export const getBlendMaterial = function() {
 
-    return new THREE.ShaderMaterial({
+    return new ShaderMaterial({
 
         uniforms: {
             texture1: { value: null },

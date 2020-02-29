@@ -29,22 +29,22 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/controls/OrbitControls.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/libs/dat.gui.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r100/examples/js/loaders/FBXLoader.js"></script>
-
-		<script type="text/javascript" src="./VolumeLight.js"></script>
-		<script type="text/javascript" src="./Blit.js"></script>
-
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Accumulated Shading by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 			<div id="iterations"></div>
 		</div>
 
-		<script>
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
+			import { FBXLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/FBXLoader.js';
+
+			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { MeshLight } from './VolumeLight.js'
+			import { blit, getBlendMaterial } from './Blit.js'
 
 			// globals
 			var stats;
@@ -147,7 +147,7 @@
 				mesh2.rotation.y = Math.PI / 2;
 				scene.add( mesh2 );
 
-				new THREE.FBXLoader().load( 'https://rawgit.com/mrdoob/three.js/r100/examples/models/fbx/stanford-bunny.fbx', obj => {
+				new FBXLoader().load( 'https://rawgit.com/mrdoob/three.js/r112/examples/models/fbx/stanford-bunny.fbx', obj => {
 
 					scene.add( obj );
 					obj.scale.multiplyScalar( 0.00025 );
@@ -164,7 +164,7 @@
 				document.body.appendChild( stats.dom );
 
 				// camera controls
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 3000;
 				controls.addEventListener( 'change', () => volumeLight.iteration = 0 );
@@ -233,14 +233,16 @@
 				// TODO: jitter the camera to get AA
 				for (var i = 0; i < 1; i ++) {
 					volumeLight.setIteration( volumeLight.iteration + 1 );
-					
+
 					const offset = jitterOffsets[ volumeLight.iteration % jitterOffsets.length ];
 					camera.setViewOffset(
 						renderBuffer.width, renderBuffer.height,
 						offset[ 0 ] * 1 / 16, offset[ 1 ] * 1 / 16,
 						renderBuffer.width, renderBuffer.height,
 					);
-					renderer.render( scene, camera, renderBuffer );
+					renderer.setRenderTarget( renderBuffer );
+					renderer.render( scene, camera );
+					renderer.setRenderTarget( null );
 
 					blendMat.uniforms.texture2.value = renderBuffer.texture;
 					blendMat.uniforms.texture1.value = frontBuffer.texture;
