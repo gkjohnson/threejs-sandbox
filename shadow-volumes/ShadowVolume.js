@@ -1,9 +1,22 @@
-const v0 = new THREE.Vector3();
-const v1 = new THREE.Vector3();
-const v2 = new THREE.Vector3();
-const v01 = new THREE.Vector3();
-const v12 = new THREE.Vector3();
-const norm = new THREE.Vector3();
+import {
+	Vector3,
+	BufferAttribute,
+	UniformsUtils,
+	Vector4,
+	ShaderMaterial,
+	ShaderLib,
+	Group,
+	FrontSide,
+	LessDepth,
+	BackSide,
+} from '//unpkg.com/three@0.106.0/build/three.module.js';
+
+const v0 = new Vector3();
+const v1 = new Vector3();
+const v2 = new Vector3();
+const v01 = new Vector3();
+const v12 = new Vector3();
+const norm = new Vector3();
 
 function vecToString( v, multiplier ) {
 
@@ -51,7 +64,7 @@ function getDynamicShadowVolumeGeometry( geometry ) {
 		normArr.push( norm.x, norm.y, norm.z );
 
 	}
-	const normAttr = new THREE.BufferAttribute( new Float32Array( normArr ), 3, false );
+	const normAttr = new BufferAttribute( new Float32Array( normArr ), 3, false );
 	shadowGeom.addAttribute( 'normal', normAttr );
 
 	// generate an edge map
@@ -128,7 +141,7 @@ function getDynamicShadowVolumeGeometry( geometry ) {
 
 	}
 
-	const indexAttr = new THREE.BufferAttribute( new Uint32Array( indexArr ), 1, false );
+	const indexAttr = new BufferAttribute( new Uint32Array( indexArr ), 1, false );
 	shadowGeom.setIndex( indexAttr );
 
 	return shadowGeom;
@@ -138,9 +151,9 @@ function getDynamicShadowVolumeGeometry( geometry ) {
 function shadowVolumeShaderMixin( shader ) {
 
 	const newShader = Object.assign( {}, shader );
-	newShader.uniforms = THREE.UniformsUtils.merge( [ {
+	newShader.uniforms = UniformsUtils.merge( [ {
 		lightInfo: {
-			value: new THREE.Vector4()
+			value: new Vector4()
 		},
 		shadowDistance: {
 			value: 1000
@@ -190,9 +203,9 @@ function shadowVolumeShaderMixin( shader ) {
 
 }
 
-class ShadowVolumeMaterial extends THREE.ShaderMaterial {
+export class ShadowVolumeMaterial extends ShaderMaterial {
 
-	constructor( source = THREE.ShaderLib.basic ) {
+	constructor( source = ShaderLib.basic ) {
 
 		super( shadowVolumeShaderMixin( source ) );
 
@@ -238,7 +251,7 @@ class ShadowVolumeMaterial extends THREE.ShaderMaterial {
 
 }
 
-class ShadowVolumeMesh extends THREE.Group {
+export class ShadowVolumeMesh extends Group {
 
 	get shadowGeometry() {
 
@@ -289,23 +302,23 @@ class ShadowVolumeMesh extends THREE.Group {
 
 		// Materials
 		const frontMaterial = new ShadowVolumeMaterial();
-		frontMaterial.side = THREE.FrontSide;
+		frontMaterial.side = FrontSide;
 		frontMaterial.colorWrite = false;
 		frontMaterial.depthWrite = false;
 		frontMaterial.depthTest = true;
-		frontMaterial.depthFunc = THREE.LessDepth;
+		frontMaterial.depthFunc = LessDepth;
 		frontMaterial.skinning = target.isSkinnedMesh;
 
 		const backMaterial = new ShadowVolumeMaterial();
-		frontMaterial.side = THREE.BackSide;
+		frontMaterial.side = BackSide;
 		backMaterial.colorWrite = false;
 		backMaterial.depthWrite = false;
 		backMaterial.depthTest = true;
-		backMaterial.depthFunc = THREE.LessDepth;
+		backMaterial.depthFunc = LessDepth;
 		backMaterial.skinning = target.isSkinnedMesh;
 
 		const tintMaterial = new ShadowVolumeMaterial();
-		tintMaterial.side = THREE.BackSide;
+		tintMaterial.side = BackSide;
 		tintMaterial.depthWrite = false;
 		tintMaterial.depthTest = false;
 		tintMaterial.uniforms.diffuse.value.set( 0 );
