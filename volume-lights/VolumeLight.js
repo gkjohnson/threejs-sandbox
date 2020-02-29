@@ -32,14 +32,14 @@ export class VolumeLight extends Object3D {
 		while ( lights.length > lightCount ) {
 
 			const light = lights.pop();
-			light.remove();
-			light.dispose();
+			light.parent.remove( light );
 
 		}
 
 		while ( lights.length < lightCount ) {
 
 			const light = new PointLight();
+			light.castShadow = true;
 			lights.push( light );
 			this.add( light );
 

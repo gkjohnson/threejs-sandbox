@@ -49,24 +49,11 @@
 			// globals
 			var stats;
 			var params = {
-				useShadowVolumes: true,
 
-				light: {
-					speed: 1.0,
-					distance: 15.0,
-					pointLight: true,
-				},
+				intensity: 1.0,
+				lightCount: 1,
+				randomSampler: false,
 
-				shadows: {
-					showVolume: false,
-					distance: 400,
-					bias: 0.01,
-				},
-
-				object: {
-					display: 0,
-					speed: 1.0,
-				}
 			};
 			var camera, scene, renderer, controls;
 			var volumeLight, directionalLight, ambientLight;
@@ -115,15 +102,11 @@
 				scene = new THREE.Scene();
 
 				volumeLight = new MeshLight( new THREE.TorusKnotBufferGeometry( 1, .3, 50, 8 ) );
-				// volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 20, 20 ) );
 				volumeLight.scale.set( 2, 2, 2 );
 				volumeLight.position.set( 15, 15, 15 );
-				volumeLight.lightCount = 5;
 				volumeLight.updateLights();
 				volumeLight.lights.forEach( light => {
 
-					light.intensity = 1 / 5;
-					light.castShadow = true;
 					light.shadow.mapSize.set( 1024, 1024 );
 					light.shadow.radius = 0;
 
@@ -182,6 +165,19 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add( params, 'intensity' ).min( 0 ).max( 2 ).onChange( () => {
+
+					volumeLight.iteration = 0;
+
+				} );
+
+				gui.add( params, 'lightCount' ).min( 1 ).max( 6 ).step( 1 ).onChange( value => {
+
+					volumeLight.lightCount = value;
+					volumeLight.updateLights();
+					volumeLight.iteration = 0;
+
+				} );
 				// gui.add(params, 'useShadowVolumes');
 
 				// var lightFolder = gui.addFolder( 'light' );
@@ -234,6 +230,16 @@
 			}
 
 			function render() {
+
+				volumeLight.lights.forEach( light => {
+
+					light.intensity = params.intensity / params.lightCount;
+					light.shadow.mapSize.set( 1024, 1024 );
+					light.shadow.radius = 0;
+
+				} );
+
+				volumeLight.lightMesh.material.color.setHSL( 0, 0, params.intensity );
 
 				controls.update();
 
