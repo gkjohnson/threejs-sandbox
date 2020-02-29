@@ -118,9 +118,16 @@
 				// volumeLight = new MeshLight( new THREE.SphereBufferGeometry( 1, 20, 20 ) );
 				volumeLight.scale.set( 2, 2, 2 );
 				volumeLight.position.set( 15, 15, 15 );
-				volumeLight.light.castShadow = true;
-				volumeLight.light.shadow.mapSize.set( 1024, 1024 );
-				volumeLight.light.shadow.radius = 0;
+				volumeLight.lightCount = 5;
+				volumeLight.updateLights();
+				volumeLight.lights.forEach( light => {
+
+					light.intensity = 1 / 5;
+					light.castShadow = true;
+					light.shadow.mapSize.set( 1024, 1024 );
+					light.shadow.radius = 0;
+
+				} );
 				scene.add( volumeLight );
 
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
