@@ -29,20 +29,20 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r102/examples/js/libs/dat.gui.min.js"></script>
-
-		<script type="text/javascript" src="./ScreenDoorShader.js"></script>
-		<script type="text/javascript" src="./AddShadowColor.js"></script>
-
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen door transparency shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 		</div>
 
-		<script>
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.106.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.106.0/examples/jsm/controls/OrbitControls.js';
+
+			import Stats from '//unpkg.com/three@0.106.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { createDitherTexture, DitheredTransparencyShaderMixin} from './ScreenDoorShader.js'
+			import { initShadowColor } from './AddShadowColor.js'
 
 			// globals
 			var stats;
@@ -131,6 +131,8 @@
 
 			function init() {
 
+				initShadowColor();
+
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -187,7 +189,7 @@
 				document.body.appendChild( stats.dom );
 
 				// camera controls
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 3000;
 

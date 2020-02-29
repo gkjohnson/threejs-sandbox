@@ -1,4 +1,13 @@
-function createDitherTexture() {
+import {
+	DataTexture,
+	LuminanceFormat,
+	FloatType,
+	NearestFilter,
+	RepeatWrapping,
+	UniformsUtils
+} from '//unpkg.com/three@0.106.0/build/three.module.js';
+
+export function createDitherTexture() {
 
 	const data = new Float32Array( 16 );
 	data[ 0 ] = 0.0 / 16.0;
@@ -21,13 +30,12 @@ function createDitherTexture() {
 	data[ 14 ] = 13.0 / 16.0;
 	data[ 15 ] = 5.0 / 16.0;
 
-
-	ditherTex = new THREE.DataTexture( data, 4, 4, THREE.LuminanceFormat, THREE.FloatType );
-	ditherTex.minFilter = THREE.NearestFilter;
-	ditherTex.magFilter = THREE.NearestFilter;
+	const ditherTex = new DataTexture( data, 4, 4, LuminanceFormat, FloatType );
+	ditherTex.minFilter = NearestFilter;
+	ditherTex.magFilter = NearestFilter;
 	ditherTex.anisotropy = 1;
-	ditherTex.wrapS = THREE.RepeatWrapping;
-	ditherTex.wrapT = THREE.RepeatWrapping;
+	ditherTex.wrapS = RepeatWrapping;
+	ditherTex.wrapT = RepeatWrapping;
 
 	ditherTex.needsUpdate = true;
 
@@ -38,7 +46,7 @@ function createDitherTexture() {
 function cloneShader( shader, uniforms, defines ) {
 
 	const newShader = Object.assign( {}, shader );
-	newShader.uniforms = THREE.UniformsUtils.merge( [
+	newShader.uniforms = UniformsUtils.merge( [
 		newShader.uniforms,
 		uniforms
 	] );
@@ -48,7 +56,7 @@ function cloneShader( shader, uniforms, defines ) {
 
 }
 
-function DitheredTransparencyShaderMixin( shader ) {
+export function DitheredTransparencyShaderMixin( shader ) {
 
 	const defineKeyword = 'ENABLE_DITHER_TRANSPARENCY';
  	const newShader = cloneShader(
