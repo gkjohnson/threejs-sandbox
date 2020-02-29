@@ -1,8 +1,9 @@
+import { UniformsUtils, Vector3 } from '//unpkg.com/three@0.106.0/build/three.module.js';
 
 function cloneShader(shader, uniforms, defines) {
 
 	const newShader = Object.assign({}, shader);
-	newShader.uniforms = THREE.UniformsUtils.merge([
+	newShader.uniforms = UniformsUtils.merge([
 		newShader.uniforms,
 		uniforms
 	]);
@@ -12,13 +13,13 @@ function cloneShader(shader, uniforms, defines) {
 
 }
 
-function addInstancePosition(shader) {
+export function addInstancePosition(shader) {
 
 	const newShader = cloneShader(
 		shader,
 		{
 			scale: { value: 1 },
-			offset: { value: new THREE.Vector3() },
+			offset: { value: new Vector3() },
 		},
 	);
 
