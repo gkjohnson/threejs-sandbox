@@ -29,21 +29,6 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
-
-		<script type="text/javascript" src="./ColorBlindColor.js"></script>
-		<script type="text/javascript" src="./ColorBlindShader.js"></script>
-
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Colorblindness Simulation Pass by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 			</br>
@@ -51,9 +36,20 @@
 			using color transform matrices described <a href="http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/">here</a>.
 		</div>
 
-		<script>
+		<script type="module">
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			import * as THREE from '//unpkg.com/three/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+			import { CopyShader } from '//unpkg.com/three/examples/jsm/shaders/CopyShader.js';
+			import { EffectComposer } from '//unpkg.com/three/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three/examples/jsm/postprocessing/ShaderPass.js';
+
+			import Stats from '//unpkg.com/three/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { ColorBlindShader } from './ColorBlindShader.js'
+			import { ColorBlindColor } from './ColorBlindColor.js'
 
 			// globals
 			var stats;
@@ -102,17 +98,17 @@
 				scene.add(mesh);
 
 				// Render Pass Setup
-				renderPass = new THREE.RenderPass( scene, camera );
-				colorBlindPass = new THREE.ShaderPass( ColorBlindShader );
+				renderPass = new RenderPass( scene, camera );
+				colorBlindPass = new ShaderPass( ColorBlindShader );
 
-				composer = new THREE.EffectComposer( renderer );
+				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
 				composer.addPass( colorBlindPass );
 				colorBlindPass.renderToScreen = true;
 
 				// camera controls
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 200;
 

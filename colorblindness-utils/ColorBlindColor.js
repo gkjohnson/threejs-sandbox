@@ -3,31 +3,31 @@
 // http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/
 // http://mapeper.github.io/jsColorblindSimulator/
 
-class ColorblindColor extends THREE.Color {}
+import { Vector3, Matrix3, Color } from '//unpkg.com/three/build/three.module.js';
 
-(function() {
+const deuteranopeMat = new Matrix3().set(
+	0.625, 0.375, 0,
+	0.7, 0.3, 0.0,
+	0, 0.3, 0.7
+);
 
-	const deuteranopeMat = new THREE.Matrix3().set(
-		0.625, 0.375, 0,
-		0.7, 0.3, 0.0,
-		0, 0.3, 0.7
-	);
+const protanopeMat = new Matrix3().set(
+	0.56667, 0.55833, 0.0,
+	0.43333, 0.44167, 0.24167,
+	0, 0, 0.75833
+);
 
-	const protanopeMat = new THREE.Matrix3().set(
-		0.56667, 0.55833, 0.0,
-		0.43333, 0.44167, 0.24167,
-		0, 0, 0.75833
-	);
+const tritanopeMat = new Matrix3().set(
+	0.95, 0, 0,
+	0.05, 0.43333, 0.475,
+	0, 0.56667, 0.525
+);
 
-	const tritanopeMat = new THREE.Matrix3().set(
-		0.95, 0, 0,
-		0.05, 0.43333, 0.475,
-		0, 0.56667, 0.525
-	);
+const tempVec = new Vector3();
 
-	const tempVec = new THREE.Vector3();
+export class ColorBlindColor extends Color {
 
-	ColorblindColor.prototype.toDeuteranope = function() {
+	toDeuteranope() {
 
 		tempVec.x = this.r;
 		tempVec.y = this.g;
@@ -39,7 +39,7 @@ class ColorblindColor extends THREE.Color {}
 
 	}
 
-	ColorblindColor.prototype.toProtanope = function() {
+	toProtanope() {
 
 		tempVec.x = this.r;
 		tempVec.y = this.g;
@@ -51,7 +51,7 @@ class ColorblindColor extends THREE.Color {}
 
 	}
 
-	ColorblindColor.prototype.toTritanope = function() {
+	toTritanope() {
 
 		tempVec.x = this.r;
 		tempVec.y = this.g;
@@ -63,4 +63,4 @@ class ColorblindColor extends THREE.Color {}
 
 	}
 
-})();
+}

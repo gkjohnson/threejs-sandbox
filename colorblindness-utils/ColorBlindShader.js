@@ -1,7 +1,7 @@
 // References
 // http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/
 // http://mapeper.github.io/jsColorblindSimulator/
-var ColorBlindShader = {
+export const ColorBlindShader = {
 
 	uniforms: {
 
