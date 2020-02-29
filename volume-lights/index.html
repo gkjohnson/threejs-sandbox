@@ -52,7 +52,7 @@
 
 				intensity: 1.0,
 				lightCount: 1,
-				randomSampler: false,
+				randomSample: false,
 
 			};
 			var camera, scene, renderer, controls;
@@ -178,24 +178,14 @@
 					volumeLight.iteration = 0;
 
 				} );
-				// gui.add(params, 'useShadowVolumes');
 
-				// var lightFolder = gui.addFolder( 'light' );
-				// lightFolder.add(params.light, 'pointLight');
-				// lightFolder.add(params.light, 'speed', 0, 2);
-				// lightFolder.add(params.light, 'distance', 0, 30);
-				// lightFolder.open();
+				gui.add( params, 'randomSample' ).onChange( value => {
 
-				// var shadowFolder = gui.addFolder( 'shadow' );
-				// shadowFolder.add(params.shadows, 'showVolume');
-				// shadowFolder.add(params.shadows, 'distance', 0, 600);
-				// shadowFolder.add(params.shadows, 'bias',-0.05, 0.05);
-				// shadowFolder.open();
+					volumeLight.randomSample = value;
+					volumeLight.iteration = 0;
 
-				// var objectFolder = gui.addFolder( 'object' );
-				// objectFolder.add(params.object, 'speed', 0, 2.0);
-				// objectFolder.add(params.object, 'display', { 'Torus': 0, 'Dancer': 1 });
-				// objectFolder.open();
+				} );
+
 				gui.open();
 
 			}

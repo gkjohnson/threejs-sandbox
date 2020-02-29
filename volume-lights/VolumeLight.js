@@ -12,6 +12,7 @@ import {
 } from '//unpkg.com/three@0.112.0/examples/jsm/math/MeshSurfaceSampler.js';
 
 const _vector = new Vector3();
+const _tri = new Triangle();
 
 export class VolumeLight extends Object3D {
 
@@ -21,7 +22,8 @@ export class VolumeLight extends Object3D {
 
 		this.lightCount = 1;
         this.lights = [];
-        this.iteration = 0;
+		this.iteration = 0;
+		this.randomSample = false;
 
     }
 
@@ -69,62 +71,68 @@ export class MeshLight extends VolumeLight {
 
     }
 
-    setIteration( i ) {
+    setIteration( iteration ) {
 
-        super.setIteration( i );
-
-        // i *= 3;
-
-        // const tri = new Triangle();
-
-        // const geometry = this.geometry;
-        // const positionAttr = geometry.attributes.position;
-        // const indexAttr = geometry.index;
-        // const triCount = indexAttr ? indexAttr.count : positionAttr.count / 3;
-
-        // const loopi = ~ ~ ( i / triCount );
-        // const modi = i % triCount;
-        // let i0 = modi + 0;
-        // let i1 = modi + 1;
-        // let i2 = modi + 2;
-
-        // if ( indexAttr ) {
-
-        //     i0 = indexAttr.getX( i0 );
-        //     i1 = indexAttr.getX( i1 );
-        //     i2 = indexAttr.getX( i2 );
-
-        // }
-
-        // // TODO: Interpolate along the surface of the triangle
-        // tri.a.fromBufferAttribute( positionAttr, i0 ).multiplyScalar( 0.3333 );
-        // tri.b.fromBufferAttribute( positionAttr, i1 ).multiplyScalar( 0.3333 );
-        // tri.c.fromBufferAttribute( positionAttr, i2 ).multiplyScalar( 0.3333 );
-
+        super.setIteration( iteration );
 
 		const lights = this.lights;
-		let sampler = this.sampler;
-		if ( ! sampler || this.geometry !== sampler.originalGeometry ) {
+		if ( this.randomSample ) {
 
-			sampler = new MeshSurfaceSampler( this.lightMesh );
-			sampler.originalGeometry = this.geometry;
-			sampler.build();
-			this.sampler = sampler;
+			let sampler = this.sampler;
+			if ( ! sampler || this.geometry !== sampler.originalGeometry ) {
+
+				sampler = new MeshSurfaceSampler( this.lightMesh );
+				sampler.originalGeometry = this.geometry;
+				sampler.build();
+				this.sampler = sampler;
+
+			}
+
+			for ( let i = 0, l = lights.length; i < l; i ++ ) {
+
+				const light = lights[ i ];
+				sampler.sample( light.position, _vector );
+
+			}
+
+		} else {
+
+			const geometry = this.geometry;
+			const positionAttr = geometry.attributes.position;
+			const indexAttr = geometry.index;
+			const triCount = indexAttr ? indexAttr.count / 3 : positionAttr.count / 9;
+			const iteration = this.iteration * lights.length;
+
+			for ( let i = 0, l = lights.length; i < l; i ++ ) {
+
+				const light = lights[ i ];
+				const modi = ( iteration + i ) % triCount;
+				let i0 = modi + 0;
+				let i1 = modi + 1;
+				let i2 = modi + 2;
+
+				if ( indexAttr ) {
+
+					i0 = indexAttr.getX( i0 );
+					i1 = indexAttr.getX( i1 );
+					i2 = indexAttr.getX( i2 );
+
+				}
+
+				_tri.a.fromBufferAttribute( positionAttr, i0 ).multiplyScalar( 0.3333 );
+				_tri.b.fromBufferAttribute( positionAttr, i1 ).multiplyScalar( 0.3333 );
+				_tri.c.fromBufferAttribute( positionAttr, i2 ).multiplyScalar( 0.3333 );
+
+				light.position
+					.set( 0, 0, 0 )
+					.add( _tri.a )
+					.add( _tri.b )
+					.add( _tri.c );
+
+			}
+
 
 		}
-
-		for ( let i = 0, l = lights.length; i < l; i ++ ) {
-
-			const light = lights[ i ];
-			sampler.sample( light.position, _vector );
-
-		}
-
-        // this.light.position
-        //     .set( 0, 0, 0 )
-        //     .add( tri.a )
-        //     .add( tri.b )
-        //     .add( tri.c );
 
     }
 
