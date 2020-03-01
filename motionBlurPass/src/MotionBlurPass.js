@@ -24,7 +24,6 @@ import { CompositeShader } from './CompositeShader.js';
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
-const _unusedItems = new Set();
 
 function traverseVisibleMeshes( obj, callback ) {
 
@@ -96,6 +95,7 @@ export class MotionBlurPass extends Pass {
 
 		// list of positions from previous frames
 		this._prevPosMap = new Map();
+		this._currentFrameMod = 0;
 		this._frustum = new Frustum();
 		this._projScreenMatrix = new Matrix4();
 		this._cameraMatricesNeedInitializing = true;
@@ -119,6 +119,7 @@ export class MotionBlurPass extends Pass {
 
 	}
 
+	// Pass API
 	dispose() {
 
 		this._compositeQuad.dispose();
@@ -171,7 +172,11 @@ export class MotionBlurPass extends Pass {
 
 		// Traversal function for iterating down and rendering the scene
 		this._ensurePrevCameraTransform();
-		this._drawAllMeshes( renderer );
+		this._drawAllMeshes(
+			renderer,
+			debug.display === MotionBlurPass.GEOMETRY ? MotionBlurPass.GEOMETRY : MotionBlurPass.VELOCITY,
+			! debug.dontUpdateState
+		);
 
 		this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
 		this._prevCamProjection.copy( camera.projectionMatrix );
@@ -180,8 +185,9 @@ export class MotionBlurPass extends Pass {
 		if ( debug.display === MotionBlurPass.DEFAULT ) {
 
 			const compositeMaterial = this._compositeMaterial;
-			compositeMaterial.uniforms.sourceBuffer.value = readBuffer.texture;
-			compositeMaterial.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+			const uniforms = compositeMaterial.uniforms;
+			uniforms.sourceBuffer.value = readBuffer.texture;
+			uniforms.velocityBuffer.value = this._velocityBuffer.texture;
 
 			if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
 
@@ -203,7 +209,9 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	_getMaterialState( obj ) {
+	// Returns the set of previous frames data for object position and bone state. Creates
+	// a new object this with frames state if it hasn't been created yet.
+	_getPreviousFrameState( obj ) {
 
 		const prevPosMap = this._prevPosMap;
 		let data = prevPosMap.get( obj );
@@ -211,6 +219,7 @@ export class MotionBlurPass extends Pass {
 
 			data = {
 
+				lastUsedFrame: - 1,
 				matrixWorld: obj.matrixWorld.clone(),
 				geometryMaterial: new ShaderMaterial( GeometryShader ),
 				velocityMaterial: new ShaderMaterial( VelocityShader ),
@@ -250,7 +259,8 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	_saveMaterialState( obj ) {
+	// saves the current state to be used next frame
+	_saveCurrentObjectState( obj ) {
 
 		const prevPosMap = this._prevPosMap;
 		const data = prevPosMap.get( obj );
@@ -266,30 +276,36 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	_drawAllMeshes( renderer ) {
+	// Draw all meshes in the scene and discard those that are no longer being used
+	_drawAllMeshes( renderer, type, saveState ) {
 
+		this._currentFrameMod = ( this._currentFrameMod + 1 ) % 2;
+		const thisFrameId = this._currentFrameMod;
 		const prevPosMap = this._prevPosMap;
-		prevPosMap.forEach( ( value, key ) => {
-
-			_unusedItems.add( key );
-
-		} );
 
 		traverseVisibleMeshes( this.scene, mesh => {
 
-			this._drawMesh( renderer, mesh );
-			_unusedItems.delete( mesh );
+			this._drawMesh( renderer, mesh, type, saveState );
+			if ( prevPosMap.has( mesh ) ) {
+
+				prevPosMap.get( mesh ).lastUsedFrame = thisFrameId;
+
+			}
 
 		} );
 
-		_unusedItems.forEach( mesh => {
+		prevPosMap.forEach( ( data, mesh ) => {
 
-			const data = prevPosMap.get( mesh );
-			data.geometryMaterial.dispose();
-			data.velocityMaterial.dispose();
-			if ( data.boneTexture ) {
+			if ( data.lastUsedFrame !== thisFrameId ) {
 
-				data.boneTexture.dispose();
+				data.geometryMaterial.dispose();
+				data.velocityMaterial.dispose();
+				if ( data.boneTexture ) {
+
+					data.boneTexture.dispose();
+
+				}
+				prevPosMap.delete( mesh );
 
 			}
 
@@ -297,9 +313,9 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	_drawMesh( renderer, mesh ) {
 
-		const debug = this.debug;
+	_drawMesh( renderer, mesh, type, saveState ) {
+
 		const overrides = mesh.motionBlur || _defaultOverrides;
 		let blurTransparent = this.blurTransparent;
 		let renderCameraBlur = this.renderCameraBlur;
@@ -319,17 +335,18 @@ export class MotionBlurPass extends Pass {
 
 		if ( skip ) {
 
-			if ( this._prevPosMap.has( mesh ) && debug.dontUpdateState === false ) {
+			if ( this._prevPosMap.has( mesh ) && saveState ) {
 
-				this._saveMaterialState( mesh );
+				this._saveCurrentObjectState( mesh );
 
 			}
 
 		} else {
 
 			const camera = this.camera;
-			const data = this._getMaterialState( mesh );
-			const material = debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+			const data = this._getPreviousFrameState( mesh );
+
+			const material = type === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 			const uniforms = material.uniforms;
 			uniforms.expandGeometry.value = expandGeometry;
 			uniforms.interpolateGeometry.value = interpolateGeometry;
@@ -342,9 +359,9 @@ export class MotionBlurPass extends Pass {
 
 			renderer.renderBufferDirect( camera, null, mesh.geometry, material, mesh, null );
 
-			if ( debug.dontUpdateState === false ) {
+			if ( saveState ) {
 
-				this._saveMaterialState( mesh );
+				this._saveCurrentObjectState( mesh );
 
 			}
 
