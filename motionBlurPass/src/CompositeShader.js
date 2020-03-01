@@ -7,8 +7,19 @@ export const CompositeShader = {
 	},
 
 	uniforms: {
-		sourceBuffer: { value: null },
-		velocityBuffer: { value: null }
+
+		sourceBuffer: {
+
+			value: null
+
+		},
+
+		velocityBuffer: {
+
+			value: null
+
+		}
+
 	},
 
 	vertexShader:

@@ -4,12 +4,43 @@ import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderCh
 export const GeometryShader = {
 
 	uniforms: {
-		prevProjectionMatrix: { value: new Matrix4() },
-		prevModelViewMatrix: { value: new Matrix4() },
-		prevBoneTexture: { value: null },
-		expandGeometry: { value: 0 },
-		interpolateGeometry: { value: 1 },
-		smearIntensity: { value: 1 }
+
+		prevProjectionMatrix: {
+
+			value: new Matrix4()
+
+		},
+
+		prevModelViewMatrix: {
+
+			value: new Matrix4()
+
+		},
+
+		prevBoneTexture: {
+
+			value: null
+
+		},
+
+		expandGeometry: {
+
+			value: 0
+
+		},
+
+		interpolateGeometry: {
+
+			value: 1
+
+		},
+
+		smearIntensity: {
+
+			value: 1
+
+		}
+
 	},
 
 	vertexShader:
