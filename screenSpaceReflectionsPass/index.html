@@ -68,6 +68,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
+			var sphere;
 			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
 
 			init();
@@ -112,7 +113,6 @@
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
-
 				// sponza scene
 				var loader = new GLTFLoader();
 				loader.load(
@@ -130,6 +130,13 @@
 						scene.add(o);
 					}
 				);
+
+				sphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( 4, 50, 50 ),
+					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
+				);
+				sphere.castShadow = true;
+				scene.add( sphere );
 
 				/*
 				// sphere + mirror scene
@@ -266,6 +273,7 @@
 			function render() {
 				camera.lookAt( scene.position );
 
+				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
 				ssrrPass.intensity = params.intensity;
 				ssrrPass.steps = params.steps;
 				ssrrPass.stride = params.stride;

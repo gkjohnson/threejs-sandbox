@@ -30,7 +30,10 @@ The per
 - Add blur based on roughness
 - Support animations, normal, and roughness maps
 - Add z fade
+- Fade as we near the end of the ray
 - Add controls
+- The pass seems to make things really slow for some reason? GPU work isn't taking place until late in the frame?
+- Use a better sampling function than the current jitter
 - Improve the connected-ness of the reflections to the ground
 - Perform raytracing on a downscaled buffer instead of just rendering depth and normals to downscaled buffers
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
