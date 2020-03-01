@@ -24,6 +24,8 @@ import { LinearDepthShader } from './LinearDepthShader.js';
  * http://jcgt.org/published/0003/04/04/paper.pdf
  * https://github.com/kode80/kode80SSR
  */
+
+const _prevClearColor = new Color();
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
 
@@ -32,16 +34,14 @@ export class SSRRPass extends Pass {
 		this.enabled = true;
 		this.needsSwap = true;
 
-		this.intensity = options.intensity || 0.5;
-		this.steps = options.steps || 10;
-		this.binarySearchSteps = options.binarySearchSteps || 4;
-		this.stride = options.stride || 30;
-		this.renderTargetScale = options.renderTargetScale || 0.5;
+		this.intensity = 'intensity' in options ? options.intensity : 0.5;
+		this.steps = 'steps' in options ? options.steps : 10;
+		this.binarySearchSteps = 'binarySearchSteps' in options ? options.binarySearchSteps : 4;
+		this.stride = 'stride' in options ? options.stride : 30;
+		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 0.5;
 
 		this.scene = scene;
 		this.camera = camera;
-
-		this._prevClearColor = new Color();
 
 		// render targets
 		this._depthBuffer =
@@ -53,14 +53,14 @@ export class SSRRPass extends Pass {
 			} );
 		this._depthBuffer.texture.name = "SSRRPass.Depth";
 		this._depthBuffer.texture.generateMipmaps = false;
-		this._depthMaterial = this.createLinearDepthMaterial();
+		this._depthMaterial = new ShaderMaterial( LinearDepthShader );
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
-		this._backfaceDepthMaterial = this.createLinearDepthMaterial();
+		this._backfaceDepthMaterial = new ShaderMaterial( LinearDepthShader );
 		this._backfaceDepthMaterial.side = BackSide;
 
-		this._packedMaterial = this.createPackedMaterial();
+		this._packedMaterial = new ShaderMaterial( PackedShader );
 
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -100,81 +100,82 @@ export class SSRRPass extends Pass {
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
-		this._prevClearColor.copy( renderer.getClearColor() );
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
+		var prevOverride = this.scene.overrideMaterial;
+		const prevRenderTarget = renderer.getRenderTarget();
+		_prevClearColor.copy( renderer.getClearColor() );
+
+		const scene = this.scene;
+		const camera = this.camera;
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
+
+		const depthBuffer = this._depthBuffer;
+		const packedBuffer = this._packedBuffer;
+		const backfaceDepthBuffer = this._backfaceDepthBuffer;
+
+		const depthMaterial = this._depthMaterial;
+		const packedMaterial = this._packedMaterial;
+		const backfaceDepthMaterial = this._backfaceDepthMaterial;
+
 		renderer.autoClear = true;
 		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
 
-		var prevOverride = this.scene.overrideMaterial;
-
 		// Normal pass
-		this.scene.overrideMaterial = this._packedMaterial;
-		renderer.setRenderTarget( this._packedBuffer );
+		scene.overrideMaterial = packedMaterial;
+		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
-		renderer.render( this.scene, this.camera );
+		renderer.render( scene, camera );
 
 		// Render depth
-		this.scene.overrideMaterial = this._depthMaterial;
-		renderer.setRenderTarget( this._depthBuffer );
+		scene.overrideMaterial = depthMaterial;
+		renderer.setRenderTarget( depthBuffer );
 		renderer.clear();
-		renderer.render( this.scene, this.camera );
+		renderer.render( scene, camera );
 
-		this.scene.overrideMaterial = this._backfaceDepthMaterial;
-		renderer.setRenderTarget( this._backfaceDepthBuffer );
+		scene.overrideMaterial = backfaceDepthMaterial;
+		renderer.setRenderTarget( backfaceDepthBuffer );
 		renderer.clear();
-		renderer.render( this.scene, this.camera );
-		this.scene.overrideMaterial = prevOverride;
+		renderer.render( scene, camera );
 
 		// Composite
-		const cm = this._compositeMaterial;
-		const uni = cm.uniforms;
-		uni.sourceBuffer.value = readBuffer.texture;
-		uni.depthBuffer.value = this._depthBuffer.texture;
-		uni.backfaceDepthBuffer.value = this._backfaceDepthBuffer.texture;
+		const compositeMaterial = this._compositeMaterial;
+		const uniforms = compositeMaterial.uniforms;
+		uniforms.sourceBuffer.value = readBuffer.texture;
+		uniforms.depthBuffer.value = depthBuffer.texture;
+		uniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
 
-		uni.packedBuffer.value = this._packedBuffer.texture;
-		uni.invProjectionMatrix.value.getInverse( this.camera.projectionMatrix );
-		uni.projMatrix.value.copy( this.camera.projectionMatrix );
-		uni.resolution.value.set( this._packedBuffer.width, this._packedBuffer.height );
+		uniforms.packedBuffer.value = packedBuffer.texture;
+		uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
+		uniforms.projMatrix.value.copy( camera.projectionMatrix );
+		uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
 
-		uni.intensity.value = this.intensity;
-		uni.stride.value = this.stride;
+		uniforms.intensity.value = this.intensity;
+		uniforms.stride.value = this.stride;
 
-		if ( cm.defines.MAX_STEPS !== this.steps ) {
+		if ( compositeMaterial.defines.MAX_STEPS !== this.steps ) {
 
-			cm.defines.MAX_STEPS = Math.floor( this.steps );
-			cm.needsUpdate = true;
-
-		}
-
-		if ( cm.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
-
-			cm.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
-			cm.needsUpdate = true;
+			compositeMaterial.defines.MAX_STEPS = Math.floor( this.steps );
+			compositeMaterial.needsUpdate = true;
 
 		}
 
-		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+		if ( compositeMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
+
+			compositeMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
+			compositeMaterial.needsUpdate = true;
+
+		}
+
+		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		this._compositeQuad.render( renderer );
 
 		// Restore renderer settings
+		scene.overrideMaterial = prevOverride;
+		renderer.setRenderTarget( prevRenderTarget );
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
 		renderer.autoClear = prevAutoClear;
-
-	}
-
-	createLinearDepthMaterial() {
-
-		return new ShaderMaterial( LinearDepthShader );
-
-
-	}
-
-	createPackedMaterial() {
-
-		return new ShaderMaterial( PackedShader );
 
 	}
 
