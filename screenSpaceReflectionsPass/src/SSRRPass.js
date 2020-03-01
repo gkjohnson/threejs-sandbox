@@ -23,73 +23,70 @@ import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass
  * http://jcgt.org/published/0003/04/04/paper.pdf
  * https://github.com/kode80/kode80SSR
  */
-export const SSRRPass = function ( scene, camera, options = {} ) {
+class SSRRPass extends Pass {
+	constructor( scene, camera, options = {} ) {
 
-	Pass.call( this );
+		Pass.call( this );
 
-	this.enabled = true;
-	this.needsSwap = true;
+		this.enabled = true;
+		this.needsSwap = true;
 
-	this.intensity = options.intensity || 0.5;
-	this.steps = options.steps || 10;
-	this.binarySearchSteps = options.binarySearchSteps || 4;
-	this.stride = options.stride || 30;
-	this.renderTargetScale = options.renderTargetScale || 0.5;
+		this.intensity = options.intensity || 0.5;
+		this.steps = options.steps || 10;
+		this.binarySearchSteps = options.binarySearchSteps || 4;
+		this.stride = options.stride || 30;
+		this.renderTargetScale = options.renderTargetScale || 0.5;
 
-	this.scene = scene;
-	this.camera = camera;
+		this.scene = scene;
+		this.camera = camera;
 
-	this._prevClearColor = new Color();
+		this._prevClearColor = new Color();
 
-	// render targets
-	this._depthBuffer =
-		new WebGLRenderTarget( 256, 256, {
-			minFilter: NearestFilter,
-			magFilter: NearestFilter,
-			format: RGBAFormat,
-			type: FloatType
-		} );
-	this._depthBuffer.texture.name = "SSRRPass.Depth";
-	this._depthBuffer.texture.generateMipmaps = false;
-	this._depthMaterial = this.createLinearDepthMaterial();
+		// render targets
+		this._depthBuffer =
+			new WebGLRenderTarget( 256, 256, {
+				minFilter: NearestFilter,
+				magFilter: NearestFilter,
+				format: RGBAFormat,
+				type: FloatType
+			} );
+		this._depthBuffer.texture.name = "SSRRPass.Depth";
+		this._depthBuffer.texture.generateMipmaps = false;
+		this._depthMaterial = this.createLinearDepthMaterial();
 
-	this._backfaceDepthBuffer = this._depthBuffer.clone();
-	this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
-	this._backfaceDepthMaterial = this.createLinearDepthMaterial();
-	this._backfaceDepthMaterial.side = BackSide;
+		this._backfaceDepthBuffer = this._depthBuffer.clone();
+		this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
+		this._backfaceDepthMaterial = this.createLinearDepthMaterial();
+		this._backfaceDepthMaterial.side = BackSide;
 
-	this._packedBuffer =
-		new WebGLRenderTarget( 256, 256, {
-			minFilter: NearestFilter,
-			magFilter: NearestFilter,
-			type: HalfFloatType,
-			format: RGBAFormat
-		} );
-	this._packedBuffer.texture.name = "SSRRPass.Packed";
-	this._packedBuffer.texture.generateMipmaps = false;
+		this._packedBuffer =
+			new WebGLRenderTarget( 256, 256, {
+				minFilter: NearestFilter,
+				magFilter: NearestFilter,
+				type: HalfFloatType,
+				format: RGBAFormat
+			} );
+		this._packedBuffer.texture.name = "SSRRPass.Packed";
+		this._packedBuffer.texture.generateMipmaps = false;
 
-	this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	this._compositeScene = new Scene();
-	this._compositeMaterial = this.getCompositeMaterial();
+		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+		this._compositeScene = new Scene();
+		this._compositeMaterial = this.getCompositeMaterial();
 
-	this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
-	this._quad.frustumCulled = false;
-	this._compositeScene.add( this._quad );
+		this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
+		this._quad.frustumCulled = false;
+		this._compositeScene.add( this._quad );
 
-};
+	}
 
-SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
-
-	constructor: SSRRPass,
-
-	dispose: function () {
+	dispose() {
 
 		this._depthBuffer.dispose();
 		this._packedBuffer.dispose();
 
-	},
+	}
 
-	setSize: function ( width, height ) {
+	setSize( width, height ) {
 
 		width *= this.renderTargetScale;
 		height *= this.renderTargetScale;
@@ -98,9 +95,9 @@ SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 		this._backfaceDepthBuffer.setSize( width, height );
 		this._packedBuffer.setSize( width, height );
 
-	},
+	}
 
-	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
 		this._prevClearColor.copy( renderer.getClearColor() );
@@ -169,9 +166,9 @@ SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
 		renderer.autoClear = prevAutoClear;
 
-	},
+	}
 
-	createLinearDepthMaterial: function () {
+	createLinearDepthMaterial() {
 
 		return new ShaderMaterial( {
 
@@ -199,9 +196,9 @@ SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 		} );
 
 
-	},
+	}
 
-	createPackedMaterial: function () {
+	createPackedMaterial() {
 
 		return new ShaderMaterial( {
 
@@ -336,9 +333,9 @@ SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 		} );
 
-	},
+	}
 
-	getCompositeMaterial: function () {
+	getCompositeMaterial() {
 
 		return new ShaderMaterial( {
 
@@ -576,4 +573,4 @@ SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 	}
 
-} );
+}
