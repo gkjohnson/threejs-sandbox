@@ -29,22 +29,6 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/FXAAShader.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/loaders/GLTFLoader.js"></script>
-
-		<script type="text/javascript" src="SSRRPass.js"></script>
-
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 
@@ -57,9 +41,21 @@
 			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
 		</div>
 
-		<script>
+		<script type="module">
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/GLTFLoader.js';
+
+			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { SSRRPass } from './SSRRPass.js';
 
 			// globals
 			var stats;
@@ -72,7 +68,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var FXAAPass, motionPass, renderPass;
+			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
 
 			init();
 			animate();
@@ -90,8 +86,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
@@ -103,7 +98,7 @@
 
 
 				// Lights
-				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.4 ) );
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
 				directionalLight.position.set( 30, 200, 230 );
@@ -118,7 +113,7 @@
 
 
 				// sponza scene
-				var loader = new THREE.GLTFLoader();
+				var loader = new GLTFLoader();
 				loader.load(
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
 					g => {
@@ -196,26 +191,28 @@
 				*/
 
 				// Render Pass Setup
-				renderPass = new THREE.RenderPass( scene, camera );
+				renderPass = new RenderPass( scene, camera );
 
-				FXAAPass = new THREE.ShaderPass( THREE.FXAAShader );
-				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				gammaPass = new ShaderPass( GammaCorrectionShader );
 
-				ssrrPass = new THREE.SSRRPass( scene, camera );
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				composer = new THREE.EffectComposer( renderer );
+				ssrrPass = new SSRRPass( scene, camera );
+
+				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
 				composer.addPass( ssrrPass );
-				composer.addPass( FXAAPass );
-				FXAAPass.renderToScreen = true;
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
 
 				// stats
 				stats = new Stats();
 				document.body.appendChild( stats.dom );
 
 				// camera controls
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 200;
 
@@ -251,7 +248,7 @@
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
-				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 			}
 

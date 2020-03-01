@@ -1,3 +1,21 @@
+import {
+	NearestFilter,
+	FloatType,
+	BackSide,
+	WebGLRenderTarget,
+	HalfFloatType,
+	RGBAFormat,
+	OrthographicCamera,
+	Scene,
+	Mesh,
+	PlaneBufferGeometry,
+	Color,
+	ShaderMaterial,
+	Matrix4,
+	Vector2
+} from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
+
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
  *
@@ -5,9 +23,9 @@
  * http://jcgt.org/published/0003/04/04/paper.pdf
  * https://github.com/kode80/kode80SSR
  */
-THREE.SSRRPass = function ( scene, camera, options = {} ) {
+export const SSRRPass = function ( scene, camera, options = {} ) {
 
-	THREE.Pass.call( this );
+	Pass.call( this );
 
 	this.enabled = true;
 	this.needsSwap = true;
@@ -21,15 +39,15 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this.scene = scene;
 	this.camera = camera;
 
-	this._prevClearColor = new THREE.Color();
+	this._prevClearColor = new Color();
 
 	// render targets
 	this._depthBuffer =
-		new THREE.WebGLRenderTarget( 256, 256, {
-			minFilter: THREE.NearestFilter,
-			magFilter: THREE.NearestFilter,
-			format: THREE.RGBAFormat,
-			type: THREE.FloatType
+		new WebGLRenderTarget( 256, 256, {
+			minFilter: NearestFilter,
+			magFilter: NearestFilter,
+			format: RGBAFormat,
+			type: FloatType
 		} );
 	this._depthBuffer.texture.name = "SSRRPass.Depth";
 	this._depthBuffer.texture.generateMipmaps = false;
@@ -38,31 +56,31 @@ THREE.SSRRPass = function ( scene, camera, options = {} ) {
 	this._backfaceDepthBuffer = this._depthBuffer.clone();
 	this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
 	this._backfaceDepthMaterial = this.createLinearDepthMaterial();
-	this._backfaceDepthMaterial.side = THREE.BackSide;
+	this._backfaceDepthMaterial.side = BackSide;
 
 	this._packedBuffer =
-		new THREE.WebGLRenderTarget( 256, 256, {
-			minFilter: THREE.NearestFilter,
-			magFilter: THREE.NearestFilter,
-			type: THREE.HalfFloatType,
-			format: THREE.RGBAFormat
+		new WebGLRenderTarget( 256, 256, {
+			minFilter: NearestFilter,
+			magFilter: NearestFilter,
+			type: HalfFloatType,
+			format: RGBAFormat
 		} );
 	this._packedBuffer.texture.name = "SSRRPass.Packed";
 	this._packedBuffer.texture.generateMipmaps = false;
 
-	this._compositeCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	this._compositeScene = new THREE.Scene();
+	this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this._compositeScene = new Scene();
 	this._compositeMaterial = this.getCompositeMaterial();
 
-	this._quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
+	this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
 	this._quad.frustumCulled = false;
 	this._compositeScene.add( this._quad );
 
 };
 
-THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+SSRRPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
-	constructor: THREE.SSRRPass,
+	constructor: SSRRPass,
 
 	dispose: function () {
 
@@ -89,20 +107,26 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 		var prevClearAlpha = renderer.getClearAlpha();
 		var prevAutoClear = renderer.autoClear;
 		renderer.autoClear = true;
-		renderer.setClearColor( new THREE.Color( 0, 0, 0 ), 0 );
+		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
 
 		var prevOverride = this.scene.overrideMaterial;
 
 		// Normal pass
 		this.scene.overrideMaterial = this.createPackedMaterial();
-		renderer.render( this.scene, this.camera, this._packedBuffer, true );
+		renderer.setRenderTarget( this._packedBuffer );
+		renderer.clear();
+		renderer.render( this.scene, this.camera );
 
 		// Render depth
 		this.scene.overrideMaterial = this._depthMaterial;
-		renderer.render( this.scene, this.camera, this._depthBuffer, true );
+		renderer.setRenderTarget( this._depthBuffer );
+		renderer.clear();
+		renderer.render( this.scene, this.camera );
 
 		this.scene.overrideMaterial = this._backfaceDepthMaterial;
-		renderer.render( this.scene, this.camera, this._backfaceDepthBuffer, true );
+		renderer.setRenderTarget( this._backfaceDepthBuffer );
+		renderer.clear();
+		renderer.render( this.scene, this.camera );
 		this.scene.overrideMaterial = prevOverride;
 
 		// Composite
@@ -137,7 +161,9 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 
 		this._quad.material = this._compositeMaterial;
-		renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
+		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+		renderer.clear();
+		renderer.render( this._compositeScene, this._compositeCamera );
 
 		// Restore renderer settings
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
@@ -147,7 +173,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	createLinearDepthMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			vertexShader: `
 				varying vec3 vViewPosition;
@@ -177,7 +203,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	createPackedMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			uniforms: {
 
@@ -192,6 +218,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 			},
 
 			vertexShader: `
+				#extension GL_OES_standard_derivatives : enable
 				#define PHYSICAL
 				varying vec3 vViewPosition;
 				#ifndef FLAT_SHADED
@@ -235,6 +262,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 			`,
 
 			fragmentShader: `
+				#extension GL_OES_standard_derivatives : enable
 				#define PHYSICAL
 				uniform vec3 diffuse;
 				uniform vec3 emissive;
@@ -265,7 +293,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				#include <bsdfs>
 				#include <cube_uv_reflection_fragment>
 				#include <lights_pars_begin>
-				#include <lights_pars_maps>
+				// #include <lights_pars_maps>
 				#include <lights_physical_pars_fragment>
 				#include <shadowmap_pars_fragment>
 				#include <bumpmap_pars_fragment>
@@ -312,7 +340,7 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 
 	getCompositeMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			defines: {
 
@@ -327,12 +355,12 @@ THREE.SSRRPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ),
 				packedBuffer: { value: null },
 				depthBuffer: { value: null },
 				backfaceDepthBuffer: { value: null },
-				invProjectionMatrix: { value: new THREE.Matrix4() },
-				projMatrix: { value: new THREE.Matrix4() },
+				invProjectionMatrix: { value: new Matrix4() },
+				projMatrix: { value: new Matrix4() },
 
 				intensity: { value: 0.5 },
 				stride: { value: 20 },
-				resolution: { value: new THREE.Vector2() },
+				resolution: { value: new Vector2() },
 				thickness: { value: 1 },
 				jitter: { value: 1 },
 				maxDistance: { value: 100 }
