@@ -23,6 +23,28 @@ import { CompositeShader } from './CompositeShader.js';
 
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
+const _defaultOverrides = {};
+
+function traverseVisibleMeshes( obj, callback ) {
+
+	if ( obj.visible ) {
+
+		if ( obj.isMesh || obj.isSkinnedMesh ) {
+
+			callback( obj );
+
+		}
+
+		const children = obj.children;
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			traverseVisibleMeshes( children[ i ], callback );
+
+		}
+
+	}
+
+}
 
 export class MotionBlurPass extends Pass {
 
@@ -120,6 +142,7 @@ export class MotionBlurPass extends Pass {
 		const renderToScreen = this.renderToScreen;
 		const scene = this.scene;
 		const camera = this.camera;
+		const compositeQuad = this._compositeQuad;
 
 		// Set the clear state
 		const prevClearAlpha = renderer.getClearAlpha();
@@ -132,31 +155,7 @@ export class MotionBlurPass extends Pass {
 
 		// Traversal function for iterating down and rendering the scene
 		const newMap = new Map();
-		function recurse( obj ) {
 
-			if ( obj.visible === false ) return;
-
-			if ( obj.isMesh || obj.isSkinnedMesh ) {
-
-				self._drawMesh( renderer, obj );
-
-				// Recreate the map of drawn geometry so we can
-				// drop references to removed meshes
-				if ( self._prevPosMap.has( obj ) ) {
-
-					newMap.set( obj, self._prevPosMap.get( obj ) );
-
-				}
-
-			}
-
-			for ( let i = 0, l = obj.children.length; i < l; i ++ ) {
-
-				recurse( obj.children[ i ] );
-
-			}
-
-		}
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
 		renderer.compile( scene, camera );
@@ -172,13 +171,22 @@ export class MotionBlurPass extends Pass {
 			renderer.setRenderTarget( renderToScreen ? null : writeBuffer );
 
 		}
+		renderer.clear();
 
 		this._ensurePrevCameraTransform();
+		traverseVisibleMeshes( this.scene, mesh => {
 
-		this._projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
-		this._frustum.setFromMatrix( this._projScreenMatrix );
-		renderer.clear();
-		recurse( this.scene );
+			self._drawMesh( renderer, mesh );
+
+			// Recreate the map of drawn geometry so we can
+			// drop references to removed meshes
+			if ( self._prevPosMap.has( mesh ) ) {
+
+				newMap.set( mesh, self._prevPosMap.get( mesh ) );
+
+			}
+
+		} );
 
 		// replace the old map with a new one storing only
 		// the most recently traversed meshes
@@ -203,7 +211,7 @@ export class MotionBlurPass extends Pass {
 			}
 
 			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
-			this._compositeQuad.render( renderer );
+			compositeQuad.render( renderer );
 			renderer.setRenderTarget( null );
 
 		}
@@ -279,24 +287,23 @@ export class MotionBlurPass extends Pass {
 	_drawMesh( renderer, mesh ) {
 
 		const debug = this.debug;
-		const overrides = mesh.motionBlur;
+		const overrides = mesh.motionBlur || _defaultOverrides;
 		let blurTransparent = this.blurTransparent;
 		let renderCameraBlur = this.renderCameraBlur;
 		let expandGeometry = this.expandGeometry;
 		let interpolateGeometry = this.interpolateGeometry;
 		let smearIntensity = this.smearIntensity;
-		if ( overrides ) {
 
-			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
-			if ( 'renderCameraBlur' in overrides ) renderCameraBlur = overrides.renderCameraBlur;
-			if ( 'expandGeometry' in overrides ) expandGeometry = overrides.expandGeometry;
-			if ( 'interpolateGeometry' in overrides ) interpolateGeometry = overrides.interpolateGeometry;
-			if ( 'smearIntensity' in overrides ) smearIntensity = overrides.smearIntensity;
+		blurTransparent = 'blurTransparent' in overrides ? overrides.blurTransparent : this.blurTransparent;
+		renderCameraBlur = 'renderCameraBlur' in overrides ? overrides.renderCameraBlur : this.renderCameraBlur;
+		expandGeometry = 'expandGeometry' in overrides ? overrides.expandGeometry : this.expandGeometry;
+		interpolateGeometry = 'interpolateGeometry' in overrides ? overrides.interpolateGeometry : this.interpolateGeometry;
+		smearIntensity = 'smearIntensity' in overrides ? overrides.smearIntensity : this.smearIntensity;
 
-		}
+		const isTransparent = mesh.material.transparent || mesh.material.alpha < 1;
+		const isCulled = mesh.frustumCulled && ! this._frustum.intersectsObject( mesh );
+		let skip = blurTransparent === false && isTransparent || isCulled;
 
-		let skip = blurTransparent === false && ( mesh.material.transparent || mesh.material.alpha < 1 );
-		skip = skip || mesh.frustumCulled && ! this._frustum.intersectsObject( mesh );
 		if ( skip ) {
 
 			if ( this._prevPosMap.has( mesh ) && debug.dontUpdateState === false ) {
@@ -334,16 +341,22 @@ export class MotionBlurPass extends Pass {
 
 	_ensurePrevCameraTransform() {
 
+		const camera = this.camera;
+		const projScreenMatrix = this._projScreenMatrix;
+
 		// reinitialize the camera matrices to the current transform because if
 		// the pass has been disabled then the matrices will be out of date
 		if ( this._cameraMatricesNeedInitializing ) {
 
-			const camera = this.camera;
 			this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
 			this._prevCamProjection.copy( camera.projectionMatrix );
 			this._cameraMatricesNeedInitializing = false;
 
 		}
+
+
+		projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
+		this._frustum.setFromMatrix( projScreenMatrix );
 
 	}
 
