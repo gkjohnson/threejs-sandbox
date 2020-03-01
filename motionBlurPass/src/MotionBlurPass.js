@@ -22,6 +22,8 @@ import {
 	ShaderMaterial
 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
+import { VelocityShader } from './VelocityShader.js';
+import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderChunks.js';
 
 export const MotionBlurPass = function ( scene, camera, options = {} ) {
 
@@ -349,126 +351,19 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 	// Shaders
 	getPrevSkinningParsVertex: function () {
 
-		// Modified ShaderChunk.skinning_pars_vertex to handle
-		// a second set of bone information from the previou frame
-		return `
-		#ifdef USE_SKINNING
-			#ifdef BONE_TEXTURE
-				uniform sampler2D prevBoneTexture;
-				mat4 getPrevBoneMatrix( const in float i ) {
-					float j = i * 4.0;
-					float x = mod( j, float( boneTextureSize ) );
-					float y = floor( j / float( boneTextureSize ) );
-					float dx = 1.0 / float( boneTextureSize );
-					float dy = 1.0 / float( boneTextureSize );
-					y = dy * ( y + 0.5 );
-					vec4 v1 = texture2D( prevBoneTexture, vec2( dx * ( x + 0.5 ), y ) );
-					vec4 v2 = texture2D( prevBoneTexture, vec2( dx * ( x + 1.5 ), y ) );
-					vec4 v3 = texture2D( prevBoneTexture, vec2( dx * ( x + 2.5 ), y ) );
-					vec4 v4 = texture2D( prevBoneTexture, vec2( dx * ( x + 3.5 ), y ) );
-					mat4 bone = mat4( v1, v2, v3, v4 );
-					return bone;
-				}
-			#else
-				uniform mat4 prevBoneMatrices[ MAX_BONES ];
-				mat4 getPrevBoneMatrix( const in float i ) {
-					mat4 bone = prevBoneMatrices[ int(i) ];
-					return bone;
-				}
-			#endif
-		#endif
-		`;
+		return prev_skinning_pars_vertex;
 
 	},
 
 	getVertexTransform: function () {
 
-		// Returns the body of the vertex shader for the velocity buffer and
-		// outputs the position of the current and last frame positions
-		return `
-		vec3 transformed;
-
-		// Get the normal
-		${ ShaderChunk.skinbase_vertex }
-		${ ShaderChunk.beginnormal_vertex }
-		${ ShaderChunk.skinnormal_vertex }
-		${ ShaderChunk.defaultnormal_vertex }
-
-		// Get the current vertex position
-		transformed = vec3( position );
-		${ ShaderChunk.skinning_vertex }
-		newPosition = modelViewMatrix * vec4(transformed, 1.0);
-
-		// Get the previous vertex position
-		transformed = vec3( position );
-		${ ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
-		${ ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
-		prevPosition = prevModelViewMatrix * vec4(transformed, 1.0);
-
-		// The delta between frames
-		vec3 delta = newPosition.xyz - prevPosition.xyz;
-		vec3 direction = normalize(delta);
-
-		// Stretch along the velocity axes
-		// TODO: Can we combine the stretch and expand
-		float stretchDot = dot(direction, transformedNormal);
-		vec4 expandDir = vec4(direction, 0.0) * stretchDot * expandGeometry * length(delta);
-		vec4 newPosition2 =  projectionMatrix * (newPosition + expandDir);
-		vec4 prevPosition2 = prevProjectionMatrix * (prevPosition + expandDir);
-
-		newPosition =  projectionMatrix * newPosition;
-		prevPosition = prevProjectionMatrix * prevPosition;
-
-		gl_Position = mix(newPosition2, prevPosition2, interpolateGeometry * (1.0 - step(0.0, stretchDot) ) );
-
-		`;
+		return velocity_vertex;
 
 	},
 
 	getVelocityMaterial: function () {
 
-		return new ShaderMaterial( {
-
-			uniforms: {
-				prevProjectionMatrix: { value: new Matrix4() },
-				prevModelViewMatrix: { value: new Matrix4() },
-				prevBoneTexture: { value: null },
-				expandGeometry: { value: 0 },
-				interpolateGeometry: { value: 1 },
-				smearIntensity: { value: 1 }
-			},
-
-			vertexShader:
-				`
-				${ ShaderChunk.skinning_pars_vertex }
-				${ this.getPrevSkinningParsVertex() }
-
-				uniform mat4 prevProjectionMatrix;
-				uniform mat4 prevModelViewMatrix;
-				uniform float expandGeometry;
-				uniform float interpolateGeometry;
-				varying vec4 prevPosition;
-				varying vec4 newPosition;
-
-				void main() {
-
-					${ this.getVertexTransform() }
-
-				}`,
-
-			fragmentShader:
-				`
-				uniform float smearIntensity;
-				varying vec4 prevPosition;
-				varying vec4 newPosition;
-
-				void main() {
-					vec3 vel;
-					vel = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
-
-					gl_FragColor = vec4(vel * smearIntensity, 1.0);
-				}`
-		} );
+		return new ShaderMaterial( VelocityShader );
 
 	},
 
