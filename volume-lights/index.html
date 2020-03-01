@@ -60,6 +60,7 @@
 				intensity: 1.0,
 				lightCount: 1,
 				randomSample: true,
+				enableFade: true,
 				fadeInDelay: 1,
 				fadeTransition: 0.1
 
@@ -67,10 +68,12 @@
 			var camera, scene, renderer, controls;
 			var volumeLight, directionalLight, ambientLight;
 			var plane;
-			var currentFrameBuffer, blendedFrameBuffer, prevFrameBuffer;
-			let timeToFadeIn, clock;
+			var currentFrameBuffer, blendedFrameBuffer, prevFrameBuffer, initialFrameBuffer;
+			let clock;
 
 			var blendMat = getBlendMaterial();
+			var finalBlendMat = getBlendMaterial();
+			finalBlendMat.defines.FINAL_OUTPUT = 1;
 			var finalMat = new THREE.MeshBasicMaterial();
 
 			// https://docs.microsoft.com/en-us/windows/desktop/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
@@ -93,8 +96,8 @@
 			function init() {
 
 				clock = new THREE.Clock();
-				clock.autoStart = false;
 
+				initialFrameBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 				prevFrameBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 				blendedFrameBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 				currentFrameBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
@@ -103,8 +106,9 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x263238 );
-				renderer.outputEncoding = THREE.GammaEncoding;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				document.body.appendChild( renderer.domElement );
 
 				// initialize renderer, scene, camera
@@ -118,15 +122,9 @@
 				volumeLight.scale.set( 2, 2, 2 );
 				volumeLight.position.set( 15, 15, 15 );
 				volumeLight.updateLights();
-				volumeLight.lights.forEach( light => {
-
-					light.shadow.mapSize.set( 1024, 1024 );
-					light.shadow.radius = 0;
-
-				} );
 				scene.add( volumeLight );
 
-				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.05 );
 				scene.add( ambientLight );
 
 				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial( { roughness: 0.025 } ) );
@@ -199,6 +197,24 @@
 
 				} );
 
+				gui.add( params, 'enableFade' ).onChange( () => {
+
+					volumeLight.iteration = 0;
+
+				} );
+
+				gui.add( params, 'fadeInDelay' ).name( 'fadeInDelay (sec)' ).min( 0 ).max( 5 ).onChange( () => {
+
+					volumeLight.iteration = 0;
+
+				} );
+
+				gui.add( params, 'fadeTransition' ).name( 'fadeTransition (sec)' ).min( 0 ).max( 1 ).onChange( () => {
+
+					volumeLight.iteration = 0;
+
+				} );
+
 				gui.open();
 
 			}
@@ -215,9 +231,10 @@
 
 				width *= window.devicePixelRatio;
 				height *= window.devicePixelRatio;
-				blendedFrameBuffer.setSize( width, height );
+				initialFrameBuffer.setSize( width, height );
 				prevFrameBuffer.setSize( width, height );
 				currentFrameBuffer.setSize( width, height );
+				blendedFrameBuffer.setSize( width, height );
 
 				volumeLight.iteration = 0;
 
@@ -234,10 +251,14 @@
 
 			function render() {
 
+				const enableFade = params.enableFade;
+				const fadeInDelay = params.fadeInDelay;
+				const fadeTransition = params.fadeTransition;
+
 				if ( volumeLight.iteration === 0 ) {
 
 					seed = 1;
-					timeToFadeIn = 0;
+					clock.start();
 
 				}
 
@@ -247,7 +268,6 @@
 
 					light.intensity = params.intensity / params.lightCount;
 					light.shadow.mapSize.set( 1024, 1024 );
-					light.shadow.radius = 0;
 
 				} );
 				volumeLight.setIteration( volumeLight.iteration + 1 );
@@ -274,15 +294,42 @@
 
 				blit( renderer, blendMat, blendedFrameBuffer );
 
-				// render the final scene to the page
-				finalMat.map = blendedFrameBuffer.texture;
-				blit( renderer, finalMat );
+				if ( ! enableFade ) {
+
+					// render the final scene to the page
+					finalMat.map = blendedFrameBuffer.texture;
+					blit( renderer, finalMat );
+
+				} else if ( volumeLight.iteration === 1 ) {
+
+					// render the final scene to the page
+					finalMat.map = blendedFrameBuffer.texture;
+					blit( renderer, finalMat );
+
+					blendMat.uniforms.texture2.value = blendedFrameBuffer.texture;
+					blendMat.uniforms.texture1.value = null;
+					blendMat.uniforms.weight.value = 1.0;
+					blit( renderer, blendMat, initialFrameBuffer );
+
+				} else if ( clock.getElapsedTime() > fadeInDelay ) {
+
+					const timeIntoFade = clock.getElapsedTime() - fadeInDelay;
+					const weight = Math.min( timeIntoFade / fadeTransition, 1.0 );
+
+					finalBlendMat.uniforms.texture2.value = blendedFrameBuffer.texture;
+					finalBlendMat.uniforms.texture1.value = initialFrameBuffer.texture;
+					finalBlendMat.uniforms.weight.value = weight;
+
+					// render the final scene to the page
+					// finalMat.map = blendedFrameBuffer.texture;
+					blit( renderer, finalBlendMat );
+
+				}
 
 				// The blended frame becomes the previous frame
 				[ prevFrameBuffer, blendedFrameBuffer ] = [ blendedFrameBuffer, prevFrameBuffer ];
 
 				document.getElementById( 'iterations' ).innerText = `iterations: ${ volumeLight.iteration }`;
-				timeToFadeIn += clock.getDelta();
 
 			}
 

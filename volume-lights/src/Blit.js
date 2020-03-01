@@ -29,6 +29,12 @@ export const getBlendMaterial = function() {
 
     return new ShaderMaterial({
 
+		defines: {
+
+			FINAL_OUTPUT: 0
+
+		},
+
         uniforms: {
             texture1: { value: null },
             texture2: { value: null },
@@ -57,8 +63,12 @@ export const getBlendMaterial = function() {
                 vec4 s2 = texture2D( texture2, vUv );
 
                 gl_FragColor = mix( s1, s2, weight );
-                gl_FragColor.a = 1.0;
-            }
+				gl_FragColor.a = 1.0;
+
+				#if FINAL_OUTPUT
+				gl_FragColor = linearToOutputTexel( gl_FragColor );
+				#endif
+			}
         `
 
     });
