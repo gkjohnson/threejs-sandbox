@@ -29,7 +29,7 @@ export const CompositeShader = {
 	},
 
 	vertexShader:
-		`
+		/* glsl */`
 		varying vec2 vUv;
 		void main() {
 			vUv = uv;
@@ -37,7 +37,7 @@ export const CompositeShader = {
 		}
 		`,
 	fragmentShader:
-		`
+		/* glsl */`
 		#include <common>
 		#include <packing>
 		varying vec2 vUv;

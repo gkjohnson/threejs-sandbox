@@ -12,7 +12,7 @@ export const PackedShader =  {
 
 	},
 
-	vertexShader: `
+	vertexShader: /* glsl */`
 		#extension GL_OES_standard_derivatives : enable
 		#define PHYSICAL
 		varying vec3 vViewPosition;
@@ -56,7 +56,7 @@ export const PackedShader =  {
 		}
 	`,
 
-	fragmentShader: `
+	fragmentShader: /* glsl */`
 		#extension GL_OES_standard_derivatives : enable
 		#define PHYSICAL
 		uniform vec3 diffuse;
