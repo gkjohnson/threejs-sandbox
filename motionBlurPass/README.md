@@ -77,13 +77,12 @@ All of the options above can be overriden by adding a `motionBlur` overrides obj
 
 ```
 
-### Possible Improvements
+### TODO Improvements
 - Use depth buffer to alleviate foreground bleeding into background blur
-- Understand why objects seem to not draw to the normal debug buffer when they're not moving
-- Draw multiple interpolated positions of geometry between frames and use that to smear
 - Add dithering / jitter to the smear samples to improve the low sample look
-- Use depth to more inteligently sample
+- Use depth to more intelligently sample and keep background crisper
 - Blur the velocity buffer to extend in the direction of the velocities
 - Use a depth-aware blur and keep track of the primary and secondary velocity vectors
 - Iteratively blur the samples
-- _Don't draw objects that haven't moved, reuse the depth buffer_
+- Don't draw objects that haven't moved, reuse the depth buffer
+- Reuse buffers from other postprocessing effects
