@@ -106,9 +106,7 @@ export class MotionBlurPass extends Pass {
 		this._prevCamProjection = new Matrix4();
 		this._prevCamWorldInverse = new Matrix4();
 
-		this._velocityMaterial = this.getVelocityMaterial();
-		this._geomMaterial = this.getGeometryMaterial();
-		this._compositeMaterial = this.getCompositeMaterial();
+		this._compositeMaterial = new ShaderMaterial( CompositeShader );
 
 		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 		this._compositeScene = new Scene();
@@ -242,8 +240,8 @@ export class MotionBlurPass extends Pass {
 			data = {
 
 				matrixWorld: obj.matrixWorld.clone(),
-				geometryMaterial: this._geomMaterial.clone(),
-				velocityMaterial: this._velocityMaterial.clone(),
+				geometryMaterial: new ShaderMaterial( GeometryShader ),
+				velocityMaterial: new ShaderMaterial( VelocityShader ),
 				boneMatrices: null,
 				boneTexture: null,
 
@@ -343,25 +341,6 @@ export class MotionBlurPass extends Pass {
 			this._saveMaterialState( obj );
 
 		}
-
-	}
-
-	// Shaders
-	getVelocityMaterial() {
-
-		return new ShaderMaterial( VelocityShader );
-
-	}
-
-	getGeometryMaterial() {
-
-		return new ShaderMaterial( GeometryShader );
-
-	}
-
-	getCompositeMaterial() {
-
-		return new ShaderMaterial( CompositeShader );
 
 	}
 
