@@ -24,6 +24,7 @@ import { CompositeShader } from './CompositeShader.js';
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
+const _unusedItems = new Set();
 
 function traverseVisibleMeshes( obj, callback ) {
 
@@ -136,7 +137,6 @@ export class MotionBlurPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		const self = this;
 		const debug = this.debug;
 		const velocityBuffer = this._velocityBuffer;
 		const renderToScreen = this.renderToScreen;
@@ -152,10 +152,6 @@ export class MotionBlurPass extends Pass {
 
 		renderer.autoClear = false;
 		renderer.setClearColor( _blackColor, 0 );
-
-		// Traversal function for iterating down and rendering the scene
-		const newMap = new Map();
-
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
 		renderer.compile( scene, camera );
@@ -173,25 +169,9 @@ export class MotionBlurPass extends Pass {
 		}
 		renderer.clear();
 
+		// Traversal function for iterating down and rendering the scene
 		this._ensurePrevCameraTransform();
-		traverseVisibleMeshes( this.scene, mesh => {
-
-			self._drawMesh( renderer, mesh );
-
-			// Recreate the map of drawn geometry so we can
-			// drop references to removed meshes
-			if ( self._prevPosMap.has( mesh ) ) {
-
-				newMap.set( mesh, self._prevPosMap.get( mesh ) );
-
-			}
-
-		} );
-
-		// replace the old map with a new one storing only
-		// the most recently traversed meshes
-		this._prevPosMap.clear();
-		this._prevPosMap = newMap;
+		this._drawAllMeshes( renderer );
 
 		this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
 		this._prevCamProjection.copy( camera.projectionMatrix );
@@ -199,14 +179,14 @@ export class MotionBlurPass extends Pass {
 		// compose the final blurred frame
 		if ( debug.display === MotionBlurPass.DEFAULT ) {
 
-			const cmat = this._compositeMaterial;
-			cmat.uniforms.sourceBuffer.value = readBuffer.texture;
-			cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+			const compositeMaterial = this._compositeMaterial;
+			compositeMaterial.uniforms.sourceBuffer.value = readBuffer.texture;
+			compositeMaterial.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
 
-			if ( cmat.defines.SAMPLES !== this.samples ) {
+			if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
 
-				cmat.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
-				cmat.needsUpdate = true;
+				compositeMaterial.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
+				compositeMaterial.needsUpdate = true;
 
 			}
 
@@ -225,7 +205,8 @@ export class MotionBlurPass extends Pass {
 
 	_getMaterialState( obj ) {
 
-		let data = this._prevPosMap.get( obj );
+		const prevPosMap = this._prevPosMap;
+		let data = prevPosMap.get( obj );
 		if ( data === undefined ) {
 
 			data = {
@@ -237,7 +218,7 @@ export class MotionBlurPass extends Pass {
 				boneTexture: null,
 
 			};
-			this._prevPosMap.set( obj, data );
+			prevPosMap.set( obj, data );
 
 		}
 
@@ -248,7 +229,8 @@ export class MotionBlurPass extends Pass {
 
 		// copy the skeleton state into the prevBoneTexture uniform
 		const skeleton = obj.skeleton;
-		if ( isSkinned && ( data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length ) ) {
+		const boneTextureNeedsUpdate = data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length;
+		if ( isSkinned && boneTextureNeedsUpdate ) {
 
 			const boneMatrices = new Float32Array( skeleton.boneMatrices.length );
 			boneMatrices.set( skeleton.boneMatrices );
@@ -281,6 +263,37 @@ export class MotionBlurPass extends Pass {
 		}
 
 		data.matrixWorld.copy( obj.matrixWorld );
+
+	}
+
+	_drawAllMeshes( renderer ) {
+
+		const prevPosMap = this._prevPosMap;
+		prevPosMap.forEach( ( value, key ) => {
+
+			_unusedItems.add( key );
+
+		} );
+
+		traverseVisibleMeshes( this.scene, mesh => {
+
+			this._drawMesh( renderer, mesh );
+			_unusedItems.delete( mesh );
+
+		} );
+
+		_unusedItems.forEach( mesh => {
+
+			const data = prevPosMap.get( mesh );
+			data.geometryMaterial.dispose();
+			data.velocityMaterial.dispose();
+			if ( data.boneTexture ) {
+
+				data.boneTexture.dispose();
+
+			}
+
+		} );
 
 	}
 
@@ -319,7 +332,7 @@ export class MotionBlurPass extends Pass {
 			const material = debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 			const uniforms = material.uniforms;
 			uniforms.expandGeometry.value = expandGeometry;
-			uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
+			uniforms.interpolateGeometry.value = interpolateGeometry;
 			uniforms.smearIntensity.value = smearIntensity;
 
 			const projMat = renderCameraBlur ? this._prevCamProjection : camera.projectionMatrix;
