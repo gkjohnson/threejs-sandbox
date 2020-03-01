@@ -3,9 +3,29 @@
  *
  *  Approach from http://john-chapman-graphics.blogspot.com/2013/01/per-object-motion-blur.html
  */
-THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
+import {
+	Frustum,
+	Color,
+	WebGLRenderTarget,
+	LinearFilter,
+	RGBFormat,
+	HalfFloatType,
+	Matrix4,
+	OrthographicCamera,
+	Scene,
+	Mesh,
+	PlaneBufferGeometry,
+	DataTexture,
+	RGBAFormat,
+	FloatType,
+	ShaderChunk,
+	ShaderMaterial
+} from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 
-	THREE.Pass.call( this );
+export const MotionBlurPass = function ( scene, camera, options = {} ) {
+
+	Pass.call( this );
 
 	options = Object.assign( {
 
@@ -55,49 +75,49 @@ THREE.MotionBlurPass = function ( scene, camera, options = {} ) {
 
 	this.debug = {
 
-		display: THREE.MotionBlurPass.DEFAULT,
+		display: MotionBlurPass.DEFAULT,
 		dontUpdateState: false
 
 	};
 
 	// list of positions from previous frames
 	this._prevPosMap = new Map();
-	this._frustum = new THREE.Frustum();
-	this._projScreenMatrix = new THREE.Matrix4();
+	this._frustum = new Frustum();
+	this._projScreenMatrix = new Matrix4();
 	this._cameraMatricesNeedInitializing = true;
-	this._prevClearColor = new THREE.Color();
-	this._clearColor = new THREE.Color( 0, 0, 0 );
+	this._prevClearColor = new Color();
+	this._clearColor = new Color( 0, 0, 0 );
 
 	// render targets
 	this._velocityBuffer =
-		new THREE.WebGLRenderTarget( 256, 256, {
-			minFilter: THREE.LinearFilter,
-			magFilter: THREE.LinearFilter,
-			format: THREE.RGBFormat,
-			type: THREE.HalfFloatType
+		new WebGLRenderTarget( 256, 256, {
+			minFilter: LinearFilter,
+			magFilter: LinearFilter,
+			format: RGBFormat,
+			type: HalfFloatType
 		} );
 	this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
 	this._velocityBuffer.texture.generateMipmaps = false;
 
-	this._prevCamProjection = new THREE.Matrix4();
-	this._prevCamWorldInverse = new THREE.Matrix4();
+	this._prevCamProjection = new Matrix4();
+	this._prevCamWorldInverse = new Matrix4();
 
 	this._velocityMaterial = this.getVelocityMaterial();
 	this._geomMaterial = this.getGeometryMaterial();
 	this._compositeMaterial = this.getCompositeMaterial();
 
-	this._compositeCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	this._compositeScene = new THREE.Scene();
+	this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this._compositeScene = new Scene();
 
-	this._quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
+	this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
 	this._quad.frustumCulled = false;
 	this._compositeScene.add( this._quad );
 
 };
 
-THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
-	constructor: THREE.MotionBlurPass,
+	constructor: MotionBlurPass,
 
 	dispose: function () {
 
@@ -128,7 +148,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			if ( obj.visible === false ) return;
 
-			if ( obj.type === 'Mesh' || obj.type === 'SkinnedMesh' ) {
+			if ( obj.isMesh || obj.isSkinnedMesh ) {
 
 				self._drawMesh( renderer, obj );
 
@@ -155,7 +175,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		// If we're rendering the blurred view, then we need to render
 		// to the velocity buffer, otherwise we can render a debug view
-		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
+		if ( this.debug.display === MotionBlurPass.DEFAULT ) {
 
 			renderer.setRenderTarget( this._velocityBuffer );
 
@@ -189,7 +209,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		this._prevCamProjection.copy( this.camera.projectionMatrix );
 
 		// compose the final blurred frame
-		if ( this.debug.display === THREE.MotionBlurPass.DEFAULT ) {
+		if ( this.debug.display === MotionBlurPass.DEFAULT ) {
 
 			var cmat = this._compositeMaterial;
 			cmat.uniforms.sourceBuffer.value = readBuffer.texture;
@@ -202,7 +222,9 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			}
 
-			renderer.render( this._compositeScene, this._compositeCamera, this.renderToScreen ? null : writeBuffer, true );
+			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+			renderer.render( this._compositeScene, this._compositeCamera );
+			renderer.setRenderTarget( null );
 
 		}
 
@@ -244,7 +266,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 			data.boneMatrices = boneMatrices;
 
 			var size = Math.sqrt( skeleton.boneMatrices.length / 4 );
-			var boneTexture = new THREE.DataTexture( boneMatrices, size, size, THREE.RGBAFormat, THREE.FloatType );
+			var boneTexture = new DataTexture( boneMatrices, size, size, RGBAFormat, FloatType );
 			boneTexture.needsUpdate = true;
 
 			data.geometryMaterial.uniforms.prevBoneTexture.value = boneTexture;
@@ -304,7 +326,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		}
 
 		var data = this._getMaterialState( obj );
-		var mat = this.debug.display === THREE.MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+		var mat = this.debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 		mat.uniforms.expandGeometry.value = expandGeometry;
 		mat.uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
 		mat.uniforms.smearIntensity.value = smearIntensity;
@@ -327,7 +349,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 	// Shaders
 	getPrevSkinningParsVertex: function () {
 
-		// Modified THREE.ShaderChunk.skinning_pars_vertex to handle
+		// Modified ShaderChunk.skinning_pars_vertex to handle
 		// a second set of bone information from the previou frame
 		return `
 		#ifdef USE_SKINNING
@@ -367,20 +389,20 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 		vec3 transformed;
 
 		// Get the normal
-		${ THREE.ShaderChunk.skinbase_vertex }
-		${ THREE.ShaderChunk.beginnormal_vertex }
-		${ THREE.ShaderChunk.skinnormal_vertex }
-		${ THREE.ShaderChunk.defaultnormal_vertex }
+		${ ShaderChunk.skinbase_vertex }
+		${ ShaderChunk.beginnormal_vertex }
+		${ ShaderChunk.skinnormal_vertex }
+		${ ShaderChunk.defaultnormal_vertex }
 
 		// Get the current vertex position
 		transformed = vec3( position );
-		${ THREE.ShaderChunk.skinning_vertex }
+		${ ShaderChunk.skinning_vertex }
 		newPosition = modelViewMatrix * vec4(transformed, 1.0);
 
 		// Get the previous vertex position
 		transformed = vec3( position );
-		${ THREE.ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
-		${ THREE.ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
+		${ ShaderChunk.skinbase_vertex.replace( /mat4 /g, '' ).replace( /getBoneMatrix/g, 'getPrevBoneMatrix' ) }
+		${ ShaderChunk.skinning_vertex.replace( /vec4 /g, '' ) }
 		prevPosition = prevModelViewMatrix * vec4(transformed, 1.0);
 
 		// The delta between frames
@@ -405,11 +427,11 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	getVelocityMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			uniforms: {
-				prevProjectionMatrix: { value: new THREE.Matrix4() },
-				prevModelViewMatrix: { value: new THREE.Matrix4() },
+				prevProjectionMatrix: { value: new Matrix4() },
+				prevModelViewMatrix: { value: new Matrix4() },
 				prevBoneTexture: { value: null },
 				expandGeometry: { value: 0 },
 				interpolateGeometry: { value: 1 },
@@ -418,7 +440,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			vertexShader:
 				`
-				${ THREE.ShaderChunk.skinning_pars_vertex }
+				${ ShaderChunk.skinning_pars_vertex }
 				${ this.getPrevSkinningParsVertex() }
 
 				uniform mat4 prevProjectionMatrix;
@@ -452,11 +474,11 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	getGeometryMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			uniforms: {
-				prevProjectionMatrix: { value: new THREE.Matrix4() },
-				prevModelViewMatrix: { value: new THREE.Matrix4() },
+				prevProjectionMatrix: { value: new Matrix4() },
+				prevModelViewMatrix: { value: new Matrix4() },
 				prevBoneTexture: { value: null },
 				expandGeometry: { value: 0 },
 				interpolateGeometry: { value: 1 },
@@ -465,7 +487,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 			vertexShader:
 				`
-				${ THREE.ShaderChunk.skinning_pars_vertex }
+				${ ShaderChunk.skinning_pars_vertex }
 				${ this.getPrevSkinningParsVertex() }
 
 				uniform mat4 prevProjectionMatrix;
@@ -498,7 +520,7 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 	getCompositeMaterial: function () {
 
-		return new THREE.ShaderMaterial( {
+		return new ShaderMaterial( {
 
 			defines: {
 				SAMPLES: 30
@@ -548,6 +570,6 @@ THREE.MotionBlurPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 } );
 
-THREE.MotionBlurPass.DEFAULT = 0;
-THREE.MotionBlurPass.VELOCITY = 1;
-THREE.MotionBlurPass.GEOMETRY = 2;
+MotionBlurPass.DEFAULT = 0;
+MotionBlurPass.VELOCITY = 1;
+MotionBlurPass.GEOMETRY = 2;

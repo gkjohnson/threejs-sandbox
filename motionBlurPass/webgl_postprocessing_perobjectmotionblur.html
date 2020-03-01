@@ -29,23 +29,6 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/build/three.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/controls/OrbitControls.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/Detector.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/stats.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/dat.gui.min.js"></script>
-
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/CopyShader.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/shaders/FXAAShader.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/EffectComposer.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/RenderPass.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/postprocessing/ShaderPass.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/libs/inflate.min.js"></script>
-		<script type="text/javascript" src="https://rawgit.com/mrdoob/three.js/r94/examples/js/loaders/FBXLoader.js"></script>
-
-		<script type="text/javascript" src="MotionBlurPass.js"></script>
-
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Per Object Motion Blur by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 			</br>
@@ -54,9 +37,22 @@
 			A velocity buffer is rendered using the previous and current frame positions for each object </br> which is then used to smear the final frame.
 		</div>
 
-		<script>
+		<script type="module">
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { FBXLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/FBXLoader.js';
+
+			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { MotionBlurPass } from './src/MotionBlurPass.js';
+
 
 			// globals
 			var stats;
@@ -73,7 +69,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var FXAAPass, motionPass, renderPass;
+			var fxaaPass, gammaPass, motionPass, renderPass;
 			var torusMesh1, torusMesh2, torusMesh3;
 
 			var mixer, clock, animTime = 0;
@@ -88,14 +84,12 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xE91E63 );
+				scene.background = new THREE.Color( 0xE91E63 ).convertGammaToLinear();
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
@@ -146,8 +140,8 @@
 				scene.add(torusMesh3);
 
 				// load samba dancer
-				var loader = new THREE.FBXLoader();
-				loader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/models/fbx/Samba%20Dancing.fbx', res => {
+				var loader = new FBXLoader();
+				loader.load( 'https://rawgit.com/mrdoob/three.js/r106/examples/models/fbx/Samba%20Dancing.fbx', res => {
 
 					scene.add( res );
 					res.scale.multiplyScalar( 0.05 );
@@ -193,26 +187,28 @@
 				scene.add( plane );
 
 				// Render Pass Setup
-				renderPass = new THREE.RenderPass( scene, camera );
+				renderPass = new RenderPass( scene, camera );
 
-				FXAAPass = new THREE.ShaderPass( THREE.FXAAShader );
-				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				motionPass = new THREE.MotionBlurPass( scene, camera );
+				gammaPass = new ShaderPass( GammaCorrectionShader );
 
-				composer = new THREE.EffectComposer( renderer );
+				motionPass = new MotionBlurPass( scene, camera );
+
+				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
 				composer.addPass( motionPass );
-				composer.addPass( FXAAPass );
-				FXAAPass.renderToScreen = true;
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
 
 				// stats
 				stats = new Stats();
 				document.body.appendChild( stats.dom );
 
 				// camera controls
-				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 200;
 
@@ -237,9 +233,9 @@
 					} );
 
 				motionFolder.add( motionPass.debug, 'display', {
-					'Motion Blur': THREE.MotionBlurPass.DEFAULT,
-					'Velocity': THREE.MotionBlurPass.VELOCITY,
-					'Geometry': THREE.MotionBlurPass.GEOMETRY
+					'Motion Blur': MotionBlurPass.DEFAULT,
+					'Velocity': MotionBlurPass.VELOCITY,
+					'Geometry': MotionBlurPass.GEOMETRY
 				} ).onChange( val => motionPass.debug.display = parseFloat(val) );
 				motionFolder.open();
 
@@ -262,7 +258,7 @@
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
-				FXAAPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 			}
 
