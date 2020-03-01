@@ -27,6 +27,25 @@ import { CompositeShader } from './CompositeShader.js';
 
 export class MotionBlurPass extends Pass {
 
+	get enabled() {
+
+		return this._enabled;
+
+	}
+
+	set enabled( val ) {
+
+		if ( val === false ) {
+
+			this._prevPosMap.clear();
+			this._cameraMatricesNeedInitializing = true;
+
+		}
+
+		this._enabled = val;
+
+	}
+
 	constructor( scene, camera, options = {} ) {
 
 		super();
@@ -42,25 +61,6 @@ export class MotionBlurPass extends Pass {
 			renderTargetScale: 1
 
 		}, options );
-
-		Object.defineProperty( this, 'enabled', {
-
-			set: val => {
-
-				if ( val === false ) {
-
-					this._prevPosMap.clear();
-					this._cameraMatricesNeedInitializing = true;
-
-				}
-
-				this._enabled = val;
-
-			},
-
-			get: () => this._enabled
-
-		} );
 
 		this.enabled = true;
 		this.needsSwap = true;
