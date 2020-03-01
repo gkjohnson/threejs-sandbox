@@ -20,31 +20,11 @@ import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
+import { traverseVisibleMeshes } from './utils.js';
 
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
-
-function traverseVisibleMeshes( obj, callback ) {
-
-	if ( obj.visible ) {
-
-		if ( obj.isMesh || obj.isSkinnedMesh ) {
-
-			callback( obj );
-
-		}
-
-		const children = obj.children;
-		for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-			traverseVisibleMeshes( children[ i ], callback );
-
-		}
-
-	}
-
-}
 
 export class MotionBlurPass extends Pass {
 
@@ -139,11 +119,10 @@ export class MotionBlurPass extends Pass {
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		const debug = this.debug;
-		const velocityBuffer = this._velocityBuffer;
-		const renderToScreen = this.renderToScreen;
 		const scene = this.scene;
 		const camera = this.camera;
 		const compositeQuad = this._compositeQuad;
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 
 		// Set the clear state
 		const prevClearAlpha = renderer.getClearAlpha();
@@ -156,51 +135,59 @@ export class MotionBlurPass extends Pass {
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
 		renderer.compile( scene, camera );
-
-		// If we're rendering the blurred view, then we need to render
-		// to the velocity buffer, otherwise we can render a debug view
-		if ( debug.display === MotionBlurPass.DEFAULT ) {
-
-			renderer.setRenderTarget( velocityBuffer );
-
-		} else {
-
-			renderer.setRenderTarget( renderToScreen ? null : writeBuffer );
-
-		}
-		renderer.clear();
-
-		// Traversal function for iterating down and rendering the scene
 		this._ensurePrevCameraTransform();
-		this._drawAllMeshes(
-			renderer,
-			debug.display === MotionBlurPass.GEOMETRY ? MotionBlurPass.GEOMETRY : MotionBlurPass.VELOCITY,
-			! debug.dontUpdateState
-		);
 
-		this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
-		this._prevCamProjection.copy( camera.projectionMatrix );
+		switch( debug.display ) {
 
-		// compose the final blurred frame
-		if ( debug.display === MotionBlurPass.DEFAULT ) {
+			case MotionBlurPass.GEOMETRY: {
 
-			const compositeMaterial = this._compositeMaterial;
-			const uniforms = compositeMaterial.uniforms;
-			uniforms.sourceBuffer.value = readBuffer.texture;
-			uniforms.velocityBuffer.value = this._velocityBuffer.texture;
-
-			if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
-
-				compositeMaterial.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
-				compositeMaterial.needsUpdate = true;
+				renderer.setRenderTarget( finalBuffer );
+				renderer.clear();
+				this._drawAllMeshes( renderer, MotionBlurPass.GEOMETRY, ! debug.dontUpdateState );
+				break;
 
 			}
 
-			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
-			compositeQuad.render( renderer );
-			renderer.setRenderTarget( null );
+			case MotionBlurPass.VELOCITY: {
+
+				renderer.setRenderTarget( finalBuffer );
+				renderer.clear();
+				this._drawAllMeshes( renderer, MotionBlurPass.VELOCITY, ! debug.dontUpdateState );
+				break;
+
+			}
+
+			case MotionBlurPass.DEFAULT: {
+
+				const velocityBuffer = this._velocityBuffer;
+				renderer.setRenderTarget( velocityBuffer );
+				renderer.clear();
+				this._drawAllMeshes( renderer, MotionBlurPass.VELOCITY, ! debug.dontUpdateState );
+
+				const compositeMaterial = this._compositeMaterial;
+				const uniforms = compositeMaterial.uniforms;
+				uniforms.sourceBuffer.value = readBuffer.texture;
+				uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+
+				if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
+
+					compositeMaterial.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
+					compositeMaterial.needsUpdate = true;
+
+				}
+
+				renderer.setRenderTarget( finalBuffer );
+				compositeQuad.render( renderer );
+
+				break;
+
+			}
 
 		}
+
+		// Save the camera state for the next frame
+		this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
+		this._prevCamProjection.copy( camera.projectionMatrix );
 
 		// Restore renderer settings
 		renderer.setClearColor( _prevClearColor, prevClearAlpha );
