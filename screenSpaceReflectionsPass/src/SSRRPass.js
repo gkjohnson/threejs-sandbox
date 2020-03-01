@@ -60,6 +60,8 @@ export class SSRRPass extends Pass {
 		this._backfaceDepthMaterial = this.createLinearDepthMaterial();
 		this._backfaceDepthMaterial.side = BackSide;
 
+		this._packedMaterial = this.createPackedMaterial();
+
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
@@ -70,15 +72,9 @@ export class SSRRPass extends Pass {
 		this._packedBuffer.texture.name = "SSRRPass.Packed";
 		this._packedBuffer.texture.generateMipmaps = false;
 
-		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-		this._compositeScene = new Scene();
-		this._compositeMaterial = new ShaderMaterial( CompositeShader );
-
-		this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
-		this._quad.frustumCulled = false;
-		this._compositeScene.add( this._quad );
-
-		this._packedMaterial = this.createPackedMaterial();
+		const compositeMaterial = new ShaderMaterial( CompositeShader );
+		this._compositeQuad = new Pass.FullScreenQuad( compositeMaterial );
+		this._compositeMaterial = compositeMaterial;
 
 	}
 
@@ -86,6 +82,7 @@ export class SSRRPass extends Pass {
 
 		this._depthBuffer.dispose();
 		this._packedBuffer.dispose();
+		this._compositeQuad.dispose();
 
 	}
 
@@ -158,12 +155,9 @@ export class SSRRPass extends Pass {
 
 		}
 
-
-
-		this._quad.material = this._compositeMaterial;
 		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
 		renderer.clear();
-		renderer.render( this._compositeScene, this._compositeCamera );
+		this._compositeQuad.render( renderer );
 
 		// Restore renderer settings
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
