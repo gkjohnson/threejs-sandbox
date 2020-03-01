@@ -133,6 +133,7 @@ export class SSRRPass extends Pass {
 		renderer.clear();
 		renderer.render( scene, camera );
 
+		// Render Backface Depth
 		scene.overrideMaterial = backfaceDepthMaterial;
 		renderer.setRenderTarget( backfaceDepthBuffer );
 		renderer.clear();

@@ -225,6 +225,7 @@ export const CompositeShader = {
 
 				// TODO: Add z fade towards camera
 
+				// TODO: Use additive blending here
 				col.a = intensity * fadeVal;
 				result = mix(result, col, col.a);
 			}
