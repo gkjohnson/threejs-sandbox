@@ -15,6 +15,7 @@ import {
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
+import { LinearDepthShader } from './LinearDepthShader.js';
 
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
@@ -71,11 +72,13 @@ export class SSRRPass extends Pass {
 
 		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 		this._compositeScene = new Scene();
-		this._compositeMaterial = this.getCompositeMaterial();
+		this._compositeMaterial = new ShaderMaterial( CompositeShader );
 
 		this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
 		this._quad.frustumCulled = false;
 		this._compositeScene.add( this._quad );
+
+		this._packedMaterial = this.createPackedMaterial();
 
 	}
 
@@ -109,7 +112,7 @@ export class SSRRPass extends Pass {
 		var prevOverride = this.scene.overrideMaterial;
 
 		// Normal pass
-		this.scene.overrideMaterial = this.createPackedMaterial();
+		this.scene.overrideMaterial = this._packedMaterial;
 		renderer.setRenderTarget( this._packedBuffer );
 		renderer.clear();
 		renderer.render( this.scene, this.camera );
@@ -170,30 +173,7 @@ export class SSRRPass extends Pass {
 
 	createLinearDepthMaterial() {
 
-		return new ShaderMaterial( {
-
-			vertexShader: `
-				varying vec3 vViewPosition;
-				#ifndef FLAT_SHADED
-					varying vec3 vNormal;
-				#endif
-				void main() {
-					#include <beginnormal_vertex>
-					#include <defaultnormal_vertex>
-					#include <begin_vertex>
-					#include <project_vertex>
-					vViewPosition = mvPosition.xyz;
-				}
-			`,
-
-			fragmentShader: `
-				varying vec3 vViewPosition;
-				void main() {
-					gl_FragColor = vec4(vViewPosition.z);
-				}
-			`
-
-		} );
+		return new ShaderMaterial( LinearDepthShader );
 
 
 	}
@@ -201,12 +181,6 @@ export class SSRRPass extends Pass {
 	createPackedMaterial() {
 
 		return new ShaderMaterial( PackedShader );
-
-	}
-
-	getCompositeMaterial() {
-
-		return new ShaderMaterial( CompositeShader );
 
 	}
 
