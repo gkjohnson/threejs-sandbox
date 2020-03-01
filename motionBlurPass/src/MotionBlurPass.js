@@ -25,6 +25,9 @@ import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
 
+const _prevClearColor = new Color();
+const _blackColor = new Color( 0, 0, 0 );
+
 export class MotionBlurPass extends Pass {
 
 	get enabled() {
@@ -50,32 +53,17 @@ export class MotionBlurPass extends Pass {
 
 		super();
 
-		options = Object.assign( {
-
-			samples: 15,
-			expandGeometry: 0,
-			interpolateGeometry: 1,
-			smearIntensity: 1,
-			blurTransparent: false,
-			renderCameraBlur: true,
-			renderTargetScale: 1
-
-		}, options );
-
 		this.enabled = true;
 		this.needsSwap = true;
 
 		// settings
-		this.samples = options.samples;
-		this.expandGeometry = options.expandGeometry;
-		this.interpolateGeometry = options.interpolateGeometry;
-		this.smearIntensity = options.smearIntensity;
-		this.blurTransparent = options.blurTransparent;
-		this.renderCameraBlur = options.renderCameraBlur;
-		this.renderTargetScale = options.renderTargetScale;
-
-		this.scene = scene;
-		this.camera = camera;
+		this.samples = 'samples' in options ? options.samples : 15;
+		this.expandGeometry = 'expandGeometry' in options ? options.expandGeometry : 0;
+		this.interpolateGeometry = 'interpolateGeometry' in options ? options.interpolateGeometry : 1;
+		this.smearIntensity = 'smearIntensity' in options ? options.smearIntensity : 1;
+		this.blurTransparent = 'blurTransparent' in options ? options.blurTransparent : false;
+		this.renderCameraBlur = 'renderCameraBlur' in options ? options.renderCameraBlur : true;
+		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1;
 
 		this.debug = {
 
@@ -84,13 +72,17 @@ export class MotionBlurPass extends Pass {
 
 		};
 
+		this.scene = scene;
+		this.camera = camera;
+
 		// list of positions from previous frames
 		this._prevPosMap = new Map();
 		this._frustum = new Frustum();
 		this._projScreenMatrix = new Matrix4();
 		this._cameraMatricesNeedInitializing = true;
-		this._prevClearColor = new Color();
-		this._clearColor = new Color( 0, 0, 0 );
+
+		this._prevCamProjection = new Matrix4();
+		this._prevCamWorldInverse = new Matrix4();
 
 		// render targets
 		this._velocityBuffer =
@@ -103,22 +95,14 @@ export class MotionBlurPass extends Pass {
 		this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
 		this._velocityBuffer.texture.generateMipmaps = false;
 
-		this._prevCamProjection = new Matrix4();
-		this._prevCamWorldInverse = new Matrix4();
-
 		this._compositeMaterial = new ShaderMaterial( CompositeShader );
-
-		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-		this._compositeScene = new Scene();
-
-		this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
-		this._quad.frustumCulled = false;
-		this._compositeScene.add( this._quad );
+		this._compositeQuad = new Pass.FullScreenQuad( this._compositeMaterial );
 
 	}
 
 	dispose() {
 
+		this._compositeQuad.dispose();
 		this._velocityBuffer.dispose();
 		this._prevPosMap.clear();
 
@@ -126,21 +110,31 @@ export class MotionBlurPass extends Pass {
 
 	setSize( width, height ) {
 
-		this._velocityBuffer.setSize( width * this.renderTargetScale, height * this.renderTargetScale );
+		const renderTargetScale = this.renderTargetScale;
+		const velocityBuffer = this._velocityBuffer;
+		velocityBuffer.setSize( width * renderTargetScale, height * renderTargetScale );
 
 	}
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
+		const self = this;
+		const debug = this.debug;
+		const velocityBuffer = this._velocityBuffer;
+		const renderToScreen = this.renderToScreen;
+		const scene = this.scene;
+		const camera = this.camera;
+
 		// Set the clear state
-		this._prevClearColor.copy( renderer.getClearColor() );
-		var prevClearAlpha = renderer.getClearAlpha();
-		var prevAutoClear = renderer.autoClear;
+		const prevClearAlpha = renderer.getClearAlpha();
+		const prevAutoClear = renderer.autoClear;
+		const prevRenderTarget = renderer.getRenderTarget();
+		_prevClearColor.copy( renderer.getClearColor() );
+
 		renderer.autoClear = false;
-		renderer.setClearColor( this._clearColor, 0 );
+		renderer.setClearColor( _blackColor, 0 );
 
 		// Traversal function for iterating down and rendering the scene
-		var self = this;
 		var newMap = new Map();
 		function recurse( obj ) {
 
@@ -169,31 +163,23 @@ export class MotionBlurPass extends Pass {
 		}
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
-		renderer.compile( this.scene, this.camera );
+		renderer.compile( scene, camera );
 
 		// If we're rendering the blurred view, then we need to render
 		// to the velocity buffer, otherwise we can render a debug view
-		if ( this.debug.display === MotionBlurPass.DEFAULT ) {
+		if ( debug.display === MotionBlurPass.DEFAULT ) {
 
-			renderer.setRenderTarget( this._velocityBuffer );
+			renderer.setRenderTarget( velocityBuffer );
 
 		} else {
 
-			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+			renderer.setRenderTarget( renderToScreen ? null : writeBuffer );
 
 		}
 
-		// reinitialize the camera matrices to the current pos becaues if
-		// the pass has been disabeled then the matrices will be out of date
-		if ( this._cameraMatricesNeedInitializing ) {
+		this._ensurePrevCameraTransform();
 
-			this._prevCamWorldInverse.copy( this.camera.matrixWorldInverse );
-			this._prevCamProjection.copy( this.camera.projectionMatrix );
-			this._cameraMatricesNeedInitializing = false;
-
-		}
-
-		this._projScreenMatrix.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse );
+		this._projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
 		this._frustum.setFromMatrix( this._projScreenMatrix );
 		renderer.clear();
 		recurse( this.scene );
@@ -203,11 +189,11 @@ export class MotionBlurPass extends Pass {
 		this._prevPosMap.clear();
 		this._prevPosMap = newMap;
 
-		this._prevCamWorldInverse.copy( this.camera.matrixWorldInverse );
-		this._prevCamProjection.copy( this.camera.projectionMatrix );
+		this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
+		this._prevCamProjection.copy( camera.projectionMatrix );
 
 		// compose the final blurred frame
-		if ( this.debug.display === MotionBlurPass.DEFAULT ) {
+		if ( debug.display === MotionBlurPass.DEFAULT ) {
 
 			var cmat = this._compositeMaterial;
 			cmat.uniforms.sourceBuffer.value = readBuffer.texture;
@@ -221,13 +207,14 @@ export class MotionBlurPass extends Pass {
 			}
 
 			renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
-			renderer.render( this._compositeScene, this._compositeCamera );
+			this._compositeQuad.render( renderer );
 			renderer.setRenderTarget( null );
 
 		}
 
 		// Restore renderer settings
-		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
+		renderer.setClearColor( _prevClearColor, prevClearAlpha );
+		renderer.setRenderTarget( prevRenderTarget );
 		renderer.autoClear = prevAutoClear;
 
 	}
@@ -339,6 +326,21 @@ export class MotionBlurPass extends Pass {
 		if ( this.debug.dontUpdateState === false ) {
 
 			this._saveMaterialState( obj );
+
+		}
+
+	}
+
+	_ensurePrevCameraTransform() {
+
+		// reinitialize the camera matrices to the current transform because if
+		// the pass has been disabled then the matrices will be out of date
+		if ( this._cameraMatricesNeedInitializing ) {
+
+			const camera = this.camera;
+			this._prevCamWorldInverse.copy( camera.matrixWorldInverse );
+			this._prevCamProjection.copy( camera.projectionMatrix );
+			this._cameraMatricesNeedInitializing = false;
 
 		}
 
