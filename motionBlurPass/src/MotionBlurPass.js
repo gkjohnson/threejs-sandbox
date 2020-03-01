@@ -135,7 +135,7 @@ export class MotionBlurPass extends Pass {
 		renderer.setClearColor( _blackColor, 0 );
 
 		// Traversal function for iterating down and rendering the scene
-		var newMap = new Map();
+		const newMap = new Map();
 		function recurse( obj ) {
 
 			if ( obj.visible === false ) return;
@@ -154,7 +154,7 @@ export class MotionBlurPass extends Pass {
 
 			}
 
-			for ( var i = 0, l = obj.children.length; i < l; i ++ ) {
+			for ( let i = 0, l = obj.children.length; i < l; i ++ ) {
 
 				recurse( obj.children[ i ] );
 
@@ -195,7 +195,7 @@ export class MotionBlurPass extends Pass {
 		// compose the final blurred frame
 		if ( debug.display === MotionBlurPass.DEFAULT ) {
 
-			var cmat = this._compositeMaterial;
+			const cmat = this._compositeMaterial;
 			cmat.uniforms.sourceBuffer.value = readBuffer.texture;
 			cmat.uniforms.velocityBuffer.value = this._velocityBuffer.texture;
 
@@ -221,7 +221,7 @@ export class MotionBlurPass extends Pass {
 
 	_getMaterialState( obj ) {
 
-		var data = this._prevPosMap.get( obj );
+		let data = this._prevPosMap.get( obj );
 		if ( data === undefined ) {
 
 			data = {
@@ -237,21 +237,21 @@ export class MotionBlurPass extends Pass {
 
 		}
 
-		var isSkinned = obj.type === 'SkinnedMesh' && obj.skeleton && obj.skeleton.bones && obj.skeleton.boneMatrices;
+		const isSkinned = obj.type === 'SkinnedMesh' && obj.skeleton && obj.skeleton.bones && obj.skeleton.boneMatrices;
 
 		data.geometryMaterial.skinning = isSkinned;
 		data.velocityMaterial.skinning = isSkinned;
 
 		// copy the skeleton state into the prevBoneTexture uniform
-		var skeleton = obj.skeleton;
+		const skeleton = obj.skeleton;
 		if ( isSkinned && ( data.boneMatrices === null || data.boneMatrices.length !== skeleton.boneMatrices.length ) ) {
 
-			var boneMatrices = new Float32Array( skeleton.boneMatrices.length );
+			const boneMatrices = new Float32Array( skeleton.boneMatrices.length );
 			boneMatrices.set( skeleton.boneMatrices );
 			data.boneMatrices = boneMatrices;
 
-			var size = Math.sqrt( skeleton.boneMatrices.length / 4 );
-			var boneTexture = new DataTexture( boneMatrices, size, size, RGBAFormat, FloatType );
+			const size = Math.sqrt( skeleton.boneMatrices.length / 4 );
+			const boneTexture = new DataTexture( boneMatrices, size, size, RGBAFormat, FloatType );
 			boneTexture.needsUpdate = true;
 
 			data.geometryMaterial.uniforms.prevBoneTexture.value = boneTexture;
@@ -266,7 +266,7 @@ export class MotionBlurPass extends Pass {
 
 	_saveMaterialState( obj ) {
 
-		var data = this._prevPosMap.get( obj );
+		const data = this._prevPosMap.get( obj );
 
 		if ( data.boneMatrices !== null ) {
 
@@ -281,12 +281,12 @@ export class MotionBlurPass extends Pass {
 
 	_drawMesh( renderer, obj ) {
 
-		var blurTransparent = this.blurTransparent;
-		var renderCameraBlur = this.renderCameraBlur;
-		var expandGeometry = this.expandGeometry;
-		var interpolateGeometry = this.interpolateGeometry;
-		var smearIntensity = this.smearIntensity;
-		var overrides = obj.motionBlur;
+		const overrides = obj.motionBlur;
+		let blurTransparent = this.blurTransparent;
+		let renderCameraBlur = this.renderCameraBlur;
+		let expandGeometry = this.expandGeometry;
+		let interpolateGeometry = this.interpolateGeometry;
+		let smearIntensity = this.smearIntensity;
 		if ( overrides ) {
 
 			if ( 'blurTransparent' in overrides ) blurTransparent = overrides.blurTransparent;
@@ -297,7 +297,7 @@ export class MotionBlurPass extends Pass {
 
 		}
 
-		var skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
+		let skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
 		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
 		if ( skip ) {
 
@@ -310,14 +310,14 @@ export class MotionBlurPass extends Pass {
 
 		}
 
-		var data = this._getMaterialState( obj );
-		var mat = this.debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+		const data = this._getMaterialState( obj );
+		const mat = this.debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
 		mat.uniforms.expandGeometry.value = expandGeometry;
 		mat.uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
 		mat.uniforms.smearIntensity.value = smearIntensity;
 
-		var projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
-		var invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
+		const projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
+		const invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
 		mat.uniforms.prevProjectionMatrix.value.copy( projMat );
 		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
 
