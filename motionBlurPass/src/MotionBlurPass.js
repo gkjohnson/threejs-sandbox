@@ -11,10 +11,6 @@ import {
 	RGBFormat,
 	HalfFloatType,
 	Matrix4,
-	OrthographicCamera,
-	Scene,
-	Mesh,
-	PlaneBufferGeometry,
 	DataTexture,
 	RGBAFormat,
 	FloatType,
@@ -266,7 +262,8 @@ export class MotionBlurPass extends Pass {
 
 	_saveMaterialState( obj ) {
 
-		const data = this._prevPosMap.get( obj );
+		const prevPosMap = this._prevPosMap;
+		const data = prevPosMap.get( obj );
 
 		if ( data.boneMatrices !== null ) {
 
@@ -279,9 +276,10 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	_drawMesh( renderer, obj ) {
+	_drawMesh( renderer, mesh ) {
 
-		const overrides = obj.motionBlur;
+		const debug = this.debug;
+		const overrides = mesh.motionBlur;
 		let blurTransparent = this.blurTransparent;
 		let renderCameraBlur = this.renderCameraBlur;
 		let expandGeometry = this.expandGeometry;
@@ -297,35 +295,38 @@ export class MotionBlurPass extends Pass {
 
 		}
 
-		let skip = blurTransparent === false && ( obj.material.transparent || obj.material.alpha < 1 );
-		skip = skip || obj.frustumCulled && ! this._frustum.intersectsObject( obj );
+		let skip = blurTransparent === false && ( mesh.material.transparent || mesh.material.alpha < 1 );
+		skip = skip || mesh.frustumCulled && ! this._frustum.intersectsObject( mesh );
 		if ( skip ) {
 
-			if ( this._prevPosMap.has( obj ) && this.debug.dontUpdateState === false ) {
+			if ( this._prevPosMap.has( mesh ) && debug.dontUpdateState === false ) {
 
-				this._saveMaterialState( obj );
+				this._saveMaterialState( mesh );
 
 			}
-			return;
 
-		}
+		} else {
 
-		const data = this._getMaterialState( obj );
-		const mat = this.debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
-		mat.uniforms.expandGeometry.value = expandGeometry;
-		mat.uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
-		mat.uniforms.smearIntensity.value = smearIntensity;
+			const camera = this.camera;
+			const data = this._getMaterialState( mesh );
+			const material = debug.display === MotionBlurPass.GEOMETRY ? data.geometryMaterial : data.velocityMaterial;
+			const uniforms = material.uniforms;
+			uniforms.expandGeometry.value = expandGeometry;
+			uniforms.interpolateGeometry.value = Math.min( 1, Math.max( 0, interpolateGeometry ) );
+			uniforms.smearIntensity.value = smearIntensity;
 
-		const projMat = renderCameraBlur ? this._prevCamProjection : this.camera.projectionMatrix;
-		const invMat = renderCameraBlur ? this._prevCamWorldInverse : this.camera.matrixWorldInverse;
-		mat.uniforms.prevProjectionMatrix.value.copy( projMat );
-		mat.uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
+			const projMat = renderCameraBlur ? this._prevCamProjection : camera.projectionMatrix;
+			const invMat = renderCameraBlur ? this._prevCamWorldInverse : camera.matrixWorldInverse;
+			uniforms.prevProjectionMatrix.value.copy( projMat );
+			uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
 
-		renderer.renderBufferDirect( this.camera, null, obj.geometry, mat, obj, null );
+			renderer.renderBufferDirect( camera, null, mesh.geometry, material, mesh, null );
 
-		if ( this.debug.dontUpdateState === false ) {
+			if ( debug.dontUpdateState === false ) {
 
-			this._saveMaterialState( obj );
+				this._saveMaterialState( mesh );
+
+			}
 
 		}
 
