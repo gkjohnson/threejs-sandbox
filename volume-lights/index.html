@@ -61,8 +61,8 @@
 				lightCount: 1,
 				randomSample: true,
 				enableFade: true,
-				fadeInDelay: 1,
-				fadeTransition: 0.1
+				fadeInDelay: 0.5,
+				fadeTransition: 0.5
 
 			};
 			var camera, scene, renderer, controls;
@@ -176,6 +176,14 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+
+				gui.add( params, 'randomSample' ).onChange( value => {
+
+					volumeLight.randomSample = value;
+					volumeLight.iteration = 0;
+
+				} );
+
 				gui.add( params, 'intensity' ).min( 0 ).max( 2 ).onChange( () => {
 
 					volumeLight.iteration = 0;
@@ -186,13 +194,6 @@
 
 					volumeLight.lightCount = value;
 					volumeLight.updateLights();
-					volumeLight.iteration = 0;
-
-				} );
-
-				gui.add( params, 'randomSample' ).onChange( value => {
-
-					volumeLight.randomSample = value;
 					volumeLight.iteration = 0;
 
 				} );
