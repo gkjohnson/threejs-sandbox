@@ -99,17 +99,20 @@ export class SSRRPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		// Set the clear state
-		var prevClearAlpha = renderer.getClearAlpha();
-		var prevAutoClear = renderer.autoClear;
-		var prevOverride = this.scene.overrideMaterial;
-		const prevRenderTarget = renderer.getRenderTarget();
-		_prevClearColor.copy( renderer.getClearColor() );
-
+		console.time('TEST')
 		const scene = this.scene;
 		const camera = this.camera;
-		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 
+		// Save the previous scene state
+		const prevClearAlpha = renderer.getClearAlpha();
+		const prevAutoClear = renderer.autoClear;
+		const prevOverride = this.scene.overrideMaterial;
+		const prevAutoUpdate = scene.autoUpdate;
+		const prevRenderTarget = renderer.getRenderTarget();
+		const pevShadowEnabled = renderer.shadowMap.enabled;
+		_prevClearColor.copy( renderer.getClearColor() );
+
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const depthBuffer = this._depthBuffer;
 		const packedBuffer = this._packedBuffer;
 		const backfaceDepthBuffer = this._backfaceDepthBuffer;
@@ -118,6 +121,8 @@ export class SSRRPass extends Pass {
 		const packedMaterial = this._packedMaterial;
 		const backfaceDepthMaterial = this._backfaceDepthMaterial;
 
+		scene.autoUpdate = false;
+		renderer.shadowMap.enabled = false;
 		renderer.autoClear = true;
 		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
 
@@ -177,6 +182,9 @@ export class SSRRPass extends Pass {
 		renderer.setRenderTarget( prevRenderTarget );
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
 		renderer.autoClear = prevAutoClear;
+		renderer.shadowMap.enabled = pevShadowEnabled;
+		scene.autoUpdate = prevAutoUpdate;
+		console.timeEnd('TEST');
 
 	}
 
