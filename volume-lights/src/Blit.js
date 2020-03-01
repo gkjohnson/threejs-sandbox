@@ -32,7 +32,7 @@ export const getBlendMaterial = function() {
         uniforms: {
             texture1: { value: null },
             texture2: { value: null },
-            iterations: { value: 1 }
+            weight: { value: 1 }
         },
 
         vertexShader: `
@@ -49,14 +49,14 @@ export const getBlendMaterial = function() {
             varying vec2 vUv;
             uniform sampler2D texture1;
             uniform sampler2D texture2;
-            uniform int iterations;
+            uniform float weight;
 
             void main() {
 
                 vec4 s1 = texture2D( texture1, vUv );
                 vec4 s2 = texture2D( texture2, vUv );
 
-                gl_FragColor = mix( s1, s2, 1.0 / float(iterations) );
+                gl_FragColor = mix( s1, s2, weight );
                 gl_FragColor.a = 1.0;
             }
         `

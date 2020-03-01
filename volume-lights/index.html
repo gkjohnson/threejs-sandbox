@@ -60,12 +60,15 @@
 				intensity: 1.0,
 				lightCount: 1,
 				randomSample: true,
+				fadeInDelay: 1,
+				fadeTransition: 0.1
 
 			};
 			var camera, scene, renderer, controls;
 			var volumeLight, directionalLight, ambientLight;
 			var plane;
 			var renderBuffer, backBuffer, frontBuffer;
+			let timeToFadeIn, clock;
 
 			var blendMat = getBlendMaterial();
 			var finalMat = new THREE.MeshBasicMaterial();
@@ -88,6 +91,9 @@
 			animate();
 
 			function init() {
+
+				clock = new THREE.Clock();
+				clock.autoStart = false;
 
 				frontBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 				backBuffer = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
@@ -231,9 +237,12 @@
 				if ( volumeLight.iteration === 0 ) {
 
 					seed = 1;
+					timeToFadeIn = 0;
 
 				}
 
+				// update light
+				volumeLight.lightMesh.material.color.setHSL( 0, 0, params.intensity );
 				volumeLight.lights.forEach( light => {
 
 					light.intensity = params.intensity / params.lightCount;
@@ -241,38 +250,38 @@
 					light.shadow.radius = 0;
 
 				} );
-
-				volumeLight.lightMesh.material.color.setHSL( 0, 0, params.intensity );
+				volumeLight.setIteration( volumeLight.iteration + 1 );
 
 				controls.update();
 
-				// TODO: jitter the camera to get AA
-				for (var i = 0; i < 1; i ++) {
-					volumeLight.setIteration( volumeLight.iteration + 1 );
+				// Update the camera jitter
+				const offset = jitterOffsets[ volumeLight.iteration % jitterOffsets.length ];
+				camera.setViewOffset(
+					renderBuffer.width, renderBuffer.height,
+					offset[ 0 ] * 1 / 16, offset[ 1 ] * 1 / 16,
+					renderBuffer.width, renderBuffer.height,
+				);
 
-					const offset = jitterOffsets[ volumeLight.iteration % jitterOffsets.length ];
-					camera.setViewOffset(
-						renderBuffer.width, renderBuffer.height,
-						offset[ 0 ] * 1 / 16, offset[ 1 ] * 1 / 16,
-						renderBuffer.width, renderBuffer.height,
-					);
-					renderer.setRenderTarget( renderBuffer );
-					renderer.render( scene, camera );
-					renderer.setRenderTarget( null );
+				// Render scene to the renderBuffer
+				renderer.setRenderTarget( renderBuffer );
+				renderer.render( scene, camera );
+				renderer.setRenderTarget( null );
 
-					blendMat.uniforms.texture2.value = renderBuffer.texture;
-					blendMat.uniforms.texture1.value = frontBuffer.texture;
-					blendMat.uniforms.iterations.value = volumeLight.iteration;
+				// Blend scene onto the backBuffer
+				blendMat.uniforms.texture2.value = renderBuffer.texture;
+				blendMat.uniforms.texture1.value = frontBuffer.texture;
+				blendMat.uniforms.weight.value = 1.0 / volumeLight.iteration;
 
-					blit( renderer, blendMat, backBuffer );
+				blit( renderer, blendMat, backBuffer );
 
-					[ backBuffer, frontBuffer ] = [ frontBuffer, backBuffer ];
-				}
-
+				// render the final scene to the page
 				finalMat.map = backBuffer.texture;
 				blit( renderer, finalMat );
 
+				[ frontBuffer, backBuffer ] = [ backBuffer, frontBuffer ];
+
 				document.getElementById( 'iterations' ).innerText = `iterations: ${ volumeLight.iteration }`;
+				timeToFadeIn += clock.getDelta();
 
 			}
 
