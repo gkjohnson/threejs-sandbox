@@ -23,6 +23,8 @@ import {
 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
+import { GeometryShader } from './GeometryShader.js';
+import { CompositeShader } from './CompositeShader.js';
 import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderChunks.js';
 
 export const MotionBlurPass = function ( scene, camera, options = {} ) {
@@ -369,97 +371,13 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 	getGeometryMaterial: function () {
 
-		return new ShaderMaterial( {
-
-			uniforms: {
-				prevProjectionMatrix: { value: new Matrix4() },
-				prevModelViewMatrix: { value: new Matrix4() },
-				prevBoneTexture: { value: null },
-				expandGeometry: { value: 0 },
-				interpolateGeometry: { value: 1 },
-				smearIntensity: { value: 1 }
-			},
-
-			vertexShader:
-				`
-				${ ShaderChunk.skinning_pars_vertex }
-				${ this.getPrevSkinningParsVertex() }
-
-				uniform mat4 prevProjectionMatrix;
-				uniform mat4 prevModelViewMatrix;
-				uniform float expandGeometry;
-				uniform float interpolateGeometry;
-				varying vec4 prevPosition;
-				varying vec4 newPosition;
-				varying vec3 color;
-
-				void main() {
-
-					${ this.getVertexTransform() }
-
-					color = (modelViewMatrix * vec4(normal.xyz, 0)).xyz;
-					color = normalize(color);
-
-				}`,
-
-			fragmentShader:
-				`
-				varying vec3 color;
-
-				void main() {
-					gl_FragColor = vec4(color, 1);
-				}`
-		} );
+		return new ShaderMaterial( GeometryShader );
 
 	},
 
 	getCompositeMaterial: function () {
 
-		return new ShaderMaterial( {
-
-			defines: {
-				SAMPLES: 30
-			},
-
-			uniforms: {
-				sourceBuffer: { value: null },
-				velocityBuffer: { value: null }
-			},
-
-			vertexShader:
-				`
-				varying vec2 vUv;
-				void main() {
-					vUv = uv;
-					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-				}
-				`,
-
-			fragmentShader:
-				`
-				varying vec2 vUv;
-				uniform sampler2D sourceBuffer;
-				uniform sampler2D velocityBuffer;
-				void main() {
-
-					vec2 vel = texture2D(velocityBuffer, vUv).xy;
-					vec4 result = texture2D(sourceBuffer, vUv);
-
-					for(int i = 1; i <= SAMPLES; i ++) {
-
-						vec2 offset = vel * (float(i - 1) / float(SAMPLES) - 0.5);
-						result += texture2D(sourceBuffer, vUv + offset);
-
-					}
-
-					result /= float(SAMPLES + 1);
-
-					gl_FragColor = result;
-
-				}
-				`
-
-		} );
+		return new ShaderMaterial( CompositeShader );
 
 	}
 
