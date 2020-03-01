@@ -25,116 +25,114 @@ import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
 
-export const MotionBlurPass = function ( scene, camera, options = {} ) {
+export class MotionBlurPass extends Pass {
 
-	Pass.call( this );
+	constructor( scene, camera, options = {} ) {
 
-	options = Object.assign( {
+		super();
 
-		samples: 15,
-		expandGeometry: 0,
-		interpolateGeometry: 1,
-		smearIntensity: 1,
-		blurTransparent: false,
-		renderCameraBlur: true,
-		renderTargetScale: 1
+		options = Object.assign( {
 
-	}, options );
+			samples: 15,
+			expandGeometry: 0,
+			interpolateGeometry: 1,
+			smearIntensity: 1,
+			blurTransparent: false,
+			renderCameraBlur: true,
+			renderTargetScale: 1
 
-	Object.defineProperty( this, 'enabled', {
+		}, options );
 
-		set: val => {
+		Object.defineProperty( this, 'enabled', {
 
-			if ( val === false ) {
+			set: val => {
 
-				this._prevPosMap.clear();
-				this._cameraMatricesNeedInitializing = true;
+				if ( val === false ) {
 
-			}
+					this._prevPosMap.clear();
+					this._cameraMatricesNeedInitializing = true;
 
-			this._enabled = val;
+				}
 
-		},
+				this._enabled = val;
 
-		get: () => this._enabled
+			},
 
-	} );
+			get: () => this._enabled
 
-	this.enabled = true;
-	this.needsSwap = true;
-
-	// settings
-	this.samples = options.samples;
-	this.expandGeometry = options.expandGeometry;
-	this.interpolateGeometry = options.interpolateGeometry;
-	this.smearIntensity = options.smearIntensity;
-	this.blurTransparent = options.blurTransparent;
-	this.renderCameraBlur = options.renderCameraBlur;
-	this.renderTargetScale = options.renderTargetScale;
-
-	this.scene = scene;
-	this.camera = camera;
-
-	this.debug = {
-
-		display: MotionBlurPass.DEFAULT,
-		dontUpdateState: false
-
-	};
-
-	// list of positions from previous frames
-	this._prevPosMap = new Map();
-	this._frustum = new Frustum();
-	this._projScreenMatrix = new Matrix4();
-	this._cameraMatricesNeedInitializing = true;
-	this._prevClearColor = new Color();
-	this._clearColor = new Color( 0, 0, 0 );
-
-	// render targets
-	this._velocityBuffer =
-		new WebGLRenderTarget( 256, 256, {
-			minFilter: LinearFilter,
-			magFilter: LinearFilter,
-			format: RGBFormat,
-			type: HalfFloatType
 		} );
-	this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
-	this._velocityBuffer.texture.generateMipmaps = false;
 
-	this._prevCamProjection = new Matrix4();
-	this._prevCamWorldInverse = new Matrix4();
+		this.enabled = true;
+		this.needsSwap = true;
 
-	this._velocityMaterial = this.getVelocityMaterial();
-	this._geomMaterial = this.getGeometryMaterial();
-	this._compositeMaterial = this.getCompositeMaterial();
+		// settings
+		this.samples = options.samples;
+		this.expandGeometry = options.expandGeometry;
+		this.interpolateGeometry = options.interpolateGeometry;
+		this.smearIntensity = options.smearIntensity;
+		this.blurTransparent = options.blurTransparent;
+		this.renderCameraBlur = options.renderCameraBlur;
+		this.renderTargetScale = options.renderTargetScale;
 
-	this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	this._compositeScene = new Scene();
+		this.scene = scene;
+		this.camera = camera;
 
-	this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
-	this._quad.frustumCulled = false;
-	this._compositeScene.add( this._quad );
+		this.debug = {
 
-};
+			display: MotionBlurPass.DEFAULT,
+			dontUpdateState: false
 
-MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
+		};
 
-	constructor: MotionBlurPass,
+		// list of positions from previous frames
+		this._prevPosMap = new Map();
+		this._frustum = new Frustum();
+		this._projScreenMatrix = new Matrix4();
+		this._cameraMatricesNeedInitializing = true;
+		this._prevClearColor = new Color();
+		this._clearColor = new Color( 0, 0, 0 );
 
-	dispose: function () {
+		// render targets
+		this._velocityBuffer =
+			new WebGLRenderTarget( 256, 256, {
+				minFilter: LinearFilter,
+				magFilter: LinearFilter,
+				format: RGBFormat,
+				type: HalfFloatType
+			} );
+		this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";
+		this._velocityBuffer.texture.generateMipmaps = false;
+
+		this._prevCamProjection = new Matrix4();
+		this._prevCamWorldInverse = new Matrix4();
+
+		this._velocityMaterial = this.getVelocityMaterial();
+		this._geomMaterial = this.getGeometryMaterial();
+		this._compositeMaterial = this.getCompositeMaterial();
+
+		this._compositeCamera = new OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+		this._compositeScene = new Scene();
+
+		this._quad = new Mesh( new PlaneBufferGeometry( 2, 2 ), this._compositeMaterial );
+		this._quad.frustumCulled = false;
+		this._compositeScene.add( this._quad );
+
+	}
+
+	dispose() {
 
 		this._velocityBuffer.dispose();
 		this._prevPosMap.clear();
 
-	},
+	}
 
-	setSize: function ( width, height ) {
+	setSize( width, height ) {
 
 		this._velocityBuffer.setSize( width * this.renderTargetScale, height * this.renderTargetScale );
 
-	},
+	}
 
-	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		// Set the clear state
 		this._prevClearColor.copy( renderer.getClearColor() );
@@ -234,7 +232,7 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
 		renderer.autoClear = prevAutoClear;
 
-	},
+	}
 
 	_getMaterialState( obj ) {
 
@@ -279,7 +277,7 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 		return data;
 
-	},
+	}
 
 	_saveMaterialState( obj ) {
 
@@ -294,7 +292,7 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 		data.matrixWorld.copy( obj.matrixWorld );
 
-	},
+	}
 
 	_drawMesh( renderer, obj ) {
 
@@ -346,28 +344,28 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
 		}
 
-	},
+	}
 
 	// Shaders
-	getVelocityMaterial: function () {
+	getVelocityMaterial() {
 
 		return new ShaderMaterial( VelocityShader );
 
-	},
+	}
 
-	getGeometryMaterial: function () {
+	getGeometryMaterial() {
 
 		return new ShaderMaterial( GeometryShader );
 
-	},
+	}
 
-	getCompositeMaterial: function () {
+	getCompositeMaterial() {
 
 		return new ShaderMaterial( CompositeShader );
 
 	}
 
-} );
+}
 
 MotionBlurPass.DEFAULT = 0;
 MotionBlurPass.VELOCITY = 1;
