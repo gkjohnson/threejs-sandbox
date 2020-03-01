@@ -18,14 +18,12 @@ import {
 	DataTexture,
 	RGBAFormat,
 	FloatType,
-	ShaderChunk,
 	ShaderMaterial
 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
-import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderChunks.js';
 
 export const MotionBlurPass = function ( scene, camera, options = {} ) {
 
@@ -351,18 +349,6 @@ MotionBlurPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 	},
 
 	// Shaders
-	getPrevSkinningParsVertex: function () {
-
-		return prev_skinning_pars_vertex;
-
-	},
-
-	getVertexTransform: function () {
-
-		return velocity_vertex;
-
-	},
-
 	getVelocityMaterial: function () {
 
 		return new ShaderMaterial( VelocityShader );
