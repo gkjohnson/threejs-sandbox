@@ -14,3 +14,6 @@ Pencil images from http://www.colourblindawareness.org/.
 - http://www.daltonize.org/search/label/Daltonize
 - http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/
 - http://mapeper.github.io/jsColorblindSimulator/
+
+## TODO
+- Understand if the functions are supposed to operate on linear or srgb color space.
