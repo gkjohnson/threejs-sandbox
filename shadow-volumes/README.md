@@ -30,3 +30,4 @@ _The resultant shadow rendered from the shadow volume._
 - Provide a warning if not all edges are bridged
 - Support spot lights
 - Add quads between all the bridges so no light leaking occurs.
+- Use three.js stencil materials
