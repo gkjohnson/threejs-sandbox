@@ -26,16 +26,16 @@ The intensity of the reflection.
 The per
 
 ## TODO / Issues
-- Reflections can make a surface appear _darker_, which is incorrect
-- Add blur based on roughness
+- Make reflective light additive blended.
+- Add blur based on roughness.
 - Support animations, normal, and roughness maps
-- Add z fade
-- Fade as we near the end of the ray
-- Add controls
+- Fade as we near the end of the ray.
 - The pass seems to make things really slow for some reason? GPU work isn't taking place until late in the frame?
-- Use a better sampling function than the current jitter
-- Improve the connected-ness of the reflections to the ground
+- Use a better sampling function than the current jitter -- halton sampling or poisson dsk.
+- Perform raycasting in a separate lower resolution pass to see where everything hits, sample color buffer in afull resolution pass and reuse sampling for sibling rays
+- Improve the connected-ness of the reflections to the ground.
 - Perform raytracing on a downscaled buffer instead of just rendering depth and normals to downscaled buffers
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
 - Objects with zero thickness create incorrect stretched reflections
+- Normals don't seem to be correct. Skewed wall on left causes stretch vase.
 - Blur with mipmaps and step through depth pyramid a la http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
