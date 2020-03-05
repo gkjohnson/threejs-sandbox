@@ -12,18 +12,21 @@ const threejsAxes = '+X+Y+Z';
 const targetAxes = '+X-Y+Z';
 
 // transforming an object to reflect a different coordinate frame
-const group = new Group();
-getBasisTransform( threejsAxes, targetAxes, group.matrix );
+const threeToTargetGroup = new Group();
+getBasisTransform( threejsAxes, targetAxes, threeToTargetGroup.matrix );
 
 // transform points the target coordinate frame in the three.js frame
-const matrix = new Matrix4();
-getBasisTransform( threejsAxes, targetAxes, matrix );
+const threeToTargetMatrix = new Matrix4();
+getBasisTransform( threejsAxes, targetAxes, threeToTargetMatrix );
 
 const position = new Vector( 1, 2, 3 );
 position.applyMatrix4( matrix );
 
 console.log( vector.x, vector.y, vector.z );
 // 1, -2, 3
+
+// See the coordinate frame
+console.log( axesToString( targetAxes ) );
 ```
 
 # API
