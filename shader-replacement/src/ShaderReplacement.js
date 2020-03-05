@@ -1,15 +1,8 @@
 export class ShaderReplacement {
 
-	constructor( shaderOrMaterial ) {
+	constructor( shader ) {
 
-		let material = shaderOrMaterial;
-		if ( ! shaderOrMaterial instanceof Material ) {
-
-			material = new ShaderMaterial( shaderOrMaterial );
-
-		}
-
-		this._sourceMaterial = material;
+		this._replacementMaterial = new ShaderMaterial( shader );
 		this._replacementMaterials = new WeakMap();
 		this._originalMaterials = new WeakMap();
 
@@ -146,13 +139,98 @@ export class ShaderReplacement {
 	createMaterial( object ) {
 
 		// TODO
-		return this._sourceMaterial.clone();
+		return this._replacementMaterial.clone();
 
 	}
 
 	updateUniforms( object, material, target ) {
 
-		// TODO
+		const replacementMaterial = this._replacementMaterial;
+		const originalDefines = replacementMaterial.defines;
+		const materialDefines = material.defines;
+		const targetDefines = target.defines;
+		for ( const key in materialDefines ) {
+		
+			if ( materialDefines[ key ] !== targetDefines[ key ] ) {
+			
+				targetDefines[ key ] = materialDefines[ key ];
+				target.needsUpdate = true;
+				
+			}
+			
+		}
+		
+		for ( const key in targetDefines ) {
+
+			if ( ! key in materialDefines ) {
+
+				if ( key in originalDefines ) {
+					
+					if ( originalDefines[ key ] !== targetDefines[ key ] ) {
+						
+						targetDefines[ key ] = originalDefines[ key ];
+						target.needsUpdate = true;
+						
+					}
+					
+				} else {
+				
+					delete targetDefines[ key ];
+					target.needsUpdate = true;
+					
+				}
+			    
+		    	} else if ( materialDefines[ key ] !== targetDefines[ key ] ) {
+			
+				targetDefines[ key ] = materialDefines[ key ];
+				target.needsUpdate = true;
+				
+			}
+			
+		}
+		
+		// NOTE: we shouldn't have to worry about using copy / equals on colors, vectors, or arrays here
+		// because we promise not to change the values.
+		const targetUniforms = target.uniforms;
+		if ( material.isShaderMaterial ) {
+			
+			const materialUniforms = material.uniformns;
+			for ( const key in targetUniforms ) {
+				
+				const materialUniform = materialUniforms[ key ];
+				const targetUniform = targetUniforms[ key ];
+				if ( materialUniform && materialUniform.value !== targetUniform.value ) {
+					
+					targetUniform.value = materialUniform.value;
+					if ( targetUniform.value.isTexture ) {
+					
+						target.needsUpdate = true;
+						
+					}
+					
+				}
+				
+			}
+			
+		} else {
+			
+			for ( const key in targetUniforms ) {
+				
+				const targetUniform = targetUniforms[ key ];
+				if ( key in material && material[ key ] !== targetUniform.value ) {
+					
+					targetUniform.value = material[ key ];
+					if ( targetUniform.value.isTexture ) {
+					
+						target.needsUpdate = true;
+						
+					}
+					
+				}
+				
+			}
+			
+		}
 
 	}
 
