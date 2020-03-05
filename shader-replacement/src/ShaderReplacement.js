@@ -10,81 +10,136 @@ export class ShaderReplacement {
 		}
 
 		this._sourceMaterial = material;
-		this._currentScene = null;
 		this._replacementMaterials = new WeakMap();
 		this._originalMaterials = new WeakMap();
 
 	}
 
-	replace( scene ) {
+	replace( scene, recursive = false, cacheCurrentMaterial = false ) {
 
-		const currentScene = this.currentScene;
-		if ( currentScene !== null && currentScene !== scene ) {
+		function applyMaterial( object ) {
 
-			throw new Error();
-
-		}
-
-		const replacementMaterials = this._replacementMaterials;
-		const originalMaterials = this._originalMaterials;
-		const cacheCurrentMaterial = currentScene === null;
-		scene.traverse( c => {
-
-			if ( ! c.isMesh && ! c.skinnedMesh ) {
+			if ( ! object.isMesh && ! object.skinnedMesh ) {
 
 				return;
 
 			}
 
-			if ( ! replacementMaterials.has( c ) ) {
+			if ( ! replacementMaterials.has( object ) ) {
 
-				const replacementMaterial = this.createMaterial( c );
-				replacementMaterials.set( c, replacementMaterial );
+				const replacementMaterial = this.createMaterial( object );
+				replacementMaterials.set( object, replacementMaterial );
 
 			}
 
-			const replacementMaterial = replacementMaterials.get( c );
+			const replacementMaterial = replacementMaterials.get( object );
 			if ( replacementMaterial === null ) {
 
 				return;
 
 			}
 
-			let originalMaterial = c.material;
+			let originalMaterial = object.material;
 			if ( cacheCurrentMaterial ) {
 
-				originalMaterials.set( c, originalMaterial );
+				originalMaterials.set( object, originalMaterial );
 
 			} else {
 
-				originalMaterials.get( c );
+				originalMaterial = originalMaterials.get( object );
 
 			}
-			this.updateUniforms( c, originalMaterial, replacementMaterial );
+			this.updateUniforms( object, originalMaterial, replacementMaterial );
 
-			c.material = replacementMaterial;
+			object.material = replacementMaterial;
 
-		} );
+		}
+		
+		const replacementMaterials = this._replacementMaterials;
+		const originalMaterials = this._originalMaterials;
+		if ( Array.isArray( scene ) ) {
+			
+			if ( recursive ) {
+			
+				for ( let i = 0, l = scene.length; i < l; i ++ ) {
+				
+					scene[ i ].traverse( applyMaterial );
+					
+				}
 
-		this._currentScene = scene;
+			} else {
+				
+				for ( let i = 0, l = scene.length; i < l; i ++ ) {
+				
+					applyMaterial( scene[ i ] );
+					
+				}
+				
+			}
+			
+		} else {
+		
+			if ( recursive ) {
+			
+				scene.traverse( applyMaterial );
+				
+			} else {
+			
+				applyMaterial( scene );
+				
+			}
+			
+		}
 
 	}
 
-	reset() {
+	reset( scene, recursive ) {
+
+		function resetMaterial( object ) {
+			
+			if ( originalMaterials.has( object ) ) {
+
+				object.material = originalMaterials.get( object );
+
+			}
+			
+		}
 
 		const currentScene = this._currentScene;
 		const originalMaterials = this._originalMaterials;
-		currentScene.traverse( c => {
-
-			if ( originalMaterials.has( c ) ) {
-
-				c.material = originalMaterials.get( c );
-
+		if ( Array.isArray( scene ) ) {
+		
+			if ( recursive ) { 
+				
+				for ( let i = 0, l = scene.length; i < l; i ++ ) {
+				
+					resetMaterial( scene[ i ] );
+					
+				}
+				
+			} else {
+				
+				for ( let i = 0, l = scene.length; i < l; i ++ ) {
+				
+					scene[ i ].traverse( resetMaterial );
+					
+				}
+				
 			}
+			
+		} else {
+			
+			if ( recursive ) {
+				
+				scene.traverse( resetMaterial );
 
-		} );
-
-		this._currentScene = null;
+			} else {
+				
+				resetMaterial( scene );
+				
+			}
+			
+		}
 
 	}
 
