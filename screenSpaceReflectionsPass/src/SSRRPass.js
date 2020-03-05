@@ -155,6 +155,7 @@ export class SSRRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
+			_debugPackedMaterial.uniforms.displayRoughness.value = 0.0;
 			_debugPackedMaterial.uniforms.texture.value = packedBuffer;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
@@ -163,6 +164,15 @@ export class SSRRPass extends Pass {
 		}
 
 		if ( debug.display === SSRRPass.ROUGHNESS ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_debugPackedMaterial.uniforms.displayRoughness.value = 1.0;
+			_debugPackedMaterial.uniforms.texture.value = packedBuffer;
+			_debugPackedQuad.render( renderer );
+			replaceOriginalValues();
+			return;
 
 		}
 

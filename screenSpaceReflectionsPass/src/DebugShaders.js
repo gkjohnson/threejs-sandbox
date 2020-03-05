@@ -2,7 +2,8 @@ export const PackedNormalDisplayShader = {
 
 	uniforms: {
 
-		texture: { value: null }
+		texture: { value: null },
+		displayRoughness: { value: 0 },
 
 	},
 
@@ -22,11 +23,18 @@ export const PackedNormalDisplayShader = {
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
 		uniform sampler2D texture;
+		uniform float displayRoughness;
 		void main() {
 
-			vec3 packedNormal = texture2D( texture, vUv ).xyz;
+			vec4 texVal = texture2D( texture, vUv );
+			float roughness = texVal.a;
+			vec3 packedNormal = texVal.xyz;
 			vec3 unpackedNormal = ( packedNormal - 0.5 ) * 2.0;
-			gl_FragColor = vec4( unpackedNormal, 1.0 );
+			gl_FragColor = mix(
+				vec4( unpackedNormal, 1.0 ),
+				vec4( roughness, roughness, roughness, 1.0 ),
+				displayRoughness
+			);
 
 		}
 	`

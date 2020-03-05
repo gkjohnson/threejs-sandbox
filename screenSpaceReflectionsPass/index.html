@@ -64,7 +64,8 @@
 				binarySearchSteps: 4,
 				stride: 30,
 				intensity: 0.5,
-				renderTargetScale: 0.5
+				renderTargetScale: 0.5,
+				display: SSRRPass.DEFAULT,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -241,6 +242,17 @@
 						onWindowResize();
 
 					} );
+				gui.add(
+					params,
+					'display',
+					{
+						DEFAULT: SSRRPass.DEFAULT,
+						NORMAL: SSRRPass.NORMAL,
+						ROUGHNESS: SSRRPass.ROUGHNESS
+					}).onChange(value => {
+						ssrrPass.debug.display = parseFloat(value);
+					});
+
 
 				gui.open();
 
