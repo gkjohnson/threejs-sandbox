@@ -75,7 +75,7 @@
 
 			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
 			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
-			import { getBasisTransform, axesToString, stringToAxes } from './src/index.js';
+			import { getBasisTransform, axesToAsciiImage, stringToAxes } from './src/index.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			var scene, renderer, camera, controls;
@@ -253,7 +253,7 @@
 						axes1.scale
 					);
 
-					const debugAxes1 = axesToString( axes1String );
+					const debugAxes1 = axesToAsciiImage( axes1String );
 					axes1Debug.innerHTML = debugAxes1;
 					console.log( 'Three.js Frame' );
 					console.log( debugAxes1 );
@@ -284,7 +284,7 @@
 						axes2.scale
 					);
 
-					const debugAxes2 = axesToString( axes2String );
+					const debugAxes2 = axesToAsciiImage( axes2String );
 					axes2Debug.innerHTML = debugAxes2;
 
 					console.log( 'Custom Frame' );
