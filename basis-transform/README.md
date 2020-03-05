@@ -72,3 +72,7 @@ Debug utility that outputs an ascii drawing of the given frame with "forward" po
      /
    Z
 ```
+
+# To Do
+
+- Provide utility for converting euler angle order from one frame into another with different orders and rotation direction.
