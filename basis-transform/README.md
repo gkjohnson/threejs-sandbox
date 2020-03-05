@@ -8,7 +8,7 @@ Helper functions for creating a matrix to transform between arbitrary cartesian 
 
 ```js
 import { Group, Vector3, Matrix4 } from '//unpkg.com/three@0.112.0/build/three.module.js';
-import { getBasisTransform, axesToString } from './src/index.js';
+import { getBasisTransform } from './src/index.js';
 
 const threejsAxes = '+X+Y+Z';
 const targetAxes = '+X-Y+Z';
@@ -25,6 +25,20 @@ matrix.decompose( group.position, group.quaternion, group.scale );
 const vector = new Vector3( 1, 2, 3 );
 vector.applyMatrix4( matrix );
 // 1, -2, 3
+```
+
+Log the frame image:
+
+```js
+import { axesToString } from './src/index.js';
+
+console.log( axesToString( '+X+Y+Z' ) );
+//      Y
+//      |
+//      |
+//      .----- X
+//     /
+//   Z
 ```
 
 # API
