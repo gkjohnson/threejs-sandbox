@@ -16,6 +16,7 @@ import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
+import { PackedNormalDisplayShader } from './DebugShaders.js';
 
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
@@ -25,6 +26,8 @@ import { LinearDepthShader } from './LinearDepthShader.js';
  * https://github.com/kode80/kode80SSR
  */
 
+const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
+const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
 const _prevClearColor = new Color();
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
@@ -42,6 +45,9 @@ export class SSRRPass extends Pass {
 
 		this.scene = scene;
 		this.camera = camera;
+		this.debug = {
+			display: SSRRPass.DEFAULT
+		};
 
 		// render targets
 		this._depthBuffer =
@@ -66,7 +72,7 @@ export class SSRRPass extends Pass {
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
-				type: HalfFloatType,
+				type: FloatType,
 				format: RGBAFormat
 			} );
 		this._packedBuffer.texture.name = "SSRRPass.Packed";
@@ -99,9 +105,10 @@ export class SSRRPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		console.time('TEST')
+		// console.time('TEST')
 		const scene = this.scene;
 		const camera = this.camera;
+		const debug = this.debug;
 
 		// Save the previous scene state
 		const prevClearAlpha = renderer.getClearAlpha();
@@ -111,6 +118,18 @@ export class SSRRPass extends Pass {
 		const prevRenderTarget = renderer.getRenderTarget();
 		const pevShadowEnabled = renderer.shadowMap.enabled;
 		_prevClearColor.copy( renderer.getClearColor() );
+
+		const replaceOriginalValues = () => {
+
+			// Restore renderer settings
+			scene.overrideMaterial = prevOverride;
+			renderer.setRenderTarget( prevRenderTarget );
+			renderer.setClearColor( this._prevClearColor, prevClearAlpha );
+			renderer.autoClear = prevAutoClear;
+			renderer.shadowMap.enabled = pevShadowEnabled;
+			scene.autoUpdate = prevAutoUpdate;
+
+		}
 
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const depthBuffer = this._depthBuffer;
@@ -126,11 +145,26 @@ export class SSRRPass extends Pass {
 		renderer.autoClear = true;
 		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
 
-		// Normal pass
+		// Roughness / Normal pass
 		scene.overrideMaterial = packedMaterial;
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
+		if ( debug.display === SSRRPass.NORMAL ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_debugPackedMaterial.uniforms.texture.value = packedBuffer;
+			_debugPackedQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
+		if ( debug.display === SSRRPass.ROUGHNESS ) {
+
+		}
 
 		// Render depth
 		scene.overrideMaterial = depthMaterial;
@@ -177,15 +211,16 @@ export class SSRRPass extends Pass {
 		renderer.clear();
 		this._compositeQuad.render( renderer );
 
-		// Restore renderer settings
-		scene.overrideMaterial = prevOverride;
-		renderer.setRenderTarget( prevRenderTarget );
-		renderer.setClearColor( this._prevClearColor, prevClearAlpha );
-		renderer.autoClear = prevAutoClear;
-		renderer.shadowMap.enabled = pevShadowEnabled;
-		scene.autoUpdate = prevAutoUpdate;
-		console.timeEnd('TEST');
+
+		replaceOriginalValues();
+		// console.timeEnd('TEST');
 
 	}
 
 }
+
+SSRRPass.DEFAULT = 0;
+SSRRPass.FRONT_DEPTH = 1;
+SSRRPass.BACK_DEPTH = 2;
+SSRRPass.NORMAL = 3;
+SSRRPass.ROUGHNESS = 4;
