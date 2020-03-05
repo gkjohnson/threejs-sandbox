@@ -30,9 +30,10 @@ vector.applyMatrix4( matrix );
 Log the frame image:
 
 ```js
-import { axesToString } from './src/index.js';
+import { axesToAsciiImage } from './src/index.js';
 
-console.log( axesToString( '+X+Y+Z' ) );
+console.log( axesToAsciiImage( '+X+Y+Z' ) );
+
 //      Y
 //      |
 //      |
@@ -55,10 +56,10 @@ Sets `target` to a matrix that transforms from the `from` frame to the `to` fram
 
 Notionally the first axis should represent the "right" direction, the second should represent "up", and the third "forward".
 
-### axesToString
+### axesToAsciiImage
 
 ```js
-axesToString( axes : string ) : string
+axesToAsciiImage( axes : string ) : string
 ```
 
 Debug utility that outputs an ascii drawing of the given frame with "forward" pointing out of the screen like so:
