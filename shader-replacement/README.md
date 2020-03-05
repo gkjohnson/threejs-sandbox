@@ -2,6 +2,11 @@
 
 # Use
 
+```js
+import { ShaderReplacement } from './src/ShaderReplacement.js';
+
+```
+
 # API
 
 ## ShaderReplacement
@@ -9,7 +14,7 @@
 ### constructor
 
 ```js
-constructor( shader : Shader )
+constructor( shader : Shader | Material )
 ```
 
 ### replace
