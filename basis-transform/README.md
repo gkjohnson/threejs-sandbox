@@ -8,16 +8,16 @@ Helper functions for creating a matrix to transform between arbitrary cartesian 
 import { Group, Vector3, Matrix4 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { getBasisTransform, axesToString } from './src/index.js';
 
-// transforming an object to reflect a different coordinate frame
 const threejsAxes = '+X+Y+Z';
 const targetAxes = '+X-Y+Z';
 
+// transforming an object to reflect a different coordinate frame
 const group = new Group();
 getBasisTransform( threejsAxes, targetAxes, group.matrix );
 
-// transform points
+// transform points the target coordinate frame in the three.js frame
 const matrix = new Matrix4();
-getBasisTransform( targetAxes, threejsAxes, matrix );
+getBasisTransform( threejsAxes, targetAxes, matrix );
 
 const position = new Vector( 1, 2, 3 );
 position.applyMatrix4( matrix );

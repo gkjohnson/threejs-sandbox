@@ -83,6 +83,8 @@
 			var axes1Debug, axes2Debug;
 			var threejsAxes = '+X+Y+Z';
 			var data1, data2, ghostPoints;
+			var invMatrix = new THREE.Matrix4();
+
 			var params = {
 
 				axes1: {
@@ -243,7 +245,7 @@
 				} else {
 
 					axes1.visible = true;
-					getBasisTransform( threejsAxes, axes1String, axes1.matrix );
+					getBasisTransform( axes1String, threejsAxes, axes1.matrix );
 
 					axes1.matrix.decompose(
 						axes1.position,
@@ -274,7 +276,7 @@
 				} else {
 
 					axes2.visible = true;
-					getBasisTransform( threejsAxes, axes2String, axes2.matrix );
+					getBasisTransform( axes2String, threejsAxes, axes2.matrix );
 
 					axes2.matrix.decompose(
 						axes2.position,
@@ -288,11 +290,13 @@
 					console.log( 'Custom Frame' );
 					console.log( debugAxes2 );
 
+					// transform points from threejs frame into the local coordinate frame
+					getBasisTransform( threejsAxes, axes2String, invMatrix );
 					data2.forEach( ( sphere, i ) => {
 
 						const ogSphere = data1[ i ];
 						sphere.position.copy( ogSphere.position );
-						sphere.position.applyMatrix4( axes2.matrix );
+						sphere.position.applyMatrix4( invMatrix );
 						ghostPoints[ i ].position.copy( ogSphere.position );
 
 					} );
