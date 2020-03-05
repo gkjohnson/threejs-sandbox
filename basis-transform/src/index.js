@@ -48,12 +48,12 @@ function getBasisTransform( from, to, targetMatrix ) {
         const fromAxis = fromAxes[ i ];
         const toAxis = toAxes[ i ];
 
-        const toIndex = nameToIndex[ toAxis.name ];
+        const fromIndex = nameToIndex[ fromAxis.name ];
         const equalNegative = fromAxis.negative === toAxis.negative;
 
-        const vector = orderedVectors[ toIndex ];
+        const vector = orderedVectors[ fromIndex ];
         vector.set( 0, 0, 0 );
-        vector[ fromAxis.name ] = equalNegative ? 1 : - 1;
+        vector[ toAxis.name ] = equalNegative ? 1 : - 1;
 
 	}
 
