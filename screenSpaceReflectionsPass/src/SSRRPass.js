@@ -151,6 +151,8 @@ export class SSRRPass extends Pass {
 		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
 
 		// Roughness / Normal pass
+		// TODO: Write a manual "material override" function that will automatically
+		// make new materials and map their uniforms to it so we can get correct surface results.
 		scene.overrideMaterial = packedMaterial;
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
@@ -264,7 +266,6 @@ export class SSRRPass extends Pass {
 		renderer.clear();
 		this._compositeQuad.render( renderer );
 
-
 		replaceOriginalValues();
 		// console.timeEnd('TEST');
 
@@ -277,3 +278,5 @@ SSRRPass.FRONT_DEPTH = 1;
 SSRRPass.BACK_DEPTH = 2;
 SSRRPass.NORMAL = 3;
 SSRRPass.ROUGHNESS = 4;
+SSRRPass.INTERSECTION_RESULTS = 5;
+SSRRPass.INTERSECTION_COLORS = 6;
