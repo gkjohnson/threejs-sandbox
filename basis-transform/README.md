@@ -13,18 +13,17 @@ import { getBasisTransform, axesToString } from './src/index.js';
 const threejsAxes = '+X+Y+Z';
 const targetAxes = '+X-Y+Z';
 
-// transforming an object to reflect a different coordinate frame
-const group = new Group();
-getBasisTransform( threejsAxes, targetAxes, group.matrix );
-
-// transform points the target coordinate frame in the three.js frame
+// Transform from +X +Y +Z to +X -Y +Z
 const matrix = new Matrix4();
 getBasisTransform( threejsAxes, targetAxes, matrix );
 
-const position = new Vector( 1, 2, 3 );
-position.applyMatrix4( matrix );
+// Create an object to represent the framee
+const group = new Group();
+matrix.decompose( group.position, group.quaternion, group.scale );
 
-console.log( vector.x, vector.y, vector.z );
+// Apply the transform to vertices
+const vector = new Vector3( 1, 2, 3 );
+vector.applyMatrix4( matrix );
 // 1, -2, 3
 ```
 
