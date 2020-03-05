@@ -61,7 +61,7 @@ function getBasisTransform( from, to, targetMatrix ) {
 
 }
 
-function axesToString( str ) {
+function axesToAsciiImage( str ) {
 
     const axes = stringToAxes( str );
     const axis0 = axes[ 0 ];
@@ -118,4 +118,4 @@ function axesToString( str ) {
 
 }
 
-export { getBasisTransform, axesToString, stringToAxes };
+export { getBasisTransform, axesToAsciiImage, stringToAxes };

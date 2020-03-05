@@ -2,31 +2,44 @@
 
 Helper functions for creating a matrix to transform between arbitrary cartesian coordinate frames.
 
+[Demo Here!](https://gkjohnson.github.io/threejs-sandbox/basis-transform/)
+
 # Use
 
 ```js
 import { Group, Vector3, Matrix4 } from '//unpkg.com/three@0.112.0/build/three.module.js';
-import { getBasisTransform, axesToString } from './src/index.js';
+import { getBasisTransform } from './src/index.js';
 
 const threejsAxes = '+X+Y+Z';
 const targetAxes = '+X-Y+Z';
 
-// transforming an object to reflect a different coordinate frame
-const threeToTargetGroup = new Group();
-getBasisTransform( threejsAxes, targetAxes, threeToTargetGroup.matrix );
+// Transform from +X +Y +Z to +X -Y +Z
+const matrix = new Matrix4();
+getBasisTransform( threejsAxes, targetAxes, matrix );
 
-// transform points the target coordinate frame in the three.js frame
-const threeToTargetMatrix = new Matrix4();
-getBasisTransform( threejsAxes, targetAxes, threeToTargetMatrix );
+// Create an object to represent the framee
+const group = new Group();
+matrix.decompose( group.position, group.quaternion, group.scale );
 
-const position = new Vector( 1, 2, 3 );
-position.applyMatrix4( matrix );
-
-console.log( vector.x, vector.y, vector.z );
+// Apply the transform to vertices
+const vector = new Vector3( 1, 2, 3 );
+vector.applyMatrix4( matrix );
 // 1, -2, 3
+```
 
-// See the coordinate frame
-console.log( axesToString( targetAxes ) );
+Log the frame image:
+
+```js
+import { axesToAsciiImage } from './src/index.js';
+
+console.log( axesToAsciiImage( '+X+Y+Z' ) );
+
+//      Y
+//      |
+//      |
+//      .----- X
+//     /
+//   Z
 ```
 
 # API
@@ -43,10 +56,10 @@ Sets `target` to a matrix that transforms from the `from` frame to the `to` fram
 
 Notionally the first axis should represent the "right" direction, the second should represent "up", and the third "forward".
 
-### axesToString
+### axesToAsciiImage
 
 ```js
-axesToString( axes : string ) : string
+axesToAsciiImage( axes : string ) : string
 ```
 
 Debug utility that outputs an ascii drawing of the given frame with "forward" pointing out of the screen like so:
