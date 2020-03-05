@@ -4,7 +4,7 @@ const basesRegex = /^([+-][xyz])([+-][xyz])([+-][xyz])$/i;
 const nameToIndex = { x: 0, y: 1, z: 2 };
 const orderedVectors = [ new Vector3(), new Vector3(), new Vector3() ];
 
-function axesToAsciiImage( axesString ) {
+function stringToAxes( axesString ) {
 
     if ( ! basesRegex.test( axesString ) ) {
 
@@ -61,7 +61,7 @@ function getBasisTransform( from, to, targetMatrix ) {
 
 }
 
-function axesToString( str ) {
+function axesToAsciiImage( str ) {
 
     const axes = stringToAxes( str );
     const axis0 = axes[ 0 ];
