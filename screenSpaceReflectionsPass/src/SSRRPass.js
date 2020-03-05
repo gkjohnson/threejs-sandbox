@@ -10,13 +10,14 @@ import {
 	Mesh,
 	PlaneBufferGeometry,
 	Color,
-	ShaderMaterial
+	ShaderMaterial,
+	MeshBasicMaterial
 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
-import { PackedNormalDisplayShader } from './DebugShaders.js';
+import { PackedNormalDisplayShader, LinearDepthDisplayShader } from './DebugShaders.js';
 
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
@@ -28,6 +29,10 @@ import { PackedNormalDisplayShader } from './DebugShaders.js';
 
 const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
 const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
+
+const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
+const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
+
 const _prevClearColor = new Color();
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
@@ -156,7 +161,7 @@ export class SSRRPass extends Pass {
 			renderer.clear();
 
 			_debugPackedMaterial.uniforms.displayRoughness.value = 0.0;
-			_debugPackedMaterial.uniforms.texture.value = packedBuffer;
+			_debugPackedMaterial.uniforms.texture.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -169,7 +174,7 @@ export class SSRRPass extends Pass {
 			renderer.clear();
 
 			_debugPackedMaterial.uniforms.displayRoughness.value = 1.0;
-			_debugPackedMaterial.uniforms.texture.value = packedBuffer;
+			_debugPackedMaterial.uniforms.texture.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -182,11 +187,49 @@ export class SSRRPass extends Pass {
 		renderer.clear();
 		renderer.render( scene, camera );
 
+		// TODO: Use a depth texture with 1 value rather than 4 (Luminance, depth texture type?)
+		// TODO: Depth looks banded right now -- instead of using float and storing the large values maybe
+		// scale from zero to one and unpack in the raymarching code
+		// TODO: Separate depth buffer resolution from final and march resolution
+		if ( debug.display === SSRRPass.FRONT_DEPTH ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_debugDepthMaterial.uniforms.texture.value = depthBuffer.texture;
+			_debugDepthMaterial.uniforms.divide.value = camera.far;
+			_debugDepthQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
 		// Render Backface Depth
 		scene.overrideMaterial = backfaceDepthMaterial;
 		renderer.setRenderTarget( backfaceDepthBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
+
+		if ( debug.display === SSRRPass.BACK_DEPTH ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_debugDepthMaterial.uniforms.texture.value = backfaceDepthBuffer.texture;
+			_debugDepthMaterial.uniforms.divide.value = camera.far;
+			_debugDepthQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
+		// TODO: Raymarch in a separate buffer and keep distance and final position in the final buffer
+		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
+		// larger than the target pixels so you can share the ray result with neighboring pixels and
+		// blend silhouette using roughness map.
+		// TODO: Jitter marching
+		// TODO: Add z fade towards the camera
+		// TODO: Add fade based on ray distance / closeness to end of steps
 
 		// Composite
 		const compositeMaterial = this._compositeMaterial;
