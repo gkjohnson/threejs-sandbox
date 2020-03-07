@@ -16,7 +16,6 @@ const shaderReplacement = new ShaderReplacement( ShaderLib.normal );
 shaderReplacement.reploace( scene, true );
 renderer.render( scene, camera );
 shaderReplacement.reset( scene, true );
-
 ```
 
 # API

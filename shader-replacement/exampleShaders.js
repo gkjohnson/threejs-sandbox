@@ -1,4 +1,4 @@
-import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderLib } from '//unpkg.com/three@0.112.0/build/three.module.js';
 
 export const normalShader = {
 	defines: {
@@ -99,7 +99,6 @@ export const opacityShader = {
 	fragmentShader:
 	`
 	varying vec2 vUv;
-	uniform float metalness;
 	uniform vec3 diffuse;
 	uniform float opacity;
 	#include <map_pars_fragment>
@@ -107,6 +106,27 @@ export const opacityShader = {
 		vec4 diffuseColor = vec4( diffuse, opacity );
 		#include <map_fragment>
 		gl_FragColor = vec4( diffuseColor.a );
+	}
+	`,
+};
+
+export const emissiveShader = {
+	defines: {
+		USE_UV : '',
+		USE_EMISSIVEMAP: ''
+	},
+	uniforms: ShaderLib.standard.uniforms,
+	vertexShader: ShaderLib.normal.vertexShader,
+	fragmentShader:
+	`
+	varying vec2 vUv;
+	uniform vec3 emissive;
+	uniform float opacity;
+	#include <emissivemap_pars_fragment>
+	void main() {
+		vec3 totalEmissiveRadiance = emissive;
+		#include <emissivemap_fragment>
+		gl_FragColor = vec4( totalEmissiveRadiance, 1.0 );
 	}
 	`,
 };

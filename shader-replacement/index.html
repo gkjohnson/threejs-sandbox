@@ -30,29 +30,25 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shader Replacement by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 
 			<br/>
 
-			Based on implementations from <a href="https://github.com/kode80/kode80SSR">here</a> and <a href="http://casual-effects.blogspot.com/2014/08/screen-space-ray-tracing.html">here</a>.
-
-			<br/>
-
-			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
+			Replace the materials used on all materials in the scene with new materials that have copied uniforms and defines from the original materials.
 		</div>
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
-			import { RGBELoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/RGBELoader.js';
-			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
-			import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
-			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/RGBELoader.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/GLTFLoader.js';
+			import { RoughnessMipmapper } from '//unpkg.com/three@0.112.0/examples/jsm/utils/RoughnessMipmapper.js'
+			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { ShaderReplacement } from './src/ShaderReplacement.js';
-			import { normalShader, uvShader, roughnessShader, metalnessShader, albedoShader, opacityShader } from './exampleShaders.js';
+			import { normalShader, uvShader, roughnessShader, metalnessShader, albedoShader, opacityShader, emissiveShader } from './exampleShaders.js';
 
 			// globals
 			var stats;
@@ -206,7 +202,8 @@
 					'UV',
 					'ROUGHNESS',
 					'METALNESS',
-					'OPACITY'
+					'OPACITY',
+					'EMISSIVE'
 				] );
 
 				gui.add( params, 'model', [
@@ -339,6 +336,31 @@
 					}
 
 					if ( ogValue !== target.defines.USE_MAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
+
+				replacementMaterials.EMISSIVE = new THREE.ShaderMaterial( emissiveShader );
+				replacementMaterials.EMISSIVE.defines = {};
+				replacementShaders.EMISSIVE = new ShaderReplacement( emissiveShader );
+				replacementShaders.EMISSIVE.updateUniforms = function( object, material, target ) {
+
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_EMISSIVEMAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_EMISSIVEMAP;
+
+					} else {
+
+						target.defines.USE_EMISSIVEMAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_EMISSIVEMAP ) {
 
 						target.needsUpdate = true;
 
