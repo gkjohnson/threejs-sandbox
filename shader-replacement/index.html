@@ -44,24 +44,27 @@
 		<script type="module">
 
 			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
-			import { RGBELoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/RGBELoader.js';
-			import { GLTFLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/GLTFLoader.js';
-			import { RoughnessMipmapper } from '//unpkg.com/three@0.112.0/examples/jsm/utils/RoughnessMipmapper.js'
-			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/RGBELoader.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+			import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { ShaderReplacement } from './src/ShaderReplacement.js';
+			import { normalShader, uvShader, roughnessShader, metalnessShader, albedoShader, opacityShader } from './exampleShaders.js';
 
 			// globals
 			var stats;
 			var params = {
 				useReplacementShader: true,
-				display: 'DEFAULT'
+				display: 'DEFAULT',
+				model: 'damagedHelmet'
 			};
+			var models = {};
 			var camera, scene, renderer, controls;
-			var replacements = {};
-			const or = new THREE.MeshStandardMaterial();
+			var replacementShaders = {};
+			var replacementMaterials = {};
 
 			init();
 			animate();
@@ -81,14 +84,26 @@
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.setClearColor( 0x0d1113 );
 
 				document.body.appendChild( renderer.domElement );
+
+				const floor = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					new THREE.ShadowMaterial( { side: 2, transparent: true, opacity: 0.25 } )
+				);
+				floor.scale.set( 10, 10, 10 );
+				floor.position.set( 0, - 1, 0 );
+				floor.rotation.x = - Math.PI / 2;
+				floor.receiveShadow = true;
+				scene.add( floor );
 
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 30, 200, 230 );
+				directionalLight.position.set( 2.5, 4, 2 );
+				directionalLight.shadow.mapSize.set( 2048, 2048 );
 				directionalLight.castShadow = true;
 				scene.add( directionalLight );
 
@@ -111,10 +126,10 @@
 					} );
 
 
-				var loader = new GLTFLoader();
-				loader.load(
+				new GLTFLoader().load(
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
 					gltf => {
+
 						var roughnessMipmapper = new RoughnessMipmapper( renderer );
 
 						gltf.scene.traverse( function ( child ) {
@@ -122,6 +137,8 @@
 							if ( child.isMesh ) {
 
 								roughnessMipmapper.generateMipmaps( child.material );
+								child.castShadow = true;
+								child.receiveShadow = true;
 
 							}
 
@@ -130,6 +147,37 @@
 						scene.add( gltf.scene );
 
 						roughnessMipmapper.dispose();
+
+						models.damagedHelmet = gltf.scene;
+
+					}
+				);
+
+				new GLTFLoader().load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
+					gltf => {
+
+						var roughnessMipmapper = new RoughnessMipmapper( renderer );
+
+						gltf.scene.traverse( function ( child ) {
+
+							if ( child.isMesh ) {
+
+								roughnessMipmapper.generateMipmaps( child.material );
+								child.castShadow = true;
+								child.receiveShadow = true;
+
+							}
+
+						} );
+
+						gltf.scene.scale.set( 4, 4, 4 );
+						gltf.scene.position.y = - 1;
+						scene.add( gltf.scene );
+
+						roughnessMipmapper.dispose();
+
+						models.flightHelmet = gltf.scene;
 
 					}
 				);
@@ -153,24 +201,150 @@
 
 				gui.add( params, 'display', [
 					'DEFAULT',
+					'ALBEDO',
 					'NORMAL',
 					'UV',
 					'ROUGHNESS',
 					'METALNESS',
-					'AMBIENT_LIGHT',
-					'LIGHT',
-					'ALBEDO',
+					'OPACITY'
+				] );
+
+				gui.add( params, 'model', [
+					'flightHelmet',
+					'damagedHelmet'
 				] );
 
 				gui.open();
 
-				replacements.NORMAL = new ShaderReplacement( THREE.ShaderLib.normal );
-				replacements.NORMAL._replacementMaterial.fragmentShader =
-					'#extension GL_OES_standard_derivatives : enable\n' + THREE.ShaderLib.normal.fragmentShader;
-				replacements.NORMAL._replacementMaterial.defines.USE_NORMALMAP = '';
-				replacements.NORMAL._replacementMaterial.defines.TANGENTSPACE_NORMALMAP = '';
-				replacements.NORMAL._replacementMaterial.defines.USE_UV = '';
+				replacementMaterials.NORMAL = new THREE.ShaderMaterial( normalShader );
+				replacementMaterials.NORMAL.defines = {};
+				replacementShaders.NORMAL = new ShaderReplacement( normalShader );
+				replacementShaders.NORMAL.updateUniforms = function( object, material, target ) {
 
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_NORMALMAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_NORMALMAP;
+						delete target.defines.TANGENTSPACE_NORMALMAP;
+
+					} else {
+
+						target.defines.TANGENTSPACE_NORMALMAP = '';
+						target.defines.USE_NORMALMAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_NORMALMAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
+
+				replacementShaders.UV = new ShaderReplacement( uvShader );
+				replacementMaterials.UV = new THREE.ShaderMaterial( uvShader );
+
+				replacementMaterials.ROUGHNESS = new THREE.ShaderMaterial( roughnessShader );
+				replacementMaterials.ROUGHNESS.defines = {};
+				replacementShaders.ROUGHNESS = new ShaderReplacement( roughnessShader );
+				replacementShaders.ROUGHNESS.updateUniforms = function( object, material, target ) {
+
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_ROUGHNESSMAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_ROUGHNESSMAP;
+
+					} else {
+
+						target.defines.USE_ROUGHNESSMAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_ROUGHNESSMAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
+
+				replacementMaterials.METALNESS = new THREE.ShaderMaterial( metalnessShader );
+				replacementMaterials.METALNESS.defines = {};
+				replacementShaders.METALNESS = new ShaderReplacement( metalnessShader );
+				replacementShaders.METALNESS.updateUniforms = function( object, material, target ) {
+
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_METALNESSMAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_METALNESSMAP;
+
+					} else {
+
+						target.defines.USE_METALNESSMAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_METALNESSMAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
+
+				replacementMaterials.ALBEDO = new THREE.ShaderMaterial( albedoShader );
+				replacementMaterials.ALBEDO.defines = {};
+				replacementShaders.ALBEDO = new ShaderReplacement( albedoShader );
+				replacementShaders.ALBEDO.updateUniforms = function( object, material, target ) {
+
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_MAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_MAP;
+
+					} else {
+
+						target.defines.USE_MAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_MAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
+
+				replacementMaterials.OPACITY = new THREE.ShaderMaterial( opacityShader );
+				replacementMaterials.OPACITY.defines = {};
+				replacementShaders.OPACITY = new ShaderReplacement( opacityShader );
+				replacementShaders.OPACITY.updateUniforms = function( object, material, target ) {
+
+					this.constructor.prototype.updateUniforms.apply( this, arguments );
+					const ogValue = target.defines.USE_MAP;
+					if ( ! target.uniforms.map.value ) {
+
+						delete target.defines.USE_MAP;
+
+					} else {
+
+						target.defines.USE_MAP = '';
+
+					}
+
+					if ( ogValue !== target.defines.USE_MAP ) {
+
+						target.needsUpdate = true;
+
+					}
+
+				};
 
 			}
 
@@ -183,8 +357,6 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
-				composer.setSize( width, height );
-				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 			}
 
@@ -200,8 +372,25 @@
 
 			function render() {
 
+				for ( const key in models ) {
+
+					models[ key ].visible = false;
+
+				}
+
+				if ( params.model in models ) {
+
+					models[ params.model ].visible = true;
+					const box = new THREE.Box3();
+					box.setFromObject( models[ params.model ] );
+					box.getCenter( controls.target );
+					controls.update();
+
+				}
+
 				const ogBackground = scene.background;
-				const replacer = replacements[ params.display ];
+				const replacer = replacementShaders[ params.display ];
+				const material = replacementMaterials[ params.display ];
 				if ( replacer ) {
 
 					scene.background = null;
@@ -211,7 +400,7 @@
 
 					} else {
 
-						scene.overrideMaterial = replacer._replacementMaterial;
+						scene.overrideMaterial = material;
 
 					}
 
@@ -219,13 +408,12 @@
 
 				renderer.render( scene, camera );
 
-				window.scene = scene;
 				if ( replacer ) {
 
 					scene.background = ogBackground;
 					if ( params.useReplacementShader ) {
 
-						// replacer.reset( scene, true );
+						replacer.reset( scene, true );
 
 					} else {
 

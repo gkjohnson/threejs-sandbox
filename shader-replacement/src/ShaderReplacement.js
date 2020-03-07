@@ -102,7 +102,6 @@ export class ShaderReplacement {
 
 		}
 
-		const currentScene = this._currentScene;
 		const originalMaterials = this._originalMaterials;
 		if ( Array.isArray( scene ) ) {
 
@@ -153,41 +152,46 @@ export class ShaderReplacement {
 		const originalDefines = replacementMaterial.defines;
 		const materialDefines = material.defines;
 		const targetDefines = target.defines;
-		for ( const key in materialDefines ) {
 
-			if ( materialDefines[ key ] !== targetDefines[ key ] ) {
+		if ( materialDefines ) {
 
-				targetDefines[ key ] = materialDefines[ key ];
-				target.needsUpdate = true;
+			for ( const key in materialDefines ) {
 
-			}
+				if ( key in materialDefines && materialDefines[ key ] !== targetDefines[ key ] ) {
 
-		}
-
-		for ( const key in targetDefines ) {
-
-			if ( ! key in materialDefines ) {
-
-				if ( key in originalDefines ) {
-
-					if ( originalDefines[ key ] !== targetDefines[ key ] ) {
-
-						targetDefines[ key ] = originalDefines[ key ];
-						target.needsUpdate = true;
-
-					}
-
-				} else {
-
-					delete targetDefines[ key ];
+					targetDefines[ key ] = materialDefines[ key ];
 					target.needsUpdate = true;
 
 				}
 
-		    	} else if ( materialDefines[ key ] !== targetDefines[ key ] ) {
+			}
 
-				targetDefines[ key ] = materialDefines[ key ];
-				target.needsUpdate = true;
+			for ( const key in targetDefines ) {
+
+				if ( ! ( key in materialDefines ) ) {
+
+					if ( key in originalDefines ) {
+
+						if ( originalDefines[ key ] !== targetDefines[ key ] ) {
+
+							targetDefines[ key ] = originalDefines[ key ];
+							target.needsUpdate = true;
+
+						}
+
+					} else {
+
+						delete targetDefines[ key ];
+						target.needsUpdate = true;
+
+					}
+
+				} else if ( materialDefines[ key ] !== targetDefines[ key ] ) {
+
+					targetDefines[ key ] = materialDefines[ key ];
+					target.needsUpdate = true;
+
+				}
 
 			}
 
