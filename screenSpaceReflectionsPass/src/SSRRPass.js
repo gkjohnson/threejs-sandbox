@@ -68,6 +68,50 @@ export class SSRRPass extends Pass {
 
 		// TODO: Handle normal maps, roughness maps here
 		this._packedReplacement = new ShaderReplacement( PackedShader );
+		this._packedReplacement.updateUniforms = function( object, material, target ) {
+
+			this.constructor.prototype.updateUniforms.apply( this, arguments );
+
+			target.defines.USE_UV = '';
+
+			// TODO: Why is the roughness map not showing up?
+			let originalDefine;
+			originalDefine = target.defines.USE_ROUGHNESSMAP;
+			if ( target.uniforms.roughnessMap.value ) {
+
+				target.defines.USE_ROUGHNESSMAP = '';
+
+			} else {
+
+				delete target.defines.USE_ROUGHNESSMAP;
+
+			}
+
+			if ( originalDefine !== target.defines.USE_ROUGHNESSMAP ) {
+
+				target.needsUpdate = true;
+			}
+
+			// TODO: Why does enabling normal map cause the model to turn black?
+			originalDefine = target.defines.USE_NORMALMAP;
+			if ( target.uniforms.normalMap.value ) {
+
+				// target.defines.USE_NORMALMAP = '';
+				// target.defines.TANGENTSPACE_NORMALMAP = '';
+
+			} else {
+
+				delete target.defines.USE_NORMALMAP;
+				delete target.defines.TANGENTSPACE_NORMALMAP;
+
+			}
+
+			if ( originalDefine !== target.defines.USE_NORMALMAP ) {
+
+				target.needsUpdate = true;
+			}
+
+		}
 
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {

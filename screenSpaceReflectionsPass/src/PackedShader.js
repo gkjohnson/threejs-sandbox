@@ -14,10 +14,14 @@ export const PackedShader =  {
 
 	vertexShader: /* glsl */`
 		#extension GL_OES_standard_derivatives : enable
-		#define PHYSICAL
+		#define STANDARD
 		varying vec3 vViewPosition;
 		#ifndef FLAT_SHADED
 			varying vec3 vNormal;
+			#ifdef USE_TANGENT
+				varying vec3 vTangent;
+				varying vec3 vBitangent;
+			#endif
 		#endif
 		#include <common>
 		#include <uv_pars_vertex>
@@ -41,6 +45,10 @@ export const PackedShader =  {
 			#include <defaultnormal_vertex>
 		#ifndef FLAT_SHADED
 			vNormal = normalize( transformedNormal );
+			#ifdef USE_TANGENT
+				vTangent = normalize( transformedTangent );
+				vBitangent = normalize( cross( vNormal, vTangent ) * tangent.w );
+			#endif
 		#endif
 			#include <begin_vertex>
 			#include <morphtarget_vertex>
@@ -49,7 +57,7 @@ export const PackedShader =  {
 			#include <project_vertex>
 			#include <logdepthbuf_vertex>
 			#include <clipping_planes_vertex>
-			vViewPosition = mvPosition.xyz;
+			vViewPosition = - mvPosition.xyz;
 			#include <worldpos_vertex>
 			#include <shadowmap_vertex>
 			#include <fog_vertex>
@@ -58,19 +66,37 @@ export const PackedShader =  {
 
 	fragmentShader: /* glsl */`
 		#extension GL_OES_standard_derivatives : enable
-		#define PHYSICAL
+		#define STANDARD
+		#ifdef PHYSICAL
+			#define REFLECTIVITY
+			#define CLEARCOAT
+			#define TRANSPARENCY
+		#endif
 		uniform vec3 diffuse;
 		uniform vec3 emissive;
 		uniform float roughness;
 		uniform float metalness;
 		uniform float opacity;
-		#ifndef STANDARD
-			uniform float clearCoat;
-			uniform float clearCoatRoughness;
+		#ifdef TRANSPARENCY
+			uniform float transparency;
+		#endif
+		#ifdef REFLECTIVITY
+			uniform float reflectivity;
+		#endif
+		#ifdef CLEARCOAT
+			uniform float clearcoat;
+			uniform float clearcoatRoughness;
+		#endif
+		#ifdef USE_SHEEN
+			uniform vec3 sheen;
 		#endif
 		varying vec3 vViewPosition;
 		#ifndef FLAT_SHADED
 			varying vec3 vNormal;
+			#ifdef USE_TANGENT
+				varying vec3 vTangent;
+				varying vec3 vBitangent;
+			#endif
 		#endif
 		#include <common>
 		#include <packing>
@@ -83,16 +109,17 @@ export const PackedShader =  {
 		#include <aomap_pars_fragment>
 		#include <lightmap_pars_fragment>
 		#include <emissivemap_pars_fragment>
-		#include <envmap_pars_fragment>
-		#include <fog_pars_fragment>
 		#include <bsdfs>
 		#include <cube_uv_reflection_fragment>
+		#include <envmap_common_pars_fragment>
+		#include <envmap_physical_pars_fragment>
+		#include <fog_pars_fragment>
 		#include <lights_pars_begin>
-		// #include <lights_pars_maps>
 		#include <lights_physical_pars_fragment>
 		#include <shadowmap_pars_fragment>
 		#include <bumpmap_pars_fragment>
 		#include <normalmap_pars_fragment>
+		#include <clearcoat_normalmap_pars_fragment>
 		#include <roughnessmap_pars_fragment>
 		#include <metalnessmap_pars_fragment>
 		#include <logdepthbuf_pars_fragment>
@@ -111,6 +138,8 @@ export const PackedShader =  {
 			#include <metalnessmap_fragment>
 			#include <normal_fragment_begin>
 			#include <normal_fragment_maps>
+			#include <clearcoat_normal_fragment_begin>
+			#include <clearcoat_normal_fragment_maps>
 			#include <emissivemap_fragment>
 			#include <lights_physical_fragment>
 			#include <lights_fragment_begin>
@@ -118,6 +147,9 @@ export const PackedShader =  {
 			#include <lights_fragment_end>
 			#include <aomap_fragment>
 			vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+			#ifdef TRANSPARENCY
+				diffuseColor.a *= saturate( 1. - transparency + linearToRelativeLuminance( reflectedLight.directSpecular + reflectedLight.indirectSpecular ) );
+			#endif
 			gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 			#include <tonemapping_fragment>
 			#include <encodings_fragment>
