@@ -1,4 +1,4 @@
-import { ShaderLib } from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
 export const normalShader = {
 	defines: {
