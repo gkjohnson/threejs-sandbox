@@ -43,7 +43,7 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
 			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
 			import { RGBELoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/RGBELoader.js';
 			import { GLTFLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/GLTFLoader.js';
@@ -56,8 +56,12 @@
 			// globals
 			var stats;
 			var params = {
+				useReplacementShader: true,
+				display: 'DEFAULT'
 			};
 			var camera, scene, renderer, controls;
+			var replacements = {};
+			const or = new THREE.MeshStandardMaterial();
 
 			init();
 			animate();
@@ -65,7 +69,7 @@
 			function init() {
 
 				// initialize renderer, scene, camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
 				camera.position.set( -2.5, 1, 2 );
 
 				scene = new THREE.Scene();
@@ -76,6 +80,7 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 
 				document.body.appendChild( renderer.domElement );
 
@@ -135,7 +140,7 @@
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 5;
+				// controls.minDistance = 5;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -144,7 +149,28 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add( params, 'useReplacementShader' );
+
+				gui.add( params, 'display', [
+					'DEFAULT',
+					'NORMAL',
+					'UV',
+					'ROUGHNESS',
+					'METALNESS',
+					'AMBIENT_LIGHT',
+					'LIGHT',
+					'ALBEDO',
+				] );
+
 				gui.open();
+
+				replacements.NORMAL = new ShaderReplacement( THREE.ShaderLib.normal );
+				replacements.NORMAL._replacementMaterial.fragmentShader =
+					'#extension GL_OES_standard_derivatives : enable\n' + THREE.ShaderLib.normal.fragmentShader;
+				replacements.NORMAL._replacementMaterial.defines.USE_NORMALMAP = '';
+				replacements.NORMAL._replacementMaterial.defines.TANGENTSPACE_NORMALMAP = '';
+				replacements.NORMAL._replacementMaterial.defines.USE_UV = '';
+
 
 			}
 
@@ -173,9 +199,42 @@
 			}
 
 			function render() {
-				camera.lookAt( scene.position );
+
+				const ogBackground = scene.background;
+				const replacer = replacements[ params.display ];
+				if ( replacer ) {
+
+					scene.background = null;
+					if ( params.useReplacementShader ) {
+
+						replacer.replace( scene, true );
+
+					} else {
+
+						scene.overrideMaterial = replacer._replacementMaterial;
+
+					}
+
+				}
 
 				renderer.render( scene, camera );
+
+				window.scene = scene;
+				if ( replacer ) {
+
+					scene.background = ogBackground;
+					if ( params.useReplacementShader ) {
+
+						// replacer.reset( scene, true );
+
+					} else {
+
+						scene.overrideMaterial = null;
+
+					}
+
+				}
+
 			}
 
 		</script>
