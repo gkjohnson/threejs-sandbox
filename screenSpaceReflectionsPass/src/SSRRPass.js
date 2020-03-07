@@ -6,8 +6,8 @@ import {
 	RGBAFormat,
 	Color,
 	ShaderMaterial,
-} from '//unpkg.com/three@0.112.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
+} from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
