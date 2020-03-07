@@ -12,7 +12,7 @@ export const LinearDepthShader = {
 	fragmentShader: /* glsl */`
 		varying vec3 vViewPosition;
 		void main() {
-			gl_FragColor = vec4(vViewPosition.z);
+			gl_FragColor = vec4( vViewPosition.z );
 		}
 	`
 

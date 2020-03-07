@@ -3,21 +3,16 @@ import {
 	FloatType,
 	BackSide,
 	WebGLRenderTarget,
-	HalfFloatType,
 	RGBAFormat,
-	OrthographicCamera,
-	Scene,
-	Mesh,
-	PlaneBufferGeometry,
 	Color,
 	ShaderMaterial,
-	MeshBasicMaterial
 } from '//unpkg.com/three@0.112.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
 import { PackedNormalDisplayShader, LinearDepthDisplayShader } from './DebugShaders.js';
+import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
@@ -64,14 +59,15 @@ export class SSRRPass extends Pass {
 			} );
 		this._depthBuffer.texture.name = "SSRRPass.Depth";
 		this._depthBuffer.texture.generateMipmaps = false;
-		this._depthMaterial = new ShaderMaterial( LinearDepthShader );
+		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
-		this._backfaceDepthMaterial = new ShaderMaterial( LinearDepthShader );
-		this._backfaceDepthMaterial.side = BackSide;
+		this._backfaceDepthReplacement = new ShaderReplacement( LinearDepthShader );
+		this._backfaceDepthReplacement._replacementMaterial.side = BackSide;
 
-		this._packedMaterial = new ShaderMaterial( PackedShader );
+		// TODO: Handle normal maps, roughness maps here
+		this._packedReplacement = new ShaderReplacement( PackedShader );
 
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -124,6 +120,15 @@ export class SSRRPass extends Pass {
 		const pevShadowEnabled = renderer.shadowMap.enabled;
 		_prevClearColor.copy( renderer.getClearColor() );
 
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
+		const depthBuffer = this._depthBuffer;
+		const packedBuffer = this._packedBuffer;
+		const backfaceDepthBuffer = this._backfaceDepthBuffer;
+
+		const depthReplacement = this._depthReplacement;
+		const backfaceDepthReplacement = this._backfaceDepthReplacement;
+		const packedReplacement = this._packedReplacement;
+
 		const replaceOriginalValues = () => {
 
 			// Restore renderer settings
@@ -133,17 +138,9 @@ export class SSRRPass extends Pass {
 			renderer.autoClear = prevAutoClear;
 			renderer.shadowMap.enabled = pevShadowEnabled;
 			scene.autoUpdate = prevAutoUpdate;
+			packedReplacement.reset( scene, true )
 
 		}
-
-		const finalBuffer = this.renderToScreen ? null : writeBuffer;
-		const depthBuffer = this._depthBuffer;
-		const packedBuffer = this._packedBuffer;
-		const backfaceDepthBuffer = this._backfaceDepthBuffer;
-
-		const depthMaterial = this._depthMaterial;
-		const packedMaterial = this._packedMaterial;
-		const backfaceDepthMaterial = this._backfaceDepthMaterial;
 
 		scene.autoUpdate = false;
 		renderer.shadowMap.enabled = false;
@@ -153,7 +150,7 @@ export class SSRRPass extends Pass {
 		// Roughness / Normal pass
 		// TODO: Write a manual "material override" function that will automatically
 		// make new materials and map their uniforms to it so we can get correct surface results.
-		scene.overrideMaterial = packedMaterial;
+		packedReplacement.replace( scene, true, true );
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
@@ -184,7 +181,7 @@ export class SSRRPass extends Pass {
 		}
 
 		// Render depth
-		scene.overrideMaterial = depthMaterial;
+		depthReplacement.replace( scene, true );
 		renderer.setRenderTarget( depthBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
@@ -207,7 +204,7 @@ export class SSRRPass extends Pass {
 		}
 
 		// Render Backface Depth
-		scene.overrideMaterial = backfaceDepthMaterial;
+		backfaceDepthReplacement.replace( scene, true );
 		renderer.setRenderTarget( backfaceDepthBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
