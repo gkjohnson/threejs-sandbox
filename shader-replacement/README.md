@@ -5,6 +5,18 @@
 ```js
 import { ShaderReplacement } from './src/ShaderReplacement.js';
 
+// ...
+
+const shader = ShaderLib.normal;
+shader.defines.USE_NORMALMAP = '';
+shader.defines.TANGENTSPACE_NORMALMAP = '';
+shader.defines.USE_UV = '';
+
+const shaderReplacement = new ShaderReplacement( ShaderLib.normal );
+shaderReplacement.reploace( scene, true );
+renderer.render( scene, camera );
+shaderReplacement.reset( scene, true );
+
 ```
 
 # API
@@ -14,19 +26,27 @@ import { ShaderReplacement } from './src/ShaderReplacement.js';
 ### constructor
 
 ```js
-constructor( shader : Shader | Material )
+constructor( shader : Shader )
 ```
 
 ### replace
 
 ```js
-replace( scene : Scene || Array< Object3D > ) : void
+replace(
+	scene : Scene | Array< Object3D >,
+	recursive = false : Boolean,
+	cacheMaterial = true : Boolean
+) : void
 ```
 
 ### reset
 
 ```js
-reset() : void
+reset(
+	scene : Scene | Array< Object3D >,
+	recursive = false : Boolean,
+	cacheMaterial = true : Boolean
+) : void
 ```
 
 ### createMaterial
@@ -42,5 +62,5 @@ createMaterial( object : Object3D ) : Material | null
 _overrideable_
 
 ```js
-updateUniforms( object, target ) : void
+updateUniforms( object : Object3D, material : Material, target : ShaderMaterial ) : void
 ```
