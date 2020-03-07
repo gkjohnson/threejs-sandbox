@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - per-object motion blur</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+
+			#axes-output {
+				position: absolute;
+				bottom: 10px;
+				left: 10px;
+				background: white;
+				color: #455a64;
+				text-align: initial;
+			}
+
+			#axes-output:before {
+				content: 'Console Utility';
+				color: white;
+				position: absolute;
+				top: -20px;
+				left: 0;
+			}
+
+			#axes-output > div {
+				display: inline-block;
+				white-space: pre;
+				font-family: monospace;
+				padding: 20px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Basis Conversion Utility by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Utility for generating a matrix to transform between arbitrary cartesian coordinate frames.
+			</br>
+			The three.js frame is on the left.
+			</br>
+			</br>
+			The bright points have been transformed from the three.js coordinate system to display
+			</br>
+			in the same position in customizable coordinate frame using the resulting matrix.
+		</div>
+
+		<div id="axes-output">
+			<div class="axes1"></div>
+			<div class="axes2"></div>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { getBasisTransform, axesToAsciiImage, stringToAxes } from './src/index.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			var scene, renderer, camera, controls;
+			var axes1, axes2;
+			var axes1Debug, axes2Debug;
+			var threejsAxes = '+X+Y+Z';
+			var data1, data2, ghostPoints;
+			var invMatrix = new THREE.Matrix4();
+
+			var params = {
+
+				axes1: {
+
+					right: '+X',
+					up: '+Y',
+					forward: '+Z',
+
+				},
+
+				axes2: {
+
+					right: '+X',
+					up: '-Y',
+					forward: '+Z',
+
+				},
+
+				updatePoints() {
+
+					data1.forEach( sphere =>
+						sphere
+							.position
+							.set(
+								Math.random() - 0.5,
+								Math.random() - 0.5,
+								Math.random() - 0.5
+							)
+					);
+					onAxisChange();
+
+				}
+
+			};
+
+			var axisOptions = [
+
+				'+X',
+				'-X',
+				'+Y',
+				'-Y',
+				'+Z',
+				'-Z',
+
+			];
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x181f23 );
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				document.body.appendChild( renderer.domElement );
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 5, 5, 5 );
+
+				scene = new THREE.Scene();
+
+				controls = new OrbitControls( camera, renderer.domElement );
+
+				var axes1Parent = new THREE.Group();
+				axes1Parent.position.x = - 1.5;
+				axes1 = new THREE.AxesHelper();
+				axes1Parent.add( axes1 );
+				scene.add( axes1Parent );
+
+				var axes2Parent = new THREE.Group();
+				axes2Parent.position.x = 1.5;
+				axes2 = new THREE.AxesHelper();
+				axes2Parent.add( axes2 );
+				scene.add( axes2Parent );
+
+				const gui = new dat.GUI();
+				gui.add( params.axes2, 'right', axisOptions ).onChange( onAxisChange );
+				gui.add( params.axes2, 'up', axisOptions ).onChange( onAxisChange );
+				gui.add( params.axes2, 'forward', axisOptions ).onChange( onAxisChange );
+				gui.add( params, 'updatePoints' );
+
+				axes1Debug = document.querySelector( '#axes-output .axes1' );
+				axes2Debug = document.querySelector( '#axes-output .axes2' );
+
+				ghostPoints = [];
+				data1 = new Array( 3 ).fill().map( () => {
+
+					const sphere = new THREE.Mesh( new THREE.SphereBufferGeometry( 0.025, 20, 20 ) );
+					axes1.add( sphere );
+
+					const ghostSphere = sphere.clone();
+					ghostSphere.material = sphere.material.clone();
+					ghostSphere.material.transparent = true;
+					ghostSphere.material.depthWrite = false;
+					ghostSphere.material.opacity = 0.1;
+					axes2.add( ghostSphere );
+					ghostPoints.push( ghostSphere );
+
+					return sphere;
+
+				} );
+
+				data2 = new Array( 3 ).fill().map( ( el, i ) => {
+
+					const sphere = data1[ i ].clone();
+					axes2.add( sphere );
+					return sphere;
+
+				} );
+
+				onWindowResize();
+				params.updatePoints();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+			}
+
+			function convertStringToMonospaceHTML( str ) {
+
+				return str
+					.split( /\n/g )
+					.map( line => {
+
+						const html = [ ...line ].map( c => `<span class="char">${ c }</span>` ).join( '' );
+						return `<div class="line">${ html }</div>`;
+
+					} )
+					.join( '' );
+
+			}
+
+			function onAxisChange() {
+
+				const axes1Params = params.axes1;
+				const axes1String = `${ axes1Params.right }${ axes1Params.up }${ axes1Params.forward }`;
+				let right, up, forward;
+				[ right, up, forward ] = stringToAxes( axes1String );
+
+				if (
+					right.name === forward.name ||
+					right.name === up.name ||
+					forward.name === up.name
+				) {
+
+					axes1.visible = false;
+					axes1Debug.innerHTML = '';
+
+				} else {
+
+					axes1.visible = true;
+					getBasisTransform( axes1String, threejsAxes, axes1.matrix );
+
+					axes1.matrix.decompose(
+						axes1.position,
+						axes1.quaternion,
+						axes1.scale
+					);
+
+					const debugAxes1 = axesToAsciiImage( axes1String );
+					axes1Debug.innerHTML = debugAxes1;
+					console.log( 'Three.js Frame' );
+					console.log( debugAxes1 );
+
+				}
+
+				const axes2Params = params.axes2;
+				const axes2String = `${ axes2Params.right }${ axes2Params.up }${ axes2Params.forward }`;
+				[ right, up, forward ] = stringToAxes( axes2String );
+
+				if (
+					right.name === forward.name ||
+					right.name === up.name ||
+					forward.name === up.name
+				) {
+
+					axes2.visible = false;
+					axes2Debug.innerHTML = '';
+
+				} else {
+
+					axes2.visible = true;
+					getBasisTransform( axes2String, threejsAxes, axes2.matrix );
+
+					axes2.matrix.decompose(
+						axes2.position,
+						axes2.quaternion,
+						axes2.scale
+					);
+
+					const debugAxes2 = axesToAsciiImage( axes2String );
+					axes2Debug.innerHTML = debugAxes2;
+
+					console.log( 'Custom Frame' );
+					console.log( debugAxes2 );
+
+					// transform points from threejs frame into the local coordinate frame
+					getBasisTransform( threejsAxes, axes2String, invMatrix );
+					data2.forEach( ( sphere, i ) => {
+
+						const ogSphere = data1[ i ];
+						sphere.position.copy( ogSphere.position );
+						sphere.position.applyMatrix4( invMatrix );
+						ghostPoints[ i ].position.copy( ogSphere.position );
+
+					} );
+
+				}
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				renderer.render( scene, camera );
+
+			}
+
+			init();
+			animate();
+
+		</script>
+	</body>
+</html>
