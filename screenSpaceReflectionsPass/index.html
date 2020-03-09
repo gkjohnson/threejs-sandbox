@@ -60,6 +60,7 @@
 			// globals
 			var stats;
 			var params = {
+				enabled: true,
 				steps: 10,
 				binarySearchSteps: 4,
 				stride: 30,
@@ -231,6 +232,7 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add(params, 'enabled' );
 				gui.add(params, 'stride', 1, 60);
 				gui.add(params, 'steps', 2, 200);
 				gui.add(params, 'binarySearchSteps', 0, 20);
@@ -292,6 +294,7 @@
 				ssrrPass.steps = params.steps;
 				ssrrPass.stride = params.stride;
 				ssrrPass.binarySearchSteps = params.binarySearchSteps;
+				ssrrPass.enabled = params.enabled;
 
 				composer.render();
 			}
