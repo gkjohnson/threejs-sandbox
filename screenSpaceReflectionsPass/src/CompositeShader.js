@@ -107,6 +107,7 @@ export const CompositeShader = {
 			// View space information
 			vec3 vpos =  depthSample * ray;
 			vec3 vnorm = UnpackNormal(dataSample);
+			float roughness = dataSample.a;
 			vec3 dir = normalize(reflect(normalize(vpos), normalize(vnorm)));
 
 			// Define view space values
@@ -225,6 +226,7 @@ export const CompositeShader = {
 
 				// TODO: Add z fade towards camera
 
+				// result += col * intensity * ( 1.0 - roughness );
 				result += col * intensity;
 			}
 

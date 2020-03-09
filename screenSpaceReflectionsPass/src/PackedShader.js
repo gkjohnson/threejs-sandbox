@@ -1,3 +1,5 @@
+import { Matrix3, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+
 export const PackedShader =  {
 
 	uniforms: {
@@ -8,7 +10,10 @@ export const PackedShader =  {
 		metalnessMap: { value: null },
 		metalness: { value: 0 },
 
-		normalMap: { value: null }
+		normalMap: { value: null },
+		normalScale: { value: new Vector2() },
+
+		uvTransform: { value: new Matrix3() }
 
 	},
 
@@ -157,6 +162,7 @@ export const PackedShader =  {
 			#include <premultiplied_alpha_fragment>
 			#include <dithering_fragment>
 
+			// TODO: Pack this the way the normal shader does?
 			gl_FragColor = vec4(normal.xyz * 0.5 + 0.5, roughnessFactor);
 		}
 	`

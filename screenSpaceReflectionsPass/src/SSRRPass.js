@@ -74,7 +74,6 @@ export class SSRRPass extends Pass {
 
 			target.defines.USE_UV = '';
 
-			// TODO: Why is the roughness map not showing up?
 			let originalDefine;
 			originalDefine = target.defines.USE_ROUGHNESSMAP;
 			if ( target.uniforms.roughnessMap.value ) {
@@ -92,12 +91,11 @@ export class SSRRPass extends Pass {
 				target.needsUpdate = true;
 			}
 
-			// TODO: Why does enabling normal map cause the model to turn black?
 			originalDefine = target.defines.USE_NORMALMAP;
 			if ( target.uniforms.normalMap.value ) {
 
-				// target.defines.USE_NORMALMAP = '';
-				// target.defines.TANGENTSPACE_NORMALMAP = '';
+				target.defines.USE_NORMALMAP = '';
+				target.defines.TANGENTSPACE_NORMALMAP = '';
 
 			} else {
 
