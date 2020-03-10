@@ -7,3 +7,4 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - GTAO
 - Debuggable Shader
 - Fixing SSRR image stretching
+- Translucent material with refraction
