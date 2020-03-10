@@ -60,4 +60,4 @@ vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level )
 vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level )
 ```
 
-Shader functions for sampling the generated texture at a specific mip level.
+Shader functions for sampling the generated texture at a specific mip level. If the int variant is used only a single texture sample is made.
