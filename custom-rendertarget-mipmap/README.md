@@ -1,4 +1,10 @@
-# Custom Render Target Mip Mapp Generation
+# Custom Mip Map Generation
+
+Utility for generating a custom mipmap when blending the parent mip level and packing it into a texture.
+
+NOTE: There is nothing to prevent bleeding on mip edges and works best with point sampling.
+
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 # Use
 
@@ -44,3 +50,14 @@ dispose() : void
 ```
 
 Disposes of any created context objects.
+
+## Sample Functions
+
+### packedTexture2DLOD
+
+```glsl
+vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level )
+vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level )
+```
+
+Shader functions for sampling the generated texture at a specific mip level.
