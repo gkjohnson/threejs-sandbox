@@ -87,6 +87,8 @@ export class PackedMipmapGenerator {
 		const fullScreenQuad = this._fullScreenQuad;
 		const swapTarget = this._swapTarget;
 
+		// TODO: add option for ceil power of two and option to not power of two at all? This
+		// causes the mip texels to not align, though...
 		const width = MathUtils.floorPowerOfTwo( texture.image.width );
 		const height = MathUtils.floorPowerOfTwo( texture.image.height );
 
