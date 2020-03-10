@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Based on implementations from <a href="https://github.com/kode80/kode80SSR">here</a> and <a href="http://casual-effects.blogspot.com/2014/08/screen-space-ray-tracing.html">here</a>.
+
+			<br/>
+
+			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { RenderTargetMipmapper } from './src/RenderTargetMipmapper.js';
+			import { mipBiasShader, customSampleShader } from './shaders.js';
+
+			// globals
+			var stats;
+			var params = {
+				linearFilter: true,
+				mipLevel: 0,
+				sampleType: 0,
+			};
+			var camera, scene, renderer, controls;
+			var plane, mipPlane, fullPlane;
+			var nearestTarget, linearTarget;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 2000 );
+				camera.position.set( 0.0, 2, 2 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0d0912 );
+
+				const offset = .55;
+				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+				plane.position.y = - offset;
+				plane.position.x = - offset;
+				plane.material = new THREE.ShaderMaterial( mipBiasShader );
+				plane.material.side = THREE.DoubleSide;
+				scene.add( plane );
+
+				mipPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+				mipPlane.position.y = - offset;
+				mipPlane.position.x = offset;
+				mipPlane.material = new THREE.ShaderMaterial( customSampleShader );
+				mipPlane.material.side = THREE.DoubleSide;
+				scene.add( mipPlane );
+
+				fullPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+				fullPlane.position.y = offset;
+				fullPlane.scale.x = 1.5;
+				fullPlane.material.side = THREE.DoubleSide;
+				scene.add( fullPlane );
+
+				new THREE.TextureLoader().load('./images/voyager-record-cover.jpg', texture => {
+
+					plane.material.uniforms.map.value = texture;
+
+					nearestTarget = new THREE.WebGLRenderTarget();
+					nearestTarget.texture.minFilter = THREE.NearestFilter;
+					nearestTarget.texture.magFilter = THREE.NearestFilter;
+
+					linearTarget = new THREE.WebGLRenderTarget();
+
+					const mipMapper = new RenderTargetMipmapper();
+					mipMapper.update( texture, nearestTarget, renderer );
+					mipMapper.update( texture, linearTarget, renderer );
+					mipMapper.dispose();
+
+					fullPlane.material.map = linearTarget.texture;
+					fullPlane.material.needsUpdate = true;
+
+					mipPlane.material.uniforms.map.value = linearTarget.texture;
+					mipPlane.material.needsUpdate = true;
+
+				} );
+
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+				controls.maxDistance = 200;
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.add( params, 'mipLevel' ).min( 0 ).max( 15 ).step( 0.01 );
+				gui.add( params, 'linearFilter' ).onChange( val => {
+
+					const map = plane.material.uniforms.map.value;
+					const mipMat = mipPlane.material;
+					if ( val ) {
+
+						map.minFilter = THREE.LinearMipmapLinearFilter;
+						map.magFilter = THREE.LinearFilter;
+						map.needsUpdate = true;
+
+						mipMat.uniforms.map.value = linearTarget.texture;
+
+						delete mipMat.defines.NEAREST_FILTER;
+						mipMat.needsUpdate = true;
+
+					} else {
+
+						map.minFilter = THREE.NearestMipmapNearestFilter;
+						map.magFilter = THREE.NearestFilter;
+						map.needsUpdate = true;
+
+						mipMat.uniforms.map.value = nearestTarget.texture;
+
+						mipMat.defines.NEAREST_FILTER = '';
+						mipMat.needsUpdate = true;
+
+					}
+
+				} );
+				gui.width = 300;
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				plane.material.uniforms.level.value = params.mipLevel;
+				mipPlane.material.uniforms.level.value = params.mipLevel;
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
