@@ -5,6 +5,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 ## Upcoming Projects
 
 - GTAO
+- TRAA
 - Deferred Renderer
 - Debuggable Shader
 - Fixing SSRR image stretching
