@@ -9,11 +9,11 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 # Use
 
 ```js
-import { RenderTargetMipmapper } from './src/RenderTargetMipmapper.js';
+import { PackedMipmapGenerator } from './src/PackedMipmapGenerator.js';
 
 // ...
 
-const mipmapper = new RenderTargetMipMapper(
+const mipmapper = new PackedMipmapGenerator(
 	`
 	gl_FragColor = (
 		samples[0][0] + samples[0][1] + samples[1][0] + samples[1][1]
@@ -27,7 +27,7 @@ mipmapper.dispose();
 
 # API
 
-## RenderTargetMipmapper
+## PackedMipmapGenerator
 
 ### constructor
 

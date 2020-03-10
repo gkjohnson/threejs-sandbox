@@ -30,7 +30,7 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Custom Packed Mipmap Generation by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 
 			<br/>
 
@@ -50,7 +50,7 @@
 			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { RenderTargetMipmapper } from './src/RenderTargetMipmapper.js';
+			import { PackedMipmapGenerator } from './src/PackedMipmapGenerator.js';
 			import { mipBiasShader, customSampleShader } from './shaders.js';
 
 			// globals
@@ -107,7 +107,7 @@
 
 					linearTarget = new THREE.WebGLRenderTarget();
 
-					const mipMapper = new RenderTargetMipmapper();
+					const mipMapper = new PackedMipmapGenerator();
 					mipMapper.update( texture, nearestTarget, renderer );
 					mipMapper.update( texture, linearTarget, renderer );
 					mipMapper.dispose();

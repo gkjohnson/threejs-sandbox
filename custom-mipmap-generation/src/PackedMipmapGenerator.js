@@ -5,7 +5,7 @@ import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyS
 import { sampleFunctions } from './mipSampleFunctions.js';
 
 const _originalClearColor = new Color();
-export class RenderTargetMipmapper {
+export class PackedMipmapGenerator {
 
 	constructor( mipmapLogic ) {
 
