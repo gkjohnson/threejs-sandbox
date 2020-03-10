@@ -1,5 +1,7 @@
 # Custom Mip Map Generation
 
+![](./docs/image.png)
+
 Utility for generating a custom mipmap when blending the parent mip level and packing it into a texture.
 
 NOTE: There is nothing to prevent bleeding on mip edges and works best with point sampling.
