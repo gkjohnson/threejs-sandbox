@@ -5,6 +5,8 @@
 
 Utility for rendering a scene with a replacement shader. Similar to `Scene.overrideMaterial` but the uniforms of the original material uniforms are maintained.
 
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/shader-replacement/)
+
 # Use
 
 ```js
