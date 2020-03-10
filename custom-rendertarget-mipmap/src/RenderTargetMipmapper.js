@@ -59,10 +59,11 @@ export class RenderTargetMipmapper {
 					uv10.x += halfPixelSize.x;
 					uv10.y += halfPixelSize.y;
 
-					vec4 sample00 = packedTexture2DLOD( map, uv00, parentLevel );
-					vec4 sample01 = packedTexture2DLOD( map, uv01, parentLevel );
-					vec4 sample10 = packedTexture2DLOD( map, uv10, parentLevel );
-					vec4 sample11 = packedTexture2DLOD( map, uv11, parentLevel );
+					mat2 samples;
+					samples[0][0] = packedTexture2DLOD( map, uv00, parentLevel );
+					samples[0][1] = packedTexture2DLOD( map, uv01, parentLevel );
+					samples[1][0] = packedTexture2DLOD( map, uv10, parentLevel );
+					samples[1][1] = packedTexture2DLOD( map, uv11, parentLevel );
 
 					${ mipmapLogic }
 
