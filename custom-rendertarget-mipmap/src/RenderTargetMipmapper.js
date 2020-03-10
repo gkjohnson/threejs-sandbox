@@ -98,11 +98,17 @@ export class RenderTargetMipmapper {
 		renderer.autoClear = false;
 		renderer.setClearColor( 0 );
 		renderer.setClearAlpha();
-		renderer.setRenderTarget( target );
-		renderer.clear();
 
 		fullScreenQuad.material.uniforms.tDiffuse.value = texture;
 		fullScreenQuad.camera.setViewOffset( width, height, 0, 0, targetWidth, targetHeight );
+
+		renderer.setRenderTarget( target );
+		renderer.clear();
+		fullScreenQuad.render( renderer );
+
+		// TODO: can we avoid clearing?
+		renderer.setRenderTarget( swapTarget );
+		renderer.clear();
 		fullScreenQuad.render( renderer );
 
 		let currWidth = width;
@@ -114,15 +120,14 @@ export class RenderTargetMipmapper {
 			currWidth /= 2;
 			currHeight /= 2;
 
-			renderer.setRenderTarget( swapTarget );
-			fullScreenQuad.material.uniforms.tDiffuse.value = target.texture;
-			fullScreenQuad.camera.setViewOffset( 1, 1, 0, 0, 1, 1 );
-			fullScreenQuad.render( renderer );
-
 			// TODO: replace this with sampling of the parent mip of the swap buffer
 			renderer.setRenderTarget( target );
 			fullScreenQuad.material.uniforms.tDiffuse.value = texture;
 			fullScreenQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
+			fullScreenQuad.render( renderer );
+
+			renderer.setRenderTarget( swapTarget );
+			fullScreenQuad.material.uniforms.tDiffuse.value = target.texture;
 			fullScreenQuad.render( renderer );
 
 			mip ++;
@@ -131,6 +136,8 @@ export class RenderTargetMipmapper {
 		}
 
 		// Fill in the last pixel so the final color is used at all final mip maps
+		renderer.setRenderTarget( target );
+		fullScreenQuad.material.uniforms.tDiffuse.value = texture;
 		fullScreenQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
 		fullScreenQuad.render( renderer );
 
