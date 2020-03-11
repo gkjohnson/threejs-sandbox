@@ -23,19 +23,30 @@ The number of extra iterations to take to search for the intersected surface.
 The intensity of the reflection.
 
 #### renderTargetScale
-The per
 
-## TODO / Issues
-- Make reflective light additive blended.
-- Add blur based on roughness.
-- Support animations, normal, and roughness maps
-- Fade as we near the end of the ray.
-- The pass seems to make things really slow for some reason? GPU work isn't taking place until late in the frame?
-- Use a better sampling function than the current jitter -- halton sampling or poisson dsk.
-- Perform raycasting in a separate lower resolution pass to see where everything hits, sample color buffer in afull resolution pass and reuse sampling for sibling rays
+
+## TODO
+
+### Bugs
 - Improve the connected-ness of the reflections to the ground.
-- Perform raytracing on a downscaled buffer instead of just rendering depth and normals to downscaled buffers
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
 - Objects with zero thickness create incorrect stretched reflections
-- Normals don't seem to be correct. Skewed wall on left causes stretch vase.
-- Blur with mipmaps and step through depth pyramid a la http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
+- Normals don't seem to be correct. Skewed wall on left causes stretch vase. The depth buffer could also be the culprit here.
+
+### Features
+
+- Optionally fall back to environment map
+- Understand how roughness and metalness affect the blending model
+- Blur output based on roughness and ray distance
+- Use a depth pyramid map to raymarch
+- Use cheap rays for roughness
+- Support animations
+- Fade as we near the end of the ray
+- Fade as the ray nears the edge of the buffer
+- Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
+- Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
+- Use a different jitter technique such as Halton or Poisson disks.
+
+### References
+
+-  http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
