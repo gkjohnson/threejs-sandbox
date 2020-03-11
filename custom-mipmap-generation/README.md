@@ -9,7 +9,7 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 **TODO**
-- Understand how a non power of two texture mipmap should be generated ([reference](https://www.nvidia.com/en-us/drivers/np2-mipmapping/))
+- Understand how a non power of two texture mipmap should be generated ([reference](https://www.nvidia.com/en-us/drivers/np2-mipmapping/)). Use weighted samples. For something like a depth texture that requires a max of all values the map should return the max of even partially covered pixels.
 
 # Use
 
