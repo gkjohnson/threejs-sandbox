@@ -62,7 +62,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var plane, mipPlane, fullPlane;
-			var nearestTarget, linearTarget;
+			var nearestTarget, linearTarget, originalLinearTarget, originalNearestTarget;
 
 			init();
 			animate();
@@ -99,7 +99,34 @@
 
 				new THREE.TextureLoader().load('./images/voyager-record-cover.jpg', texture => {
 
+					// const b = 255;
+					// texture = new THREE.DataTexture(
+					// 	new Uint8Array([
+					// 		b, 0, 0, 0, b, 0, 0, 0, b, b, b, b,
+					// 		0, 0, 0, b, 0, 0, b, b, 0, 0, b, 0,
+					// 		b, b, b, b, 0, b, b, b, 0, 0, b, b,
+					// 		0, 0, 0, b, b, 0, 0, b, b, b, 0, 0
+					// 	]),
+					// 	4, 4, THREE.RGBFormat
+					// );
+
 					plane.material.uniforms.map.value = texture;
+
+					originalLinearTarget = new THREE.WebGLRenderTarget();
+					originalLinearTarget.setSize(
+						THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
+						THREE.MathUtils.floorPowerOfTwo( texture.image.height )
+					);
+					originalLinearTarget.texture.minFilter = THREE.LinearMipmapLinearFilter;
+					originalLinearTarget.texture.generateMipmaps = true;
+
+					originalNearestTarget = new THREE.WebGLRenderTarget();
+					originalNearestTarget.setSize(
+						THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
+						THREE.MathUtils.floorPowerOfTwo( texture.image.height )
+					);
+					originalNearestTarget.texture.minFilter = THREE.NearestMipmapNearestFilter;
+					originalNearestTarget.texture.generateMipmaps = true;
 
 					nearestTarget = new THREE.WebGLRenderTarget();
 					nearestTarget.texture.minFilter = THREE.NearestFilter;
@@ -107,16 +134,36 @@
 
 					linearTarget = new THREE.WebGLRenderTarget();
 
+					// render mip pyramids
 					const mipMapper = new PackedMipmapGenerator();
 					mipMapper.update( texture, nearestTarget, renderer );
 					mipMapper.update( texture, linearTarget, renderer );
+
+					// render original targets
+					const copyQuad = mipMapper._copyQuad;
+					copyQuad.material.uniforms.tDiffuse.value = texture;
+					copyQuad.camera.setViewOffset( 1, 1, 0, 0, 1, 1 );
+
+					renderer.setRenderTarget( originalLinearTarget );
+					renderer.clear();
+					copyQuad.render( renderer );
+
+					renderer.setRenderTarget( originalNearestTarget );
+					renderer.clear();
+					copyQuad.render( renderer );
+
+					renderer.setRenderTarget( null );
+
+					// dipose
 					mipMapper.dispose();
 
-					fullPlane.material.map = linearTarget.texture;
+					fullPlane.material.map = nearestTarget.texture;
 					fullPlane.material.needsUpdate = true;
 
 					mipPlane.material.uniforms.map.value = linearTarget.texture;
 					mipPlane.material.needsUpdate = true;
+
+					plane.material.uniforms.map.value = originalLinearTarget.texture;
 
 				} );
 
@@ -144,14 +191,11 @@
 				gui.add( params, 'mipLevel' ).min( 0 ).max( 15 ).step( 0.01 );
 				gui.add( params, 'linearFilter' ).onChange( val => {
 
-					const map = plane.material.uniforms.map.value;
+					const planeMat = plane.material;
 					const mipMat = mipPlane.material;
 					if ( val ) {
 
-						map.minFilter = THREE.LinearMipmapLinearFilter;
-						map.magFilter = THREE.LinearFilter;
-						map.needsUpdate = true;
-
+						planeMat.uniforms.map.value = originalLinearTarget.texture;
 						mipMat.uniforms.map.value = linearTarget.texture;
 
 						delete mipMat.defines.NEAREST_FILTER;
@@ -159,10 +203,8 @@
 
 					} else {
 
-						map.minFilter = THREE.NearestMipmapNearestFilter;
-						map.magFilter = THREE.NearestFilter;
-						map.needsUpdate = true;
 
+						planeMat.uniforms.map.value = originalNearestTarget.texture;
 						mipMat.uniforms.map.value = nearestTarget.texture;
 
 						mipMat.defines.NEAREST_FILTER = '';

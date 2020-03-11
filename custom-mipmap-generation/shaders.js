@@ -34,7 +34,9 @@ export const mipBiasShader = {
 
 		void main() {
 
-			gl_FragColor = texture2DLodEXT( map, vUv, level );
+			// for some reason when 0 is based into this function an interpolated
+			// mipmap is used so force it to use a minimum of 0.01
+			gl_FragColor = texture2DLodEXT( map, vUv, max( level, 0.01 ) );
 
 		}
 	`

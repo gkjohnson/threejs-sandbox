@@ -76,8 +76,8 @@ export class PackedMipmapGenerator {
 					uv10.y -= halfPixelSize.y;
 
 					vec2 uv11 = baseUv;
-					uv10.x += halfPixelSize.x;
-					uv10.y += halfPixelSize.y;
+					uv11.x += halfPixelSize.x;
+					uv11.y += halfPixelSize.y;
 
 					int level = int( parentLevel );
 					vec4 sample00 = packedTexture2DLOD( map, uv00, level );
@@ -126,8 +126,6 @@ export class PackedMipmapGenerator {
 		swapTarget.setSize( targetWidth, targetHeight );
 		// NOTE: can't use copy here because it clones a texture and likely doesn't reinitialize
 		// it if it has already been rendered with.
-
-
 
 		// init the renderer
 		renderer.autoClear = false;
