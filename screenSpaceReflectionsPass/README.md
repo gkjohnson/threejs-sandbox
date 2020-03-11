@@ -27,10 +27,11 @@ The intensity of the reflection.
 
 ## TODO
 
+- Set up a debug scene with mirror surfaces for testing
+
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
-- Objects with zero thickness create incorrect stretched reflections
 - Normals don't seem to be correct. Skewed wall on left causes stretch vase. The depth buffer could also be the culprit here.
 
 ### Features
