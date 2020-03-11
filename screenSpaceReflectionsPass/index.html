@@ -76,6 +76,96 @@
 			init();
 			animate();
 
+			function createSponza() {
+
+				// sponza scene
+				var sponzaGroup = new THREE.Group();
+				var loader = new GLTFLoader();
+				loader.load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
+					g => {
+						const o = g.scene.children[0];
+						o.position.y = -20;
+						o.rotation.set(0, Math.PI / 2, 0);
+						o.scale.multiplyScalar(30);
+
+						o.traverse(c => {
+							c.castShadow = true;
+							c.receiveShadow = true;
+						})
+						sponzaGroup.add(o);
+					}
+				);
+
+				sphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( 4, 50, 50 ),
+					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
+				);
+				sphere.castShadow = true;
+				sponzaGroup.add( sphere );
+
+				return sponzaGroup;
+
+			}
+
+			function createDebug1() {
+
+				var group = new THREE.Group();
+
+				// sphere + mirror scene
+				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
+				plane.receiveShadow = true;
+				plane.rotation.set( -Math.PI / 2, 0, 0 );
+				plane.scale.set( 2000, 2000, 0.1 );
+				plane.position.y = -4;
+				group.add( plane );
+
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 50, 50 );
+					plane.material.roughnessMap = map;
+					plane.material.map = map;
+					plane.material.needsUpdate = true;
+				} );
+
+				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
+				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = -10;
+				group.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 0;
+				group.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 10;
+				group.add(sphere);
+
+				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0, side: THREE.DoubleSide, roughness: 0 }));
+				mirror.rotation.set( 0, 0, 0 );
+				mirror.scale.set(60, 20, 0.5);
+				mirror.position.y = -4;
+				mirror.position.z = -15;
+				group.add(mirror);
+
+				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
+				box.position.x = -20;
+				box.scale.set( 2, 10, 2 );
+				group.add(box);
+
+				return group;
+
+			}
+
 			function init() {
 
 				// initialize renderer, scene, camera
@@ -115,90 +205,11 @@
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
-				// sponza scene
-				var loader = new GLTFLoader();
-				loader.load(
-					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
-					g => {
-						const o = g.scene.children[0];
-						o.position.y = -20;
-						o.rotation.set(0, Math.PI / 2, 0);
-						o.scale.multiplyScalar(30);
+				var sponzaGroup = createSponza();
+				scene.add( sponzaGroup );
 
-						o.traverse(c => {
-							c.castShadow = true;
-							c.receiveShadow = true;
-						})
-						scene.add(o);
-					}
-				);
-
-				sphere = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( 4, 50, 50 ),
-					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
-				);
-				sphere.castShadow = true;
-				scene.add( sphere );
-
-				/*
-				// sphere + mirror scene
-				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
-				plane.receiveShadow = true;
-				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.set( 2000, 2000, 0.1 );
-				plane.position.y = -4;
-				scene.add( plane );
-
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 50, 50 );
-					plane.material.roughnessMap = map;
-					plane.material.map = map;
-					plane.material.needsUpdate = true;
-				} );
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Normal.jpg', function ( map ) {
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 50, 50 );
-					plane.material.normalMap = map;
-					plane.material.needsUpdate = true;
-				} );
-
-				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
-				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = -10;
-				scene.add(sphere);
-
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = 0;
-				scene.add(sphere);
-
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = 10;
-				scene.add(sphere);
-
-				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-				mirror.rotation.set( 0, 0, 0 );
-				mirror.scale.set(60, 20, 0.5);
-				mirror.position.y = -4;
-				mirror.position.z = -15;
-				scene.add(mirror);
-
-				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
-				box.position.x = -20;
-				box.scale.set( 2, 10, 2 );
-				scene.add(box);
-				*/
+				// var debug1Group = createDebug1();
+				// scene.add( debug1Group );
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
@@ -230,7 +241,7 @@
 
 				// dat gui
 				var gui = new dat.GUI();
-				gui.width = 300;
+				gui.width = 325;
 
 				gui.add(params, 'enabled' );
 				gui.add(params, 'stride', 1, 60);
@@ -290,7 +301,7 @@
 			function render() {
 				camera.lookAt( scene.position );
 
-				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
+				if ( sphere ) sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
 				ssrrPass.intensity = params.intensity;
 				ssrrPass.steps = params.steps;
 				ssrrPass.stride = params.stride;
