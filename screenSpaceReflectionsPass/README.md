@@ -46,6 +46,7 @@ The intensity of the reflection.
 - Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
 - Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
 - Use a different jitter technique such as Halton or Poisson disks.
+- Understand how to render depth target mip pyramid.
 
 ### References
 
