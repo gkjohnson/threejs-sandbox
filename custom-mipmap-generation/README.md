@@ -8,6 +8,9 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
+**TODO**
+- Understand how a non power of two texture mipmap should be generated
+
 # Use
 
 ```js
