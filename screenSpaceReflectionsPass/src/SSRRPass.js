@@ -11,6 +11,7 @@ import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass
 import { CompositeShader } from './CompositeShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
+import { MarchResultsShader } from './MarchResultsShader.js';
 import { PackedNormalDisplayShader, LinearDepthDisplayShader } from './DebugShaders.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
@@ -58,7 +59,6 @@ export class SSRRPass extends Pass {
 				type: FloatType
 			} );
 		this._depthBuffer.texture.name = "SSRRPass.Depth";
-		this._depthBuffer.texture.generateMipmaps = false;
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
@@ -119,11 +119,21 @@ export class SSRRPass extends Pass {
 				format: RGBAFormat
 			} );
 		this._packedBuffer.texture.name = "SSRRPass.Packed";
-		this._packedBuffer.texture.generateMipmaps = false;
+
+		this._marchResultsBuffer =
+			new WebGLRenderTarget( 256, 256, {
+				minFilter: NearestFilter,
+				magFilter: NearestFilter,
+				type: FloatType,
+				format: RGBAFormat
+			} );
+		this._marchResultsBuffer.texture.name = "SSRRPass.MarchResults";
+
+		const marchMaterial = new ShaderMaterial( MarchResultsShader );
+		this._marchQuad = new Pass.FullScreenQuad( marchMaterial );
 
 		const compositeMaterial = new ShaderMaterial( CompositeShader );
 		this._compositeQuad = new Pass.FullScreenQuad( compositeMaterial );
-		this._compositeMaterial = compositeMaterial;
 
 	}
 
@@ -264,6 +274,43 @@ export class SSRRPass extends Pass {
 
 		}
 
+		if ( debug.display === SSRRPass.INTERSECTION_RESULTS ) {
+
+			const marchQuad = this._marchQuad;
+			const marchMaterial = marchQuad.material;
+			const uniforms = marchMaterial.uniforms;
+			uniforms.depthBuffer.value = depthBuffer.texture;
+			uniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
+
+			uniforms.packedBuffer.value = packedBuffer.texture;
+			uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
+			uniforms.projMatrix.value.copy( camera.projectionMatrix );
+			uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
+
+			uniforms.stride.value = this.stride;
+
+			if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
+
+				marchMaterial.defines.MAX_STEPS = Math.floor( this.steps );
+				marchMaterial.needsUpdate = true;
+
+			}
+
+			if ( marchMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
+
+				marchMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
+				marchMaterial.needsUpdate = true;
+
+			}
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+			marchQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
 		// TODO: Raymarch in a separate buffer and keep distance and final position in the final buffer
 		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
 		// larger than the target pixels so you can share the ray result with neighboring pixels and
@@ -273,7 +320,8 @@ export class SSRRPass extends Pass {
 		// TODO: Add fade based on ray distance / closeness to end of steps
 
 		// Composite
-		const compositeMaterial = this._compositeMaterial;
+		const compositeQuad = this._compositeQuad;
+		const compositeMaterial = compositeQuad.material;
 		const uniforms = compositeMaterial.uniforms;
 		uniforms.sourceBuffer.value = readBuffer.texture;
 		uniforms.depthBuffer.value = depthBuffer.texture;
@@ -303,7 +351,7 @@ export class SSRRPass extends Pass {
 
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
-		this._compositeQuad.render( renderer );
+		compositeQuad.render( renderer );
 
 		replaceOriginalValues();
 		// console.timeEnd('TEST');
