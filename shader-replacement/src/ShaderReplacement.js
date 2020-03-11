@@ -152,6 +152,8 @@ export class ShaderReplacement {
 		const materialDefines = material.defines;
 		const targetDefines = target.defines;
 
+		target.side = material.side;
+
 		if ( materialDefines ) {
 
 			for ( const key in materialDefines ) {
