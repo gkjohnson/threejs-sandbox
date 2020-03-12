@@ -95,7 +95,7 @@
 						o.traverse(c => {
 							c.castShadow = true;
 							c.receiveShadow = true;
-						})
+						});
 						sponzaGroup.add(o);
 					}
 				);
@@ -108,6 +108,38 @@
 				sponzaGroup.add( sphere );
 
 				return sponzaGroup;
+
+			}
+
+			function createHelmetScene() {
+
+				var group = new THREE.Group();
+				var loader = new GLTFLoader();
+				loader.load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+					g => {
+						const o = g.scene.children[0];
+						// o.position.y = 20;
+
+						o.traverse(c => {
+							c.castShadow = true;
+							c.receiveShadow = true;
+						});
+						group.add(o);
+					}
+				);
+
+				const floor = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshStandardMaterial( { roughness: 0, color: 0x010101 } )
+				);
+
+				floor.scale.set( 10, 1, 10 );
+				floor.position.y = -1.75;
+				group.add( floor );
+
+				group.scale.multiplyScalar( 20 );
+				return group;
 
 			}
 
@@ -214,9 +246,13 @@
 				var spheresScene = createSphereScene();
 				scene.add( spheresScene );
 
+				var helmetScene = createHelmetScene();
+				scene.add( helmetScene );
+
 				scenes = {
 					sponza: sponzaScene,
-					spheres: spheresScene
+					helmet: helmetScene,
+					spheres: spheresScene,
 				};
 
 				// Render Pass Setup
@@ -278,7 +314,7 @@
 					}).onChange(value => {
 						ssrrPass.debug.display = parseFloat(value);
 					});
-				gui.add( params, 'scene', [ 'sponza', 'spheres', 'mirror box' ] );
+				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres', 'mirror box' ] );
 
 
 				gui.open();
