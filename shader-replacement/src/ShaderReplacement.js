@@ -153,6 +153,8 @@ export class ShaderReplacement {
 		const targetDefines = target.defines;
 
 		target.side = material.side;
+		target.flatShading = material.flatShading;
+		target.skinning = material.skinning;
 
 		if ( materialDefines ) {
 
