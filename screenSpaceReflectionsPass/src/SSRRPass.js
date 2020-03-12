@@ -67,6 +67,8 @@ export class SSRRPass extends Pass {
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 0.5;
 		this.raymarchTargetScale = 'raymarchTargetScale' in options ? options.raymarchTargetScale : 0.5;
 		this.jitter = 'jitter' in options ? options.jitter : 1;
+		this.thickness = 'thickness' in options ? options.thickness : 1;
+		this.useThickness = 'useThickness' in options ? options.useThickness : false;
 
 		this.scene = scene;
 		this.camera = camera;
@@ -216,6 +218,7 @@ export class SSRRPass extends Pass {
 		const depthBuffer = this._depthBuffer;
 		const packedBuffer = this._packedBuffer;
 		const backfaceDepthBuffer = this._backfaceDepthBuffer;
+		const useThickness = this.useThickness;
 
 		const depthReplacement = this._depthReplacement;
 		const backfaceDepthReplacement = this._backfaceDepthReplacement;
@@ -297,36 +300,40 @@ export class SSRRPass extends Pass {
 
 		}
 
-		// Render Backface Depth
-		backfaceDepthReplacement.replace( scene, true );
-		renderer.setRenderTarget( backfaceDepthBuffer );
-		renderer.clear();
-		renderer.render( scene, camera );
+		if ( useThickness === false ) {
 
-		if ( debug.display === SSRRPass.BACK_DEPTH ) {
-
-			renderer.setRenderTarget( finalBuffer );
+			// Render Backface Depth
+			backfaceDepthReplacement.replace( scene, true );
+			renderer.setRenderTarget( backfaceDepthBuffer );
 			renderer.clear();
+			renderer.render( scene, camera );
 
-			_debugDepthMaterial.uniforms.texture.value = backfaceDepthBuffer.texture;
-			_debugDepthMaterial.uniforms.divide.value = camera.far;
-			_debugDepthQuad.render( renderer );
-			replaceOriginalValues();
-			return;
+			if ( debug.display === SSRRPass.BACK_DEPTH ) {
 
-		}
+				renderer.setRenderTarget( finalBuffer );
+				renderer.clear();
 
-		if ( debug.display === SSRRPass.DEPTH_DELTA ) {
+				_debugDepthMaterial.uniforms.texture.value = backfaceDepthBuffer.texture;
+				_debugDepthMaterial.uniforms.divide.value = camera.far;
+				_debugDepthQuad.render( renderer );
+				replaceOriginalValues();
+				return;
 
-			renderer.setRenderTarget( finalBuffer );
-			renderer.clear();
+			}
 
-			_debugDepthDeltaMaterial.uniforms.backSideTexture.value = backfaceDepthBuffer.texture;
-			_debugDepthDeltaMaterial.uniforms.frontSideTexture.value = depthBuffer.texture;
-			_debugDepthDeltaMaterial.uniforms.divide.value = camera.far;
-			_debugDepthDeltaQuad.render( renderer );
-			replaceOriginalValues();
-			return;
+			if ( debug.display === SSRRPass.DEPTH_DELTA ) {
+
+				renderer.setRenderTarget( finalBuffer );
+				renderer.clear();
+
+				_debugDepthDeltaMaterial.uniforms.backSideTexture.value = backfaceDepthBuffer.texture;
+				_debugDepthDeltaMaterial.uniforms.frontSideTexture.value = depthBuffer.texture;
+				_debugDepthDeltaMaterial.uniforms.divide.value = camera.far;
+				_debugDepthDeltaQuad.render( renderer );
+				replaceOriginalValues();
+				return;
+
+			}
 
 		}
 
@@ -342,7 +349,7 @@ export class SSRRPass extends Pass {
 		marchUniforms.projMatrix.value.copy( camera.projectionMatrix );
 		marchUniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
 		marchUniforms.jitter.value = this.jitter;
-
+		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
 
 		if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
@@ -355,6 +362,13 @@ export class SSRRPass extends Pass {
 		if ( marchMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
 
 			marchMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( ( ! ! marchMaterial.defines.USE_THICKNESS ) !== useThickness ) {
+
+			marchMaterial.defines.USE_THICKNESS = useThickness ? 1.0 : 0.0;
 			marchMaterial.needsUpdate = true;
 
 		}

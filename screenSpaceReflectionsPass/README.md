@@ -99,7 +99,8 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Test orthographic camera
 - Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
 - Support animations
-- Improve rendertarget footprint size.
+- Improve rendertarget memory footprint.
+- See if we can improve the look of rendering using thickness -- some thin surfaces are missed
 
 ### References
 

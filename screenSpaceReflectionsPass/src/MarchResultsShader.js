@@ -6,7 +6,8 @@ export const MarchResultsShader = {
 
 		MAX_STEPS: 10,
 		BINARY_SEARCH_ITERATIONS: 4,
-		PYRAMID_DEPTH: 1
+		PYRAMID_DEPTH: 1,
+		USE_THICKNESS: 0
 
 	},
 
@@ -73,6 +74,17 @@ export const MarchResultsShader = {
 
 		}
 
+		#if USE_THICKNESS
+
+		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv ) {
+
+			float sceneZMin = texture2D( depthBuffer, uv ).r;
+			return sceneZMin != 0.0 && rayzmin >= sceneZMin - thickness && rayzmax <= sceneZMin;
+
+		}
+
+		#else
+
 		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv ) {
 
 			float sceneZMax = texture2D( backfaceDepthBuffer, uv ).r;
@@ -81,6 +93,8 @@ export const MarchResultsShader = {
 			return sceneZMin != 0.0 && rayzmin >= sceneZMax && rayzmax <= sceneZMin;
 
 		}
+
+		#endif
 
 		float distanceSquared( vec2 a, vec2 b ) {
 
