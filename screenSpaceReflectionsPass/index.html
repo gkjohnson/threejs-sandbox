@@ -66,12 +66,15 @@
 				stride: 30,
 				intensity: 0.5,
 				renderTargetScale: 0.5,
+				jitter: 1,
 				display: SSRRPass.DEFAULT,
+				scene: 'sponza'
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var sphere;
 			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
+			var scenes;
 
 			init();
 			animate();
@@ -108,7 +111,7 @@
 
 			}
 
-			function createDebug1() {
+			function createSphereScene() {
 
 				var group = new THREE.Group();
 
@@ -205,11 +208,16 @@
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
-				var sponzaGroup = createSponza();
-				scene.add( sponzaGroup );
+				var sponzaScene = createSponza();
+				scene.add( sponzaScene );
 
-				// var debug1Group = createDebug1();
-				// scene.add( debug1Group );
+				var spheresScene = createSphereScene();
+				scene.add( spheresScene );
+
+				scenes = {
+					sponza: sponzaScene,
+					spheres: spheresScene
+				};
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
@@ -220,6 +228,7 @@
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
 				ssrrPass = new SSRRPass( scene, camera );
+				window.ssrrPass = ssrrPass;
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
@@ -243,12 +252,13 @@
 				var gui = new dat.GUI();
 				gui.width = 325;
 
-				gui.add(params, 'enabled' );
-				gui.add(params, 'stride', 1, 60);
-				gui.add(params, 'steps', 2, 200);
-				gui.add(params, 'binarySearchSteps', 0, 20);
-				gui.add(params, 'intensity', 0, 1);
-				gui.add(params, 'renderTargetScale', 0.1, 1)
+				gui.add( params, 'enabled' );
+				gui.add( params, 'stride', 1, 60 );
+				gui.add( params, 'steps', 2, 200 );
+				gui.add( params, 'binarySearchSteps', 0, 20 );
+				gui.add( params, 'intensity', 0, 1 );
+				gui.add( params, 'jitter', 0, 5 ).step( 0.1 );
+				gui.add( params, 'renderTargetScale', 0.1, 1 )
 					.onChange( v => {
 
 						ssrrPass.renderTargetScale = v;
@@ -268,6 +278,7 @@
 					}).onChange(value => {
 						ssrrPass.debug.display = parseFloat(value);
 					});
+				gui.add( params, 'scene', [ 'sponza', 'spheres', 'mirror box' ] );
 
 
 				gui.open();
@@ -307,6 +318,13 @@
 				ssrrPass.stride = params.stride;
 				ssrrPass.binarySearchSteps = params.binarySearchSteps;
 				ssrrPass.enabled = params.enabled;
+				ssrrPass.jitter = params.jitter;
+
+				for ( const key in scenes ) {
+
+					if ( scenes[key] ) scenes[key].visible = key === params.scene;
+
+				}
 
 				composer.render();
 			}

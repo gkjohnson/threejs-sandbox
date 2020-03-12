@@ -43,6 +43,7 @@ export class SSRRPass extends Pass {
 		this.binarySearchSteps = 'binarySearchSteps' in options ? options.binarySearchSteps : 4;
 		this.stride = 'stride' in options ? options.stride : 30;
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 0.5;
+		this.jitter = 'jitter' in options ? options.jitter : 1;
 
 		this.scene = scene;
 		this.camera = camera;
@@ -286,6 +287,7 @@ export class SSRRPass extends Pass {
 			uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
 			uniforms.projMatrix.value.copy( camera.projectionMatrix );
 			uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
+			uniforms.jitter.value = this.jitter;
 
 			uniforms.stride.value = this.stride;
 
@@ -331,6 +333,7 @@ export class SSRRPass extends Pass {
 		uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
 		uniforms.projMatrix.value.copy( camera.projectionMatrix );
 		uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
+		uniforms.jitter.value = this.jitter;
 
 		uniforms.intensity.value = this.intensity;
 		uniforms.stride.value = this.stride;
