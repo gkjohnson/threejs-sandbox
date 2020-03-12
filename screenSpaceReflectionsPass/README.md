@@ -70,7 +70,6 @@ constructor( scene : Scene, camera : Camera, options : Object )
 ### Upcoming
 
 - Optionally fall back to environment map
-- Fade as the ray nears the edge of the buffer
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
@@ -84,7 +83,8 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Features
 
-- Understand how roughness and metalness affect the blending model
+- Understand how roughness and metalness affect the blending model -- reference how environment maps are sampled and applied
+- Investigate how incidence angle should play a role
 - Blur output based on roughness and ray distance
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
