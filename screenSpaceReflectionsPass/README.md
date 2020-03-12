@@ -67,7 +67,10 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ## TODO
 
-- Set up a debug scene with mirror surfaces for testing
+### Upcoming
+
+- Optionally fall back to environment map
+- Fade as the ray nears the edge of the buffer
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
@@ -80,14 +83,11 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Features
 
-- Optionally fall back to environment map
 - Understand how roughness and metalness affect the blending model
 - Blur output based on roughness and ray distance
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Support animations
-- Fade as we near the end of the ray
-- Fade as the ray nears the edge of the buffer
 - Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
 - Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
 - Use a different jitter technique such as Halton or Poisson disks.
