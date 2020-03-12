@@ -8,11 +8,11 @@ import {
 	ShaderMaterial,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
-import { CompositeShader } from './CompositeShader.js';
+import { ColorResolveShader } from './ColorResolveShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
-import { PackedNormalDisplayShader, LinearDepthDisplayShader } from './DebugShaders.js';
+import { PackedNormalDisplayShader, LinearDepthDisplayShader, IntersectDistanceShader, IntersectUvShader } from './DebugShaders.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 /**
@@ -28,6 +28,12 @@ const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
 
 const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
 const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
+
+const _intersectUvMaterial = new ShaderMaterial( IntersectUvShader );
+const _intersectUvQuad = new Pass.FullScreenQuad( _intersectUvMaterial );
+
+const _intersectDistMaterial = new ShaderMaterial( IntersectDistanceShader );
+const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
 
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0 );
@@ -68,7 +74,6 @@ export class SSRRPass extends Pass {
 		this._backfaceDepthReplacement = new ShaderReplacement( LinearDepthShader );
 		this._backfaceDepthReplacement._replacementMaterial.side = BackSide;
 
-		// TODO: Handle normal maps, roughness maps here
 		this._packedReplacement = new ShaderReplacement( PackedShader );
 		this._packedReplacement.updateUniforms = function( object, material, target ) {
 
@@ -134,8 +139,8 @@ export class SSRRPass extends Pass {
 		const marchMaterial = new ShaderMaterial( MarchResultsShader );
 		this._marchQuad = new Pass.FullScreenQuad( marchMaterial );
 
-		const compositeMaterial = new ShaderMaterial( CompositeShader );
-		this._compositeQuad = new Pass.FullScreenQuad( compositeMaterial );
+		const colorResolveMaterial = new ShaderMaterial( ColorResolveShader );
+		this._colorResolveQuad = new Pass.FullScreenQuad( colorResolveMaterial );
 
 	}
 
@@ -148,6 +153,8 @@ export class SSRRPass extends Pass {
 	}
 
 	setSize( width, height ) {
+
+		this._marchResultsBuffer.setSize( width, height );
 
 		width *= this.renderTargetScale;
 		height *= this.renderTargetScale;
@@ -279,39 +286,58 @@ export class SSRRPass extends Pass {
 
 		}
 
+		// Render march results
+		const marchQuad = this._marchQuad;
+		const marchMaterial = marchQuad.material;
+		const marchUniforms = marchMaterial.uniforms;
+		marchUniforms.depthBuffer.value = depthBuffer.texture;
+		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
+
+		marchUniforms.packedBuffer.value = packedBuffer.texture;
+		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
+		marchUniforms.projMatrix.value.copy( camera.projectionMatrix );
+		marchUniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
+		marchUniforms.jitter.value = this.jitter;
+
+		marchUniforms.stride.value = this.stride;
+
+		if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
+
+			marchMaterial.defines.MAX_STEPS = Math.floor( this.steps );
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
+
+			marchMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		renderer.setRenderTarget( this._marchResultsBuffer );
+		renderer.clear();
+		marchQuad.render( renderer );
+
 		if ( debug.display === SSRRPass.INTERSECTION_RESULTS ) {
-
-			const marchQuad = this._marchQuad;
-			const marchMaterial = marchQuad.material;
-			const uniforms = marchMaterial.uniforms;
-			uniforms.depthBuffer.value = depthBuffer.texture;
-			uniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
-
-			uniforms.packedBuffer.value = packedBuffer.texture;
-			uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
-			uniforms.projMatrix.value.copy( camera.projectionMatrix );
-			uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
-			uniforms.jitter.value = this.jitter;
-
-			uniforms.stride.value = this.stride;
-
-			if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
-
-				marchMaterial.defines.MAX_STEPS = Math.floor( this.steps );
-				marchMaterial.needsUpdate = true;
-
-			}
-
-			if ( marchMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
-
-				marchMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
-				marchMaterial.needsUpdate = true;
-
-			}
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
-			marchQuad.render( renderer );
+
+			_intersectUvQuad.material.uniforms.texture.value = this._marchResultsBuffer.texture;
+			_intersectUvQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
+		if ( debug.display === SSRRPass.INTERSECTION_DISTANCE ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_intersectDistQuad.material.uniforms.texture.value = this._marchResultsBuffer.texture;
+			_intersectDistQuad.render( renderer );
 			replaceOriginalValues();
 			return;
 
@@ -325,41 +351,17 @@ export class SSRRPass extends Pass {
 		// TODO: Add z fade towards the camera
 		// TODO: Add fade based on ray distance / closeness to end of steps
 
-		// Composite
-		const compositeQuad = this._compositeQuad;
-		const compositeMaterial = compositeQuad.material;
-		const uniforms = compositeMaterial.uniforms;
-		uniforms.sourceBuffer.value = readBuffer.texture;
-		uniforms.depthBuffer.value = depthBuffer.texture;
-		uniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
-
-		uniforms.packedBuffer.value = packedBuffer.texture;
-		uniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
-		uniforms.projMatrix.value.copy( camera.projectionMatrix );
-		uniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
-		uniforms.jitter.value = this.jitter;
-
-		uniforms.intensity.value = this.intensity;
-		uniforms.stride.value = this.stride;
-
-		if ( compositeMaterial.defines.MAX_STEPS !== this.steps ) {
-
-			compositeMaterial.defines.MAX_STEPS = Math.floor( this.steps );
-			compositeMaterial.needsUpdate = true;
-
-		}
-
-		if ( compositeMaterial.defines.BINARY_SEARCH_ITERATIONS !== this.binarySearchSteps ) {
-
-			compositeMaterial.defines.BINARY_SEARCH_ITERATIONS = Math.floor( this.binarySearchSteps );
-			compositeMaterial.needsUpdate = true;
-
-		}
+		const resolveQuad = this._colorResolveQuad;
+		const resolveMaterial = resolveQuad.material;
+		const resolveUniforms = resolveMaterial.uniforms;
+		resolveUniforms.sourceBuffer.value = readBuffer.texture;
+		resolveUniforms.packedBuffer.value = packedBuffer.texture;
+		resolveUniforms.intersectBuffer.value = this._marchResultsBuffer.texture;
+		resolveUniforms.intensity.value = this.intensity;
 
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
-		compositeQuad.render( renderer );
-
+		resolveQuad.render( renderer );
 		replaceOriginalValues();
 		// console.timeEnd('TEST');
 
@@ -373,4 +375,4 @@ SSRRPass.BACK_DEPTH = 2;
 SSRRPass.NORMAL = 3;
 SSRRPass.ROUGHNESS = 4;
 SSRRPass.INTERSECTION_RESULTS = 5;
-SSRRPass.INTERSECTION_COLORS = 6;
+SSRRPass.INTERSECTION_DISTANCE = 6;

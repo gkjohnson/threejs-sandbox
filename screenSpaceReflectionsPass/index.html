@@ -311,6 +311,7 @@
 						FRONT_DEPTH: SSRRPass.FRONT_DEPTH,
 						BACK_DEPTH: SSRRPass.BACK_DEPTH,
 						INTERSECTION_RESULTS: SSRRPass.INTERSECTION_RESULTS,
+						INTERSECTION_DISTANCE: SSRRPass.INTERSECTION_DISTANCE,
 					}).onChange(value => {
 						ssrrPass.debug.display = parseFloat(value);
 					});
@@ -348,7 +349,9 @@
 			function render() {
 				camera.lookAt( scene.position );
 
-				if ( sphere ) sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
+				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
+				if ( scenes.helmet.children.length > 1 ) scenes.helmet.children[ 1 ].rotation.z = window.performance.now() / 5000;
+
 				ssrrPass.intensity = params.intensity;
 				ssrrPass.steps = params.steps;
 				ssrrPass.stride = params.stride;
@@ -362,6 +365,7 @@
 
 				}
 
+				gammaPass.enabled = ssrrPass.debug.display === SSRRPass.DEFAULT;
 				composer.render();
 			}
 

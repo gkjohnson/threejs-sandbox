@@ -52,6 +52,7 @@ The intensity of the reflection.
 - Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
 - Use a different jitter technique such as Halton or Poisson disks.
 - Understand how to render depth target mip pyramid.
+- Allow for setting distance / normal buffer sizes separately from the march buffer
 
 ### References
 

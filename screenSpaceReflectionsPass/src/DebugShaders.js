@@ -77,3 +77,71 @@ export const LinearDepthDisplayShader = {
 	`
 
 };
+
+export const IntersectUvShader = {
+
+	uniforms: {
+
+		texture: { value: null }
+
+	},
+
+	vertexShader: /* glsl */`
+		varying vec3 vViewPosition;
+		varying vec2 vUv;
+		void main() {
+
+			#include <begin_vertex>
+			#include <project_vertex>
+			vViewPosition = mvPosition.xyz;
+			vUv = uv;
+
+		}
+	`,
+
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D texture;
+		void main() {
+
+			vec4 texVal = texture2D( texture, vUv );
+			gl_FragColor = vec4( texVal.xy, 0.0, 1.0 );
+
+		}
+	`
+
+};
+
+export const IntersectDistanceShader = {
+
+	uniforms: {
+
+		texture: { value: null }
+
+	},
+
+	vertexShader: /* glsl */`
+		varying vec3 vViewPosition;
+		varying vec2 vUv;
+		void main() {
+
+			#include <begin_vertex>
+			#include <project_vertex>
+			vViewPosition = mvPosition.xyz;
+			vUv = uv;
+
+		}
+	`,
+
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D texture;
+		void main() {
+
+			vec4 texVal = texture2D( texture, vUv );
+			gl_FragColor = vec4( texVal.z, texVal.z, texVal.z, 1.0 );
+
+		}
+	`
+
+};
