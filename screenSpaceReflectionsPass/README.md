@@ -9,25 +9,68 @@ _sponza scene from GLTF 2.0 example models_
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
-## Options
-#### stride
+# API
+
+## SSRRPass
+
+_extends Pass_
+
+### .stride
+
+```js
+stride : Number
+```
+
 The number of screen space pixels to step over per iteration in the down sampled depth texture.
 
-#### steps
+### .steps
+
+```js
+steps : Number
+```
+
 The number of steps to take along the cast ray.
 
-#### binarySearchSteps
+### .binarySearchSteps
+
+```js
+binarySearchSteps : Number
+```
+
 The number of extra iterations to take to search for the intersected surface.
 
-#### intensity
+### .intensity
+
+```js
+intensity : Number
+```
+
 The intensity of the reflection.
 
-#### renderTargetScale
+### .renderTargetScale
 
+```js
+renderTargetScale : Number
+```
+
+### .jitter
+
+```js
+jitter : Number
+```
+
+### .constructor
+
+```js
+constructor( scene : Scene, camera : Camera, options : Object )
+```
 
 ## TODO
 
-- Set up a debug scene with mirror surfaces for testing
+### Upcoming
+
+- Optionally fall back to environment map
+- Fade as the ray nears the edge of the buffer
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
@@ -40,14 +83,11 @@ The intensity of the reflection.
 
 ### Features
 
-- Optionally fall back to environment map
 - Understand how roughness and metalness affect the blending model
 - Blur output based on roughness and ray distance
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Support animations
-- Fade as we near the end of the ray
-- Fade as the ray nears the edge of the buffer
 - Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
 - Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
 - Use a different jitter technique such as Halton or Poisson disks.
