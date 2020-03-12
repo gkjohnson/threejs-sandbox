@@ -30,6 +30,7 @@ const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
 const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
 
 const _prevClearColor = new Color();
+const _blackColor = new Color( 0 );
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
 
@@ -193,12 +194,12 @@ export class SSRRPass extends Pass {
 			scene.autoUpdate = prevAutoUpdate;
 			packedReplacement.reset( scene, true )
 
-		}
+		};
 
 		scene.autoUpdate = false;
 		renderer.shadowMap.enabled = false;
 		renderer.autoClear = true;
-		renderer.setClearColor( new Color( 0, 0, 0 ), 0 );
+		renderer.setClearColor( _blackColor, 0 );
 
 		// Roughness / Normal pass
 		// TODO: Write a manual "material override" function that will automatically
