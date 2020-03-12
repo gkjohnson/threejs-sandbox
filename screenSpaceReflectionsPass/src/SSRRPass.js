@@ -59,6 +59,7 @@ export class SSRRPass extends Pass {
 		this.binarySearchSteps = 'binarySearchSteps' in options ? options.binarySearchSteps : 4;
 		this.stride = 'stride' in options ? options.stride : 30;
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 0.5;
+		this.raymarchTargetScale = 'raymarchTargetScale' in options ? options.raymarchTargetScale : 0.5;
 		this.jitter = 'jitter' in options ? options.jitter : 1;
 
 		this.scene = scene;
@@ -163,14 +164,17 @@ export class SSRRPass extends Pass {
 
 	setSize( width, height ) {
 
-		this._marchResultsBuffer.setSize( width, height );
+		const raymarchWidth = width * this.raymarchTargetScale;
+		const raymarchHeight = height * this.raymarchTargetScale;
 
-		width *= this.renderTargetScale;
-		height *= this.renderTargetScale;
+		this._marchResultsBuffer.setSize( raymarchWidth, raymarchHeight );
 
-		this._depthBuffer.setSize( width, height );
-		this._backfaceDepthBuffer.setSize( width, height );
-		this._packedBuffer.setSize( width, height );
+		const renderWidth = width * this.renderTargetScale;
+		const renderHeight = height * this.renderTargetScale;
+
+		this._depthBuffer.setSize( renderWidth, renderHeight );
+		this._backfaceDepthBuffer.setSize( renderWidth, renderHeight );
+		this._packedBuffer.setSize( renderWidth, renderHeight );
 
 	}
 

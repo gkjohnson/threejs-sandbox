@@ -66,6 +66,7 @@
 				stride: 30,
 				intensity: 0.5,
 				renderTargetScale: 0.5,
+				raymarchTargetScale: 1.0,
 				jitter: 1,
 				display: SSRRPass.DEFAULT,
 				scene: 'sponza'
@@ -263,7 +264,7 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				ssrrPass = new SSRRPass( scene, camera );
+				ssrrPass = new SSRRPass( scene, camera, { raymarchTargetScale: 1.0 } );
 				window.ssrrPass = ssrrPass;
 
 				composer = new EffectComposer( renderer );
@@ -301,6 +302,14 @@
 						onWindowResize();
 
 					} );
+				gui.add( params, 'raymarchTargetScale', 0.1, 1 )
+					.onChange( v => {
+
+						ssrrPass.raymarchTargetScale = v;
+						onWindowResize();
+
+					} );
+
 				gui.add(
 					params,
 					'display',

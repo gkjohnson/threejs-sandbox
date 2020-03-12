@@ -80,6 +80,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - For some reason where there are gaps ray marching still seems to occur. Maybe because the case of `F      B     F` (where F is front face is B is back face) is not handled. This is apparent in the spheres scene.
 - "Black" is considered close to the camera at the moment and is also the same as the clear color. So if there's no background elements then the unrendered space will look like it's "close" to the camera and cause intersections.
 	- This is complicated because the depths are negated and in the range `[ near, far ]`. Fix this when the depth is changed to use another format later.
+- At really glancing angles (especially far back on the sponza floor when moving the camera down) it looks like the rays are not actually hitting the wall in the back. Maybe it's because it hits itself? Or the depth behind it?
 
 ### Features
 
@@ -92,7 +93,6 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
 - Use a different jitter technique such as Halton or Poisson disks.
 - Understand how to render depth target mip pyramid.
-- Allow for setting distance / normal buffer sizes separately from the march buffer
 
 ### References
 
