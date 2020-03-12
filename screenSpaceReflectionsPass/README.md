@@ -33,6 +33,7 @@ The intensity of the reflection.
 - Improve the connected-ness of the reflections to the ground.
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
 - Normals don't seem to be correct. Skewed wall on left causes stretch vase. The depth buffer could also be the culprit here.
+- For some reason where there are gaps ray marching still seems to occur. Maybe because the case of `F      B     F` (where F is front face is B is back face) is not handled. This is apparent in the spheres scene.
 
 ### Features
 
