@@ -78,6 +78,62 @@ export const LinearDepthDisplayShader = {
 
 };
 
+export const DepthDeltaShader = {
+
+	uniforms: {
+
+		frontSideTexture: { value: null },
+		backSideTexture: { value: null },
+		divide: { value: 1 }
+
+	},
+
+	vertexShader: /* glsl */`
+		varying vec3 vViewPosition;
+		varying vec2 vUv;
+		void main() {
+
+			#include <begin_vertex>
+			#include <project_vertex>
+			vViewPosition = mvPosition.xyz;
+			vUv = uv;
+
+		}
+	`,
+
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D frontSideTexture;
+		uniform sampler2D backSideTexture;
+		uniform float divide;
+		void main() {
+
+			vec4 frontTex = texture2D( frontSideTexture, vUv );
+			vec4 backTex = texture2D( backSideTexture, vUv );
+
+			float frontDepth = frontTex.r;
+			float backDepth = backTex.r;
+			float depthDelta = frontDepth - backDepth;
+
+			if ( frontDepth < backDepth ) {
+
+				gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+
+			} else if ( ( frontDepth == 0.0 ) != ( backDepth == 0.0 ) ) {
+
+				gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+
+			} else {
+
+				gl_FragColor = vec4( 10.0 * depthDelta / divide );
+
+			}
+
+		}
+	`
+
+};
+
 export const IntersectUvShader = {
 
 	uniforms: {

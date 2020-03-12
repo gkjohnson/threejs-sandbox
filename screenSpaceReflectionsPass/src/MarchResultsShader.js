@@ -78,7 +78,7 @@ export const MarchResultsShader = {
 			float sceneZMax = texture2D( backfaceDepthBuffer, uv ).r;
 			float sceneZMin = texture2D( depthBuffer, uv ).r;
 
-			return rayzmin >= sceneZMax && rayzmax <= sceneZMin;
+			return sceneZMin != 0.0 && rayzmin >= sceneZMax && rayzmax <= sceneZMin;
 
 		}
 
@@ -92,7 +92,7 @@ export const MarchResultsShader = {
 		// NOTE: "further" is actually "more negative"
 		void swapIfBigger( inout float a, inout float b ) {
 
-			if (a > b) {
+			if ( a > b ) {
 
 				float t = a;
 				a = b;
@@ -107,6 +107,7 @@ export const MarchResultsShader = {
 			return x < 0.0 || x > 1.0;
 
 		}
+
 		bool isOutsideUvBounds( vec2 uv ) {
 
 			return isOutsideUvBounds( uv.x ) || isOutsideUvBounds( uv.y );
@@ -181,7 +182,7 @@ export const MarchResultsShader = {
 
 			vec2 hitUV;
 			bool intersected = false;
-			for (float stepCount = 1.0; stepCount <= float( MAX_STEPS ); stepCount ++) {
+			for ( float stepCount = 1.0; stepCount <= float( MAX_STEPS ); stepCount ++ ) {
 
 				PQK += dPQK;
 
