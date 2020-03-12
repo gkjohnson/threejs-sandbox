@@ -25,6 +25,7 @@ export const ColorResolveShader = {
 		/* glsl */`
 		#include <common>
 		#include <packing>
+		#define EDGE_FADE 0.3
 		varying vec2 vUv;
 		uniform sampler2D intersectBuffer;
 		uniform sampler2D sourceBuffer;
@@ -43,12 +44,10 @@ export const ColorResolveShader = {
 
 				vec4 col = texture2D( sourceBuffer, hitUV, 10.0 );
 				vec2 ndc = abs( hitUV * 2.0 - 1.0 );
-				float maxndc = max( ndc.x, ndc.y );
-				float fadeVal =
-					( 1.0 - ( max( 0.0, maxndc - 0.4 ) / ( 1.0 - 0.4 )  ) ) *
-					( 1.0 - ( stepRatio ) );
-
-				// TODO: Add z fade towards camera
+				float maxndc = max( abs( ndc.x ), abs( ndc.y ) ); // [ -1.0, 1.0 ]
+				float rayLengthFade = 1.0 - stepRatio;
+				float ndcFade = 1.0 - ( max( 0.0, maxndc - EDGE_FADE ) / ( 1.0 - EDGE_FADE )  );
+				float fadeVal = min( rayLengthFade, ndcFade );
 
 				// source += col * intensity * ( 1.0 - roughness ) * fadeVal;
 				source += col * intensity * fadeVal;
