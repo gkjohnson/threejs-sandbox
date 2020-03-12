@@ -2,6 +2,8 @@ import {
 	NearestFilter,
 	FloatType,
 	BackSide,
+	FrontSide,
+	DoubleSide,
 	WebGLRenderTarget,
 	RGBAFormat,
 	Color,
@@ -15,6 +17,7 @@ import { MarchResultsShader } from './MarchResultsShader.js';
 import {
 	PackedNormalDisplayShader,
 	LinearDepthDisplayShader,
+	DepthDeltaShader,
 	IntersectDistanceShader,
 	IntersectUvShader,
 	IntersectColorShader
@@ -34,6 +37,9 @@ const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
 
 const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
 const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
+
+const _debugDepthDeltaMaterial = new ShaderMaterial( DepthDeltaShader );
+const _debugDepthDeltaQuad = new Pass.FullScreenQuad( _debugDepthDeltaMaterial );
 
 const _intersectUvMaterial = new ShaderMaterial( IntersectUvShader );
 const _intersectUvQuad = new Pass.FullScreenQuad( _intersectUvMaterial );
@@ -78,11 +84,22 @@ export class SSRRPass extends Pass {
 			} );
 		this._depthBuffer.texture.name = "SSRRPass.Depth";
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
+		this._depthReplacement.updateUniforms = function( object, material, target ) {
+
+			this.constructor.prototype.updateUniforms.apply( this, arguments );
+			target.side = material.side === DoubleSide ? DoubleSide : FrontSide;
+
+		};
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
 		this._backfaceDepthReplacement = new ShaderReplacement( LinearDepthShader );
-		this._backfaceDepthReplacement._replacementMaterial.side = BackSide;
+		this._backfaceDepthReplacement.updateUniforms = function( object, material, target ) {
+
+			this.constructor.prototype.updateUniforms.apply( this, arguments );
+			target.side = material.side === DoubleSide ? DoubleSide : BackSide;
+
+		};
 
 		this._packedReplacement = new ShaderReplacement( PackedShader );
 		this._packedReplacement.updateUniforms = function( object, material, target ) {
@@ -299,6 +316,20 @@ export class SSRRPass extends Pass {
 
 		}
 
+		if ( debug.display === SSRRPass.DEPTH_DELTA ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_debugDepthDeltaMaterial.uniforms.backSideTexture.value = backfaceDepthBuffer.texture;
+			_debugDepthDeltaMaterial.uniforms.frontSideTexture.value = depthBuffer.texture;
+			_debugDepthDeltaMaterial.uniforms.divide.value = camera.far;
+			_debugDepthDeltaQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
 		// Render march results
 		const marchQuad = this._marchQuad;
 		const marchMaterial = marchQuad.material;
@@ -400,8 +431,9 @@ export class SSRRPass extends Pass {
 SSRRPass.DEFAULT = 0;
 SSRRPass.FRONT_DEPTH = 1;
 SSRRPass.BACK_DEPTH = 2;
-SSRRPass.NORMAL = 3;
-SSRRPass.ROUGHNESS = 4;
-SSRRPass.INTERSECTION_RESULTS = 5;
-SSRRPass.INTERSECTION_DISTANCE = 6;
-SSRRPass.INTERSECTION_COLOR = 7;
+SSRRPass.DEPTH_DELTA = 3;
+SSRRPass.NORMAL = 4;
+SSRRPass.ROUGHNESS = 5;
+SSRRPass.INTERSECTION_RESULTS = 6;
+SSRRPass.INTERSECTION_DISTANCE = 7;
+SSRRPass.INTERSECTION_COLOR = 8;
