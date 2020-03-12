@@ -172,6 +172,7 @@ export class SSRRPass extends Pass {
 		const prevAutoUpdate = scene.autoUpdate;
 		const prevRenderTarget = renderer.getRenderTarget();
 		const pevShadowEnabled = renderer.shadowMap.enabled;
+		const prevSceneBackground = scene.background;
 		_prevClearColor.copy( renderer.getClearColor() );
 
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
@@ -192,7 +193,8 @@ export class SSRRPass extends Pass {
 			renderer.autoClear = prevAutoClear;
 			renderer.shadowMap.enabled = pevShadowEnabled;
 			scene.autoUpdate = prevAutoUpdate;
-			packedReplacement.reset( scene, true )
+			packedReplacement.reset( scene, true );
+			scene.background = prevSceneBackground;
 
 		};
 
@@ -200,6 +202,7 @@ export class SSRRPass extends Pass {
 		renderer.shadowMap.enabled = false;
 		renderer.autoClear = true;
 		renderer.setClearColor( _blackColor, 0 );
+		scene.background = null;
 
 		// Roughness / Normal pass
 		// TODO: Write a manual "material override" function that will automatically
