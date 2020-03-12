@@ -70,6 +70,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 ### Upcoming
 
 - Optionally fall back to environment map
+- Understand how roughness and metalness affect the blending model -- reference how environment maps are sampled and applied
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
@@ -83,16 +84,21 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Features
 
-- Understand how roughness and metalness affect the blending model -- reference how environment maps are sampled and applied
 - Investigate how incidence angle should play a role
 - Blur output based on roughness and ray distance
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
-- Support animations
-- Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
-- Separate the color resolve from raymarch hit so color resolve can happen in higher resolution while marching happens in a lower one.
+- Resolve color using sibling pixels to improve detail. Should ray direction affect this? Should the values be flipped?
 - Use a different jitter technique such as Halton or Poisson disks.
 - Understand how to render depth target mip pyramid.
+- Use mip LoDs for normals, color, depth? to blend the pixels
+
+### Stretch
+
+- Test orthographic camera
+- Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
+- Support animations
+
 
 ### References
 
