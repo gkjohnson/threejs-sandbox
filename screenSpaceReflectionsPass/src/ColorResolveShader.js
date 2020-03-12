@@ -1,5 +1,3 @@
-import { Matrix4, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
-
 export const ColorResolveShader = {
 
 	uniforms: {

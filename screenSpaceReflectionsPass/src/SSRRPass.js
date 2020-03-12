@@ -12,7 +12,13 @@ import { ColorResolveShader } from './ColorResolveShader.js';
 import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
-import { PackedNormalDisplayShader, LinearDepthDisplayShader, IntersectDistanceShader, IntersectUvShader } from './DebugShaders.js';
+import {
+	PackedNormalDisplayShader,
+	LinearDepthDisplayShader,
+	IntersectDistanceShader,
+	IntersectUvShader,
+	IntersectColorShader
+} from './DebugShaders.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 /**
@@ -34,6 +40,9 @@ const _intersectUvQuad = new Pass.FullScreenQuad( _intersectUvMaterial );
 
 const _intersectDistMaterial = new ShaderMaterial( IntersectDistanceShader );
 const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
+
+const _intersectColorMaterial = new ShaderMaterial( IntersectColorShader );
+const _intersectColorQuad = new Pass.FullScreenQuad( _intersectColorMaterial );
 
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0 );
@@ -343,6 +352,21 @@ export class SSRRPass extends Pass {
 
 		}
 
+		if ( debug.display === SSRRPass.INTERSECTION_COLOR ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+
+			_intersectColorQuad.material.uniforms.sourceBuffer.value = readBuffer.texture;
+			_intersectColorQuad.material.uniforms.packedBuffer.value = packedBuffer.texture;
+			_intersectColorQuad.material.uniforms.intersectBuffer.value = this._marchResultsBuffer.texture;
+
+			_intersectColorQuad.render( renderer );
+			replaceOriginalValues();
+			return;
+
+		}
+
 		// TODO: Raymarch in a separate buffer and keep distance and final position in the final buffer
 		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
 		// larger than the target pixels so you can share the ray result with neighboring pixels and
@@ -376,3 +400,4 @@ SSRRPass.NORMAL = 3;
 SSRRPass.ROUGHNESS = 4;
 SSRRPass.INTERSECTION_RESULTS = 5;
 SSRRPass.INTERSECTION_DISTANCE = 6;
+SSRRPass.INTERSECTION_COLOR = 7;
