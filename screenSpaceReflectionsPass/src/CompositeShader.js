@@ -37,7 +37,7 @@ export const CompositeShader = {
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}
-		`,
+	`,
 	fragmentShader:
 		/* glsl */`
 		#include <common>
@@ -257,8 +257,8 @@ export const CompositeShader = {
 
 				// TODO: Add z fade towards camera
 
-				// result += col * intensity * ( 1.0 - roughness );
-				result += col * intensity;
+				// result += col * intensity * ( 1.0 - roughness ) * fadeVal;
+				result += col * intensity * fadeVal;
 
 			}
 

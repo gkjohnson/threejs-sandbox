@@ -239,7 +239,7 @@ export const MarchResultsShader = {
 				}
 			}
 
-			gl_FragColor = intersected ? vec4( hitUV, 0.0, 1.0 ) : vec4( 0.0 );
+			gl_FragColor = intersected ? vec4( hitUV, stepped / MAX_STEPS, 1.0 ) : vec4( 0.0 );
 
 		}
 		`
