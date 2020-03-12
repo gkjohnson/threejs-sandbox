@@ -9,7 +9,12 @@ _sponza scene from GLTF 2.0 example models_
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
-## Options
+# API
+
+## SSRRPass
+
+_extends Pass_
+
 ### .stride
 
 ```js
@@ -34,7 +39,7 @@ binarySearchSteps : Number
 
 The number of extra iterations to take to search for the intersected surface.
 
-#### .intensity
+### .intensity
 
 ```js
 intensity : Number
@@ -42,16 +47,22 @@ intensity : Number
 
 The intensity of the reflection.
 
-#### .renderTargetScale
+### .renderTargetScale
 
 ```js
 renderTargetScale : Number
 ```
 
-#### .jitter
+### .jitter
 
 ```js
 jitter : Number
+```
+
+### .constructor
+
+```js
+constructor( scene : Scene, camera : Camera, options : Object )
 ```
 
 ## TODO
