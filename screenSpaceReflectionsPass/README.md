@@ -10,20 +10,49 @@ _sponza scene from GLTF 2.0 example models_
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
 ## Options
-#### stride
+### .stride
+
+```js
+stride : Number
+```
+
 The number of screen space pixels to step over per iteration in the down sampled depth texture.
 
-#### steps
+### .steps
+
+```js
+steps : Number
+```
+
 The number of steps to take along the cast ray.
 
-#### binarySearchSteps
+### .binarySearchSteps
+
+```js
+binarySearchSteps : Number
+```
+
 The number of extra iterations to take to search for the intersected surface.
 
-#### intensity
+#### .intensity
+
+```js
+intensity : Number
+```
+
 The intensity of the reflection.
 
-#### renderTargetScale
+#### .renderTargetScale
 
+```js
+renderTargetScale : Number
+```
+
+#### .jitter
+
+```js
+jitter : Number
+```
 
 ## TODO
 
