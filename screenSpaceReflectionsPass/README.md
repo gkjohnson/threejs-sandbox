@@ -69,21 +69,18 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
-- Optionally fall back to environment map
-- Understand how roughness and metalness affect the blending model -- reference how environment maps are sampled and applied
+- Blur output based on roughness and ray distance
+- For some reason where there are gaps ray marching still seems to occur. Maybe because the case of `F      B     F` (where F is front face is B is back face) is not handled. This is apparent in the spheres scene.
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
-- For some reason where there are gaps ray marching still seems to occur. Maybe because the case of `F      B     F` (where F is front face is B is back face) is not handled. This is apparent in the spheres scene.
 - "Black" is considered close to the camera at the moment and is also the same as the clear color. So if there's no background elements then the unrendered space will look like it's "close" to the camera and cause intersections.
 	- This is complicated because the depths are negated and in the range `[ near, far ]`. Fix this when the depth is changed to use another format later.
-- At really glancing angles (especially far back on the sponza floor when moving the camera down) it looks like the rays are not actually hitting the wall in the back. Maybe it's because it hits itself? Or the depth behind it?
+- At really glancing angles (especially far back on the sponza floor when moving the camera down) it looks like the rays are not actually hitting the wall in the back. Maybe it's because it hits itself? Or the depth behind it? Lowering the rendertarget and raymarch scale to 0.2 demonstrates this -- it looks like the pixels are hitting themselves
 
 ### Features
 
-- Investigate how incidence angle should play a role
-- Blur output based on roughness and ray distance
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Resolve color using sibling pixels to improve detail. Should ray direction affect this? Should the values be flipped?
@@ -96,11 +93,14 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Stretch
 
+- Investigate how incidence angle should play a role
 - Test orthographic camera
 - Avoid rendering the same data twice (reuse depth buffer from prior renders, other effects)
 - Support animations
 - Improve rendertarget memory footprint.
 - See if we can improve the look of rendering using thickness -- some thin surfaces are missed
+- Optionally fall back to environment map
+- Understand how roughness and metalness affect the blending model -- reference how environment maps are sampled and applied
 
 ### References
 
