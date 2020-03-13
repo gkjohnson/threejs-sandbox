@@ -1,0 +1,1 @@
+# Ground Truth Ambient Occlusion
