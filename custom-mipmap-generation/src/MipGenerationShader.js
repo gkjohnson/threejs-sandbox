@@ -108,6 +108,34 @@ export const MipGenerationShader = {
 
 			#elif X_POWER_OF_TWO
 
+			// TODO: Are these weights correct?
+			// copy this to the X_POWER_OF_TWO section
+			float wx0 = 0.5;
+			float wx1 = 0.5;
+
+			float yden = 2.0 * mapSize.y + 1.0;
+			float wy0 = ( mapSize.y - y ) / yden;
+			float wy1 = ( mapSize.y ) / yden;
+			float wy2 = ( mapSize.y + 1.0 ) / yden;
+
+			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
+			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
+
+			samples[ 2 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, pixelSize.y ), level );
+			samples[ 3 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, pixelSize.y ), level );
+
+			samples[ 4 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, 2.0 * pixelSize.y ), level );
+			samples[ 5 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 2.0 * pixelSize.y ), level );
+
+			weights[ 0 ] = wx0 * wy0;
+			weights[ 1 ] = wx1 * wy0;
+
+			weights[ 2 ] = wx0 * wy1;
+			weights[ 3 ] = wx1 * wy1;
+
+			weights[ 4 ] = wx0 * wy2;
+			weights[ 5 ] = wx1 * wy2;
+
 			#elif Y_POWER_OF_TWO
 
 			// TODO: Are these weights correct?
