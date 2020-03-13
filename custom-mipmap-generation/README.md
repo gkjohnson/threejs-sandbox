@@ -10,6 +10,9 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 
 **TODO**
 - Understand how a non power of two texture mipmap should be generated ([reference](https://www.nvidia.com/en-us/drivers/np2-mipmapping/)). Use weighted samples. For something like a depth texture that requires a max of all values the map should return the max of even partially covered pixels.
+- Fix incorrect weights when generating mip maps for NPOT textures
+- Fix sampling with NPOT textures so the positioning is correct
+- track down everywhere that the pixel values need to be floored for NPOT sampling
 
 # Use
 

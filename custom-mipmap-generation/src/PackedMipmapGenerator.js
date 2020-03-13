@@ -53,7 +53,7 @@ export class PackedMipmapGenerator {
 
 	}
 
-	update( texture, target, renderer ) {
+	update( texture, target, renderer, forcePowerOfTwo = false ) {
 
 		const originalAutoClear = renderer.autoClear;
 		const originalClearAlpha = renderer.getClearAlpha();
@@ -67,8 +67,18 @@ export class PackedMipmapGenerator {
 
 		// TODO: add option for ceil power of two and option to not power of two at all? This
 		// causes the mip texels to not align, though...
-		const width = MathUtils.floorPowerOfTwo( texture.image.width );
-		const height = MathUtils.floorPowerOfTwo( texture.image.height );
+		let width, height;
+		if ( forcePowerOfTwo ) {
+
+			width = MathUtils.floorPowerOfTwo( texture.image.width );
+			height = MathUtils.floorPowerOfTwo( texture.image.height );
+
+		} else {
+
+			width = texture.image.width;
+			height = texture.image.height;
+
+		}
 
 		const targetWidth = width * 1.5;
 		const targetHeight = height;

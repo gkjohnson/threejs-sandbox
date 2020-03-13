@@ -114,7 +114,7 @@ export const MipGenerationShader = {
 			float wx1 = 0.5;
 
 			float yden = 2.0 * mapSize.y + 1.0;
-			float wy0 = ( mapSize.y - y ) / yden;
+			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
 			float wy1 = ( mapSize.y ) / yden;
 			float wy2 = ( mapSize.y + 1.0 ) / yden;
 
@@ -141,7 +141,7 @@ export const MipGenerationShader = {
 			// TODO: Are these weights correct?
 			// copy this to the X_POWER_OF_TWO section
 			float xden = 2.0 * mapSize.x + 1.0;
-			float wx0 = ( mapSize.x - x ) / xden;
+			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
 			float wx1 = ( mapSize.x ) / xden;
 			float wx2 = ( mapSize.x + 1.0 ) / xden;
 
@@ -167,12 +167,12 @@ export const MipGenerationShader = {
 			#else
 
 			float xden = 2.0 * mapSize.x + 1.0;
-			float wx0 = ( mapSize.x - x ) / xden;
+			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
 			float wx1 = ( mapSize.x ) / xden;
 			float wx2 = ( mapSize.x + 1.0 ) / xden;
 
 			float yden = 2.0 * mapSize.y + 1.0;
-			float wy0 = ( mapSize.y - y ) / yden;
+			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
 			float wy1 = ( mapSize.y ) / yden;
 			float wy2 = ( mapSize.y + 1.0 ) / yden;
 
