@@ -56,7 +56,7 @@
 			// globals
 			var stats;
 			var params = {
-				linearFilter: true,
+				linearFilter: false,
 				mipLevel: 0,
 				sampleType: 0,
 			};
@@ -99,6 +99,11 @@
 
 				new THREE.TextureLoader().load('./images/voyager-record-cover.jpg', texture => {
 
+					const forcePowerOfTwo = true;
+
+					texture.minFilter = THREE.NearestMipMapNearestFilter;
+					texture.generateMipMaps = true;
+
 					// const b = 255;
 					// texture = new THREE.DataTexture(
 					// 	new Uint8Array([
@@ -109,10 +114,10 @@
 					// 	]),
 					// 	4, 4, THREE.RGBFormat
 					// );
+					// texture.minFilter = THREE.NearestFilter;
+
 
 					plane.material.uniforms.map.value = texture;
-					texture.minFilter = THREE.LinearMipMapLinearFilter;
-					texture.generateMipMaps = true;
 
 					linearTarget = new THREE.WebGLRenderTarget();
 					nearestTarget = new THREE.WebGLRenderTarget();
@@ -121,8 +126,8 @@
 
 					// render mip pyramids
 					const mipMapper = new PackedMipmapGenerator();
-					mipMapper.update( texture, nearestTarget, renderer );
-					mipMapper.update( texture, linearTarget, renderer );
+					mipMapper.update( texture, nearestTarget, renderer, forcePowerOfTwo );
+					mipMapper.update( texture, linearTarget, renderer, forcePowerOfTwo );
 
 					// render original targets
 					const copyQuad = mipMapper._copyQuad;
@@ -137,12 +142,24 @@
 					fullPlane.material.map = nearestTarget.texture;
 					fullPlane.material.needsUpdate = true;
 
-					mipPlane.material.uniforms.map.value = linearTarget.texture;
-					mipPlane.material.uniforms.originalSize.value.set(
-						texture.image.width,
-						texture.image.height
-					);
+					mipPlane.material.uniforms.map.value = nearestTarget.texture;
 
+					if ( forcePowerOfTwo ) {
+
+						mipPlane.material.uniforms.originalSize.value.set(
+							THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
+							THREE.MathUtils.floorPowerOfTwo( texture.image.height )
+						);
+
+					} else {
+
+						mipPlane.material.uniforms.originalSize.value.set(
+							texture.image.width,
+							texture.image.height
+						);
+
+					}
+					mipPlane.material.defines.NEAREST_FILTER = 1;
 					mipPlane.material.needsUpdate = true;
 
 					plane.material.uniforms.map.value = texture;
