@@ -8,5 +8,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - TRAA
 - Deferred Renderer
 - Debuggable Shader
-- Fixing SSRR image stretching
-- Translucent material with refraction
+- SSRR
+- Translucent material with refraction + depth peeling
+- Improve PCSS with max value depth pyramid
+- Subsurface Scattering
