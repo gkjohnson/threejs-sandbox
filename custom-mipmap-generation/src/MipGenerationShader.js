@@ -116,7 +116,7 @@ export const MipGenerationShader = {
 			float yden = 2.0 * mapSize.y + 1.0;
 			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
 			float wy1 = ( mapSize.y ) / yden;
-			float wy2 = ( mapSize.y + 1.0 ) / yden;
+			float wy2 = ( pixelPos.y + 1.0 ) / yden;
 
 			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
 			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
@@ -143,7 +143,7 @@ export const MipGenerationShader = {
 			float xden = 2.0 * mapSize.x + 1.0;
 			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
 			float wx1 = ( mapSize.x ) / xden;
-			float wx2 = ( mapSize.x + 1.0 ) / xden;
+			float wx2 = ( pixelPos.x + 1.0 ) / xden;
 
 			float wy0 = 0.5;
 			float wy1 = 0.5;
@@ -169,12 +169,12 @@ export const MipGenerationShader = {
 			float xden = 2.0 * mapSize.x + 1.0;
 			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
 			float wx1 = ( mapSize.x ) / xden;
-			float wx2 = ( mapSize.x + 1.0 ) / xden;
+			float wx2 = ( pixelPos.x + 1.0 ) / xden;
 
 			float yden = 2.0 * mapSize.y + 1.0;
 			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
 			float wy1 = ( mapSize.y ) / yden;
-			float wy2 = ( mapSize.y + 1.0 ) / yden;
+			float wy2 = ( pixelPos.y + 1.0 ) / yden;
 
 			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
 			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );

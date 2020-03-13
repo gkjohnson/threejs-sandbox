@@ -3,18 +3,17 @@ export const sampleFunctions = /* glsl */`
 	// Without original size argument
 	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level ) {
 
-		float dimensions = 1.0 / pow( 2.0, float( level ) );
-		float scaledWidth = 2.0 / 3.0;
-		vec2 scaledDimensions = vec2( scaledWidth * dimensions, dimensions );
+		float targetRatio = 1.0 / pow( 2.0, float( level ) );
+		float startY = targetRatio;
+		float originalWidth = 2.0 / 3.0;
+
+		vec2 scaledDimensions = vec2( originalWidth * targetRatio, targetRatio );
 		vec2 offset = vec2(
-			level > 0 ? scaledWidth : 0.0,
-			level > 0 ? 1.0 / pow( 2.0, float( level ) ) : 0.0
+			level > 0 ? originalWidth : 0.0,
+			level > 0 ? startY : 0.0
 		);
 
-		vec2 samplePoint;
-		samplePoint.x = mix( offset.x, offset.x + scaledDimensions.x, uv.x );
-		samplePoint.y = mix( offset.y, offset.y + scaledDimensions.y, uv.y );
-
+		vec2 samplePoint = mix( offset, offset + scaledDimensions, uv );
 		return texture2D( texture, samplePoint );
 
 	}
@@ -35,18 +34,17 @@ export const sampleFunctions = /* glsl */`
 
 		// use inverse pow of 2 to simulate right bit shift operator
 		vec2 pixelDimensions = floor( originalSize / pow( 2.0, float( level ) ) );
-		float dimensions = 1.0 / pow( 2.0, float( level ) );
-		float scaledWidth = 2.0 / 3.0;
-		vec2 scaledDimensions = vec2( scaledWidth * dimensions, dimensions );
+		vec2 targetRatio = pixelDimensions / originalSize;
+		float originalWidth = ( originalSize / floor( originalSize * 1.5 ) ).x;
+
+		float startY = targetRatio.y;
+		vec2 scaledDimensions = vec2( originalWidth * targetRatio.x, targetRatio );
 		vec2 offset = vec2(
-			level > 0 ? scaledWidth : 0.0,
-			level > 0 ? 1.0 / pow( 2.0, float( level ) ) : 0.0
+			level > 0 ? originalWidth : 0.0,
+			level > 0 ? startY : 0.0
 		);
 
-		vec2 samplePoint;
-		samplePoint.x = mix( offset.x, offset.x + scaledDimensions.x, uv.x );
-		samplePoint.y = mix( offset.y, offset.y + scaledDimensions.y, uv.y );
-
+		vec2 samplePoint = mix( offset, offset + scaledDimensions, uv );
 		return texture2D( texture, samplePoint );
 
 	}
@@ -57,7 +55,11 @@ export const sampleFunctions = /* glsl */`
 		int minLevel = int( floor( level ) );
 		int maxLevel = int( ceil( level ) );
 
-		return mix( packedTexture2DLOD( texture, uv, minLevel, originalSize ), packedTexture2DLOD( texture, uv, maxLevel, originalSize ), ratio );
+		return mix(
+			packedTexture2DLOD( texture, uv, minLevel, originalSize ),
+			packedTexture2DLOD( texture, uv, maxLevel, originalSize ),
+			ratio
+		);
 
 	}
 

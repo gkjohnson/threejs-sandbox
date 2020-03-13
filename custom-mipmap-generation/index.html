@@ -161,6 +161,10 @@
 					fullPlane.material.needsUpdate = true;
 
 					mipPlane.material.uniforms.map.value = linearTarget.texture;
+					mipPlane.material.uniforms.originalSize.value.set(
+						THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
+						THREE.MathUtils.floorPowerOfTwo( texture.image.height )
+					);
 					mipPlane.material.needsUpdate = true;
 
 					plane.material.uniforms.map.value = originalLinearTarget.texture;

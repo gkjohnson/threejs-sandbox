@@ -1,3 +1,4 @@
+import { Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { sampleFunctions } from './src/mipSampleFunctions.js';
 
 export const mipBiasShader = {
@@ -47,7 +48,7 @@ export const customSampleShader = {
 	uniforms: {
 
 		map: { value: null },
-		mapHeight: { value: 1 },
+		originalSize: { value: new Vector2() },
 		level: { value: 0 },
 
 	},
@@ -65,6 +66,7 @@ export const customSampleShader = {
 
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
+		uniform vec2 originalSize;
 		uniform sampler2D map;
 		uniform float level;
 
@@ -74,11 +76,12 @@ export const customSampleShader = {
 
 			#ifdef NEAREST_FILTER
 
-			gl_FragColor = packedTexture2DLOD( map, vUv, mod( level, 1.0 ) < 0.5 ? int( level ) : int( level ) + 1 );
+			int intLevel = mod( level, 1.0 ) < 0.5 ? int( level ) : int( level ) + 1;
+			gl_FragColor = packedTexture2DLOD( map, vUv, intLevel, originalSize );
 
 			#else
 
-			gl_FragColor = packedTexture2DLOD( map, vUv, level );
+			gl_FragColor = packedTexture2DLOD( map, vUv, level, originalSize );
 
 			#endif
 

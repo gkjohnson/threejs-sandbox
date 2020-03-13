@@ -80,8 +80,8 @@ export class PackedMipmapGenerator {
 
 		}
 
-		const targetWidth = width * 1.5;
-		const targetHeight = height;
+		const targetWidth = Math.floor( width * 1.5 );
+		const targetHeight = Math.floor( height );
 
 		// init the targets
 		target.setSize( targetWidth, targetHeight );
@@ -126,8 +126,11 @@ export class PackedMipmapGenerator {
 			currWidth /= 2;
 			currHeight /= 2;
 
+			const floorWidth = Math.floor( currWidth );
+			const floorHeight = Math.floor( currHeight );
+
 			renderer.setRenderTarget( target );
-			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
+			mipQuad.camera.setViewOffset( floorWidth, floorHeight, - width, - heightOffset, targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
 			// Copy the subframe to the scratch target
