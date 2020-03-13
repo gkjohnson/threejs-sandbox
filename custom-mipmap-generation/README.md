@@ -21,7 +21,10 @@ import { PackedMipmapGenerator } from './src/PackedMipmapGenerator.js';
 const mipmapper = new PackedMipmapGenerator(
 	`
 	gl_FragColor = (
-		samples[0][0] + samples[0][1] + samples[1][0] + samples[1][1]
+		samples[ 0 ] * weights[ 0 ] +
+		samples[ 1 ] * weights[ 1 ] +
+		samples[ 2 ] * weights[ 2 ] +
+		samples[ 3 ] * weights[ 3 ]
 	) / 4.0;
 	`
 );
@@ -40,14 +43,14 @@ mipmapper.dispose();
 constructor( logic : string )
 ```
 
-Takes a block of code to generate the next mip level. Must set the `gl_FragColor`. An matrix of the parent sibling values is available in the `samples` variable.
+Takes a block of code to generate the next mip level. Must set the `gl_FragColor`. An row major array of the parent sibling values is available in the `samples` variable. The number of samples, pixel width, and pixel height are available in SAMPLES, HEIGHT, and WIDTH defines.
 
 ### .update
 ```js
 update( texture : Texture, target : WebGLRenderTarget, renderer : WebGLRenderer ) : Number
 ```
 
-Takes a texture to turn into a mip pyramid, a target to to render the pyramid into, and a rendeer to render with. Returns the number of mips generated.
+Takes a texture to turn into a mip pyramid, a target to to render the pyramid into, and a renderer to render with. Returns the number of mips generated.
 
 ### .dispose
 ```js

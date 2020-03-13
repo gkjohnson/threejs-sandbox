@@ -2,7 +2,6 @@
 import { FullScreenQuad } from './FullScreenQuad.js';
 import { Color, ShaderMaterial, MathUtils, Vector2, WebGLRenderTarget, NearestFilter } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
-import { sampleFunctions } from './mipSampleFunctions.js';
 import { clone, MipGenerationShader } from './MipGenerationShader.js';
 
 const _originalClearColor = new Color();
@@ -13,14 +12,15 @@ export class PackedMipmapGenerator {
 		if ( ! mipmapLogic ) {
 
 			mipmapLogic = /* glsl */`
-				gl_FragColor =
-					(
-						sample00 +
-						sample01 +
-						sample10 +
-						sample11
-					) / 4.0;
-				`;
+
+				#pragma unroll_loop
+				for ( int i = 0; i < SAMPLES; i ++ ) {
+
+					gl_FragColor += samples[ i ] * weights[ i ] * ( 1.0 / float( SAMPLES ) );
+
+				}
+
+			`;
 
 		}
 
@@ -88,7 +88,7 @@ export class PackedMipmapGenerator {
 
 			renderer.setRenderTarget( target );
 			mipQuad.material.uniforms.map.value = swapTarget.texture;
-			mipQuad.material.uniforms.parentLevel.value = mip;
+			mipQuad.material.uniforms.level.value = mip;
 			mipQuad.material.uniforms.mapSize.value.set( currWidth, currHeight );
 
 			currWidth /= 2;
