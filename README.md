@@ -10,5 +10,5 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Debuggable Shader
 - SSRR
 - Translucent material with refraction + depth peeling
-- Improve PCSS with max value depth pyramid
 - Subsurface Scattering
+- Add value pass to color blind utils so we can see the value of colors in the scene relative to eachother
