@@ -135,18 +135,24 @@ export class PackedMipmapGenerator {
 
 			// Copy the subframe to the scratch target
 			renderer.setRenderTarget( swapTarget );
-			copyQuad.material.uniforms.tDiffuse.value = target.texture;
-			copyQuad.camera.setViewOffset( 1, 1, 0, 0, 1, 1 );
-			copyQuad.render( renderer );
+			material.uniforms.map.value = target.texture;
+			mipQuad.render( renderer );
 
 			mip ++;
 			heightOffset += currHeight;
 
 		}
 
+		// TODO: Remove this last pixel and fill make the last draw the rest of the pixels at the end of the above loop
+		const index =
+		( currWidth % 2 === 0 ? 1 << 0 : 0 ) |
+		( currHeight % 2 === 0 ? 1 << 1 : 0 );
+
+		const material = mipMaterials[ index ];
+		material.uniforms.map.value = swapTarget.texture;
+
 		// Fill in the last pixel so the final color is used at all final mip maps
 		renderer.setRenderTarget( target );
-		console.log(currHeight);
 		mipQuad.camera.setViewOffset( currWidth, targetHeight - currHeight, - width, - heightOffset, targetWidth, targetHeight );
 		mipQuad.render( renderer );
 

@@ -30,6 +30,9 @@ export const sampleFunctions = /* glsl */`
 
 	// With original size argument
 	// TODO: finish this
+	// TODO: Figure out how to correctly derive the height to sample based on
+	// TODO: we only generate up until theres only one pixel in either row or height
+	// so we need to accomodate that here: use min( floor( log2( w ) ), floor( log2( h ) ) )
 	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level, vec2 originalSize ) {
 
 		// use inverse pow of 2 to simulate right bit shift operator

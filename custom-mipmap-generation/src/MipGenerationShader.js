@@ -104,7 +104,6 @@ export const MipGenerationShader = {
 			vec2 parentPixelPos = childPixelPos * 2.0;
 
 			vec2 baseUv = ( parentPixelPos / parentMapSize ) + halfParentPixelSize;
-			// vec2 parentPixelPos = floor( baseUv * parentMapSize );
 
 			vec4 samples[ SAMPLES ];
 			float weights[ SAMPLES ];
@@ -123,8 +122,6 @@ export const MipGenerationShader = {
 
 			#elif X_POWER_OF_TWO
 
-			// TODO: Are these weights correct?
-			// copy this to the X_POWER_OF_TWO section
 			float wx0 = 0.5;
 			float wx1 = 0.5;
 
@@ -153,8 +150,6 @@ export const MipGenerationShader = {
 
 			#elif Y_POWER_OF_TWO
 
-			// TODO: Are these weights correct?
-			// copy this to the X_POWER_OF_TWO section
 			float xden = 2.0 * parentMapSize.x + 1.0;
 			float wx0 = ( parentMapSize.x - parentPixelPos.x ) / xden;
 			float wx1 = ( parentMapSize.x ) / xden;
@@ -217,9 +212,8 @@ export const MipGenerationShader = {
 
 			#endif
 
+			// gl_FragColor = vec4(0);
 			<mipmap_logic>
-
-			// gl_FragColor = samples[ 2 ];
 
 		}
 	`
