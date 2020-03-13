@@ -11,4 +11,5 @@ A hacked in implementation of [NVidia's Percentage Closer Soft Shadows](http://d
 - Afford control over PCF and blocker sample counts
 - Optimize the blocker search by using a depth mip map pyramid
 - Remove dependency on shadow texture resolution (changing the shadow resolution changes the scale of the blur effects)
-- The shadow currently only uses an orthogonally-rendered directional light shadow, which can only cover a portion of the area lights coverage. This also means that the shadows do not shange if the light shifts left or right. Possibly a spot light shadow is more appropriate?
+- The shadow currently only uses an orthogonally-rendered directional light shadow, which can only cover a portion of the area lights coverage. This also means that the shadows do not shange if the light shifts left or right. Possibly a spot light shadow is more appropriate
+- Use a max value depth pyramid to improve traversal time of the shadow map?
