@@ -34,8 +34,9 @@ export const MipGenerationShader = {
 	uniforms: {
 
 		map: { value: null },
-		mapSize: { value: new Vector2() },
-		level: { value: 0 },
+		originalMapSize: { value: new Vector2() },
+		parentMapSize: { value: new Vector2() },
+		parentLevel: { value: 0 },
 
 	},
 
@@ -53,8 +54,9 @@ export const MipGenerationShader = {
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
 		uniform sampler2D map;
-		uniform int level;
-		uniform vec2 mapSize;
+		uniform int parentLevel;
+		uniform vec2 parentMapSize;
+		uniform vec2 originalMapSize;
 
 		${ sampleFunctions }
 
@@ -83,23 +85,36 @@ export const MipGenerationShader = {
 		#define HEIGHT 3
 
 		#endif
+
+		vec4 sampleAt( vec2 uv ) {
+
+			return packedTexture2DLOD( map, uv, parentLevel );
+
+		}
+
 		void main() {
 
-			vec2 pixelSize = 1.0 / mapSize;
-			vec2 halfPixelSize = pixelSize / 2.0;
-			vec2 baseUv = vUv - vec2( halfPixelSize );
-			vec2 pixelPos = floor( baseUv * mapSize );
-			vec2 childMapSize = floor( mapSize / 2.0 );
+			vec2 childMapSize = parentMapSize / 2.0;
+			// vec2 childPixelSize = 1.0 / childMapSize;
+			// vec2 halfChildPixelSize = childPixelSize / 2.0;
+			vec2 childPixelPos = floor( vUv * childMapSize );
+
+			vec2 parentPixelSize = 1.0 / parentMapSize;
+			vec2 halfParentPixelSize = parentPixelSize / 2.0;
+			vec2 parentPixelPos = childPixelPos * 2.0;
+
+			vec2 baseUv = ( parentPixelPos / parentMapSize ) + halfParentPixelSize;
+			// vec2 parentPixelPos = floor( baseUv * parentMapSize );
 
 			vec4 samples[ SAMPLES ];
 			float weights[ SAMPLES ];
 
 			#if X_POWER_OF_TWO && Y_POWER_OF_TWO
 
-			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
-			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
-			samples[ 2 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, pixelSize.y ), level );
-			samples[ 3 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, pixelSize.y ), level );
+			samples[ 0 ] = sampleAt( baseUv );
+			samples[ 1 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 0.0 ) );
+			samples[ 2 ] = sampleAt( baseUv + vec2( 0.0, parentPixelSize.y ) );
+			samples[ 3 ] = sampleAt( baseUv + vec2( parentPixelSize.x, parentPixelSize.y ) );
 
 			weights[ 0 ] = 0.25;
 			weights[ 1 ] = 0.25;
@@ -113,19 +128,19 @@ export const MipGenerationShader = {
 			float wx0 = 0.5;
 			float wx1 = 0.5;
 
-			float yden = 2.0 * mapSize.y + 1.0;
-			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
-			float wy1 = ( mapSize.y ) / yden;
-			float wy2 = ( pixelPos.y + 1.0 ) / yden;
+			float yden = 2.0 * parentMapSize.y + 1.0;
+			float wy0 = ( parentMapSize.y - parentPixelPos.y ) / yden;
+			float wy1 = ( parentMapSize.y ) / yden;
+			float wy2 = ( parentPixelPos.y + 1.0 ) / yden;
 
-			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
-			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
+			samples[ 0 ] = sampleAt( baseUv );
+			samples[ 1 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 0.0 ) );
 
-			samples[ 2 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, pixelSize.y ), level );
-			samples[ 3 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, pixelSize.y ), level );
+			samples[ 2 ] = sampleAt( baseUv + vec2( 0.0, parentPixelSize.y ) );
+			samples[ 3 ] = sampleAt( baseUv + vec2( parentPixelSize.x, parentPixelSize.y ) );
 
-			samples[ 4 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, 2.0 * pixelSize.y ), level );
-			samples[ 5 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 2.0 * pixelSize.y ), level );
+			samples[ 4 ] = sampleAt( baseUv + vec2( 0.0, 2.0 * parentPixelSize.y ) );
+			samples[ 5 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 2.0 * parentPixelSize.y ) );
 
 			weights[ 0 ] = wx0 * wy0;
 			weights[ 1 ] = wx1 * wy0;
@@ -140,21 +155,21 @@ export const MipGenerationShader = {
 
 			// TODO: Are these weights correct?
 			// copy this to the X_POWER_OF_TWO section
-			float xden = 2.0 * mapSize.x + 1.0;
-			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
-			float wx1 = ( mapSize.x ) / xden;
-			float wx2 = ( pixelPos.x + 1.0 ) / xden;
+			float xden = 2.0 * parentMapSize.x + 1.0;
+			float wx0 = ( parentMapSize.x - parentPixelPos.x ) / xden;
+			float wx1 = ( parentMapSize.x ) / xden;
+			float wx2 = ( parentPixelPos.x + 1.0 ) / xden;
 
 			float wy0 = 0.5;
 			float wy1 = 0.5;
 
-			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
-			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
-			samples[ 2 ] = packedTexture2DLOD( map, baseUv + vec2( 2.0 * pixelSize.x, 0.0 ), level );
+			samples[ 0 ] = sampleAt( baseUv );
+			samples[ 1 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 0.0 ) );
+			samples[ 2 ] = sampleAt( baseUv + vec2( 2.0 * parentPixelSize.x, 0.0 ) );
 
-			samples[ 3 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, pixelSize.y ), level );
-			samples[ 4 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, pixelSize.y ), level );
-			samples[ 5 ] = packedTexture2DLOD( map, baseUv + vec2( 2.0 * pixelSize.x, pixelSize.y ), level );
+			samples[ 3 ] = sampleAt( baseUv + vec2( 0.0, parentPixelSize.y ) );
+			samples[ 4 ] = sampleAt( baseUv + vec2( parentPixelSize.x, parentPixelSize.y ) );
+			samples[ 5 ] = sampleAt( baseUv + vec2( 2.0 * parentPixelSize.x, parentPixelSize.y ) );
 
 			weights[ 0 ] = wx0 * wy0;
 			weights[ 1 ] = wx1 * wy0;
@@ -166,27 +181,27 @@ export const MipGenerationShader = {
 
 			#else
 
-			float xden = 2.0 * mapSize.x + 1.0;
-			float wx0 = ( mapSize.x - pixelPos.x ) / xden;
-			float wx1 = ( mapSize.x ) / xden;
-			float wx2 = ( pixelPos.x + 1.0 ) / xden;
+			float xden = 2.0 * parentMapSize.x + 1.0;
+			float wx0 = ( parentMapSize.x - parentPixelPos.x ) / xden;
+			float wx1 = ( parentMapSize.x ) / xden;
+			float wx2 = ( parentPixelPos.x + 1.0 ) / xden;
 
-			float yden = 2.0 * mapSize.y + 1.0;
-			float wy0 = ( mapSize.y - pixelPos.y ) / yden;
-			float wy1 = ( mapSize.y ) / yden;
-			float wy2 = ( pixelPos.y + 1.0 ) / yden;
+			float yden = 2.0 * parentMapSize.y + 1.0;
+			float wy0 = ( parentMapSize.y - parentPixelPos.y ) / yden;
+			float wy1 = ( parentMapSize.y ) / yden;
+			float wy2 = ( parentPixelPos.y + 1.0 ) / yden;
 
-			samples[ 0 ] = packedTexture2DLOD( map, baseUv, level );
-			samples[ 1 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 0.0 ), level );
-			samples[ 2 ] = packedTexture2DLOD( map, baseUv + vec2( 2.0 * pixelSize.x, 0.0 ), level );
+			samples[ 0 ] = sampleAt( baseUv );
+			samples[ 1 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 0.0 ) );
+			samples[ 2 ] = sampleAt( baseUv + vec2( 2.0 * parentPixelSize.x, 0.0 ) );
 
-			samples[ 3 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, pixelSize.y ), level );
-			samples[ 4 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, pixelSize.y ), level );
-			samples[ 5 ] = packedTexture2DLOD( map, baseUv + vec2( 2.0 * pixelSize.x, pixelSize.y ), level );
+			samples[ 3 ] = sampleAt( baseUv + vec2( 0.0, parentPixelSize.y ) );
+			samples[ 4 ] = sampleAt( baseUv + vec2( parentPixelSize.x, parentPixelSize.y ) );
+			samples[ 5 ] = sampleAt( baseUv + vec2( 2.0 * parentPixelSize.x, parentPixelSize.y ) );
 
-			samples[ 6 ] = packedTexture2DLOD( map, baseUv + vec2( 0.0, 2.0 * pixelSize.y ), level );
-			samples[ 7 ] = packedTexture2DLOD( map, baseUv + vec2( pixelSize.x, 2.0 * pixelSize.y ), level );
-			samples[ 8 ] = packedTexture2DLOD( map, baseUv + vec2( 2.0 * pixelSize.x, 2.0 * pixelSize.y ), level );
+			samples[ 6 ] = sampleAt( baseUv + vec2( 0.0, 2.0 * parentPixelSize.y ) );
+			samples[ 7 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 2.0 * parentPixelSize.y ) );
+			samples[ 8 ] = sampleAt( baseUv + vec2( 2.0 * parentPixelSize.x, 2.0 * parentPixelSize.y ) );
 
 			weights[ 0 ] = wx0 * wy0;
 			weights[ 1 ] = wx1 * wy0;
@@ -203,6 +218,8 @@ export const MipGenerationShader = {
 			#endif
 
 			<mipmap_logic>
+
+			// gl_FragColor = samples[ 2 ];
 
 		}
 	`

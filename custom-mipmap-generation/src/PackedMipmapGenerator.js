@@ -114,23 +114,23 @@ export class PackedMipmapGenerator {
 		while ( currWidth > 1 && currHeight > 1 ) {
 
 			const index =
-				( MathUtils.isPowerOfTwo( currWidth ) ? 1 << 0 : 0 ) |
-				( MathUtils.isPowerOfTwo( currHeight ) ? 1 << 1 : 0 );
+				( currWidth % 2 === 0 ? 1 << 0 : 0 ) |
+				( currHeight % 2 === 0 ? 1 << 1 : 0 );
 
 			const material = mipMaterials[ index ];
 			material.uniforms.map.value = swapTarget.texture;
-			material.uniforms.level.value = mip;
-			material.uniforms.mapSize.value.set( currWidth, currHeight );
+			material.uniforms.parentLevel.value = mip;
+			material.uniforms.parentMapSize.value.set( currWidth, currHeight );
+			material.uniforms.originalMapSize.value.set( width, height );
 			mipQuad.material = material;
 
-			currWidth /= 2;
-			currHeight /= 2;
+			console.log( currWidth, currHeight );
 
-			const floorWidth = Math.floor( currWidth );
-			const floorHeight = Math.floor( currHeight );
+			currWidth = Math.floor( currWidth / 2 );
+			currHeight = Math.floor( currHeight / 2 );
 
 			renderer.setRenderTarget( target );
-			mipQuad.camera.setViewOffset( floorWidth, floorHeight, - width, - heightOffset, targetWidth, targetHeight );
+			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
 			// Copy the subframe to the scratch target
@@ -146,7 +146,8 @@ export class PackedMipmapGenerator {
 
 		// Fill in the last pixel so the final color is used at all final mip maps
 		renderer.setRenderTarget( target );
-		mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
+		console.log(currHeight);
+		mipQuad.camera.setViewOffset( currWidth, targetHeight - currHeight, - width, - heightOffset, targetWidth, targetHeight );
 		mipQuad.render( renderer );
 
 		renderer.setRenderTarget( originalRenderTarget );

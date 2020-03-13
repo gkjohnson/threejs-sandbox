@@ -33,12 +33,12 @@ export const sampleFunctions = /* glsl */`
 	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level, vec2 originalSize ) {
 
 		// use inverse pow of 2 to simulate right bit shift operator
-		vec2 pixelDimensions = floor( originalSize / pow( 2.0, float( level ) ) );
-		vec2 targetRatio = pixelDimensions / originalSize;
+		vec2 currentPixelDimensions = floor( originalSize / pow( 2.0, float( level ) ) );
+		vec2 targetRatio = currentPixelDimensions / originalSize;
 		float originalWidth = ( originalSize / floor( originalSize * 1.5 ) ).x;
 
-		float startY = targetRatio.y;
-		vec2 scaledDimensions = vec2( originalWidth * targetRatio.x, targetRatio );
+		float startY = targetRatio.y + mod( originalSize.y, 2.0 ) / originalSize.y;
+		vec2 scaledDimensions = vec2( originalWidth * targetRatio.x, targetRatio.y );
 		vec2 offset = vec2(
 			level > 0 ? originalWidth : 0.0,
 			level > 0 ? startY : 0.0

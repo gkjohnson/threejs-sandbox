@@ -99,8 +99,9 @@
 
 				new THREE.TextureLoader().load('./images/voyager-record-cover.jpg', texture => {
 
-					const forcePowerOfTwo = true;
+					// TODO: Add an option to enable or not forced power of two and regenerating this texture
 
+					let forcePowerOfTwo = true;
 					texture.minFilter = THREE.NearestMipMapNearestFilter;
 					texture.generateMipMaps = true;
 
