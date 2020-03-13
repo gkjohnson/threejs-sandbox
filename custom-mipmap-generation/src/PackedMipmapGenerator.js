@@ -27,6 +27,8 @@ export class PackedMipmapGenerator {
 		const shader = clone( MipGenerationShader );
 		shader.fragmentShader = shader.fragmentShader.replace( /<mipmap_logic>/g, mipmapLogic );
 
+		// Save the mip materials such that mip 0 indicates whether or not X is power
+		// of two and 1 indicates the same for y to prevent material recompilation.
 		const mipMaterials = new Array( 4 );
 		mipMaterials[ 0 ] = new ShaderMaterial( clone( shader ) );
 		mipMaterials[ 0 ].defines.X_POWER_OF_TWO = 0;
@@ -104,7 +106,6 @@ export class PackedMipmapGenerator {
 			const index =
 				( MathUtils.isPowerOfTwo( currWidth ) ? 1 << 0 : 0 ) |
 				( MathUtils.isPowerOfTwo( currHeight ) ? 1 << 1 : 0 );
-				console.log( index );
 
 			const material = mipMaterials[ index ];
 			material.uniforms.map.value = swapTarget.texture;
