@@ -1,6 +1,6 @@
 
 import { FullScreenQuad } from './FullScreenQuad.js';
-import { Color, ShaderMaterial, MathUtils, Vector2, WebGLRenderTarget, NearestFilter } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Color, ShaderMaterial, MathUtils, WebGLRenderTarget, NearestFilter } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { clone, MipGenerationShader } from './MipGenerationShader.js';
 
@@ -16,7 +16,7 @@ export class PackedMipmapGenerator {
 				#pragma unroll_loop
 				for ( int i = 0; i < SAMPLES; i ++ ) {
 
-					gl_FragColor += samples[ i ] * weights[ i ] * ( 1.0 / float( SAMPLES ) );
+					gl_FragColor += samples[ i ] * weights[ i ];
 
 				}
 
@@ -27,13 +27,27 @@ export class PackedMipmapGenerator {
 		const shader = clone( MipGenerationShader );
 		shader.fragmentShader = shader.fragmentShader.replace( /<mipmap_logic>/g, mipmapLogic );
 
+		const mipMaterials = new Array( 4 );
+		mipMaterials[ 0 ] = new ShaderMaterial( clone( shader ) );
+		mipMaterials[ 0 ].defines.X_POWER_OF_TWO = 0;
+		mipMaterials[ 0 ].defines.Y_POWER_OF_TWO = 0;
+
+		mipMaterials[ 1 ] = new ShaderMaterial( clone( shader ) );
+		mipMaterials[ 1 ].defines.X_POWER_OF_TWO = 0;
+
+		mipMaterials[ 2 ] = new ShaderMaterial( clone( shader ) );
+		mipMaterials[ 2 ].defines.Y_POWER_OF_TWO = 0;
+
+		mipMaterials[ 3 ] = new ShaderMaterial( clone( shader ) );
+
 		const swapTarget = new WebGLRenderTarget();
 		swapTarget.texture.minFilter = NearestFilter;
 		swapTarget.texture.magFilter = NearestFilter;
 
 		this._swapTarget = swapTarget;
 		this._copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
-		this._mipQuad = new FullScreenQuad( new ShaderMaterial( shader ) );
+		this._mipQuad = new FullScreenQuad( null );
+		this._mipMaterials = mipMaterials;
 
 	}
 
@@ -47,6 +61,7 @@ export class PackedMipmapGenerator {
 		const copyQuad = this._copyQuad;
 		const mipQuad = this._mipQuad;
 		const swapTarget = this._swapTarget;
+		const mipMaterials = this._mipMaterials;
 
 		// TODO: add option for ceil power of two and option to not power of two at all? This
 		// causes the mip texels to not align, though...
@@ -86,14 +101,21 @@ export class PackedMipmapGenerator {
 		let heightOffset = 0;
 		while ( currWidth > 1 && currHeight > 1 ) {
 
-			renderer.setRenderTarget( target );
-			mipQuad.material.uniforms.map.value = swapTarget.texture;
-			mipQuad.material.uniforms.level.value = mip;
-			mipQuad.material.uniforms.mapSize.value.set( currWidth, currHeight );
+			const index =
+				( MathUtils.isPowerOfTwo( currWidth ) ? 1 << 0 : 0 ) |
+				( MathUtils.isPowerOfTwo( currHeight ) ? 1 << 1 : 0 );
+				console.log( index );
+
+			const material = mipMaterials[ index ];
+			material.uniforms.map.value = swapTarget.texture;
+			material.uniforms.level.value = mip;
+			material.uniforms.mapSize.value.set( currWidth, currHeight );
+			mipQuad.material = material;
 
 			currWidth /= 2;
 			currHeight /= 2;
 
+			renderer.setRenderTarget( target );
 			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - heightOffset, targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
@@ -127,6 +149,7 @@ export class PackedMipmapGenerator {
 		this._swapTarget.dispose();
 		this._mipQuad.dispose();
 		this._copyQuad.dispose();
+		this._mipMaterials.forEach( m => m.dispose() );
 
 	}
 
