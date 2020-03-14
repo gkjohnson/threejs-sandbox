@@ -50,7 +50,7 @@
 			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { PackedMipmapGenerator } from './src/PackedMipmapGenerator.js';
+			import { PackedMipMapGenerator } from './src/PackedMipMapGenerator.js';
 			import { mipBiasShader, customSampleShader } from './shaders.js';
 
 			// globals
@@ -250,7 +250,7 @@
 				}
 
 				// render mip pyramids
-				const mipMapper = new PackedMipmapGenerator();
+				const mipMapper = new PackedMipMapGenerator();
 				mipMapper.update( texture, nearestTarget, renderer, forcePowerOfTwo );
 				mipMapper.update( texture, linearTarget, renderer, forcePowerOfTwo );
 

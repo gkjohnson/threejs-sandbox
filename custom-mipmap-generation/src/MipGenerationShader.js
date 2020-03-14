@@ -26,8 +26,8 @@ export const MipGenerationShader = {
 
 	defines: {
 
-		X_POWER_OF_TWO: 1,
-		Y_POWER_OF_TWO: 1,
+		X_IS_EVEN: 1,
+		Y_IS_EVEN: 1,
 
 	},
 
@@ -60,19 +60,19 @@ export const MipGenerationShader = {
 
 		${ sampleFunctions }
 
-		#if X_POWER_OF_TWO && Y_POWER_OF_TWO
+		#if X_IS_EVEN && Y_IS_EVEN
 
 		#define SAMPLES 4
 		#define WIDTH 2
 		#define HEIGHT 2
 
-		#elif X_POWER_OF_TWO
+		#elif X_IS_EVEN
 
 		#define SAMPLES 6
 		#define WIDTH 2
 		#define HEIGHT 3
 
-		#elif Y_POWER_OF_TWO
+		#elif Y_IS_EVEN
 
 		#define SAMPLES 6
 		#define WIDTH 3
@@ -108,7 +108,7 @@ export const MipGenerationShader = {
 			vec4 samples[ SAMPLES ];
 			float weights[ SAMPLES ];
 
-			#if X_POWER_OF_TWO && Y_POWER_OF_TWO
+			#if X_IS_EVEN && Y_IS_EVEN
 
 			samples[ 0 ] = sampleAt( baseUv );
 			samples[ 1 ] = sampleAt( baseUv + vec2( parentPixelSize.x, 0.0 ) );
@@ -120,7 +120,7 @@ export const MipGenerationShader = {
 			weights[ 2 ] = 0.25;
 			weights[ 3 ] = 0.25;
 
-			#elif X_POWER_OF_TWO
+			#elif X_IS_EVEN
 
 			float wx0 = 0.5;
 			float wx1 = 0.5;
@@ -148,7 +148,7 @@ export const MipGenerationShader = {
 			weights[ 4 ] = wx0 * wy2;
 			weights[ 5 ] = wx1 * wy2;
 
-			#elif Y_POWER_OF_TWO
+			#elif Y_IS_EVEN
 
 			float xden = 2.0 * parentMapSize.x + 1.0;
 			float wx0 = ( parentMapSize.x - parentPixelPos.x ) / xden;

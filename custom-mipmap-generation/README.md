@@ -2,17 +2,14 @@
 
 ![](./docs/image.png)
 
-Utility for generating a custom mipmap when blending the parent mip level and packing it into a texture.
+Utility for generating custom mipmaps for power of two and non power of two textures by packing it into a texture and using custom sample functions. The pixel samples and weights are available to custom logic passed into the `PackedMipmapGenerator` constructor.
 
 NOTE: There is nothing to prevent bleeding on mip edges and works best with point sampling.
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 **TODO**
-- Understand how a non power of two texture mipmap should be generated ([reference](https://www.nvidia.com/en-us/drivers/np2-mipmapping/)). Use weighted samples. For something like a depth texture that requires a max of all values the map should return the max of even partially covered pixels.
-- Fix incorrect weights when generating mip maps for NPOT textures
-- Fix sampling with NPOT textures so the positioning is correct
-- track down everywhere that the pixel values need to be floored for NPOT sampling
+- Validate performance specifically when copying data to the back buffer on generation.
 
 # Use
 
@@ -21,19 +18,31 @@ import { PackedMipmapGenerator } from './src/PackedMipmapGenerator.js';
 
 // ...
 
-const mipmapper = new PackedMipmapGenerator(
+const traditionalMipMapper = new PackedMipmapGenerator(
 	`
-	gl_FragColor = (
-		samples[ 0 ] * weights[ 0 ] +
-		samples[ 1 ] * weights[ 1 ] +
-		samples[ 2 ] * weights[ 2 ] +
-		samples[ 3 ] * weights[ 3 ]
-	) / 4.0;
+	for ( int i = 0; i < SAMPLES; i ++ ) {
+
+		gl_FragColor = samples[ i ] * weights[ i ];
+
+	}
 	`
 );
 
-mipmapper.update( texture, target, renderer );
-mipmapper.dispose();
+mipMapper.update( texture, target, renderer );
+mipMapper.dispose();
+
+const maxMipMapper = new PackedMipmapGenerator(
+	`
+	for ( int i = 0; i < SAMPLES; i ++ ) {
+
+		gl_FragColor = max( samples[ i ], gl_FragColor );
+
+	}
+	`
+);
+
+mipMapper.update( texture, target, renderer );
+mipMapper.dispose();
 ```
 
 # API
@@ -46,7 +55,7 @@ mipmapper.dispose();
 constructor( logic : string )
 ```
 
-Takes a block of code to generate the next mip level. Must set the `gl_FragColor`. An row major array of the parent sibling values is available in the `samples` variable. The number of samples, pixel width, and pixel height are available in SAMPLES, HEIGHT, and WIDTH defines.
+Takes a block of code to generate the next mip level. Must set the `gl_FragColor`. An row major array of the parent sample values is available in the `samples` variable and weights in the `weights` variable. The number of samples, pixel width, and pixel height are available in `SAMPLES`, `HEIGHT`, and `WIDTH` defines.
 
 ### .update
 ```js
@@ -67,8 +76,29 @@ Disposes of any created context objects.
 ### packedTexture2DLOD
 
 ```glsl
+// point sampled
 vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level )
+vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level, vec2 originalSize )
+
+// interpolated
 vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level )
+vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level, vec2 originalSize )
+```
+
+```js
+// The sampler with the packed mipmaps
+texture : sampler2D
+
+// The uv in [ 0.0, 1.0 ] to sample
+uv : vec2
+
+// The mip level to sample
+level : int | float
+
+// The original size of the texture converted into the mipmap texture
+// if the texture was generated with power to two enabled then this
+// must be the power of to size. This is only useful for NPOT textures.
+originalSize : vec2
 ```
 
 Shader functions for sampling the generated texture at a specific mip level. If the int variant is used only a single texture sample is made.

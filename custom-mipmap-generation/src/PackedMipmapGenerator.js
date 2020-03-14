@@ -5,7 +5,7 @@ import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyS
 import { clone, MipGenerationShader } from './MipGenerationShader.js';
 
 const _originalClearColor = new Color();
-export class PackedMipmapGenerator {
+export class PackedMipMapGenerator {
 
 	constructor( mipmapLogic ) {
 
@@ -31,14 +31,14 @@ export class PackedMipmapGenerator {
 		// of two and 1 indicates the same for y to prevent material recompilation.
 		const mipMaterials = new Array( 4 );
 		mipMaterials[ 0 ] = new ShaderMaterial( clone( shader ) );
-		mipMaterials[ 0 ].defines.X_POWER_OF_TWO = 0;
-		mipMaterials[ 0 ].defines.Y_POWER_OF_TWO = 0;
+		mipMaterials[ 0 ].defines.X_IS_EVEN = 0;
+		mipMaterials[ 0 ].defines.Y_IS_EVEN = 0;
 
 		mipMaterials[ 1 ] = new ShaderMaterial( clone( shader ) );
-		mipMaterials[ 1 ].defines.Y_POWER_OF_TWO = 0;
+		mipMaterials[ 1 ].defines.Y_IS_EVEN = 0;
 
 		mipMaterials[ 2 ] = new ShaderMaterial( clone( shader ) );
-		mipMaterials[ 2 ].defines.X_POWER_OF_TWO = 0;
+		mipMaterials[ 2 ].defines.X_IS_EVEN = 0;
 
 		mipMaterials[ 3 ] = new ShaderMaterial( clone( shader ) );
 
@@ -102,7 +102,6 @@ export class PackedMipmapGenerator {
 		renderer.clear();
 		copyQuad.render( renderer );
 
-		// TODO: can we avoid clearing?
 		renderer.setRenderTarget( swapTarget );
 		renderer.clear();
 		copyQuad.render( renderer );
@@ -130,6 +129,7 @@ export class PackedMipmapGenerator {
 			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - ( targetHeight - currHeight ) + currHeight, targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
+			// TODO: Is this the fastest way to do this? Can I just copy the subframe from the original texture to the next?
 			// Copy the subframe to the scratch target
 			renderer.setRenderTarget( swapTarget );
 			material.uniforms.map.value = target.texture;
