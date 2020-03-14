@@ -59,9 +59,10 @@
 				linearFilter: false,
 				mipLevel: 0,
 				sampleType: 0,
+				powerOfTwo: false
 			};
 			var camera, scene, renderer, controls;
-			var plane, mipPlane, fullPlane;
+			var plane, mipPlane, fullPlane, ogTexture;
 			var nearestTarget, linearTarget;
 
 			init();
@@ -99,74 +100,10 @@
 
 				new THREE.TextureLoader().load('./images/voyager-record-cover.jpg', texture => {
 
-					// TODO: Add an option to enable or not forced power of two and regenerating this texture
-
-					let forcePowerOfTwo = true;
-					texture.minFilter = THREE.NearestMipMapNearestFilter;
-					texture.generateMipMaps = true;
-
-					// const b = 255;
-					// texture = new THREE.DataTexture(
-					// 	new Uint8Array([
-					// 		b, 0, 0, 0, b, 0, 0, 0, b, b, b, b,
-					// 		0, 0, 0, b, 0, 0, b, b, 0, 0, b, 0,
-					// 		b, b, b, b, 0, b, b, b, 0, 0, b, b,
-					// 		0, 0, 0, b, b, 0, 0, b, b, b, 0, 0
-					// 	]),
-					// 	4, 4, THREE.RGBFormat
-					// );
-					// texture.minFilter = THREE.NearestFilter;
-
-
-					plane.material.uniforms.map.value = texture;
-
-					linearTarget = new THREE.WebGLRenderTarget();
-					nearestTarget = new THREE.WebGLRenderTarget();
-					nearestTarget.texture.minFilter = THREE.NearestFilter;
-					nearestTarget.texture.magFilter = THREE.NearestFilter;
-
-					// render mip pyramids
-					const mipMapper = new PackedMipmapGenerator();
-					mipMapper.update( texture, nearestTarget, renderer, forcePowerOfTwo );
-					mipMapper.update( texture, linearTarget, renderer, forcePowerOfTwo );
-
-					// render original targets
-					const copyQuad = mipMapper._copyQuad;
-					copyQuad.material.uniforms.tDiffuse.value = texture;
-					copyQuad.camera.setViewOffset( 1, 1, 0, 0, 1, 1 );
-
-					renderer.setRenderTarget( null );
-
-					// dipose
-					mipMapper.dispose();
-
-					fullPlane.material.map = nearestTarget.texture;
-					fullPlane.material.needsUpdate = true;
-
-					mipPlane.material.uniforms.map.value = nearestTarget.texture;
-
-					if ( forcePowerOfTwo ) {
-
-						mipPlane.material.uniforms.originalSize.value.set(
-							THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
-							THREE.MathUtils.floorPowerOfTwo( texture.image.height )
-						);
-
-					} else {
-
-						mipPlane.material.uniforms.originalSize.value.set(
-							texture.image.width,
-							texture.image.height
-						);
-
-					}
-					mipPlane.material.defines.NEAREST_FILTER = 1;
-					mipPlane.material.needsUpdate = true;
-
-					plane.material.uniforms.map.value = texture;
+					ogTexture = texture;
+					updateTexture();
 
 				} );
-
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -189,30 +126,15 @@
 				// dat gui
 				var gui = new dat.GUI();
 				gui.add( params, 'mipLevel' ).min( 0 ).max( 15 ).step( 0.01 );
-				gui.add( params, 'linearFilter' ).onChange( val => {
+				gui.add( params, 'linearFilter' ).onChange( () => {
 
-					const planeMat = plane.material;
-					const mipMat = mipPlane.material;
-					if ( val ) {
+					updateFilter();
 
-						planeMat.uniforms.map.value.minFilter = THREE.LinearMipMapLinearFilter;
-						planeMat.uniforms.map.value.needsUpdate = true;
+				} );
+				gui.add( params, 'powerOfTwo' ).onChange( () => {
 
-						mipMat.uniforms.map.value = linearTarget.texture;
-						delete mipMat.defines.NEAREST_FILTER;
-						mipMat.needsUpdate = true;
-
-					} else {
-
-
-						planeMat.uniforms.map.value.minFilter = THREE.NearestMipMapNearestFilter;
-						planeMat.uniforms.map.value.needsUpdate = true;
-
-						mipMat.uniforms.map.value = nearestTarget.texture;
-						mipMat.defines.NEAREST_FILTER = '';
-						mipMat.needsUpdate = true;
-
-					}
+					updateTexture();
+					updateFilter();
 
 				} );
 				gui.width = 300;
@@ -240,6 +162,132 @@
 				stats.begin();
 				render();
 				stats.end();
+
+			}
+
+			function updateFilter() {
+
+				const val = params.linearFilter;
+
+				const planeMat = plane.material;
+				const mipMat = mipPlane.material;
+				if ( val ) {
+
+					planeMat.uniforms.map.value.minFilter = THREE.LinearMipMapLinearFilter;
+					planeMat.uniforms.map.value.needsUpdate = true;
+
+					mipMat.uniforms.map.value = linearTarget.texture;
+					delete mipMat.defines.NEAREST_FILTER;
+					mipMat.needsUpdate = true;
+
+				} else {
+
+
+					planeMat.uniforms.map.value.minFilter = THREE.NearestMipMapNearestFilter;
+					planeMat.uniforms.map.value.needsUpdate = true;
+
+					mipMat.uniforms.map.value = nearestTarget.texture;
+					mipMat.defines.NEAREST_FILTER = '';
+					mipMat.needsUpdate = true;
+
+				}
+
+			}
+
+			function updateTexture() {
+
+				const texture = ogTexture;
+				const forcePowerOfTwo = params.powerOfTwo;
+
+				// TODO: Add an option to enable or not forced power of two and regenerating this texture
+
+				texture.minFilter = THREE.NearestMipMapNearestFilter;
+				texture.generateMipMaps = true;
+
+				// const b = 255;
+				// texture = new THREE.DataTexture(
+				// 	new Uint8Array([
+				// 		b, 0, 0, 0, b, 0, 0, 0, b, b, b, b,
+				// 		0, 0, 0, b, 0, 0, b, b, 0, 0, b, 0,
+				// 		b, b, b, b, 0, b, b, b, 0, 0, b, b,
+				// 		0, 0, 0, b, b, 0, 0, b, b, b, 0, 0
+				// 	]),
+				// 	4, 4, THREE.RGBFormat
+				// );
+				// texture.minFilter = THREE.NearestFilter;
+
+				// const w = 43;
+				// const h = 17;
+				// const b = 255;
+				// texture = new THREE.DataTexture(
+				// 	new Uint8Array( w * h * 3 ),
+				// 	w, h, THREE.RGBFormat
+				// );
+				// texture.minFilter = THREE.NearestFilter;
+
+				// for ( let x = 0; x < w; x ++ ) {
+
+				// 	for ( let y = 0; y < h; y ++ ) {
+
+				// 		const offset = x % 2 === 0.0 ? 1 : 0;
+				// 		const index = ( y * w + x ) * 3;
+				// 		texture.image.data[ index + offset ] = x / w * 255;
+				// 		texture.image.data[ index + 2 ] = y % 2 == 0 ?  255 : 0;
+
+				// 	}
+
+				// }
+
+				plane.material.uniforms.map.value = texture;
+
+				if ( ! linearTarget ) {
+
+					linearTarget = new THREE.WebGLRenderTarget();
+					nearestTarget = new THREE.WebGLRenderTarget();
+					nearestTarget.texture.minFilter = THREE.NearestFilter;
+					nearestTarget.texture.magFilter = THREE.NearestFilter;
+
+				}
+
+				// render mip pyramids
+				const mipMapper = new PackedMipmapGenerator();
+				mipMapper.update( texture, nearestTarget, renderer, forcePowerOfTwo );
+				mipMapper.update( texture, linearTarget, renderer, forcePowerOfTwo );
+
+				// render original targets
+				const copyQuad = mipMapper._copyQuad;
+				copyQuad.material.uniforms.tDiffuse.value = texture;
+				copyQuad.camera.setViewOffset( 1, 1, 0, 0, 1, 1 );
+
+				renderer.setRenderTarget( null );
+
+				// dipose
+				mipMapper.dispose();
+
+				fullPlane.material.map = nearestTarget.texture;
+				fullPlane.material.needsUpdate = true;
+
+				mipPlane.material.uniforms.map.value = nearestTarget.texture;
+
+				if ( forcePowerOfTwo ) {
+
+					mipPlane.material.uniforms.originalSize.value.set(
+						THREE.MathUtils.floorPowerOfTwo( texture.image.width ),
+						THREE.MathUtils.floorPowerOfTwo( texture.image.height )
+					);
+
+				} else {
+
+					mipPlane.material.uniforms.originalSize.value.set(
+						texture.image.width,
+						texture.image.height
+					);
+
+				}
+				mipPlane.material.defines.NEAREST_FILTER = 1;
+				mipPlane.material.needsUpdate = true;
+
+				plane.material.uniforms.map.value = texture;
 
 			}
 

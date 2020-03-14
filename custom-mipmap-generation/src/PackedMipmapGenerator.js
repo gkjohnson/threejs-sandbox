@@ -35,10 +35,10 @@ export class PackedMipmapGenerator {
 		mipMaterials[ 0 ].defines.Y_POWER_OF_TWO = 0;
 
 		mipMaterials[ 1 ] = new ShaderMaterial( clone( shader ) );
-		mipMaterials[ 1 ].defines.X_POWER_OF_TWO = 0;
+		mipMaterials[ 1 ].defines.Y_POWER_OF_TWO = 0;
 
 		mipMaterials[ 2 ] = new ShaderMaterial( clone( shader ) );
-		mipMaterials[ 2 ].defines.Y_POWER_OF_TWO = 0;
+		mipMaterials[ 2 ].defines.X_POWER_OF_TWO = 0;
 
 		mipMaterials[ 3 ] = new ShaderMaterial( clone( shader ) );
 
