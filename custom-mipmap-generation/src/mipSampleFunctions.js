@@ -40,7 +40,7 @@ export const sampleFunctions = /* glsl */`
 		vec2 targetRatio = currentPixelDimensions / originalSize;
 		float originalWidth = ( originalSize / floor( originalSize * 1.5 ) ).x;
 
-		float startY = targetRatio.y + mod( originalSize.y, 2.0 ) / originalSize.y;
+		float startY = targetRatio.y;
 		vec2 scaledDimensions = vec2( originalWidth * targetRatio.x, targetRatio.y );
 		vec2 offset = vec2(
 			level > 0 ? originalWidth : 0.0,

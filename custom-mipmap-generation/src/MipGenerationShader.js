@@ -88,7 +88,7 @@ export const MipGenerationShader = {
 
 		vec4 sampleAt( vec2 uv ) {
 
-			return packedTexture2DLOD( map, uv, parentLevel );
+			return packedTexture2DLOD( map, uv, parentLevel, originalMapSize );
 
 		}
 
@@ -212,7 +212,6 @@ export const MipGenerationShader = {
 
 			#endif
 
-			// gl_FragColor = vec4(0);
 			<mipmap_logic>
 
 		}
