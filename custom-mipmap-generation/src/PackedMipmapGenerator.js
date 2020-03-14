@@ -55,6 +55,12 @@ export class PackedMipMapGenerator {
 
 	update( texture, target, renderer, forcePowerOfTwo = false ) {
 
+		if ( texture.isWebGLRenderTarget ) {
+
+			texture = texture.texture;
+
+		}
+
 		const originalAutoClear = renderer.autoClear;
 		const originalClearAlpha = renderer.getClearAlpha();
 		const originalRenderTarget = renderer.getRenderTarget();
@@ -75,8 +81,8 @@ export class PackedMipMapGenerator {
 
 		} else {
 
-			width = texture.image.width;
-			height = texture.image.height;
+			width = Math.floor( texture.image.width );
+			height = Math.floor( texture.image.height );
 
 		}
 
@@ -85,9 +91,17 @@ export class PackedMipMapGenerator {
 
 		// init the targets
 		target.setSize( targetWidth, targetHeight );
-		swapTarget.setSize( targetWidth, targetHeight );
-		// NOTE: can't use copy here because it clones a texture and likely doesn't reinitialize
-		// it if it has already been rendered with.
+
+		if ( swapTarget.texture.type !== target.texture.type ) {
+
+			swapTarget.dispose();
+			swapTarget.copy( target );
+
+		} else {
+
+			swapTarget.setSize( targetWidth, targetHeight );
+
+		}
 
 		// init the renderer
 		renderer.autoClear = false;
@@ -126,7 +140,7 @@ export class PackedMipMapGenerator {
 			currHeight = Math.floor( currHeight / 2 );
 
 			renderer.setRenderTarget( target );
-			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - ( targetHeight - currHeight ) + currHeight, targetWidth, targetHeight );
+			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - ( targetHeight - 2 * currHeight ), targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
 			// TODO: Is this the fastest way to do this? Can I just copy the subframe from the original texture to the next?

@@ -3,14 +3,12 @@ export const sampleFunctions = /* glsl */`
 	// Without original size argument
 	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level ) {
 
-		float targetRatio = 1.0 / pow( 2.0, float( level ) );
-		float startY = targetRatio;
-		float originalWidth = 2.0 / 3.0;
-
-		vec2 scaledDimensions = vec2( originalWidth * targetRatio, targetRatio );
+		float targetSubview = 1.0 / pow( 2.0, float( level ) );
+		float texelWidth = 2.0 / 3.0;
+		vec2 scaledDimensions = vec2( targetSubview * texelWidth, targetSubview );
 		vec2 offset = vec2(
-			level > 0 ? originalWidth : 0.0,
-			level > 0 ? startY : 0.0
+			level > 0 ? texelWidth : 0.0,
+			level > 0 ? targetSubview : 0.0
 		);
 
 		vec2 samplePoint = mix( offset, offset + scaledDimensions, uv );
@@ -36,14 +34,14 @@ export const sampleFunctions = /* glsl */`
 
 		// use inverse pow of 2 to simulate right bit shift operator
 		vec2 currentPixelDimensions = floor( originalSize / pow( 2.0, float( level ) ) );
-		vec2 targetRatio = currentPixelDimensions / originalSize;
-		float originalWidth = ( originalSize / floor( originalSize * 1.5 ) ).x;
+		vec2 targetSubview = currentPixelDimensions / originalSize;
 
-		float startY = targetRatio.y;
-		vec2 scaledDimensions = vec2( originalWidth * targetRatio.x, targetRatio.y );
+		float texelWidth = ( originalSize / floor( originalSize * 1.5 ) ).x;
+
+		vec2 scaledDimensions = vec2( texelWidth * targetSubview.x, targetSubview.y );
 		vec2 offset = vec2(
-			level > 0 ? originalWidth : 0.0,
-			level > 0 ? startY : 0.0
+			level > 0 ? texelWidth : 0.0,
+			level > 0 ? targetSubview.y : 0.0
 		);
 
 		vec2 samplePoint = mix( offset, offset + scaledDimensions, uv );

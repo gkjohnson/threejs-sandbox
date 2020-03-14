@@ -207,7 +207,7 @@ export class SSRRPass extends Pass {
 		// Save the previous scene state
 		const prevClearAlpha = renderer.getClearAlpha();
 		const prevAutoClear = renderer.autoClear;
-		const prevOverride = this.scene.overrideMaterial;
+		const prevOverride = scene.overrideMaterial;
 		const prevAutoUpdate = scene.autoUpdate;
 		const prevRenderTarget = renderer.getRenderTarget();
 		const pevShadowEnabled = renderer.shadowMap.enabled;

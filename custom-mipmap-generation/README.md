@@ -9,7 +9,7 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 **TODO**
-- Validate performance specifically when copying data to the back buffer on generation.
+- Validate performance specifically when copying data to the back buffer on generation. It would be best to just copy instead of rerunning the mip map code again.
 
 # Use
 
