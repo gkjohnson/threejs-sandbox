@@ -1,12 +1,12 @@
 import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
+const _originalMaterials = new WeakMap();
 export class ShaderReplacement {
 
 	constructor( shader ) {
 
 		this._replacementMaterial = new ShaderMaterial( shader );
 		this._replacementMaterials = new WeakMap();
-		this._originalMaterials = new WeakMap();
 
 	}
 
@@ -15,7 +15,7 @@ export class ShaderReplacement {
 		const scope = this;
 		function applyMaterial( object ) {
 
-			if ( ! object.isMesh && ! object.skinnedMesh ) {
+			if ( ! object.isMesh && ! object.isSkinnedMesh ) {
 
 				return;
 
@@ -46,6 +46,12 @@ export class ShaderReplacement {
 
 			}
 
+			if ( ! originalMaterial ) {
+
+				console.error( 'ShaderReplacement : Material for object was not cached before replacing shader.', object );
+
+			}
+
 			scope.updateUniforms( object, originalMaterial, replacementMaterial );
 
 			object.material = replacementMaterial;
@@ -53,7 +59,7 @@ export class ShaderReplacement {
 		}
 
 		const replacementMaterials = this._replacementMaterials;
-		const originalMaterials = this._originalMaterials;
+		const originalMaterials = _originalMaterials;
 		if ( Array.isArray( scene ) ) {
 
 			if ( recursive ) {
@@ -97,12 +103,17 @@ export class ShaderReplacement {
 			if ( originalMaterials.has( object ) ) {
 
 				object.material = originalMaterials.get( object );
+				originalMaterials.delete( object );
+
+			} else if ( object.isSkinnedMesh || object.isMesh ) {
+
+				console.error( 'ShaderReplacement : Material for object was not cached before resetting.', object );
 
 			}
 
 		}
 
-		const originalMaterials = this._originalMaterials;
+		const originalMaterials = _originalMaterials;
 		if ( Array.isArray( scene ) ) {
 
 			if ( recursive ) {

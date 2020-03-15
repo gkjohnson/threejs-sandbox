@@ -7,9 +7,6 @@ Utility for rendering a scene with a replacement shader. Similar to `Scene.overr
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/shader-replacement/)
 
-**TODO**
-- When running two replacements back to back it's nice to be able to cache the materials so you don't have to reset and iterate over every object every time.
-
 # Use
 
 ```js
