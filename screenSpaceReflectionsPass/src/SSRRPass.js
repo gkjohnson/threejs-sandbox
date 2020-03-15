@@ -278,7 +278,7 @@ export class SSRRPass extends Pass {
 		}
 
 		// Render depth
-		depthReplacement.replace( scene, true );
+		depthReplacement.replace( scene, true, false );
 		renderer.setRenderTarget( depthBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
@@ -303,7 +303,7 @@ export class SSRRPass extends Pass {
 		if ( useThickness === false ) {
 
 			// Render Backface Depth
-			backfaceDepthReplacement.replace( scene, true );
+			backfaceDepthReplacement.replace( scene, true, false );
 			renderer.setRenderTarget( backfaceDepthBuffer );
 			renderer.clear();
 			renderer.render( scene, camera );
