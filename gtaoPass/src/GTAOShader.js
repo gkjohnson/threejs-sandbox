@@ -111,15 +111,16 @@ export const GTAOShader = {
 
 			vec2 uv = vUv;
 
-			vec2 loc = gl_FragCoord.xy;// depthPyramidSize * uv;
+			vec2 screenCoord = gl_FragCoord.xy;// depthPyramidSize * uv;
+			vec2 loc = screenCoord;// depthPyramidSize * uv;
 			vec4 vpos = GetViewPosition( loc, 1.0 );
 
-			// if ( vpos.w == 1.0 ) {
+			if ( vpos.w == 1.0 ) {
 
-			// 	my_FragColor0 = 1.0;
-			// 	return;
+				gl_FragColor = vec4( 1.0 );
+				return;
 
-			// }
+			}
 
 			vec4 s;
 			vec3 vnorm	= texture2D( normalBuffer, vUv ).rgb;
@@ -130,7 +131,7 @@ export const GTAOShader = {
 			vnorm.z = - vnorm.z;
 
 			// TODO: use a noise function o texture here. Halton? Poisson?
-			vec2 noises	= vec2( 0.0 ); //texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
+			vec2 noises	= vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
 
@@ -153,7 +154,7 @@ export const GTAOShader = {
 				offset = round( dir.xy * currstep );
 
 				// h1
-				s = GetViewPosition( gl_FragCoord.xy + offset, currstep );
+				s = GetViewPosition( screenCoord + offset, currstep );
 				ws = s.xyz - vpos.xyz;
 
 				dist2 = dot( ws, ws );
@@ -164,7 +165,7 @@ export const GTAOShader = {
 				horizons.x = max( horizons.x, cosh - falloff );
 
 				// h2
-				s = GetViewPosition( gl_FragCoord.xy - offset, currstep );
+				s = GetViewPosition( screenCoord - offset, currstep );
 				ws = s.xyz - vpos.xyz;
 
 				dist2 = dot( ws, ws );
