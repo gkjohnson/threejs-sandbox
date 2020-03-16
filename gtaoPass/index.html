@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Screen-space Raytraced Reflections by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Based on implementations from <a href="https://github.com/kode80/kode80SSR">here</a> and <a href="http://casual-effects.blogspot.com/2014/08/screen-space-ray-tracing.html">here</a>.
+
+			<br/>
+
+			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { GTAOPass } from './src/GTAOPass.js';
+
+			// globals
+			var stats;
+			var params = {
+				enabled: true,
+				display: GTAOPass.DEFAULT,
+				depthLevel: -1,
+				scene: 'pyramid'
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var sphere;
+			var fxaaPass, gtaoPass, gammaPass, motionPass, renderPass;
+			var scenes;
+
+			init();
+			animate();
+
+			function createBallPyramid() {
+
+				var group = new THREE.Group();
+				var plane = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshStandardMaterial( { color: 0x111111, roughness: 0.8 } )
+				);
+				plane.receiveShadow = true;
+				plane.rotation.set( -Math.PI / 2, 0, 0 );
+				plane.scale.set( 2000, 2000, 0.1 );
+				plane.position.y = -1;
+				group.add( plane );
+
+				const total = 3;
+				for ( let i = 0; i <= total; i ++ ) {
+
+					const count = total - i;
+					for ( let x = 0; x <= count; x ++ ) {
+
+						for ( let y = 0; y <= count; y ++ ) {
+
+							var sphere = new THREE.Mesh(
+								new THREE.SphereBufferGeometry( 1, 30, 30 ),
+								new THREE.MeshStandardMaterial( { color: 0x111111, roughness: 0.8 } )
+							);
+
+							const offsetx = 2 * x - count;
+							const offsety = 2 * y - count;
+							sphere.position.set( offsetx, i * 1.4, offsety );
+							group.add( sphere );
+
+						}
+
+					}
+
+				}
+
+				return group;
+
+			}
+
+			function createSphereScene() {
+
+				var group = new THREE.Group();
+
+				// sphere + mirror scene
+				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
+				plane.receiveShadow = true;
+				plane.rotation.set( -Math.PI / 2, 0, 0 );
+				plane.scale.set( 2000, 2000, 0.1 );
+				plane.position.y = -4;
+				group.add( plane );
+
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
+					map.wrapS = THREE.RepeatWrapping;
+					map.wrapT = THREE.RepeatWrapping;
+					map.anisotropy = 4;
+					map.repeat.set( 50, 50 );
+					plane.material.roughnessMap = map;
+					plane.material.map = map;
+					plane.material.needsUpdate = true;
+				} );
+
+				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
+				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = -10;
+				group.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 0;
+				group.add(sphere);
+
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				sphere.position.x = 10;
+				group.add(sphere);
+
+				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0, side: THREE.DoubleSide, roughness: 0 }));
+				mirror.rotation.set( 0, 0, 0 );
+				mirror.scale.set(60, 20, 0.5);
+				mirror.position.y = -4;
+				mirror.position.z = -15;
+				group.add(mirror);
+
+				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
+				box.position.x = -20;
+				box.scale.set( 2, 10, 2 );
+				group.add(box);
+
+				return group;
+
+			}
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 200 );
+				camera.position.set( 0.0, 10, 10 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var standardMaterial = new THREE.MeshStandardMaterial( {
+					map: null,
+					color: 0xffffff,
+					metalness: 0.5,
+				} );
+
+
+				// Lights
+				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 30, 200, 230 );
+				directionalLight.castShadow = true;
+
+				var shadowCam = directionalLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -400;
+				shadowCam.right = shadowCam.top = 400;
+				directionalLight.shadow.mapSize.width = 2048;
+				directionalLight.shadow.mapSize.height = 2048;
+				scene.add( directionalLight );
+
+				var spheresScene = createSphereScene();
+				scene.add( spheresScene );
+
+				var pyramidScene = createBallPyramid();
+				scene.add( pyramidScene );
+
+				scenes = {
+					pyramid: pyramidScene,
+					spheres: spheresScene,
+				};
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				gtaoPass = new GTAOPass( scene, camera, { raymarchTargetScale: 1.0 } );
+				window.gtaoPass = gtaoPass;
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( gtaoPass );
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'enabled' );
+				gui.add( params, 'display', {
+					DEFAULT: GTAOPass.DEFAULT,
+					DEPTH_PYRAMID: GTAOPass.DEPTH_PYRAMID,
+					NORMAL: GTAOPass.NORMAL
+				} );
+				gui.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
+				gui.add( params, 'scene', [ 'spheres', 'pyramid' ] );
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+				camera.lookAt( scene.position );
+
+				for ( const key in scenes ) {
+
+					if ( scenes[key] ) scenes[key].visible = key === params.scene;
+
+				}
+				gtaoPass.debug.display = parseInt( params.display );
+				gtaoPass.debug.depthLevel = params.depthLevel;
+				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
+
+				composer.render();
+			}
+
+		</script>
+
+	</body>
+
+</html>
