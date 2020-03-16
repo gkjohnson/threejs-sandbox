@@ -64,6 +64,7 @@
 				display: GTAOPass.DEFAULT,
 				depthLevel: -1,
 				renderTargetScale: 1.0,
+				noiseIntensity: 1.0,
 				scene: 'pyramid'
 			};
 			var camera, scene, renderer, controls;
@@ -264,6 +265,7 @@
 					onWindowResize();
 
 				} );
+				gui.add( params, 'noiseIntensity' ).min( 0.0 ).max( 2.0 ).step( 0.01 );
 				gui.add( params, 'display', {
 					DEFAULT: GTAOPass.DEFAULT,
 					DEPTH_PYRAMID: GTAOPass.DEPTH_PYRAMID,
@@ -309,6 +311,8 @@
 				}
 				gtaoPass.debug.display = parseInt( params.display );
 				gtaoPass.debug.depthLevel = params.depthLevel;
+				gtaoPass.noiseIntensity = params.noiseIntensity;
+				gtaoPass.enabled = params.enabled;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				composer.render();

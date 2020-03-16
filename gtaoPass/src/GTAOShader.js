@@ -13,6 +13,8 @@ export const GTAOShader = {
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
 
+		noiseIntensity: { value: 1.0 }
+
 	},
 
 	vertexShader:
@@ -50,7 +52,37 @@ export const GTAOShader = {
 		uniform vec4 projInfo;
 		uniform vec2 params;
 
+		uniform float noiseIntensity;
+
 		${ sampleFunctions }
+
+		vec2 getDiskPoint( int i ) {
+
+			// Better poisson disk generation taken from another PCSS implmentation
+			// https://github.com/mrdoob/three.js/blob/master/examples/webgl_shadowmap_pcss.html#L54
+			#define NUM_RINGS 11
+			#define NUM_SAMPLES 10
+			float noiseIntensity = 1.0;
+			vec2 randomSeed = gl_FragCoord.xy;
+
+			vec2 poissonDisk[NUM_SAMPLES];
+
+			float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
+			float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
+			float angle = rand( randomSeed ) * PI2 * noiseIntensity;
+			float radius = INV_NUM_SAMPLES;
+			float radiusStep = radius;
+			for( int i = 0; i < NUM_SAMPLES; i ++ ) {
+
+				poissonDisk[i] = vec2( cos( angle ), sin( angle ) ) * pow( radius, 0.75 );
+				radius += radiusStep;
+				angle += ANGLE_STEP;
+
+			}
+
+			return poissonDisk[ 0 ];
+
+		}
 
 		float round( float f ) {
 
@@ -111,7 +143,7 @@ export const GTAOShader = {
 
 			vec2 uv = vUv;
 
-			vec2 screenCoord = gl_FragCoord.xy;// depthPyramidSize * uv;
+			vec2 screenCoord = depthPyramidSize * uv;
 			vec2 loc = screenCoord;// depthPyramidSize * uv;
 			vec4 vpos = GetViewPosition( loc, 1.0 );
 
@@ -131,7 +163,7 @@ export const GTAOShader = {
 			vnorm.z = - vnorm.z;
 
 			// TODO: use a noise function o texture here. Halton? Poisson?
-			vec2 noises	= vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
+			vec2 noises	= getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
 

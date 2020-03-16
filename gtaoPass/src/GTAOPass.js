@@ -46,6 +46,7 @@ export class GTAOPass extends Pass {
 		this.drawIndex = 0;
 
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
+		this.noiseIntensity = 'noiseIntensity' in options ? options.noiseIntensity : 1.0;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -71,7 +72,7 @@ export class GTAOPass extends Pass {
 			} );
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
 		this._depthPyramidGenerator = new PackedMipMapGenerator(
-			`
+			/* glsl */`
 			float depth = 0.0;
 
 			#pragma unroll_loop
@@ -243,6 +244,7 @@ export class GTAOPass extends Pass {
 			camera.far,
 			0.5 * ( height / ( 2.0 * Math.tan( camera.fov * 0.5 ) ) )
 		);
+		gtaoMaterial.uniforms.noiseIntensity.value = this.noiseIntensity;
 		gtaoMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		gtaoMaterial.uniforms.depthPyramid.value = depthPyramidBuffer.texture;
 		gtaoMaterial.uniforms.depthPyramidSize.value.set(
