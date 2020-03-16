@@ -245,8 +245,6 @@ export class SSRRPass extends Pass {
 		scene.background = null;
 
 		// Roughness / Normal pass
-		// TODO: Write a manual "material override" function that will automatically
-		// make new materials and map their uniforms to it so we can get correct surface results.
 		packedReplacement.replace( scene, true, true );
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
