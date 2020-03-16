@@ -90,6 +90,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Provide a minimum thickness for potentially thin objects?
 - Add an option to only use a front side depth and a thickness because non water tight meshes will having streaming coming off like the helmet
 - Add alpha test clipping to the pass shaders so the leaves on the planters look correct
+- Performe a reuseable depth prepass to improve performance on all subsequent passes.
 
 ### Stretch
 
