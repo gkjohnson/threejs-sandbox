@@ -226,8 +226,8 @@ export class GTAOPass extends Pass {
 		const gtaoQuad = _gtaoQuad;
 		const projection = camera.projectionMatrix;
 		gtaoMaterial.uniforms.params.value.set(
-			rotations[ 0 % 6 ] / 360.0,
-			offsets[ ( 0 / 6 ) % 4 ]
+			rotations[ drawIndex % 6 ] / 360.0,
+			offsets[ ( drawIndex / 6 ) % 4 ]
 		);
 		gtaoMaterial.uniforms.projInfo.value.set(
 			2.0 / ( width * projection.elements[ 4 * 1 + 1 ] ),

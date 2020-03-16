@@ -81,9 +81,11 @@ export const GTAOShader = {
 			);
 
 			vec2 mipcoord = uv / depthPyramidSize;
-			float d = packedTexture2DLOD( depthPyramid, mipcoord, miplevel, depthPyramidSize ).r;
 
-			// TODO: d is expected to be [ 0.0, 1.0 ]
+			// d is expected to be [ 0.0, 1.0 ]
+			float d = packedTexture2DLOD( depthPyramid, mipcoord, miplevel, depthPyramidSize ).r;
+			d = ( abs( d ) - clipInfo.x ) / ( clipInfo.y - clipInfo.x );
+
 			vec4 ret = vec4( 0.0 );
 			ret.w = d;
 			ret.z = clipInfo.x + d * ( clipInfo.y - clipInfo.x );
