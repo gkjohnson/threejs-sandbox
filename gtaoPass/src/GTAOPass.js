@@ -45,6 +45,8 @@ export class GTAOPass extends Pass {
 		};
 		this.drawIndex = 0;
 
+		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
+
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
@@ -110,8 +112,9 @@ export class GTAOPass extends Pass {
 
 	setSize( width, height ) {
 
-		const renderWidth = width;
-		const renderHeight = height;
+		const renderTargetScale = this.renderTargetScale;
+		const renderWidth = width * renderTargetScale;
+		const renderHeight = height * renderTargetScale;
 
 		this._depthBuffer.setSize( renderWidth, renderHeight );
 		this._normalBuffer.setSize( renderWidth, renderHeight );
