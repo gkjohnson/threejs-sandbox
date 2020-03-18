@@ -6,7 +6,9 @@ import {
 	RGBAFormat,
 	FloatType,
 	RGBFormat,
-	Math as MathUtils
+	Math as MathUtils,
+	DataTexture,
+	UnsignedByteType
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
@@ -17,10 +19,14 @@ import { PackedShader } from '../../screenSpaceReflectionsPass/src/PackedShader.
 import { LinearDepthDisplayShader, LinearMipDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
 import { GTAOShader } from './GTAOShader.js';
+import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 
 const _gtaoMaterial = new ShaderMaterial( GTAOShader );
 const _gtaoQuad = new Pass.FullScreenQuad( _gtaoMaterial );
+
+const _singlePassGtaoMaterial = new ShaderMaterial( SinglePassGTAOShader );
+const _singlePassGtaoQuad = new Pass.FullScreenQuad( _singlePassGtaoMaterial );
 
 const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
 const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
@@ -40,6 +46,19 @@ const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
 const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
+
+const data = new Uint8Array( 16 * 4 );
+for (let i = 0; i < 4; ++i) {
+	for (let j = 0; j < 4; ++j) {
+		let dirnoise = 0.0625 * ((((i + j) & 0x3) << 2) + (i & 0x3));
+		let offnoise = 0.25 * ((j - i) & 0x3);
+
+		data[(i * 4 + j) * 4 + 0] = dirnoise * 255.0;
+		data[(i * 4 + j) * 4 + 1] = offnoise * 255.0;
+	}
+}
+
+const noiseTexture = new DataTexture( data, 4, 4, RGBAFormat, UnsignedByteType );
 
 export class GTAOPass extends Pass {
 
@@ -241,16 +260,26 @@ export class GTAOPass extends Pass {
 		}
 
 		// Run the GTAO sampling
+		let gtaoMaterial, gtaoQuad;
+		if ( this.singlePass ) {
+
+			gtaoMaterial = _singlePassGtaoMaterial;
+			gtaoQuad = _singlePassGtaoQuad;
+
+		} else {
+
+			gtaoMaterial = _gtaoMaterial;
+			gtaoQuad = _gtaoQuad;
+
+		}
 		const gtaoBuffer = this._gtaoBuffer;
 		const width = Math.floor( gtaoBuffer.texture.image.width );
 		const height = Math.floor( gtaoBuffer.texture.image.height );
-		const gtaoMaterial = _gtaoMaterial;
-		const gtaoQuad = _gtaoQuad;
 		const projection = camera.projectionMatrix;
 		const fovRadians = MathUtils.DEG2RAD * camera.fov;
 		gtaoMaterial.uniforms.params.value.set(
-			rotations[ drawIndex % 6 ] / 360.0,
-			offsets[ ( drawIndex / 6 ) % 4 ]
+			rotations[ sampleIndex % 6 ] / 360.0,
+			offsets[ ( sampleIndex / 6 ) % 4 ]
 		);
 		gtaoMaterial.uniforms.projInfo.value.set(
 			2.0 / ( width * projection.elements[ 4 * 0 + 0 ] ),
@@ -271,6 +300,7 @@ export class GTAOPass extends Pass {
 			Math.floor( depthBuffer.texture.image.width ),
 			Math.floor( depthBuffer.texture.image.height )
 		);
+		gtaoMaterial.uniforms.noiseTexture.value = noiseTexture;
 
 		if ( debug.display === GTAOPass.AO_SAMPLE ) {
 
@@ -289,11 +319,13 @@ export class GTAOPass extends Pass {
 
 		}
 
-		// TODO spatial denoise via blur
+		if ( ! this.singlePass ) {
 
-		// TODO temporal reproject denoise and accumulate
+			// TODO spatial denoise via blur
 
+			// TODO temporal reproject denoise and accumulate
 
+		}
 
 		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
 		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;

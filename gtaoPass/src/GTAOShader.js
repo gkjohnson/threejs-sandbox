@@ -5,6 +5,7 @@ export const GTAOShader = {
 
 	uniforms: {
 
+		noiseTexture: { value: null },
 		normalBuffer: { value: null },
 		depthPyramid: { value: null },
 		depthPyramidSize: { value: new Vector2() },
@@ -44,6 +45,7 @@ export const GTAOShader = {
 		#include <packing>
 		varying vec2 vUv;
 
+		uniform sampler2D noiseTexture;
 		uniform sampler2D normalBuffer;
 		uniform sampler2D depthPyramid;
 		uniform vec2 depthPyramidSize;
@@ -98,6 +100,12 @@ export const GTAOShader = {
 
 		}
 
+		vec3 UnpackNormal( vec4 d ) {
+
+			return d.xyz * 2.0 - 1.0;
+
+		}
+
 		vec4 GetViewPosition( vec2 uv, float currStep ) {
 
 			int miplevel = int(
@@ -143,7 +151,7 @@ export const GTAOShader = {
 
 			vec2 uv = vUv;
 
-			vec2 screenCoord = depthPyramidSize * uv;
+			vec2 screenCoord = floor( depthPyramidSize * uv );
 			vec2 loc = screenCoord;// depthPyramidSize * uv;
 			vec4 vpos = GetViewPosition( loc, 1.0 );
 
@@ -155,7 +163,7 @@ export const GTAOShader = {
 			}
 
 			vec4 s;
-			vec3 vnorm	= texture2D( normalBuffer, vUv ).rgb;
+			vec3 vnorm	= UnpackNormal( texture2D( normalBuffer, vUv ) );
 			vec3 vdir	= normalize( - vpos.xyz );
 			vec3 dir, ws;
 
@@ -163,7 +171,9 @@ export const GTAOShader = {
 			vnorm.z = - vnorm.z;
 
 			// TODO: use a noise function o texture here. Halton? Poisson?
-			vec2 noises	= getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
+			vec2 texelPos = vec2( 0.125 ) + mod( screenCoord, vec2( 4.0 ) ) / 4.0;
+			vec2 noises	= texture2D( noiseTexture, texelPos ).rg;//getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
+
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
 
