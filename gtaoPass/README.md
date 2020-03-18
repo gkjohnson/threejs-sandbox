@@ -31,3 +31,6 @@ TODO
 - Composite
 - Pull and run original implementation to compare
 - Add a depth aware blur
+- Unroll loop in the GTAO shader
+- Try different mip map techniques for the depth pyramid
+  - Make the sample fetches a function so we don't incur all texture taps if they're not needed
