@@ -23,6 +23,7 @@ TODO
 # TODO
 
 - Understand why the first sample seems particularly dark compared to the rest
+- The pyramid atlas seems to be bleeding
 - Add a spatial denoising blur
 - Add temporal reprojection denoising
 - Performance
