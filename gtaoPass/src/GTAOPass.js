@@ -1,4 +1,4 @@
-import { Color, ShaderMaterial, WebGLRenderTarget, NearestFilter, RGBAFormat, FloatType } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Color, ShaderMaterial, WebGLRenderTarget, NearestFilter, RGBAFormat, FloatType, RGBFormat } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
@@ -8,6 +8,7 @@ import { PackedShader } from '../../screenSpaceReflectionsPass/src/PackedShader.
 import { LinearDepthDisplayShader, LinearMipDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
 import { GTAOShader } from './GTAOShader.js';
+import { CompositeShader } from './CompositeShader.js';
 
 const _gtaoMaterial = new ShaderMaterial( GTAOShader );
 const _gtaoQuad = new Pass.FullScreenQuad( _gtaoMaterial );
@@ -23,6 +24,9 @@ const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
 
 const _debugMipDepthMaterial = new ShaderMaterial( LinearMipDepthDisplayShader );
 const _debugMipDepthQuad = new Pass.FullScreenQuad( _debugMipDepthMaterial );
+
+const _compositeMaterial = new ShaderMaterial( CompositeShader );
+const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
 
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
@@ -43,31 +47,31 @@ export class GTAOPass extends Pass {
 			display: GTAOPass.DEFAULT,
 			depthLevel: - 1,
 		};
-		this.drawIndex = 0;
+		this.sampleIndex = 0;
 
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
 		this.noiseIntensity = 'noiseIntensity' in options ? options.noiseIntensity : 1.0;
+		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
-				format: RGBAFormat,
-				type: FloatType
+				format: RGBFormat,
 			} );
 
 		this._depthBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
-				format: RGBAFormat,
+				format: RGBFormat,
 				type: FloatType
 			} );
 		this._depthPyramidBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
-				format: RGBAFormat,
+				format: RGBFormat,
 				type: FloatType
 			} );
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
@@ -125,8 +129,13 @@ export class GTAOPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		const drawIndex = this.drawIndex;
-		this.drawIndex = ( drawIndex + 1 ) % 6;
+		const sampleIndex = this.sampleIndex;
+
+		if ( ! this.fixedSample ) {
+
+			this.sampleIndex = ( sampleIndex + 1 ) % 6;
+
+		}
 
 		const scene = this.scene;
 		const camera = this.camera;
@@ -234,10 +243,10 @@ export class GTAOPass extends Pass {
 			offsets[ ( drawIndex / 6 ) % 4 ]
 		);
 		gtaoMaterial.uniforms.projInfo.value.set(
-			2.0 / ( width * projection.elements[ 4 * 1 + 1 ] ),
-			2.0 / ( height * projection.elements[ 4 * 2 + 2 ] ),
-			- 1.0 / ( projection.elements[ 4 * 1 + 1 ] ),
-			- 1.0 / ( width * projection.elements[ 4 * 2 + 2 ] )
+			2.0 / ( width * projection.elements[ 4 * 0 + 0 ] ),
+			2.0 / ( height * projection.elements[ 4 * 1 + 1 ] ),
+			- 1.0 / ( projection.elements[ 4 * 0 + 0 ] ),
+			- 1.0 / ( width * projection.elements[ 4 * 1 + 1 ] )
 		);
 		gtaoMaterial.uniforms.clipInfo.value.set(
 			camera.near,
@@ -252,13 +261,35 @@ export class GTAOPass extends Pass {
 			Math.floor( depthBuffer.texture.image.height )
 		);
 
-		renderer.setRenderTarget( finalBuffer );
-		renderer.clear();
-		gtaoQuad.render( renderer );
+		if ( debug.display === GTAOPass.AO_SAMPLE ) {
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+			gtaoQuad.render( renderer );
+
+			replaceOriginalValues();
+			return;
+
+		} else {
+
+			renderer.setRenderTarget( gtaoBuffer );
+			renderer.clear();
+			gtaoQuad.render( renderer );
+
+		}
 
 		// TODO spatial denoise via blur
 
 		// TODO temporal reproject denoise and accumulate
+
+
+
+		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
+		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
+		renderer.setRenderTarget( finalBuffer );
+		renderer.clear();
+		_compositeQuad.render( renderer );
+
 
 		// renderer.setRenderTarget( finalBuffer );
 		// _copyMaterial.uniforms.tDiffuse.value = readBuffer.texture;
@@ -273,3 +304,7 @@ export class GTAOPass extends Pass {
 GTAOPass.DEFAULT = 0;
 GTAOPass.DEPTH_PYRAMID = 1;
 GTAOPass.NORMAL = 2;
+GTAOPass.AO_SAMPLE = 3;
+GTAOPass.AO_BLUR = 3;
+GTAOPass.AO_ACCUMULATED = 4;
+GTAOPass.ACCUMULATION = 5;

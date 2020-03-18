@@ -269,7 +269,11 @@
 				gui.add( params, 'display', {
 					DEFAULT: GTAOPass.DEFAULT,
 					DEPTH_PYRAMID: GTAOPass.DEPTH_PYRAMID,
-					NORMAL: GTAOPass.NORMAL
+					NORMAL: GTAOPass.NORMAL,
+					AO_SAMPLE: GTAOPass.AO_SAMPLE,
+					AO_BLUR: GTAOPass.AO_BLUR,
+					AO_ACCUMULATED: GTAOPass.AO_ACCUMULATED,
+					ACCUMULATION: GTAOPass.ACCUMULATION,
 				} );
 				gui.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
 				gui.add( params, 'scene', [ 'spheres', 'pyramid' ] );
