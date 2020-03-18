@@ -76,6 +76,38 @@
 			init();
 			animate();
 
+			function createSponza() {
+
+				// sponza scene
+				var sponzaGroup = new THREE.Group();
+				var loader = new GLTFLoader();
+				loader.load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
+					g => {
+						const o = g.scene.children[0];
+						o.position.y = -20;
+						o.rotation.set(0, Math.PI / 2, 0);
+						o.scale.multiplyScalar(30);
+
+						o.traverse(c => {
+							c.castShadow = true;
+							c.receiveShadow = true;
+						});
+						sponzaGroup.add(o);
+					}
+				);
+
+				sphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( 4, 50, 50 ),
+					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
+				);
+				sphere.castShadow = true;
+				sponzaGroup.add( sphere );
+
+				return sponzaGroup;
+
+			}
+
 			function createBallPyramid() {
 
 				var group = new THREE.Group();
@@ -214,6 +246,9 @@
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
+				var sponzaGroup = createSponza();
+				scene.add( sponzaGroup );
+
 				var spheresScene = createSphereScene();
 				scene.add( spheresScene );
 
@@ -221,6 +256,7 @@
 				scene.add( pyramidScene );
 
 				scenes = {
+					sponza: sponzaGroup,
 					pyramid: pyramidScene,
 					spheres: spheresScene,
 				};
@@ -276,7 +312,7 @@
 					ACCUMULATION: GTAOPass.ACCUMULATION,
 				} );
 				gui.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
-				gui.add( params, 'scene', [ 'spheres', 'pyramid' ] );
+				gui.add( params, 'scene', [ 'sponza', 'spheres', 'pyramid' ] );
 
 				gui.open();
 
