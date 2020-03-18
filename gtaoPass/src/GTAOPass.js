@@ -1,4 +1,13 @@
-import { Color, ShaderMaterial, WebGLRenderTarget, NearestFilter, RGBAFormat, FloatType, RGBFormat } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import {
+	Color,
+	ShaderMaterial,
+	WebGLRenderTarget,
+	NearestFilter,
+	RGBAFormat,
+	FloatType,
+	RGBFormat,
+	Math as MathUtils
+} from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
@@ -238,6 +247,7 @@ export class GTAOPass extends Pass {
 		const gtaoMaterial = _gtaoMaterial;
 		const gtaoQuad = _gtaoQuad;
 		const projection = camera.projectionMatrix;
+		const fovRadians = MathUtils.DEG2RAD * camera.fov;
 		gtaoMaterial.uniforms.params.value.set(
 			rotations[ drawIndex % 6 ] / 360.0,
 			offsets[ ( drawIndex / 6 ) % 4 ]
@@ -245,13 +255,14 @@ export class GTAOPass extends Pass {
 		gtaoMaterial.uniforms.projInfo.value.set(
 			2.0 / ( width * projection.elements[ 4 * 0 + 0 ] ),
 			2.0 / ( height * projection.elements[ 4 * 1 + 1 ] ),
-			- 1.0 / ( projection.elements[ 4 * 0 + 0 ] ),
-			- 1.0 / ( width * projection.elements[ 4 * 1 + 1 ] )
+			- 1.0 / projection.elements[ 4 * 0 + 0 ],
+			- 1.0 / projection.elements[ 4 * 1 + 1 ]
 		);
 		gtaoMaterial.uniforms.clipInfo.value.set(
 			camera.near,
 			camera.far,
-			0.5 * ( height / ( 2.0 * Math.tan( camera.fov * 0.5 ) ) )
+			0.5 * ( height / ( 2.0 * Math.tan( fovRadians * 0.5 ) ) ),
+			0.0
 		);
 		gtaoMaterial.uniforms.noiseIntensity.value = this.noiseIntensity;
 		gtaoMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
