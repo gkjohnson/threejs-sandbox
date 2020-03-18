@@ -31,8 +31,6 @@ export const SinglePassGTAOShader = {
 
 	fragmentShader:
 		/* glsl */`
-		#define PREFETCH_CACHE_SIZE 8
-		#define NUM_MIP_LEVELS 5
 		#define NUM_STEPS		8
 		#define RADIUS			2.0		// in world space
 		#define NUM_DIRECTIONS	32
@@ -62,16 +60,17 @@ export const SinglePassGTAOShader = {
 		vec4 GetViewPosition( vec2 uv, float currstep ) {
 
 			vec2 basesize = depthPyramidSize;
-			vec2 coord = (uv / basesize);
+			vec2 coord = ( uv / basesize );
+			coord = min( coord, vec2( 1.0 - 1.0 / ( basesize * 2.0 ) ) );
 
 			// d is expected to be [ 0.0, 1.0 ]
-			float d = packedTexture2DLOD(depthPyramid, coord, 0, depthPyramidSize).r;
+			float d = packedTexture2DLOD( depthPyramid, coord, 0, depthPyramidSize ).r;
 			d = d == 0.0 ? clipInfo.y : d;
 			d = ( abs( d ) - clipInfo.x ) / ( clipInfo.y - clipInfo.x );
 
-			vec4 ret = vec4(0.0, 0.0, 0.0, d);
-			ret.z = clipInfo.x + d * (clipInfo.y - clipInfo.x);
-			ret.xy = (uv * projInfo.xy + projInfo.zw) * ret.z;
+			vec4 ret = vec4( 0.0, 0.0, 0.0, d );
+			ret.z = clipInfo.x + d * ( clipInfo.y - clipInfo.x );
+			ret.xy = ( uv * projInfo.xy + projInfo.zw ) * ret.z;
 
 			return ret;
 
@@ -118,7 +117,7 @@ export const SinglePassGTAOShader = {
 			// calculation uses left handed system
 			vnorm.z = - vnorm.z;
 
-			vec2 noises	= vec2( 0.0 ); //texelFetch(noise, loc % 4, 0).rg;
+			vec2 noises	= vec2( 0.0 );
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
 
@@ -132,8 +131,10 @@ export const SinglePassGTAOShader = {
 			float currstep	= 1.0 + division + 0.25 * stepsize * params.y;
 			float dist2, invdist, falloff, cosh;
 
-			for ( int k = 0; k < NUM_DIRECTIONS; ++ k ) {
+			#pragma unroll_loop_start
+			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
+				int k = i;
 				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) );
 				currstep = 1.0;
 
@@ -191,6 +192,7 @@ export const SinglePassGTAOShader = {
 					( horizons.x * singamma2 + cosgamma - cos( 2.0 * horizons.x - gamma ) ) +
 					( horizons.y * singamma2 + cosgamma - cos( 2.0 * horizons.y - gamma ) ) );
 			}
+			#pragma unroll_loop_end
 
 			// PDF = 1 / pi and must normalize with pi because of Lambert
 			ao = ao / float( NUM_DIRECTIONS );
