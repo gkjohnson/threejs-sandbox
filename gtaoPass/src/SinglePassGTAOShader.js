@@ -59,13 +59,14 @@ export const SinglePassGTAOShader = {
 		uniform vec3 eyePos;
 		uniform vec4 params;
 
-		vec4 GetViewPosition(vec2 uv, float currstep)
-		{
-			vec2 basesize = depthPyramidSize; // vec2(textureSize(gbufferDepth, 0));
+		vec4 GetViewPosition( vec2 uv, float currstep ) {
+
+			vec2 basesize = depthPyramidSize;
 			vec2 coord = (uv / basesize);
 
 			// d is expected to be [ 0.0, 1.0 ]
 			float d = packedTexture2DLOD(depthPyramid, coord, 0, depthPyramidSize).r;
+			d = d == 0.0 ? clipInfo.y : d;
 			d = ( abs( d ) - clipInfo.x ) / ( clipInfo.y - clipInfo.x );
 
 			vec4 ret = vec4(0.0, 0.0, 0.0, d);
@@ -73,6 +74,7 @@ export const SinglePassGTAOShader = {
 			ret.xy = (uv * projInfo.xy + projInfo.zw) * ret.z;
 
 			return ret;
+
 		}
 
 		float round( float f ) {
@@ -99,27 +101,29 @@ export const SinglePassGTAOShader = {
 
 			vec2 screenCoord = floor( depthPyramidSize * vUv );
 			vec2 loc = screenCoord;
-			vec4 vpos = GetViewPosition(screenCoord, 1.0);
+			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
-			if (vpos.w == 1.0) {
+			if ( vpos.w == 1.0 ) {
+
 				gl_FragColor = vec4(0.0, 0.0103, 0.0707, 1.0);
 				return;
+
 			}
 
 			vec4 s;
-			vec3 vnorm	= UnpackNormal( texture2D(normalBuffer, vUv) );
-			vec3 vdir	= normalize(-vpos.xyz);
+			vec3 vnorm	= UnpackNormal( texture2D( normalBuffer, vUv ) );
+			vec3 vdir	= normalize( - vpos.xyz );
 			vec3 dir, ws;
 
 			// calculation uses left handed system
-			vnorm.z = -vnorm.z;
+			vnorm.z = - vnorm.z;
 
 			vec2 noises	= vec2( 0.0 ); //texelFetch(noise, loc % 4, 0).rg;
 			vec2 offset;
-			vec2 horizons = vec2(-1.0, -1.0);
+			vec2 horizons = vec2( - 1.0, - 1.0 );
 
-			float radius = (RADIUS * clipInfo.z) / vpos.z;
-			radius = max(float( NUM_STEPS ), radius);
+			float radius = ( RADIUS * clipInfo.z ) / vpos.z;
+			radius = max( float( NUM_STEPS ), radius );
 
 			float stepsize	= radius / float( NUM_STEPS );
 			float phi		= 0.0;
@@ -128,69 +132,71 @@ export const SinglePassGTAOShader = {
 			float currstep	= 1.0 + division + 0.25 * stepsize * params.y;
 			float dist2, invdist, falloff, cosh;
 
-			for (int k = 0; k < NUM_DIRECTIONS; ++k) {
-				phi = float(k) * (PI / float(NUM_DIRECTIONS));
+			for ( int k = 0; k < NUM_DIRECTIONS; ++ k ) {
+
+				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) );
 				currstep = 1.0;
 
-				dir = vec3(cos(phi), sin(phi), 0.0);
-				horizons = vec2(-1.0);
+				dir = vec3( cos( phi ), sin( phi ), 0.0 );
+				horizons = vec2( - 1.0 );
 
 				// calculate horizon angles
-				for (int j = 0; j < NUM_STEPS; ++j) {
-					offset = round(dir.xy * currstep);
+				for ( int j = 0; j < NUM_STEPS; ++ j ) {
+					offset = round( dir.xy * currstep );
 
 					// h1
-					s = GetViewPosition(screenCoord + offset, currstep);
+					s = GetViewPosition( screenCoord + offset, currstep );
 					ws = s.xyz - vpos.xyz;
 
-					dist2 = dot(ws, ws);
-					invdist = inversesqrt(dist2);
-					cosh = invdist * dot(ws, vdir);
+					dist2 = dot( ws, ws );
+					invdist = inversesqrt( dist2 );
+					cosh = invdist * dot( ws, vdir );
 
-					horizons.x = max(horizons.x, cosh);
+					horizons.x = max( horizons.x, cosh );
 
 					// h2
-					s = GetViewPosition(screenCoord - offset, currstep);
+					s = GetViewPosition( screenCoord - offset, currstep );
 					ws = s.xyz - vpos.xyz;
 
-					dist2 = dot(ws, ws);
-					invdist = inversesqrt(dist2);
-					cosh = invdist * dot(ws, vdir);
+					dist2 = dot( ws, ws );
+					invdist = inversesqrt( dist2 );
+					cosh = invdist * dot( ws, vdir );
 
-					horizons.y = max(horizons.y, cosh);
+					horizons.y = max( horizons.y, cosh );
 
 					// increment
 					currstep += stepsize;
 				}
 
-				horizons = acos(horizons);
+				horizons = acos( horizons );
 
 				// calculate gamma
-				vec3 bitangent	= normalize(cross(dir, vdir));
-				vec3 tangent	= cross(vdir, bitangent);
-				vec3 nx			= vnorm - bitangent * dot(vnorm, bitangent);
+				vec3 bitangent	= normalize( cross( dir, vdir ) );
+				vec3 tangent	= cross( vdir, bitangent );
+				vec3 nx			= vnorm - bitangent * dot( vnorm, bitangent );
 
-				float nnx		= length(nx);
-				float invnnx	= 1.0 / (nnx + 1e-6);			// to avoid division with zero
-				float cosxi		= dot(nx, tangent) * invnnx;	// xi = gamma + HALF_PI
-				float gamma		= acos(cosxi) - HALF_PI;
-				float cosgamma	= dot(nx, vdir) * invnnx;
+				float nnx		= length( nx );
+				float invnnx	= 1.0 / ( nnx + 1e-6 );			// to avoid division with zero
+				float cosxi		= dot( nx, tangent ) * invnnx;	// xi = gamma + HALF_PI
+				float gamma		= acos( cosxi ) - HALF_PI;
+				float cosgamma	= dot( nx, vdir ) * invnnx;
 				float singamma2	= -2.0 * cosxi;					// cos(x + HALF_PI) = -sin(x)
 
 				// clamp to normal hemisphere
-				horizons.x = gamma + max(-horizons.x - gamma, -HALF_PI);
-				horizons.y = gamma + min(horizons.y - gamma, HALF_PI);
+				horizons.x = gamma + max( - horizons.x - gamma, - HALF_PI );
+				horizons.y = gamma + min( horizons.y - gamma, HALF_PI );
 
 				// Riemann integral is additive
 				ao += nnx * 0.25 * (
-					(horizons.x * singamma2 + cosgamma - cos(2.0 * horizons.x - gamma)) +
-					(horizons.y * singamma2 + cosgamma - cos(2.0 * horizons.y - gamma)));
+					( horizons.x * singamma2 + cosgamma - cos( 2.0 * horizons.x - gamma ) ) +
+					( horizons.y * singamma2 + cosgamma - cos( 2.0 * horizons.y - gamma ) ) );
 			}
 
 			// PDF = 1 / pi and must normalize with pi because of Lambert
-			ao = ao / float(NUM_DIRECTIONS);
+			ao = ao / float( NUM_DIRECTIONS );
 
-			gl_FragColor = vec4(ao, ao, ao, 1.0);
+			gl_FragColor = vec4( ao, ao, ao, 1.0 );
+
 		}
 
 	`
