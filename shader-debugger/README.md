@@ -7,13 +7,14 @@ A shade debug renderer intended to help with understanding and reading data from
 ```js
 import { ShaderDebugRenderer } from './src/ShaderDebugRenderer.js';
 
+const debugMaterial = new DebugShaderMaterial( material );
 const renderer = new ShaderDebugRenderer();
 const shaderDebugger = renderer.shaderDebugger;
 shaderDebugger.enable = true;
-shaderDebugger.material = material;
+shaderDebugger.material = debugMaterial;
 
-
-
+debugMaterial.setDisplayVariable( statment, line, column, typeOverride, condition );
+debugMaterial.
 ```
 
 # API
