@@ -1,5 +1,5 @@
 import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { parseVariables, getMainExtents, splice } from './utils.js';
+import { parseVariables, getMainExtents, splice, getScopeDepth } from './utils.js';
 
 export class ShaderDebugMaterial extends ShaderMaterial {
 
@@ -42,7 +42,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 	}
 
-	setVertexOutputVariable( name, index, type = null, condition = null ) {
+	setVertexOutputVariable( name, type, index = null, condition = null ) {
 
 		this.clearOutputVariable();
 
@@ -133,7 +133,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 	}
 
-	setFragmentOutputVariable( name, index = null, type = null, condition = null ) {
+	setFragmentOutputVariable( name, type, index = null, condition = null ) {
 
 		this.clearOutputVariable();
 
@@ -150,9 +150,6 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 			throw new Error( 'ShaderDebugMaterial: Can only insert code in main body.' );
 
 		}
-
-		// TODO: try to find type definition if it isn't given by extracting the current scope
-		// and checking which variable declaration is correct.
 
 		let output;
 		if ( /gl_FragColor\s*=/.test( name ) ) {
@@ -231,6 +228,5 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 		this.needsUpdate = true;
 
 	}
-
 
 }

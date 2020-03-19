@@ -16,19 +16,11 @@ function parseGlobals( prefix, text ) {
 	let lastResult = null;
 	while ( lastResult = regex.exec( text ) ) {
 
-		const beginning = text.substr( 0, lastResult.index + lastResult[ 0 ].length - 1 );
-
-		const lines = beginning.split( /\n/g );
-		const line = lines.length - 1;
-		const column = lines[ lines.length - 1 ].length;
-
 		const type = lastResult[ 1 ];
 		const name = lastResult[ 2 ];
 		result.push( {
 
 			index: lastResult.index + lastResult[ 0 ].length - 1,
-			line,
-			column,
 			type,
 			name,
 
@@ -83,15 +75,6 @@ function parseLocalVariables( text ) {
 	result.sort( ( a, b ) => {
 
 		return a.index - b.index;
-		if ( a.line !== b.line ) {
-
-			return a.line - b.line;
-
-		} else {
-
-			return a.column - b.column;
-
-		}
 
 	} );
 
@@ -137,11 +120,6 @@ function parseDeclarations( body, startIndex, endIndex ) {
 		const rest = lastResult[ 2 ].replace( /\(.*?\)/g, '' );
 		const index = lastResult.index + line.length;
 
-		const beginning = body.substr( 0, index );
-		const lines = beginning.split( /\n/g );
-		const lineCount = lines.length;
-		const column = lines[ lines.length - 1 ].length;
-
 		const splits = rest.split( ',' );
 		for( let i = 0, l = splits.length; i < l; i ++ ) {
 
@@ -154,8 +132,6 @@ function parseDeclarations( body, startIndex, endIndex ) {
 				result.push( {
 
 					index,
-					line: lineCount,
-					column,
 					type,
 					name
 
@@ -196,7 +172,7 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 	}
 
-	// remove duplicates?
+	// remove duplicates
 	for ( let i = 0; i < result.length; i ++ ) {
 
 		const item = result[ i ];
