@@ -26,8 +26,98 @@ export class ShaderDebugMaterial {
 	updateDefinitions() {
 
 		this.clearOutputVariable();
+		// TODO: extract main beginning and end
 		this.vertexDefinitions = parseVariables( this.vertexShader );
 		this.fragmentDefinitions = parseVariables( this.fragmentShader );
+
+	}
+
+	setVertexOutputVariable( name, line, column, type = null, condition = null ) {
+
+		this.clearOutputVariable();
+
+		const mainStartLine, mainStartColumn;
+		const definition =
+		`
+		gl_FragColor = __varying_output__;
+		return;
+		`;
+
+		this.setFragmentOutputVariable( definition, mainStartLine, mainStartColumn );
+
+		// TODO: insert varying vec4 __varying_output__; in front of main in fragment and vertex shaders
+
+		let output;
+		if ( /gl_FragColor\s*=/.test( name ) ) {
+
+			output = name.replace( 'gl_FragColor', '__varying_output__' );
+
+		} else {
+
+			switch( type ) {
+
+				case 'float':
+					output = `vec4( ${ name } )`;
+					break;
+				case 'int':
+					output = `vec4( float( ${ name } ) )`;
+					break;
+				case 'bool':
+					output = `vec4( float( ${ name } ) )`;
+					break;
+				case 'vec2':
+					output = `vec4( ${ name }.xy, 0.0, 0.0 )`;
+					break;
+				case 'vec3':
+					output = `vec4( ${ name }.xyz, 0.0 )`;
+					break;
+				case 'vec4':
+					output = `${ name }`;
+					break;
+			}
+
+		}
+
+		const vertexShader = this.vertexShader;
+		const lines = vertexShader.split( /\n/g );
+		let result = '';
+		for ( let i = 0; i < line; i ++ ) {
+
+			const line = lines.shift();
+			result += line + '\n';
+
+		}
+
+		result += lines[ 0 ].substr( 0, column );
+		lines[ 0 ] = lines[ 0 ].substr( column );
+
+		if ( condition ) {
+
+			result += `
+
+			if ( ${ condition } ) {
+
+				__varying_output__ = ${ output };
+				return;
+
+			}
+
+			`;
+
+		} else {
+
+			result += `
+
+			__varying_output__ = ${ output };
+			return;
+
+			`;
+
+		}
+
+		result += lines.join( '\n' );
+		this.vertexShader = result;
+		this.needsUpdate = true;
 
 	}
 
@@ -41,27 +131,34 @@ export class ShaderDebugMaterial {
 		// and checking which variable declaration is correct.
 
 		let output;
+		if ( /gl_FragColor\s*=/.test( name ) ) {
 
-		switch( type ) {
+			output = name;
 
-			case 'float':
-				output = `vec4( ${ name } )`;
-				break;
-			case 'int':
-				output = `vec4( float( ${ name } ) )`;
-				break;
-			case 'bool':
-				output = `vec4( float( ${ name } ) )`;
-				break;
-			case 'vec2':
-				output = `vec4( ${ name }.xy, 0.0, 0.0 )`;
-				break;
-			case 'vec3':
-				output = `vec4( ${ name }.xyz, 0.0 )`;
-				break;
-			case 'vec4':
-				output = `${ name }`;
-				break;
+		} else {
+
+			switch( type ) {
+
+				case 'float':
+					output = `vec4( ${ name } )`;
+					break;
+				case 'int':
+					output = `vec4( float( ${ name } ) )`;
+					break;
+				case 'bool':
+					output = `vec4( float( ${ name } ) )`;
+					break;
+				case 'vec2':
+					output = `vec4( ${ name }.xy, 0.0, 0.0 )`;
+					break;
+				case 'vec3':
+					output = `vec4( ${ name }.xyz, 0.0 )`;
+					break;
+				case 'vec4':
+					output = `${ name }`;
+					break;
+			}
+
 		}
 
 		const fragmentShader = this.fragmentShader;
