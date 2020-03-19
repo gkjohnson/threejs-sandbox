@@ -11,12 +11,12 @@ function parseGlobals( prefix, text ) {
 
 	// Find the declarations
 	const result = [];
-	const regex = new RegExp( `${ prefix }\s+(.*)?\s+(.*)?\s*;`, 'g' );
+	const regex = new RegExp( `${ prefix }\\s+(\\w+)?\\s+(\\w+)?\\s*;`, 'g' );
+
 	let lastResult = null;
 	while ( lastResult = regex.exec( text ) ) {
 
-		const wholeMatch = lastResult[ 0 ];
-		const beginning = text.match( new RegExp( `^.*${ wholeMatch }` ) );
+		const beginning = text.substr( 0, lastResult.index + lastResult[ 0 ].length - 1 );
 
 		const lines = beginning.split( /\n/g );
 		const line = lines.length - 1;
@@ -47,11 +47,11 @@ function parseLocalVariables( text ) {
 	const startIndex = mainRegex.exec( text ).index;
 
 	const braceRegex = /[{}]/g;
-	braceRegex.index = startIndex;
+	braceRegex.lastIndex = startIndex;
 
 	let lastResult = null;
 	let braceIndices = [ startIndex ];
-	while ( lastResult = braceRegex.exec( text ) && braceIndices.length !== 0 ) {
+	while ( ( lastResult = braceRegex.exec( text ) ) && braceIndices.length !== 0 ) {
 
 		const brace = lastResult[ 0 ];
 		if ( brace === '{' ) {
@@ -72,7 +72,7 @@ function parseLocalVariables( text ) {
 
 			const content = text.substr( startIndex, endIndex );
 			const replaced = content.replace( /[^\n]/g, ' ' );
-			text = splice( text, startIndex, endIndex - startIndex, replaced );
+			text = splice( text, startIndex, endIndex - startIndex + 1, replaced );
 
 		}
 
@@ -125,21 +125,22 @@ function parseDeclarations( body, startIndex, endIndex ) {
 	body = body.substr( 0, endIndex );
 
 	const result = [];
-	const declarationRegex = /(vec[1234]|float|int|bool).+?;/g;
-	declarationRegex.index = startIndex;
+	const declarationRegex = /(vec[1234]|float|int|bool)(.+)?;/g;
+	declarationRegex.lastIndex = startIndex;
 	let lastResult = null;
 	while ( lastResult = declarationRegex.exec( body ) ) {
 
 		const line = lastResult[ 0 ];
 		const type = lastResult[ 1 ];
-		const index = lastResult.index;
+		const rest = lastResult[ 2 ].replace( /\(.*?\)/g, '' );
+		const index = lastResult.index + line.length;
 
 		const beginning = body.substr( 0, index );
 		const lines = beginning.split( /\n/g );
 		const lineCount = lines.length;
 		const column = lines[ lines.length - 1 ].length;
 
-		const splits = line.split( ',' );
+		const splits = rest.split( ',' );
 		for( let i = 0, l = splits.length; i < l; i ++ ) {
 
 			const item = splits[ i ];
@@ -148,38 +149,32 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 				name = item.split( '=' )[ 0 ].trim();
 
-			} else {
+				result.push( {
 
-				name = item.trim();
+					line: lineCount,
+					column,
+					type,
+					name
+
+				} );
 
 			}
 
-			result.push( {
-
-				line: lineCount,
-				column,
-				type,
-				name
-
-			} );
-
 		}
-
-		const replaced = line.replace( /[^\n]/g, ' ' );
-		body = splice( body, index - line.length, line.length, replaced );
 
 	}
 
 	const semiRegexp = /;/g;
 	const setRegexp = /(\w+?)\s*=\s*\w+?(;|,)/g;
-	setRegexp.index = startIndex;
+	setRegexp.lastIndex = startIndex;
 	while ( lastResult = setRegexp.exec( body ) ) {
 
+		const line = lastResult[ 0 ];
 		const name = lastResult[ 1 ];
 
 		semiRegexp.index = lastResult.index;
 		semiRegexp.exec( body );
-		const index = semiRegexp.index;
+		const index = semiRegexp.index + line.length;
 
 		const beginning = body.substr( 0, index );
 		const lines = beginning.split( /\n/g );
@@ -197,14 +192,30 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 	}
 
-	// TODO: remove duplicates?
+	// remove duplicates?
+	for ( let i = 0; i < result.length; i ++ ) {
+
+		const item = result[ i ];
+		for ( let j = i + 1; j < result.length; j ++ ) {
+
+			const item2 = result[ j ];
+			if ( item.name === item2.name && item.line === item2.line && item.column === item2.column ) {
+
+				result.splice( j, 1 );
+				j --;
+
+			}
+
+		}
+
+	}
 
 	return result;
 
 }
 
 // Collect the uniforms, attributes, varyings, and locals used in a given shader main function
-function getVariables( text ) {
+export function parseVariables( text ) {
 
 	// If there's no main function lets bail
 	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*\{([\s\S]*)\}/;
