@@ -1,21 +1,32 @@
-import { ShaderMaterial } from '';
-import { parseVariables } from './utils.js';
+import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { parseVariables, getMainExtents, splice } from './utils.js';
 
-export class ShaderDebugMaterial {
+export class ShaderDebugMaterial extends ShaderMaterial {
 
 	constructor( shaderOrMaterial ) {
 
-		super( shaderOrMaterial );
+		let shader, material;
 
 		if ( shaderOrMaterial.isShaderMaterial ) {
 
-			this.targetMaterial = shaderOrMaterial;
+			material = shaderOrMaterial;
+			shader = {
+				uniforms: material.uniforms,
+				defines: material.defines,
+				fragmentShader: material.fragmentShader,
+				vertexShader: material.vertexShader
+
+			};
 
 		} else {
 
-			this.targetMaterial = new ShaderMaterial( shaderOrMaterial );
+			shader = shaderOrMaterial;
+			material = new ShaderMaterial( shader );
 
 		}
+
+		super( shader );
+		this.targetMaterial = material;
 
 		this.vertexDefinitions = null;
 		this.fragmentDefinitions = null;
@@ -26,26 +37,39 @@ export class ShaderDebugMaterial {
 	updateDefinitions() {
 
 		this.clearOutputVariable();
-		// TODO: extract main beginning and end
 		this.vertexDefinitions = parseVariables( this.vertexShader );
 		this.fragmentDefinitions = parseVariables( this.fragmentShader );
 
 	}
 
-	setVertexOutputVariable( name, line, column, type = null, condition = null ) {
+	setVertexOutputVariable( name, index, type = null, condition = null ) {
 
 		this.clearOutputVariable();
 
-		const mainStartLine, mainStartColumn;
-		const definition =
-		`
-		gl_FragColor = __varying_output__;
-		return;
-		`;
+		const vertexShader = this.vertexShader;
+		const extents = getMainExtents( vertexShader );
+		if ( index === null ) {
 
-		this.setFragmentOutputVariable( definition, mainStartLine, mainStartColumn );
+			index = extents.end;
 
-		// TODO: insert varying vec4 __varying_output__; in front of main in fragment and vertex shaders
+		}
+
+		if ( index < extents.after || index > extents.end ) {
+
+			throw new Error( 'ShaderDebugMaterial: Can only insert code in main body.' );
+
+		}
+
+		this.fragmentShader = splice(
+			this.fragmentShader,
+			'\ngl_FragColor = __varying_output__; return;\n',
+			getMainExtents( this.fragmentShader ).after
+		);
+		this.fragmentShader = splice(
+			this.fragmentShader,
+			'\n varying vec4 __varying_output__;\n',
+			getMainExtents( this.fragmentShader ).before
+		);
 
 		let output;
 		if ( /gl_FragColor\s*=/.test( name ) ) {
@@ -78,22 +102,10 @@ export class ShaderDebugMaterial {
 
 		}
 
-		const vertexShader = this.vertexShader;
-		const lines = vertexShader.split( /\n/g );
-		let result = '';
-		for ( let i = 0; i < line; i ++ ) {
-
-			const line = lines.shift();
-			result += line + '\n';
-
-		}
-
-		result += lines[ 0 ].substr( 0, column );
-		lines[ 0 ] = lines[ 0 ].substr( column );
-
+		let result;
 		if ( condition ) {
 
-			result += `
+			result = `
 
 			if ( ${ condition } ) {
 
@@ -106,7 +118,7 @@ export class ShaderDebugMaterial {
 
 		} else {
 
-			result += `
+			result = `
 
 			__varying_output__ = ${ output };
 			return;
@@ -115,17 +127,29 @@ export class ShaderDebugMaterial {
 
 		}
 
-		result += lines.join( '\n' );
-		this.vertexShader = result;
+		this.vertexShader = splice( this.vertexShader, result, index );
+		this.vertexShader = splice( this.vertexShader, '\nvarying vec4 __varying_output__;\n', getMainExtents( this.vertexShader ).before );
 		this.needsUpdate = true;
 
 	}
 
-	setFragmentOutputVariable( name, line, column, type = null, condition = null ) {
+	setFragmentOutputVariable( name, index = null, type = null, condition = null ) {
 
 		this.clearOutputVariable();
 
-		// TODO: verify that the position is within the main block and throw otherwise
+		const fragmentShader = this.fragmentShader;
+		const extents = getMainExtents( fragmentShader );
+		if ( index === null ) {
+
+			index = extents.end;
+
+		}
+
+		if ( index < extents.after || index > extents.end ) {
+
+			throw new Error( 'ShaderDebugMaterial: Can only insert code in main body.' );
+
+		}
 
 		// TODO: try to find type definition if it isn't given by extracting the current scope
 		// and checking which variable declaration is correct.
@@ -161,22 +185,10 @@ export class ShaderDebugMaterial {
 
 		}
 
-		const fragmentShader = this.fragmentShader;
-		const lines = fragmentShader.split( /\n/g );
-		let result = '';
-		for ( let i = 0; i < line; i ++ ) {
-
-			const line = lines.shift();
-			result += line + '\n';
-
-		}
-
-		result += lines[ 0 ].substr( 0, column );
-		lines[ 0 ] = lines[ 0 ].substr( column );
-
+		let result;
 		if ( condition ) {
 
-			result += `
+			result = `
 
 			if ( ${ condition } ) {
 
@@ -189,7 +201,7 @@ export class ShaderDebugMaterial {
 
 		} else {
 
-			result += `
+			result = `
 
 			gl_FragColor = ${ output };
 			return;
@@ -198,11 +210,8 @@ export class ShaderDebugMaterial {
 
 		}
 
-		result += lines.join( '\n' );
-
-		// TODO: insert black output at the end of main
-
-		this.fragmentShader = result;
+		this.fragmentShader = splice( this.fragmentShader, result, index );
+		this.fragmentShader = splice( this.fragmentShader, '\ngl_FragColor = vec4( 0.0 );', getMainExtents( this.fragmentShader ).end );
 		this.needsUpdate = true;
 
 	}

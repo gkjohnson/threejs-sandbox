@@ -1,6 +1,6 @@
 
 // Splice a new string into the target string
-function splice( str, start, delCount, newSubStr ) {
+export function splice( str, newSubStr, start, delCount = 0 ) {
 
 	return str.slice( 0, start ) + newSubStr + str.slice( start + delCount );
 
@@ -26,6 +26,7 @@ function parseGlobals( prefix, text ) {
 		const name = lastResult[ 2 ];
 		result.push( {
 
+			index: lastResult.index + lastResult[ 0 ].length - 1,
 			line,
 			column,
 			type,
@@ -72,7 +73,7 @@ function parseLocalVariables( text ) {
 
 			const content = text.substr( startIndex, endIndex );
 			const replaced = content.replace( /[^\n]/g, ' ' );
-			text = splice( text, startIndex, endIndex - startIndex + 1, replaced );
+			text = splice( text, replaced, startIndex, endIndex - startIndex + 1 );
 
 		}
 
@@ -81,6 +82,7 @@ function parseLocalVariables( text ) {
 	// Sort the variables to be in line first order, character order next
 	result.sort( ( a, b ) => {
 
+		return a.index - b.index;
 		if ( a.line !== b.line ) {
 
 			return a.line - b.line;
@@ -151,6 +153,7 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 				result.push( {
 
+					index,
 					line: lineCount,
 					column,
 					type,
@@ -183,6 +186,7 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 		result.push( {
 
+			index,
 			line: lineCount,
 			column,
 			type: null,
@@ -214,11 +218,103 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 }
 
+export function lineColToIndex( text, line, column ) {
+
+	const lines = text.split( /\n/g );
+	if ( line >= lines.length ) {
+
+		return - 1;
+
+	}
+
+	let result = 0;
+	for ( let i = 0; i < line; i ++ ) {
+
+		const line = lines.shift();
+		result += line.length + 1;
+
+	}
+
+	result += column;
+	return result;
+
+}
+
+export function getScopeDepth( text, index ) {
+
+	const braceRegex = /[{}]/g;
+	let braceCount = 0;
+	let lastResult;
+	while( lastResult = braceRegex.exec ) {
+
+		if ( lastResult.lastIndex > index ) {
+
+			return braceCount;
+
+		} else {
+
+			if ( lastResult[ 0 ] === '{' ) {
+
+				braceCount ++;
+
+			} else {
+
+				braceCount --;
+
+			}
+
+		}
+
+	}
+
+	return braceCount;
+
+}
+
+export function getMainExtents( text ) {
+
+	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*\{/g;
+	const mainResult = mainRegex.exec( text );
+
+	const braceRegex = /[{}]/g;
+	braceRegex.lastIndex = mainRegex.lastIndex + mainResult[ 0 ].length;
+
+	const before = mainRegex.lastIndex -  mainResult[ 0 ].length;
+	const after = mainRegex.lastIndex;
+	let end = 0;
+
+	let braceCount = 1;
+	let lastResult;
+	while ( lastResult = braceRegex.exec( text ) ) {
+
+		const brace = lastResult[ 0 ];
+		if ( brace === '{' ) {
+
+			braceCount ++;
+
+		} else {
+
+			braceCount --;
+			if ( braceCount === 0 ) {
+
+				end = lastResult.index - 1;
+				break;
+
+			}
+
+		}
+
+	}
+
+	return { before, after, end };
+
+}
+
 // Collect the uniforms, attributes, varyings, and locals used in a given shader main function
 export function parseVariables( text ) {
 
 	// If there's no main function lets bail
-	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*\{([\s\S]*)\}/;
+	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*\{/;
 	const matches = text.match( mainRegex );
 	if ( ! matches ) {
 
@@ -233,6 +329,9 @@ export function parseVariables( text ) {
 
 	// Get the locals
 	const localVariables = parseLocalVariables( text );
+
+	const beforeMainIndex = matches.index;
+	const afterMainIndex = matches.index + matches[ 0 ].length;
 
 	return {
 
