@@ -13,8 +13,8 @@ const shaderDebugger = renderer.shaderDebugger;
 shaderDebugger.enable = true;
 shaderDebugger.material = debugMaterial;
 
-debugMaterial.setDisplayVariable( statment, line, column, typeOverride, condition );
-debugMaterial.
+debugMaterial.setVariable( statment, line, column, typeOverride, condition );
+debugMaterial.readValue( xPixel, yPixel );
 ```
 
 # API
