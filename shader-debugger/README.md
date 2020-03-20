@@ -157,7 +157,7 @@ debugMaterial = null : ShaderMaterial
 
 The material to debug.
 
-# TODO
+# Possible Improvements
 
 ## Shader Code Parsing
 - Use a proper syntax parser to extract variables, scope, and structures
