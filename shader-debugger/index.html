@@ -120,7 +120,7 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
-				camera.position.set( -2.5, 1, 2 );
+				camera.position.set( -3.5, 1.5, 2.5 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0f1416 );
@@ -349,7 +349,6 @@
 				let fragmentShader = debugMaterial.fragmentShader;
 				fragmentShader = fragmentShader.replace( /\/\/(.*)?\n/g, ( match, content ) => {
 
-					console.log('MATCHED', match)
 					return '//' + content.replace( /./g, ' ' ) + '\n';
 
 				} );
