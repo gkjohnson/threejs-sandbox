@@ -275,6 +275,8 @@
 
 										newMaterial.lights = true;
 										newMaterial.extensions.derivatives = true;
+										newMaterial.extensions.shaderTextureLOD = true;
+										newMaterial.defines.TEXTURE_LOD_EXT = '';
 										newMaterial.defines.USE_UV = '';
 										newMaterial.defines.USE_MAP = '';
 										newMaterial.defines.USE_NORMALMAP = '';
@@ -286,16 +288,10 @@
 										newMaterial.defines.USE_ENVMAP = '';
 										newMaterial.defines.ENVMAP_MODE_REFLECTION = '';
 										newMaterial.defines.ENVMAP_TYPE_CUBE_UV = '';
+										newMaterial.defines.ENVMAP_BLENDING_NONE = '';
 										newMaterial.needsUpdate = true;
 
-										child.material.onBeforeCompile = function( shader ) {
-
-											shader.fragmentShader +='a';
-											console.log( shader );
-
-										}
-
-										// child.material = newMaterial;
+										child.material = newMaterial;
 										debugMaterial = new ShaderDebugMaterial( newMaterial );
 										renderer.debugMaterial = debugMaterial;
 
