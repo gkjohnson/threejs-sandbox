@@ -2,6 +2,8 @@
 
 A wrapper for WebGLRenderer intended to help with debugging and reading data from shaders.
 
+![](./images/screenshot.png)
+
 [Demo Here!](https://gkjohnson.github.io/threejs-sandbox/shader-debugger/)
 
 # Use
