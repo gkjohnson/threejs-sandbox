@@ -1,6 +1,6 @@
 # Shader Debugger
 
-A shade debug renderer intended to help with understanding and reading data from shaders.
+A wrapper for WebGLRenderer intended to help with debugging and reading data from shaders.
 
 # Use
 
@@ -13,8 +13,8 @@ const shaderDebugger = renderer.shaderDebugger;
 shaderDebugger.enable = true;
 shaderDebugger.material = debugMaterial;
 
-debugMaterial.setVariable( statment, line, column, typeOverride, condition );
-debugMaterial.readValue( xPixel, yPixel );
+debugMaterial.setFragmentOutputVariable( 'diffuse', 'vec4', 200 );
+const result = debugMaterial.readPixel( x, y, 'vec4' );
 ```
 
 # API
@@ -164,9 +164,9 @@ The material to debug.
 - Differentiate between a variable being used and being set so we can display the value being passed in vs what gets set -- consider `normal = normal * 2.0`
 - Process #define code paths so we don't see code that isn't being used or fade the sections out
 - Don't extract samplers or anything that can't be returned correctly.
+- Clean up code redundancy
 
 ## Example
-- Allow hovering over canvas to get pixel information
 - Allow for adding conditionals or custom outputs
 - Update the shader to have fewer code paths so it's easier to see the impact
 - Allow for modifying material uniforms.

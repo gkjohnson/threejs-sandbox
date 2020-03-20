@@ -48,8 +48,20 @@ function render( scene, camera ) {
 
 		} );
 
+		const originalClearColor = this.getClearColor();
+		const originalClearAlpha = this.clearAlpha;
+		const originalBackground = scene.background;
+
+		this.setClearAlpha( 0 );
+		this.setClearColor( 0 );
+		scene.background = null;
+
 		this._render( scene, camera );
 		this._updateReadTarget( scene, camera );
+
+		this.setClearAlpha( originalClearAlpha );
+		this.setClearColor( originalClearColor );
+		scene.background = originalBackground;
 
 		scene.traverse( c => {
 
@@ -130,7 +142,7 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 			inspector.copyCanvas( domElement );
 			inspector.setPixel( e.clientX, e.clientY );
 			inspector.setPosition( e.clientX, e.clientY );
-			inspector.visible = true;
+			inspector.visible = this.enableDebug;
 
 		} );
 
@@ -189,20 +201,24 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 
 		}
 
+		const debugMaterial = this.debugMaterial;
 		const readTarget = this.readTarget;
 		const originalRenderTarget = this.getRenderTarget();
 		const originalClearColor = this.getClearColor();
 		const originalClearAlpha = this.clearAlpha;
 		const originalBackground = scene.background;
+		const originalMultiplier = debugMaterial.multiplier;
+		const originalOffset = debugMaterial.offset;
 
 		this.getSize( vec2 ).multiplyScalar( this.getPixelRatio() );
 		vec2.x = Math.floor( vec2.x );
 		vec2.y = Math.floor( vec2.y );
-
 		readTarget.setSize( vec2.x, vec2.y );
 		this.setClearColor( 0xff0000 );
 		this.setClearAlpha( 0 );
 		scene.background = null;
+		debugMaterial.multiplier = 1.0;
+		debugMaterial.offset = 0.0;
 
 		this.setRenderTarget( readTarget );
 		this.clear();
@@ -212,6 +228,9 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 		this.setClearColor( originalClearColor );
 		this.setClearAlpha( originalClearAlpha );
 		scene.background = originalBackground;
+		debugMaterial.multiplier = originalMultiplier;
+		debugMaterial.offset = originalOffset;
+
 
 	}
 

@@ -48,6 +48,8 @@ export class CanvasInspector {
 		const valueContainer = document.createElement( 'div' );
 		valueContainer.style.position = 'absolute';
 		valueContainer.style.textAlign = 'left';
+		valueContainer.style.paddingTop = 3 + 'px';
+		valueContainer.style.textShadow = '0px 0px 1.5px black, 0px 0px 1.5px black, 0px 0px 1.5px black, 0px 0px 1.5px black, 0px 0px 1.5px black';
 
 		const root = document.createElement( 'div' );
 		root.style.position = 'absolute';
