@@ -21,9 +21,7 @@ debugMaterial.readValue( xPixel, yPixel );
 
 ## Definition
 
-### .line
-
-### .column
+### .index
 
 ### .name
 
@@ -43,37 +41,58 @@ debugMaterial.readValue( xPixel, yPixel );
 }
 ```
 
-### .update
+### .updateDefinitions
 
 ```js
-update() : void
+updateupdateDefinitions() : void
+```
+
+### .setVertexOutputVariable
+
+```js
+setVertexOutputVariable(
+	name : String,
+	type : String,
+	index = null : Number,
+	condition = null : String
+) : void
+```
+
+### .setFragmentOutputVariable
+
+```js
+setFragmentOutputVariable(
+	name : String,
+	type : String,
+	index = null : Number,
+	condition = null : String
+) : void
+```
+
+### .clearOutputVariable
+
+```js
+clearOutputVariable() : void
+```
+
+### .reset
+
+```js
+reset() : void
 ```
 
 ## ShaderDebugRenderer
 
 _extends WebGLRenderer_
 
-### .shaderDebugger.enable
+### .enableShaderDebugger
 
 ```js
 enabled = false : Boolean
 ```
 
-### .shaderDebugger.material
+### .debugMaterial
 
 ```js
 debugMaterial = null : ShaderMaterial
 ```
-
-### .shaderDebugger.onlyIfPresent
-
-```js
-onlyIfPresent = true : Boolean
-```
-
-### .shaderDebugger.renderDepthPass
-
-```js
-renderDepthPass = true : Boolean
-```
-

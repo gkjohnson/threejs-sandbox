@@ -23,6 +23,7 @@ function parseGlobals( prefix, text ) {
 			index: lastResult.index + lastResult[ 0 ].length - 1,
 			type,
 			name,
+			prefix,
 
 		} );
 
@@ -133,7 +134,8 @@ function parseDeclarations( body, startIndex, endIndex ) {
 
 					index,
 					type,
-					name
+					name,
+					prefix: null
 
 				} );
 
@@ -155,17 +157,11 @@ function parseDeclarations( body, startIndex, endIndex ) {
 		semiRegexp.exec( body );
 		const index = semiRegexp.index + line.length;
 
-		const beginning = body.substr( 0, index );
-		const lines = beginning.split( /\n/g );
-		const lineCount = lines.length;
-		const column = lines[ lines.length - 1 ].length;
-
 		result.push( {
 
 			index,
-			line: lineCount,
-			column,
 			type: null,
+			prefix: null,
 			name,
 
 		} );
