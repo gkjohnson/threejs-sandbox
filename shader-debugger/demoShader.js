@@ -121,6 +121,7 @@ float perspectiveDepthToViewZ( const in float invClipZ, const in float near, con
 	return ( near * far ) / ( ( far - near ) * invClipZ - far );
 }
 varying vec2 vUv;
+varying vec2 vUv2;
 uniform sampler2D map;
 uniform sampler2D alphaMap;
 uniform sampler2D aoMap;
@@ -389,7 +390,7 @@ vec4 textureCubeUV(sampler2D envMap, vec3 sampleDir, float roughness) {
 uniform float envMapIntensity;
 uniform float flipEnvMap;
 uniform int maxMipLevel;
-uniform samplerCube envMap;
+uniform sampler2D envMap;
 #ifdef ENVMAP_MODE_REFRACTION
 	uniform float refractionRatio;
 #endif
@@ -404,10 +405,11 @@ vec3 getLightProbeIndirectIrradiance( const in GeometricContext geometry, const 
 		#endif
 		envMapColor.rgb = envMapTexelToLinear( envMapColor ).rgb;
 	#elif defined( ENVMAP_TYPE_CUBE_UV )
-		vec4 envMapColor = textureCubeUV( envMap, worldNormal, 1.0 );
+		vec4 envMapColor = envMapTexelToLinear( textureCubeUV( envMap, worldNormal, 1.0 ) );
 	#else
 		vec4 envMapColor = vec4( 0.0 );
 	#endif
+
 	return PI * envMapColor.rgb * envMapIntensity;
 }
 float getSpecularMIPLevel( const in float roughness, const in int maxMIPLevel ) {
@@ -848,6 +850,12 @@ void main() {
 	RE_IndirectDiffuse( irradiance, geometry, material, reflectedLight );
 	RE_IndirectSpecular( radiance, iblIrradiance, clearcoatRadiance, geometry, material, reflectedLight );
 
+	// ao map
+	float ambientOcclusion = ( texture2D( aoMap, vUv2 ).r - 1.0 ) * aoMapIntensity + 1.0;
+	reflectedLight.indirectDiffuse *= ambientOcclusion;
+	float dotNV = saturate( dot( geometry.normal, geometry.viewDir ) );
+	reflectedLight.indirectSpecular *= computeSpecularOcclusion( dotNV, ambientOcclusion, material.specularRoughness );
+
 	// final results
 	vec3 outgoingLight =
 		reflectedLight.directDiffuse +
@@ -856,7 +864,6 @@ void main() {
 		reflectedLight.indirectSpecular +
 		totalEmissiveRadiance;
 	vec4 result = vec4( outgoingLight, diffuseColor.a );
-	result = linearToOutputTexel( result );
 	result.rgb *= result.a;
 	result.rgb = dithering( result.rgb );
 

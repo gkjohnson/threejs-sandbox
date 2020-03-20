@@ -256,12 +256,18 @@
 										const newMaterial = new THREE.ShaderMaterial( THREE.ShaderLib.standard );
 										newMaterial.uniforms.map.value = originalMaterial.map;
 										newMaterial.uniforms.normalMap.value = originalMaterial.normalMap;
+										newMaterial.uniforms.normalScale.value = originalMaterial.normalScale;
 										newMaterial.uniforms.roughnessMap.value = originalMaterial.roughnessMap;
 										newMaterial.uniforms.roughness.value = originalMaterial.roughness;
 										newMaterial.uniforms.metalnessMap.value = originalMaterial.metalnessMap;
 										newMaterial.uniforms.metalness.value = originalMaterial.metalness;
 										newMaterial.uniforms.emissiveMap.value = originalMaterial.emissiveMap;
+										newMaterial.uniforms.aoMap.value = originalMaterial.aoMap;
+										newMaterial.uniforms.aoMapIntensity.value = originalMaterial.aoMapIntensity;
 										newMaterial.uniforms.envMap.value = envMap;
+										newMaterial.uniforms.flipEnvMap.value = 1;
+										newMaterial.uniforms.envMapIntensity.value = 0.25;
+										newMaterial.uniforms.maxMipLevel.value = undefined;
 										newMaterial.fragmentShader = standardFragmentShader;
 
 										newMaterial.uniforms.emissive.value.copy( originalMaterial.emissive );
@@ -272,16 +278,24 @@
 										newMaterial.defines.USE_UV = '';
 										newMaterial.defines.USE_MAP = '';
 										newMaterial.defines.USE_NORMALMAP = '';
+										newMaterial.defines.USE_AOMAP = '';
 										newMaterial.defines.TANGENTSPACE_NORMALMAP = '';
 										newMaterial.defines.USE_ROUGHNESSMAP = '';
 										newMaterial.defines.USE_METALNESSMAP = '';
 										newMaterial.defines.USE_EMISSIVEMAP = '';
 										newMaterial.defines.USE_ENVMAP = '';
 										newMaterial.defines.ENVMAP_MODE_REFLECTION = '';
-										newMaterial.defines.ENVMAP_TYPE_CUBE = '';
+										newMaterial.defines.ENVMAP_TYPE_CUBE_UV = '';
 										newMaterial.needsUpdate = true;
 
-										child.material = newMaterial;
+										child.material.onBeforeCompile = function( shader ) {
+
+											shader.fragmentShader +='a';
+											console.log( shader );
+
+										}
+
+										// child.material = newMaterial;
 										debugMaterial = new ShaderDebugMaterial( newMaterial );
 										renderer.debugMaterial = debugMaterial;
 
@@ -336,7 +350,13 @@
 				];
 
 				const replaceIndices = [];
-				let resultShader = debugMaterial.fragmentShader;
+				let fragmentShader = debugMaterial.fragmentShader;
+				fragmentShader = fragmentShader.replace( /\/\/(.*)?\n/g, ( match, content ) => {
+
+					console.log('MATCHED', match)
+					return '//' + content.replace( /./g, ' ' ) + '\n';
+
+				} );
 				variables.sort( ( a, b ) => b.length - a.length );
 				variables.forEach( v => {
 
@@ -346,11 +366,11 @@
 
 					const re = new RegExp( `([^\\w<>"\\.])${name}([^\\w<>"])`, 'g' );
 					let lastResult;
-					while ( lastResult = re.exec( resultShader ) ) {
+					while ( lastResult = re.exec( fragmentShader ) ) {
 
 						const semiRegex = /;/g;
 						semiRegex.lastIndex = lastResult.index;
-						semiRegex.exec( resultShader );
+						semiRegex.exec( fragmentShader );
 
 						replaceIndices.push( {
 
@@ -368,6 +388,7 @@
 				} );
 
 				let accumOffset = 0;
+				let resultShader = debugMaterial.fragmentShader;
 				replaceIndices.sort( ( a, b ) => a.before - b.before );
 				replaceIndices.forEach( info => {
 
