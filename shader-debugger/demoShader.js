@@ -1001,6 +1001,9 @@ float computeSpecularOcclusion( const in float dotNV, const in float ambientOccl
 	uniform vec4 clippingPlanes[ 0 ];
 #endif
 void main() {
+
+	bool even = mod( gl_FragCoord.x, 2.0 ) < 1.0;
+
 #if 0 > 0
 	vec4 plane;
 

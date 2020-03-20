@@ -245,7 +245,7 @@ export function getScopeDepth( text, index ) {
 
 export function getMainExtents( text ) {
 
-	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*\{/g;
+	const mainRegex = /void\s*main\s*\(.*?\)[\s\S]*?\{/g;
 	const mainResult = mainRegex.exec( text );
 
 	const braceRegex = /[{}]/g;

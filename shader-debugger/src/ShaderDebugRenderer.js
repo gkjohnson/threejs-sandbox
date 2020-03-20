@@ -1,8 +1,12 @@
-import { WebGLRenderer } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { RGBAFormat, FloatType, WebGLRenderer, WebGLRenderTarget, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { CanvasInspector } from './CanvasInspector.js';
 
 const VISIBLE_SYMBOL = Symbol();
 const MATERIAL_SYMBOL = Symbol();
 
+const inspector = new CanvasInspector();
+
+const vec2 = new Vector2();
 function render( scene, camera ) {
 
 	const debugMaterial = this.debugMaterial;
@@ -45,6 +49,7 @@ function render( scene, camera ) {
 		} );
 
 		this._render( scene, camera );
+		this._updateReadTarget( scene, camera );
 
 		scene.traverse( c => {
 
@@ -63,6 +68,26 @@ function render( scene, camera ) {
 	} else {
 
 		this._render( scene, camera );
+		this._updateReadTarget( scene, camera );
+
+	}
+
+	if ( this._hoverActive ) {
+
+		const domElement = this.domElement;
+		inspector.copyCanvas( domElement );
+
+		if ( this.debugMaterial ) {
+
+			const ratioX = domElement.width / domElement.offsetWidth;
+			const ratioY = domElement.height / domElement.offsetHeight;
+
+			const x = Math.floor( this._lastPixelX * ratioX );
+			const y = Math.floor( this._lastPixelY * ratioY );
+			const result = this.readPixel( x, y, this.debugMaterial._currType );
+			inspector.setValue( ...result );
+
+		}
 
 	}
 
@@ -70,19 +95,125 @@ function render( scene, camera ) {
 
 export class ShaderDebugRenderer extends WebGLRenderer {
 
-	constructor( ...args ) {
+	constructor( options ) {
 
-		super( ...args );
+		options = { preserveDrawingBuffer: true, ...options };
+
+		super( options );
+
+		const readTarget = new WebGLRenderTarget( 1, 1, {
+
+			format: RGBAFormat,
+			type: FloatType,
+
+		} );
+
 		this.enableDebug = false;
 		this.debugMaterial = null;
+		this.readTarget = readTarget;
 		this._render = this.render;
 		this.render = render;
 
+		const domElement = this.domElement;
+		domElement.addEventListener( 'mouseleave', () => {
+
+			this._hoverActive = false;
+			inspector.visible = false;
+
+		} );
+
+		domElement.addEventListener( 'mousemove', e => {
+
+			this._hoverActive = true;
+			this._lastPixelX = e.clientX;
+			this._lastPixelY = e.clientY;
+			inspector.copyCanvas( domElement );
+			inspector.setPixel( e.clientX, e.clientY );
+			inspector.setPosition( e.clientX, e.clientY );
+			inspector.visible = true;
+
+		} );
+
 	}
 
-	readPixel( pos, type ) {
+	readPixel( x, y, type ) {
+
+		const readTarget = this.readTarget;
+		const buffer = new Float32Array( 4 );
+
+		const height = readTarget.texture.image.height;
+		this.readRenderTargetPixels( readTarget, x, height - 1 - y, 1, 1, buffer );
+
+		let result;
+
+		switch( type ) {
+
+			case 'int':
+			case 'uint':
+				return [ Math.round( buffer[ 0 ] ) ];
+
+			case 'bool':
+				return [ buffer[ 0 ] > 0.5 ];
+
+			case 'float':
+				return [ buffer[ 0 ] ];
+
+			case 'vec2':
+				result = [ ...buffer ];
+				result.length = 2;
+				return result;
+
+			case 'vec3':
+				result = [ ...buffer ];
+				result.length = 3;
+				return result;
+
+			case 'vec4':
+				result = [ ...buffer ];
+				result.length = 4;
+				return result;
+
+			default:
+				return [ ...buffer ];
+
+		}
+
 
 	}
 
+	_updateReadTarget( scene, camera ) {
+
+		if ( ! this.enableDebug ) {
+
+			return;
+
+		}
+
+		const readTarget = this.readTarget;
+		const originalRenderTarget = this.getRenderTarget();
+		const originalClearColor = this.getClearColor();
+		const originalClearAlpha = this.clearAlpha;
+		const originalBackground = scene.background;
+
+		this.getSize( vec2 ).multiplyScalar( this.getPixelRatio() );
+		vec2.x = Math.floor( vec2.x );
+		vec2.y = Math.floor( vec2.y );
+
+		readTarget.setSize( vec2.x, vec2.y );
+		this.setClearColor( 0xff0000 );
+		this.setClearAlpha( 0 );
+		scene.background = null;
+
+		this.setRenderTarget( readTarget );
+		this.clear();
+		this._render( scene, camera );
+
+		this.setRenderTarget( originalRenderTarget );
+		this.setClearColor( originalClearColor );
+		this.setClearAlpha( originalClearAlpha );
+		scene.background = originalBackground;
+
+	}
 
 }
+

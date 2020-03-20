@@ -53,6 +53,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 		this.uniforms._multiplier_ = { value: 1.0 };
 		this.uniforms._offset_ = { value: 1.0 };
 		this.targetMaterial = material;
+		this._currType = null;
 
 		this.vertexDefinitions = null;
 		this.fragmentDefinitions = null;
@@ -86,6 +87,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 		}
 
+		this.fragmentShader = this.fragmentShader.replace( /gl_FragColor[^;=]*?=[^;]*;/g, '' );
 		this.fragmentShader = splice(
 			this.fragmentShader,
 			'\ngl_FragColor = _varying_output_ * _multiplier_ + _offset * _multiplier_; return;\n',
@@ -162,6 +164,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 		this.vertexShader = splice( this.vertexShader, result, index );
 		this.vertexShader = splice( this.vertexShader, '\nvarying vec4 _varying_output_;\n', getMainExtents( this.vertexShader ).before );
 		this.needsUpdate = true;
+		this._currType = type;
 
 	}
 
@@ -242,14 +245,19 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 		}
 
+		result = result.replace( /gl_FragColor/g, 'gl$FragColor' );
 		this.fragmentShader = splice( this.fragmentShader, result, index );
+		this.fragmentShader = this.fragmentShader.replace( /gl_FragColor[^;=]*?=[^;]*;/g, '' );
 		this.fragmentShader = splice( this.fragmentShader, '\ngl_FragColor = vec4( 0.0 );', getMainExtents( this.fragmentShader ).end );
 		this.fragmentShader = splice(
 			this.fragmentShader,
 			'\nuniform float _multiplier_;\nuniform float _offset_;\n',
 			getMainExtents( this.fragmentShader ).before
 		);
+		this.fragmentShader = this.fragmentShader.replace( /gl\$FragColor/g, 'gl_FragColor' );
+
 		this.needsUpdate = true;
+		this._currType = type;
 
 	}
 
@@ -259,13 +267,14 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 		this.vertexShader = targetMaterial.vertexShader;
 		this.fragmentShader = targetMaterial.fragmentShader;
 		this.needsUpdate = true;
+		this._currType = null;
 
 	}
 
 	reset() {
 
+		this.clearOutputVariable();
 		this.copy( this.targetMaterial );
-		this.needsUpdate = true;
 
 	}
 

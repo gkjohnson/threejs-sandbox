@@ -104,6 +104,7 @@
 			var params = {
 				multiplier: 1.0,
 				offset: 0.0,
+				useDevicePixelRatio: true,
 			};
 			var camera, scene, renderer, controls;
 			var textContainer, debugMaterial;
@@ -314,6 +315,8 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add( params, 'useDevicePixelRatio' );
+
 				var displayFolder = gui.addFolder( 'display' );
 				displayFolder.add( params, 'multiplier' ).min( -10 ).max( 10 ).step( 0.01 );
 				displayFolder.add( params, 'offset' ).min( -10 ).max( 10 ).step( 0.01 );
@@ -428,6 +431,16 @@
 
 					debugMaterial.multiplier = params.multiplier;
 					debugMaterial.offset = params.offset;
+
+				}
+
+				if ( params.useDevicePixelRatio ) {
+
+					renderer.setPixelRatio( window.devicePixelRatio );
+
+				} else {
+
+					renderer.setPixelRatio( 1.0 );
 
 				}
 
