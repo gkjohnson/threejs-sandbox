@@ -141,6 +141,10 @@ Copies all uniforms from the original target material.
 
 _extends WebGLRenderer_
 
+A wrapper for the WebGLRenderer that allows for displaying and inspecting pixels rendered from a debug shader by zooming in and reading their values.
+
+When `render` is called while `enableDebug` is true _and_ the scene contains an object using the debug material the scene is instead rendered with a black background and only the objects with the debug material. When hovering over the canvas a zoomed in view of the pixels is displayed with the value of the output field.
+
 ### .enableDebug
 
 ```js
@@ -158,6 +162,22 @@ debugMaterial = null : ShaderMaterial
 ```
 
 The material to debug.
+
+### .inspectorScale
+
+```js
+inspectorScale = 20 : Number
+```
+
+The magnification size of the pixels.
+
+### .inspectorDimensions
+
+```js
+inspectorDimensions = 5 : Number
+```
+
+The number of pixels to display in each dimension in the magnification.
 
 # Possible Improvements
 
