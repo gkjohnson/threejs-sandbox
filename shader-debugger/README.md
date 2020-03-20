@@ -168,6 +168,7 @@ The material to debug.
 - Don't extract samplers or anything that can't be returned correctly.
 - Clean up code redundancy
 - Allow for stepping through functions by ensuring that `gl_FragColor` is not set anywhere else and setting it mid call.
+- Handle conditionals
 
 ## Example
 - Allow for adding conditionals or custom outputs
