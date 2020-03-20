@@ -107,22 +107,28 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 			switch( type ) {
 
 				case 'float':
-					output = `vec4( ${ name } )`;
+					output = `_varying_output_ = vec4( ${ name } );`;
+					break;
+				case 'uint':
+					output = `_varying_output_ = vec4( float( ${ name } ) );`;
 					break;
 				case 'int':
-					output = `vec4( float( ${ name } ) )`;
+					output = `_varying_output_ = vec4( float( ${ name } ) );`;
+					break;
+				case 'int':
+					output = `_varying_output_ = vec4( float( ${ name } ) );`;
 					break;
 				case 'bool':
-					output = `vec4( float( ${ name } ) )`;
+					output = `_varying_output_ = vec4( float( ${ name } ) );`;
 					break;
 				case 'vec2':
-					output = `vec4( ${ name }.xy, 0.0, 0.0 )`;
+					output = `_varying_output_ = vec4( ${ name }.xy, 0.0, 0.0 );`;
 					break;
 				case 'vec3':
-					output = `vec4( ${ name }.xyz, 0.0 )`;
+					output = `_varying_output_ = vec4( ${ name }.xyz, 0.0 );`;
 					break;
 				case 'vec4':
-					output = `${ name }`;
+					output = `_varying_output_ = ${ name };`;
 					break;
 			}
 
@@ -135,7 +141,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 			if ( ${ condition } ) {
 
-				_varying_output_ = ${ output };
+				${ output }
 				return;
 
 			}
@@ -146,7 +152,7 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 
 			result = `
 
-			_varying_output_ = ${ output };
+			${ output }
 			return;
 
 			`;
@@ -190,6 +196,9 @@ export class ShaderDebugMaterial extends ShaderMaterial {
 					output = `gl_FragColor = vec4( ${ name } ) * _multiplier_ + _offset_ * _multiplier_;`;
 					break;
 				case 'int':
+					output = `gl_FragColor = vec4( float( ${ name } ) ) * _multiplier_ + _offset_ * _multiplier_;`;
+					break;
+				case 'uint':
 					output = `gl_FragColor = vec4( float( ${ name } ) ) * _multiplier_ + _offset_ * _multiplier_;`;
 					break;
 				case 'bool':

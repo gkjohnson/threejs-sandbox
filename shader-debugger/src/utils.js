@@ -111,7 +111,7 @@ function parseDeclarations( body, startIndex, endIndex ) {
 	body = body.substr( 0, endIndex );
 
 	const result = [];
-	const declarationRegex = /(vec[1234]|float|int|bool)(.+)?;/g;
+	const declarationRegex = /(vec[1234]|float|int|uint|bool)(.+)?;/g;
 	declarationRegex.lastIndex = startIndex;
 	let lastResult = null;
 	while ( lastResult = declarationRegex.exec( body ) ) {
