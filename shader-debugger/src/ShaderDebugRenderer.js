@@ -80,7 +80,6 @@ function render( scene, camera ) {
 	} else {
 
 		this._render( scene, camera );
-		this._updateReadTarget( scene, camera );
 
 	}
 
@@ -125,6 +124,8 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 		this.readTarget = readTarget;
 		this._render = this.render;
 		this.render = render;
+		this.inspectorScale = 20;
+		this.inspectorDimensions = 5;
 
 		const domElement = this.domElement;
 		domElement.addEventListener( 'mouseleave', () => {
@@ -139,6 +140,8 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 			this._hoverActive = true;
 			this._lastPixelX = e.clientX;
 			this._lastPixelY = e.clientY;
+			inspector.scale = this.inspectorScale;
+			inspector.dimensions = this.inspectorDimensions;
 			inspector.copyCanvas( domElement );
 			inspector.setPixel( e.clientX, e.clientY );
 			inspector.setPosition( e.clientX, e.clientY );
