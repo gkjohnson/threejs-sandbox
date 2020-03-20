@@ -2,6 +2,8 @@
 
 A wrapper for WebGLRenderer intended to help with debugging and reading data from shaders.
 
+[Demo Here!](https://gkjohnson.github.io/threejs-sandbox/shader-debugger/)
+
 # Use
 
 ```js
@@ -157,7 +159,7 @@ debugMaterial = null : ShaderMaterial
 
 The material to debug.
 
-# TODO
+# Possible Improvements
 
 ## Shader Code Parsing
 - Use a proper syntax parser to extract variables, scope, and structures
