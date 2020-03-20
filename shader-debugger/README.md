@@ -168,5 +168,5 @@ The material to debug.
 
 ## Example
 - Allow for adding conditionals or custom outputs
-- Update the shader to have fewer code paths so it's easier to see the impact
 - Allow for modifying material uniforms.
+- exclude comments from variable highlights

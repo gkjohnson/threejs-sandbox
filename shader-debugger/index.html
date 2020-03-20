@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<title>threejs webgl - postprocessing - shader debugger</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -22,8 +22,11 @@
 
 			#info {
 				position: absolute;
+				left: 0;
 				padding-top: 10px;
-				width: 100%;
+				width: 50%;
+				z-index: 1000;
+				text-shadow: 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black;
 			}
 
 			#textContainer {
@@ -73,15 +76,15 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shader Replacement by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shader Debugger by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 
 			<br/>
 
-			Replace the materials used on all materials in the scene with new materials that
+			Click the highlight variable definitions on the right to see their value in color on the left.
 
 			<br/>
 
-			have copied uniforms and defines from the original materials.
+			Hover over the render to see the value of the pixel where the mouse is hovered. Multiplier and offset modify the displayed values so it's easier to see large and negative values.
 		</div>
 
 		<script type="module">
@@ -120,7 +123,7 @@
 				camera.position.set( -2.5, 1, 2 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x0 );
+				scene.background = new THREE.Color( 0x0f1416 );
 
 				renderer = new ShaderDebugRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -232,7 +235,7 @@
 
 						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
-						scene.background = envMap;
+						// scene.background = envMap;
 						scene.environment = envMap;
 
 						texture.dispose();
@@ -298,10 +301,6 @@
 						);
 
 					} );
-
-				// stats
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -444,9 +443,7 @@
 
 				}
 
-				stats.begin();
 				render();
-				stats.end();
 
 			}
 
