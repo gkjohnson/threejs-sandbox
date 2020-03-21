@@ -20,4 +20,3 @@ Pencil images from http://www.colourblindawareness.org/.
 ## TODO
 - Understand if the functions are supposed to operate on linear or srgb color space.
 - Use [this reference](https://ixora.io/projects/colorblindness/color-blindness-simulation-research/) to validate application of color matrices.
-- Validate color spaces and ensure all computations are being done in linear space.

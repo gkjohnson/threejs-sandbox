@@ -74,7 +74,7 @@
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
 
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
@@ -84,6 +84,7 @@
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( './images/pencils.jpg', function ( map ) {
 
+					map.encoding = THREE.sRGBEncoding;
 					material.map = map;
 					material.needsUpdate = true;
 
