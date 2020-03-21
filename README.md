@@ -11,8 +11,9 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Subsurface Scattering
 - Bicubic filtering
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
+- Validate colorblindness transform code and color spaces
+- use GLSL syntax parser for debugger
 
 **NEXT**
-- Add value pass to color blind utils so we can see the value of colors in the scene relative to eachother
 - GTAO
 
