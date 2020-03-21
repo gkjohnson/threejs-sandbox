@@ -184,7 +184,7 @@ The number of pixels to display in each dimension in the magnification.
 # Possible Improvements
 
 ## Shader Code Parsing
-- Use a proper syntax parser to extract variables, scope, and structures
+- Use a proper syntax parser to extract variables, scope, and structures ([reference 1](https://github.com/lammas/glsl-man), [reference 2](https://github.com/burg/glsl-simulator), [reference 3](https://github.com/stackgl/glsl-parser) -- these projects use a glsl pegjs grammar file from Google).
 - Differentiate between a variable being used and being set so we can display the value being passed in vs what gets set -- consider `normal = normal * 2.0`
 - Process #define code paths so we don't see code that isn't being used or fade the sections out
 - Don't extract samplers or anything that can't be returned correctly.
