@@ -196,3 +196,4 @@ The number of pixels to display in each dimension in the magnification.
 - Allow for adding conditionals or custom outputs
 - Allow for modifying material uniforms.
 - exclude comments from variable highlights
+- Allow for zooming the canvas in and out to get a better view at pixels or allow for target scaling
