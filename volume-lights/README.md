@@ -11,3 +11,4 @@ Defines a light based on a mesh and renders by moving a point light along the su
 - Add velocity buffer to reproject existing accumulated effects (TXAA).
 - Add screen space reflections.
 - Support emissive materials.
+- Use a non float buffer
