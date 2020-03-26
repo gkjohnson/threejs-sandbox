@@ -51,6 +51,8 @@ export const sampleFunctions = /* glsl */`
 				level > 0 ? currentPixelDimensions.y : 0.0
 			);
 
+			// "minPixel / atlasSize" samples the top left piece of the first pixel
+			// "maxPixel / atlasSize" samples the bottom right piece of the last pixel
 			vec2 minPixel = pixelOffset;
 			vec2 maxPixel = pixelOffset + currentPixelDimensions;
 			vec2 samplePoint = mix( minPixel, maxPixel, uv );
