@@ -35,12 +35,16 @@ export class PackedMipMapGenerator {
 		mipMaterials[ 0 ].defines.Y_IS_EVEN = 0;
 
 		mipMaterials[ 1 ] = new ShaderMaterial( clone( shader ) );
+		mipMaterials[ 1 ].defines.X_IS_EVEN = 1;
 		mipMaterials[ 1 ].defines.Y_IS_EVEN = 0;
 
 		mipMaterials[ 2 ] = new ShaderMaterial( clone( shader ) );
 		mipMaterials[ 2 ].defines.X_IS_EVEN = 0;
+		mipMaterials[ 2 ].defines.Y_IS_EVEN = 1;
 
 		mipMaterials[ 3 ] = new ShaderMaterial( clone( shader ) );
+		mipMaterials[ 3 ].defines.X_IS_EVEN = 1;
+		mipMaterials[ 3 ].defines.Y_IS_EVEN = 1;
 
 		const swapTarget = new WebGLRenderTarget();
 		swapTarget.texture.minFilter = NearestFilter;
@@ -125,9 +129,11 @@ export class PackedMipMapGenerator {
 		let mip = 0;
 		while ( currWidth > 1 && currHeight > 1 ) {
 
+			const X_FLAG = 1 << 0;
+			const Y_FLAG = 1 << 1;
 			const index =
-				( currWidth % 2 === 0 ? 1 << 0 : 0 ) |
-				( currHeight % 2 === 0 ? 1 << 1 : 0 );
+				( currWidth % 2 === 0 ? X_FLAG : 0 ) |
+				( currHeight % 2 === 0 ? Y_FLAG : 0 );
 
 			const material = mipMaterials[ index ];
 			material.uniforms.map.value = swapTarget.texture;
@@ -139,8 +145,15 @@ export class PackedMipMapGenerator {
 			currWidth = Math.floor( currWidth / 2 );
 			currHeight = Math.floor( currHeight / 2 );
 
+			// Set the render view to currWidth x currHeight
+			// Y offset is from the top but uvs from the bottom
+			// Negate x, y offsets because the view offset function does the opposite
+
+			// targetHeight -- movest offset from top of screen to bottom
+			// 2 * currHeight -- 1 to leave space for other mips, 1 to draw current mip
+			const yOffset = targetHeight - 2 * currHeight;
 			renderer.setRenderTarget( target );
-			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - ( targetHeight - 2 * currHeight ), targetWidth, targetHeight );
+			mipQuad.camera.setViewOffset( currWidth, currHeight, - width, - yOffset, targetWidth, targetHeight );
 			mipQuad.render( renderer );
 
 			// TODO: Is this the fastest way to do this? Can I just copy the subframe from the original texture to the next?
