@@ -1,6 +1,7 @@
 // References
 // http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/
 // http://mapeper.github.io/jsColorblindSimulator/
+// https://ixora.io/projects/colorblindness/color-blindness-simulation-research/
 export const ColorBlindShader = {
 
 	uniforms: {
@@ -9,8 +10,7 @@ export const ColorBlindShader = {
 
 	},
 
-	vertexShader: `
-
+	vertexShader: /* glsl */`
 		varying vec2 vUv;
 
 		void main() {
@@ -21,7 +21,7 @@ export const ColorBlindShader = {
 		}
 	`,
 
-	fragmentShader: `
+	fragmentShader: /* glsl */`
 		varying vec2 vUv;
 		uniform sampler2D tDiffuse;
 
@@ -45,13 +45,21 @@ export const ColorBlindShader = {
 			tMat[2] = vec3(0.0, 0.475, 0.525);
 
 			vec3 res = rgb;
-
-			#if (MODE == 1)
+			#if ( MODE == 1 )
+			// deuteranopia
 			res = dMat * rgb;
-			#elif (MODE == 2)
+			#elif ( MODE == 2 )
+			// protanopia
 			res = pMat * rgb;
-			#elif (MODE == 3)
+			#elif ( MODE == 3 )
+			// tritanopia
 			res = tMat * rgb;
+			#elif ( MODE == 4 )
+			// achromatopsia
+			// using basic HSL lightness value
+			float minVal = min( rgb.r, min( rgb.g, rgb.b ) );
+			float maxVal = max( rgb.r, max( rgb.g, rgb.b ) );
+			res = vec3( ( maxVal + minVal ) / 2.0 );
 			#endif
 
 			gl_FragColor = vec4(res, 1.0);

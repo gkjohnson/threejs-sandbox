@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - shader debugger</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				left: 0;
+				padding-top: 10px;
+				width: 50%;
+				z-index: 1000;
+				text-shadow: 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black, 0px 0px 2px black;
+			}
+
+			#textContainer {
+				position: absolute;
+				left: 50%;
+				width: 50vw;
+				height: 100vh;
+				background: #161d20;
+				text-align: left;
+				overflow: auto;
+			}
+
+			#textContainer > div {
+				counter-increment: line;
+				color: #ccc;
+				white-space: pre;
+				padding: 4px;
+				padding-left: 3em;
+				position: relative;
+			}
+
+			#textContainer > div:before {
+				content: counter(line);
+				position: absolute;
+				left: 0;
+				padding-left: 8px;
+				width: 3em;
+				opacity: 0.25;
+			}
+
+			#textContainer > div:nth-child(odd) {
+				background:rgba(255, 255, 255, 0.025);
+			}
+
+			#textContainer > div > span {
+				color: #ffc107 ;
+			}
+
+			#textContainer > div > span:hover, .selected {
+				background: rgba(100%, 75.7%, 2.7%, 0.25);
+				padding: 3px;
+				margin: -3px;
+				border-radius: 3px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Shader Debugger by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Click the highlight variable definitions on the right to see their value in color on the left.
+
+			<br/>
+
+			Hover over the render to see the value of the pixel where the mouse is hovered. Multiplier and offset modify the displayed values so it's easier to see large and negative values.
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/RGBELoader.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+			import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { standardFragmentShader } from './demoShader.js';
+			import { ShaderDebugRenderer } from './src/ShaderDebugRenderer.js';
+			import { ShaderDebugMaterial } from './src/ShaderDebugMaterial.js';
+			import { splice } from './src/utils.js';
+
+			// globals
+			var stats;
+			var params = {
+				inspectorScale: 20,
+				inspectorDimensions: 5,
+				multiplier: 1.0,
+				offset: 0.0,
+				useDevicePixelRatio: true,
+			};
+			var camera, scene, renderer, controls;
+			var textContainer, debugMaterial;
+			var savedVars = null;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.set( -3.5, 1.5, 2.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0f1416 );
+
+				renderer = new ShaderDebugRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.setClearColor( 0x0d1113 );
+
+				window.renderer = renderer;
+
+				const domElement = renderer.domElement;
+				textContainer = document.createElement( 'div' );
+				document.body.appendChild( domElement );
+				document.body.appendChild( textContainer );
+
+				domElement.style.position = 'absolute';
+				domElement.style.left = '0';
+				textContainer.id = 'textContainer';
+				textContainer.addEventListener( 'mouseover', e => {
+
+					const target = e.target;
+					if ( target.tagName === 'SPAN' ) {
+
+						const name = target.getAttribute( 'name' );
+						const index = Number( target.getAttribute( 'index' ) ) || null;
+						const type = target.getAttribute( 'type' );
+
+						debugMaterial.setFragmentOutputVariable( name, type, index );
+						renderer.enableDebug = true;
+
+					}
+
+				} );
+
+				textContainer.addEventListener( 'mouseout', e => {
+
+					if ( e.target.tagName === 'SPAN' ) {
+
+						if ( savedVars ) {
+
+							debugMaterial.setFragmentOutputVariable( ...savedVars );
+
+						} else {
+
+							debugMaterial.clearOutputVariable();
+							renderer.enableDebug = false;
+
+						}
+
+					}
+
+				} );
+
+				textContainer.addEventListener( 'click', e => {
+
+					const prevSelected = document.querySelector( '.selected' );
+					if ( prevSelected ) {
+
+						prevSelected.classList.remove( 'selected' );
+
+					}
+
+					const target = e.target;
+					if ( target.tagName === 'SPAN' ) {
+
+						const name = target.getAttribute( 'name' );
+						const index = Number( target.getAttribute( 'index' ) ) || null;
+						const type = target.getAttribute( 'type' );
+						savedVars = [ name, type, index ];
+						target.classList.add( 'selected' );
+
+					} else {
+
+						debugMaterial.clearOutputVariable();
+						savedVars = null;
+						renderer.enableDebug = false;
+
+					}
+
+				} );
+
+				const floor = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					new THREE.ShadowMaterial( { side: 2, transparent: true, opacity: 0.25 } )
+				);
+				floor.scale.set( 10, 10, 10 );
+				floor.position.set( 0, - 1, 0 );
+				floor.rotation.x = - Math.PI / 2;
+				floor.receiveShadow = true;
+				scene.add( floor );
+
+				// Lights
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 2.5, 4, 2 );
+				directionalLight.shadow.mapSize.set( 2048, 2048 );
+				directionalLight.castShadow = true;
+				scene.add( directionalLight );
+
+				var pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'https://rawgit.com/mrdoob/three.js/master/examples/textures/equirectangular/' )
+					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+
+						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+						// scene.background = envMap;
+						scene.environment = envMap;
+
+						texture.dispose();
+						pmremGenerator.dispose();
+
+						new GLTFLoader().load(
+							'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+							gltf => {
+
+								var roughnessMipmapper = new RoughnessMipmapper( renderer );
+
+								gltf.scene.traverse( function ( child ) {
+
+									if ( child.isMesh ) {
+
+										roughnessMipmapper.generateMipmaps( child.material );
+										const originalMaterial = child.material;
+										const newMaterial = new THREE.ShaderMaterial( THREE.ShaderLib.standard );
+										newMaterial.uniforms.map.value = originalMaterial.map;
+										newMaterial.uniforms.normalMap.value = originalMaterial.normalMap;
+										newMaterial.uniforms.normalScale.value = originalMaterial.normalScale;
+										newMaterial.uniforms.roughnessMap.value = originalMaterial.roughnessMap;
+										newMaterial.uniforms.roughness.value = originalMaterial.roughness;
+										newMaterial.uniforms.metalnessMap.value = originalMaterial.metalnessMap;
+										newMaterial.uniforms.metalness.value = originalMaterial.metalness;
+										newMaterial.uniforms.emissiveMap.value = originalMaterial.emissiveMap;
+										newMaterial.uniforms.aoMap.value = originalMaterial.aoMap;
+										newMaterial.uniforms.aoMapIntensity.value = originalMaterial.aoMapIntensity;
+										newMaterial.uniforms.envMap.value = envMap;
+										newMaterial.uniforms.flipEnvMap.value = 1;
+										newMaterial.uniforms.envMapIntensity.value = 0.25;
+										newMaterial.uniforms.maxMipLevel.value = undefined;
+										newMaterial.fragmentShader = standardFragmentShader;
+
+										newMaterial.uniforms.emissive.value.copy( originalMaterial.emissive );
+										newMaterial.uniforms.diffuse.value.copy( originalMaterial.color );
+
+										newMaterial.lights = true;
+										newMaterial.extensions.derivatives = true;
+										newMaterial.extensions.shaderTextureLOD = true;
+										newMaterial.defines.TEXTURE_LOD_EXT = '';
+										newMaterial.defines.USE_UV = '';
+										newMaterial.defines.USE_MAP = '';
+										newMaterial.defines.USE_NORMALMAP = '';
+										newMaterial.defines.USE_AOMAP = '';
+										newMaterial.defines.TANGENTSPACE_NORMALMAP = '';
+										newMaterial.defines.USE_ROUGHNESSMAP = '';
+										newMaterial.defines.USE_METALNESSMAP = '';
+										newMaterial.defines.USE_EMISSIVEMAP = '';
+										newMaterial.defines.USE_ENVMAP = '';
+										newMaterial.defines.ENVMAP_MODE_REFLECTION = '';
+										newMaterial.defines.ENVMAP_TYPE_CUBE_UV = '';
+										newMaterial.defines.ENVMAP_BLENDING_NONE = '';
+										newMaterial.needsUpdate = true;
+
+										child.material = newMaterial;
+										debugMaterial = new ShaderDebugMaterial( newMaterial );
+										renderer.debugMaterial = debugMaterial;
+
+										child.castShadow = true;
+										child.receiveShadow = true;
+
+									}
+
+								} );
+
+								scene.add( gltf.scene );
+
+								roughnessMipmapper.dispose();
+								updateEditor();
+
+							}
+						);
+
+					} );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				// controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'useDevicePixelRatio' );
+				gui.add( params, 'inspectorScale' ).min( 5 ).max( 40 ).step( 1 );
+				gui.add( params, 'inspectorDimensions' ).min( 1 ).max(15).step( 1 );
+
+				var displayFolder = gui.addFolder( 'display' );
+				displayFolder.add( params, 'multiplier' ).min( -10 ).max( 10 ).step( 0.01 );
+				displayFolder.add( params, 'offset' ).min( -10 ).max( 10 ).step( 0.01 );
+				displayFolder.open();
+
+				gui.open();
+
+			}
+
+			function updateEditor() {
+
+				const { varyings, attributes, uniforms, localVariables } = debugMaterial.fragmentDefinitions;
+				const variables = [
+					...varyings,
+					...attributes,
+					...uniforms,
+					...localVariables,
+				];
+
+				const replaceIndices = [];
+				let fragmentShader = debugMaterial.fragmentShader;
+				fragmentShader = fragmentShader.replace( /\/\/(.*)?\n/g, ( match, content ) => {
+
+					return '//' + content.replace( /./g, ' ' ) + '\n';
+
+				} );
+				variables.sort( ( a, b ) => b.length - a.length );
+				variables.forEach( v => {
+
+					const name = v.name;
+					const type = v.type;
+					const prefix = v.prefix;
+
+					const re = new RegExp( `([^\\w<>"\\.])${name}([^\\w<>"])`, 'g' );
+					let lastResult;
+					while ( lastResult = re.exec( fragmentShader ) ) {
+
+						const semiRegex = /;/g;
+						semiRegex.lastIndex = lastResult.index;
+						semiRegex.exec( fragmentShader );
+
+						replaceIndices.push( {
+
+							name,
+							type,
+							prefix,
+							before: lastResult.index + 1,
+							after: lastResult.index + 1 + name.length,
+							insertIndex: semiRegex.lastIndex,
+
+						} );
+
+					}
+
+				} );
+
+				let accumOffset = 0;
+				let resultShader = debugMaterial.fragmentShader;
+				replaceIndices.sort( ( a, b ) => a.before - b.before );
+				replaceIndices.forEach( info => {
+
+					const {
+						name, type, prefix, before, after, insertIndex
+					} = info;
+
+					const arr = [
+						'float', 'bool', 'int', 'vec2', 'vec3', 'vec4'
+					];
+					const replacing = resultShader.substr( before + accumOffset, after - before );
+					if ( replacing === name && arr.includes( type ) ) {
+
+						const insert = `<span
+							title="${ type } ${ name }"
+							index="${ insertIndex }"
+							name="${ name }"
+							type="${ type }"
+						>${ name }</span>`.replace(/\n/g, '');
+						const delta = insert.length - name.length;
+
+						resultShader = splice( resultShader, insert, before + accumOffset, after - before );
+						accumOffset += delta;
+
+					}
+
+				} );
+
+				resultShader.replace( /<(\s+)>/, '&lt;$1&gt;' );
+
+				const mainRegex = /^([\s\S]*)?void(\s+)main/g;
+				resultShader = resultShader.replace( mainRegex, 'void$2main');
+
+				const lines = resultShader.split( /\n/g );
+				textContainer.innerHTML = lines.map( line => {
+
+					return `<div>${ line || '&nbsp;' }</div>`;
+
+				} ).join( '' );
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth / 2;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				if ( debugMaterial ) {
+
+					debugMaterial.multiplier = params.multiplier;
+					debugMaterial.offset = params.offset;
+
+				}
+
+				renderer.inspectorDimensions = params.inspectorDimensions;
+				renderer.inspectorScale = params.inspectorScale;
+				if ( params.useDevicePixelRatio ) {
+
+					renderer.setPixelRatio( window.devicePixelRatio );
+
+				} else {
+
+					renderer.setPixelRatio( 1.0 );
+
+				}
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

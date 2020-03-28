@@ -92,6 +92,8 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Add alpha test clipping to the pass shaders so the leaves on the planters look correct
 - Add spatial denoising blur
 - Add temporal denoising
+- Perform a reuseable depth prepass to improve performance on all subsequent passes.
+- Add a max loop iteration and unroll loop to see if performance improves.
 
 ### Stretch
 
