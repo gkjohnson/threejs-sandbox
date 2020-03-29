@@ -38,14 +38,15 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three/examples/jsm/controls/OrbitControls.js';
-			import { CopyShader } from '//unpkg.com/three/examples/jsm/shaders/CopyShader.js';
-			import { EffectComposer } from '//unpkg.com/three/examples/jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from '//unpkg.com/three/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from '//unpkg.com/three/examples/jsm/postprocessing/ShaderPass.js';
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
 
-			import Stats from '//unpkg.com/three/examples/jsm/libs/stats.module.js';
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { ColorBlindShader } from './src/ColorBlindShader.js'
@@ -58,7 +59,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var renderPass, colorBlindPass;
+			var renderPass, colorBlindPass, gammaPass;
 			var torusMesh1, torusMesh2, torusMesh3;
 
 			init();
@@ -71,13 +72,11 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x263238 );
+				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
 
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.gammaInput = false;
-				renderer.gammaOutput = false;
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
@@ -85,6 +84,7 @@
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( './images/pencils.jpg', function ( map ) {
 
+					map.encoding = THREE.sRGBEncoding;
 					material.map = map;
 					material.needsUpdate = true;
 
@@ -100,11 +100,13 @@
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
 				colorBlindPass = new ShaderPass( ColorBlindShader );
+				gammaPass = new ShaderPass( GammaCorrectionShader );
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
 				composer.addPass( colorBlindPass );
+				composer.addPass( gammaPass );
 				colorBlindPass.renderToScreen = true;
 
 				// camera controls
@@ -122,7 +124,8 @@
 					'none': 0,
 					'deuteranopia (red/green)': 1,
 					'protanopia (red/green)': 2,
-					'tritanopia (blue/yellow)': 3
+					'tritanopia (blue/yellow)': 3,
+					'achromatopsia (all)': 4
 				});
 
 				gui.open();

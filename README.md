@@ -4,11 +4,16 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 
 ## Upcoming Projects
 
-- GTAO
 - TRAA
 - Deferred Renderer
-- Debuggable Shader
 - SSRR
-- Translucent material with refraction + depth peeling
+- Translucent material with refraction, diffusion, depth peeling
 - Subsurface Scattering
-- Add value pass to color blind utils so we can see the value of colors in the scene relative to eachother
+- Bicubic filtering
+- [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
+- use GLSL syntax parser for debugger
+- TRAA, non float buffer on volume-lights
+
+**NEXT**
+- GTAO
+
