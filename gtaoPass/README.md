@@ -35,3 +35,4 @@ TODO
 - Unroll loop in the GTAO shader
 - Try different mip map techniques for the depth pyramid
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
+- Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
