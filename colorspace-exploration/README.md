@@ -2,7 +2,7 @@
 
 Exploration to see how different render target types and dithering affect banding due to linear -> gamma color correction.
 
-[Demo here](https://gkjohnson.github.io/colorspace-exploration/index.html)
+[Demo here](https://gkjohnson.github.io/threejs-sandbox/colorspace-exploration/index.html)
 
 # Options
 
