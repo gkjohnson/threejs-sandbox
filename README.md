@@ -4,7 +4,6 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 
 ## Upcoming Projects
 
-- TRAA
 - Deferred Renderer
 - SSRR
 - Translucent material with refraction, diffusion, depth peeling
