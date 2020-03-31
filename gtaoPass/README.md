@@ -11,6 +11,7 @@
 - http://guitarjawa.net/?page_id=789
 - https://docs.nvidia.com/gameworks/content/gameworkslibrary/visualfx/hbao/product.html
 - https://developer.download.nvidia.com/presentations/2008/SIGGRAPH/HBAO_SIG08b.pdf
+- http://advances.realtimerendering.com/s2010/Ownby,Hall%20and%20Hall%20-%20Toystory3%20(SIGGRAPH%202010%20Advanced%20RealTime%20Rendering%20Course).pdf
 
 # Use
 
