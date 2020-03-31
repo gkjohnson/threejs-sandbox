@@ -58,34 +58,6 @@ export const GTAOShader = {
 
 		${ sampleFunctions }
 
-		vec2 getDiskPoint( int i ) {
-
-			// Better poisson disk generation taken from another PCSS implmentation
-			// https://github.com/mrdoob/three.js/blob/master/examples/webgl_shadowmap_pcss.html#L54
-			#define NUM_RINGS 11
-			#define NUM_SAMPLES 10
-			float noiseIntensity = 1.0;
-			vec2 randomSeed = gl_FragCoord.xy;
-
-			vec2 poissonDisk[NUM_SAMPLES];
-
-			float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
-			float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
-			float angle = rand( randomSeed ) * PI2 * noiseIntensity;
-			float radius = INV_NUM_SAMPLES;
-			float radiusStep = radius;
-			for( int i = 0; i < NUM_SAMPLES; i ++ ) {
-
-				poissonDisk[i] = vec2( cos( angle ), sin( angle ) ) * pow( radius, 0.75 );
-				radius += radiusStep;
-				angle += ANGLE_STEP;
-
-			}
-
-			return poissonDisk[ 0 ];
-
-		}
-
 		float round( float f ) {
 
 			return f < 0.5 ? floor( f ) : ceil( f );
@@ -242,7 +214,7 @@ export const GTAOShader = {
 			float cosxi		= dot( nx, tangent ) * invnnx;	// xi = gamma + HALF_PI
 			float gamma		= acos( cosxi ) - HALF_PI;
 			float cosgamma	= dot( nx, vdir ) * invnnx;
-			float singamma2	= -2.0 * cosxi;					// cos(x + HALF_PI) = -sin(x)
+			float singamma2	= - 2.0 * cosxi;					// cos(x + HALF_PI) = -sin(x)
 
 			// clamp to normal hemisphere
 			horizons.x = gamma + max( - horizons.x - gamma, - HALF_PI );
