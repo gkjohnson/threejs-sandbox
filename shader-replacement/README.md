@@ -29,13 +29,15 @@ shaderReplacement.reset( scene, true );
 
 ## ShaderReplacement
 
-### constructor
+### .constructor
 
 ```js
 constructor( shader : Shader )
 ```
 
-### replace
+Takes the shader to use on all materials when rendering the scene.
+
+### .replace
 
 ```js
 replace(
@@ -45,23 +47,18 @@ replace(
 ) : void
 ```
 
-### reset
+Replaces the material on all objects in the given scene. Recurses to all children if `recursive` is true. If `cacheMaterial` is true then all current materials are saved so they can be replaced on [reset](#reset).
+
+### .reset
 
 ```js
 reset(
 	scene : Scene | Array< Object3D >,
-	recursive = false : Boolean,
-	cacheMaterial = true : Boolean
+	recursive = false : Boolean
 ) : void
 ```
 
-### createMaterial
-
-_overrideable_
-
-```js
-createMaterial( object : Object3D ) : Material | null
-```
+Resets all materials to the originally cached one. Recurses to all children if `recursive` is true.
 
 ### updateUniforms
 
@@ -70,3 +67,5 @@ _overrideable_
 ```js
 updateUniforms( object : Object3D, material : Material, target : ShaderMaterial ) : void
 ```
+
+Overrideable function intended to update the uniforms on the `target` material to match those on `material` for the given `object`. This can be overriden if special defines need to be set for a given material such as `USE_NORMALMAP` for a normal shader. 
