@@ -9,6 +9,7 @@ Utility for generating custom mipmaps for power of two and non power of two text
 **TODO**
 - Validate performance specifically when copying data to the back buffer on generation. It would be best to just copy instead of rerunning the mip map code again.
 - Add a `MipMapAtlasTarget` class that inherits from `WebGLRenderTarget` it's easier to track what's been rendered to it and includes member getters for `originalWidth`, `originalHeight`, and `mipLevels`.
+- Provide shader macro functions in mip map generation helper to avoid unneeded texture samples in case you want a sparser sample distribution like every other pixel.
 
 # Use
 
