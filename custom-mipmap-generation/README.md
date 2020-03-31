@@ -10,6 +10,7 @@ NOTE: There is nothing to prevent bleeding on mip edges and works best with poin
 
 **TODO**
 - Validate performance specifically when copying data to the back buffer on generation. It would be best to just copy instead of rerunning the mip map code again.
+- Add a `MipMapAtlasTarget` class that inherits from `WebGLRenderTarget` it's easier to track what's been rendered to it and includes member getters for `originalWidth`, `originalHeight`, and `mipLevels`.
 
 # Use
 
