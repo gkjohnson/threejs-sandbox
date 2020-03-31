@@ -4,8 +4,6 @@
 
 Utility for generating custom mipmaps for power of two and non power of two textures by packing it into a texture and using custom sample functions. The pixel samples and weights are available to custom logic passed into the `PackedMipmapGenerator` constructor.
 
-NOTE: There is nothing to prevent bleeding on mip edges and works best with point sampling.
-
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 **TODO**
