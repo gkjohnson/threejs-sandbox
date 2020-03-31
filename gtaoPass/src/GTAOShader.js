@@ -108,6 +108,9 @@ export const GTAOShader = {
 
 		vec4 GetViewPosition( vec2 uv, float currStep ) {
 
+			float near = clipInfo.x;
+			float far = clipInfo.y;
+
 			int miplevel = int(
 				clamp(
 					floor(
@@ -119,16 +122,19 @@ export const GTAOShader = {
 					float( NUM_MIP_LEVELS - 1 )
 				)
 			);
+			miplevel = 0;
 
-			vec2 mipcoord = uv / depthPyramidSize;
+			vec2 basesize = depthPyramidSize;
+			vec2 mipcoord = uv / basesize;
 
 			// d is expected to be [ 0.0, 1.0 ]
 			float d = packedTexture2DLOD( depthPyramid, mipcoord, miplevel, depthPyramidSize ).r;
-			d = ( abs( d ) - clipInfo.x ) / ( clipInfo.y - clipInfo.x );
+			d = d == 0.0 ? far : d;
+			d = ( abs( d ) - near ) / ( far - near );
 
 			vec4 ret = vec4( 0.0 );
 			ret.w = d;
-			ret.z = clipInfo.x + d * ( clipInfo.y - clipInfo.x );
+			ret.z = near + d * ( far - near );
 			ret.xy = ( uv * projInfo.xy + projInfo.zw ) * ret.z;
 
 			return ret;
@@ -136,6 +142,7 @@ export const GTAOShader = {
 		}
 
 		float Falloff( float dist2, float cosh ) {
+
 			#define FALLOFF_START2	0.16
 			#define FALLOFF_END2	4.0
 
@@ -149,11 +156,9 @@ export const GTAOShader = {
 
 		void main() {
 
-			vec2 uv = vUv;
-
-			vec2 screenCoord = floor( depthPyramidSize * uv );
-			vec2 loc = screenCoord;// depthPyramidSize * uv;
-			vec4 vpos = GetViewPosition( loc, 1.0 );
+			vec2 screenCoord = floor( depthPyramidSize * vUv );
+			vec2 loc = floor( screenCoord );
+			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
 			if ( vpos.w == 1.0 ) {
 
@@ -191,8 +196,10 @@ export const GTAOShader = {
 			horizons = vec2( - 1.0 );
 
 			// calculate horizon angles
-			for ( int j = 0; j < NUM_STEPS; ++ j ) {
+			#pragma unroll_loop_start
+			for ( int i = 0; i < NUM_STEPS; i ++ ) {
 
+				int j = i;
 				offset = round( dir.xy * currstep );
 
 				// h1
@@ -221,6 +228,7 @@ export const GTAOShader = {
 				currstep += stepsize;
 
 			}
+			#pragma unroll_loop_end
 
 			horizons = acos( horizons );
 

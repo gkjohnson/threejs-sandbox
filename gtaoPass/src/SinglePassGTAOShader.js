@@ -101,7 +101,7 @@ export const SinglePassGTAOShader = {
 		void main() {
 
 			vec2 screenCoord = floor( depthPyramidSize * vUv );
-			vec2 loc = screenCoord;
+			vec2 loc = floor( screenCoord );
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
 			if ( vpos.w == 1.0 ) {
