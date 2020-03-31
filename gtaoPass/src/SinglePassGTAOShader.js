@@ -31,9 +31,9 @@ export const SinglePassGTAOShader = {
 
 	fragmentShader:
 		/* glsl */`
-		#define NUM_STEPS		8
-		#define RADIUS			2.0		// in world space
 		#define NUM_DIRECTIONS	32
+		#define NUM_STEPS		16
+		#define RADIUS			2.0		// in world space
 
 		// #define PI				3.1415926535897932
 		#define TWO_PI			6.2831853071795864
@@ -59,17 +59,19 @@ export const SinglePassGTAOShader = {
 
 		vec4 GetViewPosition( vec2 uv, float currstep ) {
 
+			float near = clipInfo.x;
+			float far = clipInfo.y;
+
 			vec2 basesize = depthPyramidSize;
 			vec2 coord = ( uv / basesize );
-			coord = min( coord, vec2( 1.0 - 1.0 / ( basesize * 2.0 ) ) );
 
 			// d is expected to be [ 0.0, 1.0 ]
 			float d = packedTexture2DLOD( depthPyramid, coord, 0, depthPyramidSize ).r;
-			d = d == 0.0 ? clipInfo.y : d;
-			d = ( abs( d ) - clipInfo.x ) / ( clipInfo.y - clipInfo.x );
+			d = d == 0.0 ? far : d;
+			d = ( abs( d ) - near ) / ( far - near );
 
 			vec4 ret = vec4( 0.0, 0.0, 0.0, d );
-			ret.z = clipInfo.x + d * ( clipInfo.y - clipInfo.x );
+			ret.z = near + d * ( far - near );
 			ret.xy = ( uv * projInfo.xy + projInfo.zw ) * ret.z;
 
 			return ret;
@@ -121,6 +123,7 @@ export const SinglePassGTAOShader = {
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
 
+			// scale the search radius by the depth and camera FOV
 			float radius = ( RADIUS * clipInfo.z ) / vpos.z;
 			radius = max( float( NUM_STEPS ), radius );
 
@@ -143,6 +146,7 @@ export const SinglePassGTAOShader = {
 
 				// calculate horizon angles
 				for ( int j = 0; j < NUM_STEPS; ++ j ) {
+
 					offset = round( dir.xy * currstep );
 
 					// h1
@@ -167,6 +171,7 @@ export const SinglePassGTAOShader = {
 
 					// increment
 					currstep += stepsize;
+
 				}
 
 				horizons = acos( horizons );
@@ -181,7 +186,7 @@ export const SinglePassGTAOShader = {
 				float cosxi		= dot( nx, tangent ) * invnnx;	// xi = gamma + HALF_PI
 				float gamma		= acos( cosxi ) - HALF_PI;
 				float cosgamma	= dot( nx, vdir ) * invnnx;
-				float singamma2	= -2.0 * cosxi;					// cos(x + HALF_PI) = -sin(x)
+				float singamma2	= - 2.0 * cosxi;					// cos(x + HALF_PI) = -sin(x)
 
 				// clamp to normal hemisphere
 				horizons.x = gamma + max( - horizons.x - gamma, - HALF_PI );
@@ -191,6 +196,7 @@ export const SinglePassGTAOShader = {
 				ao += nnx * 0.25 * (
 					( horizons.x * singamma2 + cosgamma - cos( 2.0 * horizons.x - gamma ) ) +
 					( horizons.y * singamma2 + cosgamma - cos( 2.0 * horizons.y - gamma ) ) );
+
 			}
 			#pragma unroll_loop_end
 
