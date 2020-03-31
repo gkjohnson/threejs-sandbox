@@ -85,9 +85,8 @@
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
 					g => {
 						const o = g.scene.children[0];
-						o.position.y = -20;
+						o.position.y = - 2 / 3;
 						o.rotation.set(0, Math.PI / 2, 0);
-						o.scale.multiplyScalar(30);
 
 						o.traverse(c => {
 							c.castShadow = true;
@@ -144,6 +143,8 @@
 					}
 
 				}
+
+				group.scale.setScalar( 1 / 10 );
 
 				return group;
 
@@ -210,8 +211,8 @@
 			function init() {
 
 				// initialize renderer, scene, camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 10, 10 * 3.5 );
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 100 );
+				camera.position.set( 0.0, 1, 1 * 3.5 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0 );
@@ -236,12 +237,12 @@
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 30, 200, 230 );
+				directionalLight.position.set( 20, 200, 100 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
-				shadowCam.left = shadowCam.bottom = -400;
-				shadowCam.right = shadowCam.top = 400;
+				shadowCam.left = shadowCam.bottom = -15;
+				shadowCam.right = shadowCam.top = 15;
 				directionalLight.shadow.mapSize.width = 2048;
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
@@ -285,7 +286,7 @@
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 5;
+				controls.minDistance = .1;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
