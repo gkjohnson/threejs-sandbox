@@ -2,8 +2,15 @@ import { Matrix3, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.j
 
 export const PackedShader =  {
 
+	extensions: {
+
+		derivatives: true,
+
+	},
+
 	uniforms: {
 
+		opacity: { value: 1.0 },
 		roughnessMap: { value: null },
 		roughness: { value: 0 },
 
@@ -13,12 +20,15 @@ export const PackedShader =  {
 		normalMap: { value: null },
 		normalScale: { value: new Vector2() },
 
+		map: { value: null },
+		alphaMap: { value: null },
+		alphaTest: { value: 0 },
+
 		uvTransform: { value: new Matrix3() }
 
 	},
 
 	vertexShader: /* glsl */`
-		#extension GL_OES_standard_derivatives : enable
 		#define STANDARD
 		varying vec3 vViewPosition;
 		#ifndef FLAT_SHADED
@@ -70,7 +80,6 @@ export const PackedShader =  {
 	`,
 
 	fragmentShader: /* glsl */`
-		#extension GL_OES_standard_derivatives : enable
 		#define STANDARD
 		#ifdef PHYSICAL
 			#define REFLECTIVITY
