@@ -279,8 +279,9 @@ export class GTAOPass extends Pass {
 		const fovRadians = MathUtils.DEG2RAD * camera.fov;
 		gtaoMaterial.uniforms.params.value.set(
 			rotations[ sampleIndex % 6 ] / 360.0,
-			offsets[ ( sampleIndex / 6 ) % 4 ]
+			offsets[ sampleIndex % 4 ]
 		);
+
 		gtaoMaterial.uniforms.projInfo.value.set(
 			2.0 / ( width * projection.elements[ 4 * 0 + 0 ] ),
 			2.0 / ( height * projection.elements[ 4 * 1 + 1 ] ),

@@ -94,7 +94,7 @@ export const GTAOShader = {
 					float( NUM_MIP_LEVELS - 1 )
 				)
 			);
-			miplevel = 0;
+			// miplevel = 0;
 
 			vec2 basesize = depthPyramidSize;
 			vec2 mipcoord = uv / basesize;
