@@ -35,9 +35,9 @@
 			<br/>
 
 			Replace the materials used on all materials in the scene with new materials that
-			
+
 			<br/>
-			
+
 			have copied uniforms and defines from the original materials.
 		</div>
 
@@ -52,7 +52,10 @@
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { ShaderReplacement } from './src/ShaderReplacement.js';
-			import { normalShader, uvShader, roughnessShader, metalnessShader, albedoShader, opacityShader, emissiveShader } from './exampleShaders.js';
+			import { uvShader, roughnessShader, metalnessShader, albedoShader, opacityShader, emissiveShader } from './exampleShaders.js';
+			import { NormalPass } from './src/passes/NormalPass.js';
+			import { DepthPass } from './src/passes/DepthPass.js';
+			import { VelocityPass } from './src/passes/VelocityPass.js';
 
 			// globals
 			var stats;
@@ -202,12 +205,14 @@
 				gui.add( params, 'display', [
 					'DEFAULT',
 					'ALBEDO',
+					'DEPTH',
 					'NORMAL',
 					'UV',
 					'ROUGHNESS',
 					'METALNESS',
 					'OPACITY',
-					'EMISSIVE'
+					'EMISSIVE',
+					'VELOCITY',
 				] );
 
 				gui.add( params, 'model', [
@@ -217,32 +222,14 @@
 
 				gui.open();
 
-				replacementMaterials.NORMAL = new THREE.ShaderMaterial( normalShader );
-				replacementMaterials.NORMAL.defines = {};
-				replacementShaders.NORMAL = new ShaderReplacement( normalShader );
-				replacementShaders.NORMAL.updateUniforms = function( object, material, target ) {
+				replacementShaders.VELOCITY = new VelocityPass();
+				replacementMaterials.VELOCITY = replacementShaders.VELOCITY._replacementMaterial;
 
-					this.constructor.prototype.updateUniforms.apply( this, arguments );
-					const ogValue = target.defines.USE_NORMALMAP;
-					if ( ! target.uniforms.map.value ) {
+				replacementShaders.DEPTH = new DepthPass();
+				replacementMaterials.DEPTH = replacementShaders.DEPTH._replacementMaterial;
 
-						delete target.defines.USE_NORMALMAP;
-						delete target.defines.TANGENTSPACE_NORMALMAP;
-
-					} else {
-
-						target.defines.TANGENTSPACE_NORMALMAP = '';
-						target.defines.USE_NORMALMAP = '';
-
-					}
-
-					if ( ogValue !== target.defines.USE_NORMALMAP ) {
-
-						target.needsUpdate = true;
-
-					}
-
-				};
+				replacementShaders.NORMAL = new NormalPass();
+				replacementMaterials.NORMAL = replacementShaders.NORMAL._replacementMaterial;
 
 				replacementShaders.UV = new ShaderReplacement( uvShader );
 				replacementMaterials.UV = new THREE.ShaderMaterial( uvShader );
@@ -397,6 +384,16 @@
 			}
 
 			function render() {
+
+				if ( params.display !== 'VELOCITY' ) {
+
+					replacementShaders.VELOCITY.dispose();
+
+				} else {
+
+					replacementShaders.VELOCITY.camera = camera;
+
+				}
 
 				for ( const key in models ) {
 

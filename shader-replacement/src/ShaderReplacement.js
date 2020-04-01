@@ -256,4 +256,10 @@ export class ShaderReplacement {
 
 	}
 
+	dispose() {
+
+		// TODO: include disposal?
+
+	}
+
 }
