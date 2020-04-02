@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - per-object motion blur</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Color Space Exploration by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { DitheredGammaCorrectionShader } from './src/DitheredGammaCorrectionShader.js';
+			import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
+
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			// globals
+			var stats;
+			var params = {
+				postprocessing: true,
+				dithering: 'MATERIAL',
+				targetType: THREE.UnsignedByteType,
+				gammaOutput: true,
+			};
+			var camera, scene, renderer, controls;
+			var composer, renderTarget;
+			var renderPass, gammaPass;
+			var plane, copyQuad;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var material = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+				plane = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					material
+				);
+				plane.rotation.x = Math.PI / 2;
+				plane.scale.set(100, 100, 1);
+				plane.material.dithering = true;
+				scene.add( plane );
+
+				var pointLight = new THREE.PointLight( 0xffffff, 1 );
+				pointLight.position.y = .01;
+				scene.add( pointLight );
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+				gammaPass = new ShaderPass( DitheredGammaCorrectionShader );
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( gammaPass );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				window.gammaPass = gammaPass;
+				gui.add( params, 'postprocessing' ).onChange( updateDisplay );
+				gui.add( params, 'gammaOutput' ).onChange( updateDisplay );
+				gui.add( params, 'dithering', [
+					'NONE',
+					'MATERIAL',
+					'POSTPROCESS',
+					'BOTH'
+				] ).onChange( updateDithering );
+				gui.add(params, 'targetType', {
+
+					UnsignedByteType: THREE.UnsignedByteType,
+					HalfFloatType: THREE.HalfFloatType,
+					FloatType: THREE.FloatType,
+
+				} ).onChange( v => {
+
+					v = parseFloat( v );
+
+					composer.renderTarget1.dispose();
+					composer.renderTarget2.dispose();
+					renderTarget.dispose();
+
+					composer.renderTarget1.texture.type = v;
+					composer.renderTarget2.texture.type = v;
+					renderTarget.texture.type = v;
+
+					onWindowResize();
+
+				} );
+
+				gui.open();
+
+				copyQuad = new Pass.FullScreenQuad( new THREE.ShaderMaterial( CopyShader ) );
+
+				renderTarget = new THREE.WebGLRenderTarget( 1, 1 );
+				updateDisplay();
+				onWindowResize();
+				updateDithering( params.dithering );
+
+			}
+
+			function updateDithering( v ) {
+
+				plane.material.dithering = false;
+				delete gammaPass.material.defines.DITHERING;
+
+				switch( v ) {
+
+					case 'MATERIAL':
+						plane.material.dithering = true;
+						break;
+
+					case 'POSTPROCESS':
+						gammaPass.material.defines.DITHERING = '';
+						break;
+
+					case 'BOTH':
+						plane.material.dithering = true;
+						gammaPass.material.defines.DITHERING = '';
+						break;
+
+				}
+
+				gammaPass.material.needsUpdate = true;
+				plane.material.needsUpdate = true;
+
+			}
+
+			function updateDisplay() {
+
+				if ( params.postprocessing ) {
+
+					renderTarget.texture.encoding = THREE.LinearEncoding;
+
+				} else {
+
+					renderTarget.texture.encoding = THREE.sRGBEncoding;
+
+				}
+
+				if ( ! params.gammaOutput ) {
+
+					renderTarget.texture.encoding = THREE.LinearEncoding;
+					gammaPass.enabled = false;
+
+				} else {
+
+					gammaPass.enabled = true;
+
+				}
+
+				plane.material.needsUpdate = true;
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+
+				renderTarget.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				window.composer = composer;
+				if ( params.postprocessing ) {
+
+					composer.render();
+
+				} else {
+
+					renderer.setRenderTarget( renderTarget );
+					renderer.render( scene, camera );
+					renderer.setRenderTarget( null );
+
+					copyQuad.material.uniforms.tDiffuse.value = renderTarget.texture;
+					copyQuad.render( renderer );
+
+				}
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

@@ -1,19 +1,5 @@
 import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
-export const normalShader = {
-	defines: {
-		USE_NORMALMAP : '',
-		TANGENTSPACE_NORMALMAP : '',
-		USE_UV : ''
-	},
-	uniforms: ShaderLib.standard.uniforms,
-	vertexShader: ShaderLib.normal.vertexShader,
-	fragmentShader:
-	`#extension GL_OES_standard_derivatives : enable
-	${ShaderLib.normal.fragmentShader}
-	`,
-};
-
 export const uvShader = {
 	defines: {
 		USE_UV : ''

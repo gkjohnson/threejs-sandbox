@@ -4,12 +4,12 @@
 
 Utility for generating custom mipmaps for power of two and non power of two textures by packing it into a texture and using custom sample functions. The pixel samples and weights are available to custom logic passed into the `PackedMipmapGenerator` constructor.
 
-NOTE: There is nothing to prevent bleeding on mip edges and works best with point sampling.
-
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/custom-mipmap-generation/)
 
 **TODO**
 - Validate performance specifically when copying data to the back buffer on generation. It would be best to just copy instead of rerunning the mip map code again.
+- Add a `MipMapAtlasTarget` class that inherits from `WebGLRenderTarget` it's easier to track what's been rendered to it and includes member getters for `originalWidth`, `originalHeight`, and `mipLevels`.
+- Provide shader macro functions in mip map generation helper to avoid unneeded texture samples in case you want a sparser sample distribution like every other pixel.
 
 # Use
 
