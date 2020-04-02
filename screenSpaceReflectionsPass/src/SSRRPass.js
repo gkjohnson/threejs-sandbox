@@ -23,7 +23,6 @@ import {
 	IntersectColorShader
 } from './DebugShaders.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
-import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 
 /**
  * @author Garrett Johnson / http://gkjohnson.github.io/
