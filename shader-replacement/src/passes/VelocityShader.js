@@ -64,37 +64,16 @@ export const velocity_vertex =
 export const VelocityShader = {
 
 	uniforms: {
+		prevProjectionMatrix: { value: new Matrix4() },
+		prevModelViewMatrix: { value: new Matrix4() },
+		prevBoneTexture: { value: null },
+		interpolateGeometry: { value: 0 },
+		intensity: { value: 1 },
 
-		prevProjectionMatrix: {
-
-			value: new Matrix4()
-
-		},
-
-		prevModelViewMatrix: {
-
-			value: new Matrix4()
-
-		},
-
-		prevBoneTexture: {
-
-			value: null
-
-		},
-
-		interpolateGeometry: {
-
-			value: 0
-
-		},
-
-		intensity: {
-
-			value: 1
-
-		}
-
+		alphaTest: { value: 0.0 },
+		map: { value: null },
+		alphaMap: { value: null },
+		opacity: { value: 1.0 }
 	},
 
 	vertexShader:

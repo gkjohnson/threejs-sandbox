@@ -66,6 +66,7 @@ export class NormalPass extends ShaderReplacement {
 
 		// TODO: Handle object space normal map
 		// TODO: Handle displacement map
+
 		const originalDefine = target.defines.USE_NORMALMAP;
 		if ( ! target.uniforms.map.value ) {
 
@@ -105,7 +106,7 @@ export class NormalPass extends ShaderReplacement {
 
 		// alphamap
 		originalDefine = target.defines.USE_ALPHAMAP;
-		if ( ! target.uniforms.alphaMap.value ) {
+		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.alphaMap.value ) {
 
 			delete target.defines.USE_ALPHAMAP;
 
@@ -122,7 +123,7 @@ export class NormalPass extends ShaderReplacement {
 
 		// map
 		originalDefine = target.defines.USE_MAP;
-		if ( ! target.uniforms.map.value ) {
+		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.map.value ) {
 
 			delete target.defines.USE_MAP;
 
