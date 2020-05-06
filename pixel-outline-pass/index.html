@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - pixel perfect outline</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Pixel Perfect Outline by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/FXAAShader.js';
+
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			// globals
+			var stats;
+			var params = {
+				postprocessing: true,
+				dithering: 'MATERIAL',
+				targetType: THREE.UnsignedByteType,
+				gammaOutput: true,
+			};
+			var camera, scene, renderer, controls;
+			var composer, renderTarget;
+			var renderPass, gammaPass, fxaaPass;
+			var plane, copyQuad;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x090c13 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				const directionalLight = new THREE.DirectionalLight();
+				directionalLight.position.set( 1, 2, 3 );
+				scene.add( directionalLight );
+
+				const ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+				scene.add( ambientLight );
+
+				for ( let i = 0; i < 100; i ++ ) {
+
+					const mesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 20, 20 ), new THREE.MeshStandardMaterial() );
+
+					mesh
+						.position
+						.random()
+						.sub( new THREE.Vector3().setScalar( 0.5 ) )
+						.normalize()
+						.multiplyScalar( Math.random() * 3 + 1 );
+					mesh
+						.scale
+						.setScalar( Math.random() * 0.5 + 0.25 );
+					mesh
+						.material
+						.color
+						.setHSL( Math.random(), 0.5, 0.5 );
+					scene.add( mesh );
+
+				}
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( fxaaPass );
+
+				console.log( composer );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				composer.setSize( width, height );
+
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
