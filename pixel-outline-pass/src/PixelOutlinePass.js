@@ -1,19 +1,81 @@
-import { Scene, MeshBasicMaterial, Color, ShaderMaterial, Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import {
+	Scene,
+	MeshBasicMaterial,
+	Color,
+	ShaderMaterial,
+	Vector2,
+	WebGLRenderTarget,
+	NearestFilter,
+	RGBAFormat
+} from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 
 const compositeShader = {
 
 	uniforms: {
 
+		opacity: { value: 1 },
+		thickness: { value: 1 },
 		resolution: { value: new Vector2() },
 		mainTex: { value: null },
 		outlineTex: { value: null },
 
 	},
-	vertexShader: '',
-	fragmentShader: '',
+	vertexShader: /* glsl */`
+		varying vec3 vViewPosition;
+		varying vec2 vUv;
+		void main() {
+
+			#include <begin_vertex>
+			#include <project_vertex>
+			vViewPosition = mvPosition.xyz;
+			vUv = uv;
+
+		}
+	`,
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D mainTex;
+		uniform sampler2D outlineTex;
+		uniform float thickness;
+		uniform float opacity;
+		uniform vec2 resolution;
+		void main() {
+
+			vec2 resMult = 1.0 / resolution;
+			vec2 offset1 = vec2( 0.0, 1.0 ) * thickness * resMult;
+			vec2 offset2 = vec2( 0.0, -1.0 ) * thickness * resMult;
+			vec2 offset3 = vec2( 1.0, 0.0 ) * thickness * resMult;
+			vec2 offset4 = vec2( -1.0, 0.0 ) * thickness * resMult;
+
+			vec4 pix = texture2D( outlineTex, vUv );
+			vec4 pix1 = texture2D( outlineTex, vUv + offset1 );
+			vec4 pix2 = texture2D( outlineTex, vUv + offset2 );
+			vec4 pix3 = texture2D( outlineTex, vUv + offset3 );
+			vec4 pix4 = texture2D( outlineTex, vUv + offset4 );
+
+			bool onBorder =
+				pix.a != 0.0 &&
+				(
+					pix.rgb != pix1.rgb ||
+					pix.rgb != pix2.rgb ||
+					pix.rgb != pix3.rgb ||
+					pix.rgb != pix4.rgb
+				);
+
+			float weights = pix1.a + pix2.a + pix3.a + pix4.a;
+			vec3 color = pix1.rgb * pix1.a + pix2.rgb * pix2.a + pix3.rgb * pix3.a + pix4.rgb * pix4.a;
+			color /= weights;
+			color = clamp( color, 0.0, 1.0 );
+
+			float alpha = onBorder || weights != 0.0 && pix.a == 0.0 ? opacity : 0.0;
+			vec4 main = texture2D( mainTex, vUv );
+			gl_FragColor = mix( main, vec4( color, 1.0 ), alpha );
+
+		}
+	`,
 
 };
 
@@ -58,7 +120,8 @@ class BasicShaderReplacement extends ShaderReplacement {
 
 		if ( target instanceof LineMaterial ) {
 
-			target.uniforms.linewidth = material.uniforms.linewidth;
+			target.linewidth = material.linewidth;
+			target.resolution.copy( material.resolution );
 
 		}
 
@@ -66,7 +129,8 @@ class BasicShaderReplacement extends ShaderReplacement {
 
 }
 
-export class SSRRPass extends Pass {
+export class PixelOutlinePass extends Pass {
+
 	constructor( camera ) {
 
 		super();
@@ -79,7 +143,7 @@ export class SSRRPass extends Pass {
 			magFilter: NearestFilter,
 			format: RGBAFormat
 		} );
-		this.quad = new Pass.ScreenSpaceQuad( new ShaderMaterial( compositeShader ) );;
+		this.quad = new Pass.FullScreenQuad( new ShaderMaterial( compositeShader ) );;
 		this.replacer = new BasicShaderReplacement();
 		this.colorMap = new Map();
 		this.objects = [];
@@ -88,30 +152,38 @@ export class SSRRPass extends Pass {
 		this.needsSwap = true;
 
 		this.thickness = 1;
+		this.opacity = 1;
+
+		window.outlinePass = this;
 
 	}
 
-	setOutline( color, objects ) {
+	setOutline( color, newObjects ) {
 
 		const colors = this.colorMap;
 		const objects = this.objects;
-		for ( let i = 0, l = objects.length; i < l; i ++ ) {
+		for ( let i = 0, l = newObjects.length; i < l; i ++ ) {
 
-			const o = objects[ i ];
+			const o = newObjects[ i ];
+			if ( ! colors.has( o ) ) {
+
+				objects.push( o );
+
+			}
+
 			colors.set( o, color );
-			objects.push( o );
 
 		}
 
 	}
 
-	removeOutline( objects ) {
+	removeOutline( removeObjects ) {
 
 		const colors = this.colorMap;
 		const objects = this.objects;
-		for ( let i = 0, l = objects.length; i < l; i ++ ) {
+		for ( let i = 0, l = removeObjects.length; i < l; i ++ ) {
 
-			const o = objects[ i ];
+			const o = removeObjects[ i ];
 			colors.delete( o );
 
 			const index = objects.indexOf( o );
@@ -164,10 +236,11 @@ export class SSRRPass extends Pass {
 		renderer.clear();
 		renderer.render( scene, camera );
 
-		renderer.setRenderTarget( writeBuffer );
+		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
 		quad.material.uniforms.mainTex.value = readBuffer;
 		quad.material.uniforms.outlineTex.value = renderTarget;
 		quad.material.uniforms.thickness.value = this.thickness;
+		quad.material.uniforms.opacity.value = this.opacity;
 		quad.render( renderer );
 
 		renderer.setClearColor( originalClearColor );

@@ -45,21 +45,22 @@
 			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 			import { FXAAShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/FXAAShader.js';
 
+			import { Line2 } from '//unpkg.com/three@0.111.0/examples/jsm/lines/Line2.js';
+			import { LineGeometry } from '//unpkg.com/three@0.111.0/examples/jsm/lines/LineGeometry.js';
+
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { PixelOutlinePass } from './src/PixelOutlinePass.js';
 
 			// globals
 			var stats;
 			var params = {
-				postprocessing: true,
-				dithering: 'MATERIAL',
-				targetType: THREE.UnsignedByteType,
-				gammaOutput: true,
 			};
 			var camera, scene, renderer, controls;
 			var composer, renderTarget;
-			var renderPass, gammaPass, fxaaPass;
-			var plane, copyQuad;
+			var renderPass, gammaPass, fxaaPass, pixelOutlinePass;
+			var plane, copyQuad, line;
 
 			init();
 			animate();
@@ -85,6 +86,9 @@
 				const ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
 				scene.add( ambientLight );
 
+				pixelOutlinePass = new PixelOutlinePass( camera );
+
+				const linePos = [];
 				for ( let i = 0; i < 100; i ++ ) {
 
 					const mesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 20, 20 ), new THREE.MeshStandardMaterial() );
@@ -104,7 +108,36 @@
 						.setHSL( Math.random(), 0.5, 0.5 );
 					scene.add( mesh );
 
+					pixelOutlinePass.setOutline( new THREE.Color().setHSL( Math.random(), 1.0, 0.5 ) , [ mesh ] );
+
 				}
+
+				// const sphereMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 20, 20 ), new THREE.MeshStandardMaterial() );
+				// scene.add( sphereMesh );
+				// pixelOutlinePass.setOutline( new THREE.Color().setHSL( Math.random(), 1.0, 0.5 ) , [ sphereMesh ] );
+
+				for ( let i = 0; i < 20; i ++ ) {
+
+					for ( let j = 0; j < 3; j ++ ) {
+
+						const v = new THREE.Vector3()
+							.random()
+							.sub( new THREE.Vector3().setScalar( 0.5 ) )
+							.normalize()
+							.multiplyScalar( 4.5 );
+						linePos.push( v.x, v.y, v.z );
+
+					}
+
+				}
+
+				const lineGeometry = new LineGeometry();
+				lineGeometry.setPositions( linePos );
+
+				line = new Line2( lineGeometry );
+				line.material.linewidth = 3;
+				// scene.add( line );
+				window.line = line;
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
@@ -112,12 +145,15 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
+
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
+				composer.addPass( pixelOutlinePass );
 				composer.addPass( fxaaPass );
 
-				console.log( composer );
+
+				// pixelOutlinePass.setOutline( 0xff0000, [ scene.children[ 6 ] ] );
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -144,8 +180,10 @@
 				camera.updateProjectionMatrix();
 
 				composer.setSize( width, height );
+				renderer.setSize( width, height );
 
-				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / width, 1 / height );
+				line.material.resolution.set( width, height );
 
 			}
 
