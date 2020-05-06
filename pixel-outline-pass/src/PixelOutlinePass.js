@@ -24,13 +24,11 @@ const compositeShader = {
 
 	},
 	vertexShader: /* glsl */`
-		varying vec3 vViewPosition;
 		varying vec2 vUv;
 		void main() {
 
 			#include <begin_vertex>
 			#include <project_vertex>
-			vViewPosition = mvPosition.xyz;
 			vUv = uv;
 
 		}
