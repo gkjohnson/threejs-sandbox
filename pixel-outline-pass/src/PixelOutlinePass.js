@@ -1,7 +1,21 @@
-import { Scene, MeshBasicMaterial, Color } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { Scene, MeshBasicMaterial, Color, ShaderMaterial, Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+
+const compositeShader = {
+
+	uniforms: {
+
+		resolution: { value: new Vector2() },
+		mainTex: { value: null },
+		outlineTex: { value: null },
+
+	},
+	vertexShader: '',
+	fragmentShader: '',
+
+};
 
 class BasicShaderReplacement extends ShaderReplacement {
 
@@ -60,14 +74,12 @@ export class SSRRPass extends Pass {
 		const scene = new Scene();
 		scene.autoUpdate = false;
 
-		const quad = new Pass.ScreenSpaceQuad();
-
 		this.renderTarget = new WebGLRenderTarget( 1, 1,  {
 			minFilter: NearestFilter,
 			magFilter: NearestFilter,
 			format: RGBAFormat
 		} );
-		this.quad = quad;
+		this.quad = new Pass.ScreenSpaceQuad( new ShaderMaterial( compositeShader ) );;
 		this.replacer = new BasicShaderReplacement();
 		this.colorMap = new Map();
 		this.objects = [];
