@@ -5,7 +5,7 @@ import {
 	ShaderMaterial,
 	Vector2,
 	WebGLRenderTarget,
-	NearestFilter,
+	LinearFilter,
 	RGBAFormat
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
@@ -103,9 +103,17 @@ class BasicShaderReplacement extends ShaderReplacement {
 	updateUniforms( object, material, target ) {
 
 		const colorMap = this.colorMap;
-		const color = colorMap.get( object );
+		let color = 0;
+		let opacity = 0;
+		if ( colorMap.has( object ) ) {
+
+			color = colorMap.get( object );
+			opacity = 1;
+
+		}
 
 		target.side = material.side;
+		target.opacity = opacity;
 		if ( color instanceof Color ) {
 
 			target.color.copy( color );
@@ -133,22 +141,24 @@ export class PixelOutlinePass extends Pass {
 
 		super();
 
-		const scene = new Scene();
-		scene.autoUpdate = false;
+		const auxScene = new Scene();
+		auxScene.autoUpdate = false;
 
 		this.renderTarget = new WebGLRenderTarget( 1, 1,  {
-			minFilter: NearestFilter,
-			magFilter: NearestFilter,
+			minFilter: LinearFilter,
+			magFilter: LinearFilter,
 			format: RGBAFormat
 		} );
 		this.quad = new Pass.FullScreenQuad( new ShaderMaterial( compositeShader ) );;
 		this.replacer = new BasicShaderReplacement();
 		this.colorMap = new Map();
 		this.objects = [];
-		this.scene = scene;
+		this.auxScene = auxScene;
 		this.camera = camera;
 		this.needsSwap = true;
 
+		this.scene = null;
+		this.renderDepth = false;
 		this.thickness = 1;
 		this.opacity = 1;
 
@@ -218,15 +228,28 @@ export class PixelOutlinePass extends Pass {
 		const colorMap = this.colorMap;
 		const objects = this.objects;
 		const replacer = this.replacer;
-		const scene = this.scene;
 		const camera = this.camera;
 		const renderTarget = this.renderTarget;
 		const quad = this.quad;
 
-		scene.children = objects;
+		let scene = null;
+		if ( this.renderDepth ) {
 
+			scene = this.scene;
+
+		} else {
+
+			scene = this.auxScene;
+			scene.children = objects;
+
+		}
+
+		const originalSceneBackground = scene.background;
 		const originalClearColor = renderer.getClearColor();
 		const originalClearAlpha = renderer.getClearAlpha();
+		scene.background = null;
+		renderer.setClearColor( 0 );
+		renderer.setClearAlpha( 0 );
 		replacer.colorMap = colorMap;
 		replacer.replace( scene, true, true );
 
@@ -235,12 +258,13 @@ export class PixelOutlinePass extends Pass {
 		renderer.render( scene, camera );
 
 		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
-		quad.material.uniforms.mainTex.value = readBuffer;
-		quad.material.uniforms.outlineTex.value = renderTarget;
+		quad.material.uniforms.mainTex.value = readBuffer.texture;
+		quad.material.uniforms.outlineTex.value = renderTarget.texture;
 		quad.material.uniforms.thickness.value = this.thickness;
 		quad.material.uniforms.opacity.value = this.opacity;
 		quad.render( renderer );
 
+		scene.background = originalSceneBackground;
 		renderer.setClearColor( originalClearColor );
 		renderer.setClearAlpha( originalClearAlpha );
 		replacer.reset( scene, true );

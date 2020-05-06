@@ -54,12 +54,18 @@
 			import { PixelOutlinePass } from './src/PixelOutlinePass.js';
 
 			// globals
+			const DRAW_THROUGH = 0;
+			const VISIBLE = 1;
+			const BOTH = 2;
+
 			var stats;
 			var params = {
+				thickness: 1,
+				mode: DRAW_THROUGH,
 			};
 			var camera, scene, renderer, controls;
 			var composer, renderTarget;
-			var renderPass, gammaPass, fxaaPass, pixelOutlinePass;
+			var renderPass, gammaPass, fxaaPass, pixelOutlinePass, drawThoughPass;
 			var plane, copyQuad, line;
 
 			init();
@@ -87,6 +93,11 @@
 				scene.add( ambientLight );
 
 				pixelOutlinePass = new PixelOutlinePass( camera );
+				pixelOutlinePass.scene = scene;
+
+				drawThoughPass = new PixelOutlinePass( camera );
+				drawThoughPass.scene = scene;
+				drawThoughPass.opacity = 0.25;
 
 				const linePos = [];
 				for ( let i = 0; i < 100; i ++ ) {
@@ -108,13 +119,14 @@
 						.setHSL( Math.random(), 0.5, 0.5 );
 					scene.add( mesh );
 
-					pixelOutlinePass.setOutline( new THREE.Color().setHSL( Math.random(), 1.0, 0.5 ) , [ mesh ] );
+					// pixelOutlinePass.setOutline( new THREE.Color().setHSL( Math.random(), 1.0, 0.5 ) , [ mesh ] );
 
 				}
 
-				// const sphereMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 20, 20 ), new THREE.MeshStandardMaterial() );
-				// scene.add( sphereMesh );
-				// pixelOutlinePass.setOutline( new THREE.Color().setHSL( Math.random(), 1.0, 0.5 ) , [ sphereMesh ] );
+				const sphereMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 20, 20 ), new THREE.MeshStandardMaterial() );
+				scene.add( sphereMesh );
+				pixelOutlinePass.setOutline( 0xffffff , [ sphereMesh ] );
+				drawThoughPass.setOutline( 0xffffff , [ sphereMesh ] );
 
 				for ( let i = 0; i < 20; i ++ ) {
 
@@ -149,6 +161,7 @@
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
+				composer.addPass( drawThoughPass );
 				composer.addPass( pixelOutlinePass );
 				composer.addPass( fxaaPass );
 
@@ -165,6 +178,8 @@
 
 				// dat gui
 				var gui = new dat.GUI();
+				gui.add( params, 'thickness' ).min( 0.5 ).max( 5 ).step( 0.1 );
+				gui.add( params, 'mode', { DRAW_THROUGH, VISIBLE, BOTH } );
 				gui.width = 300;
 
 				gui.open();
@@ -195,6 +210,27 @@
 			}
 
 			function render() {
+
+				pixelOutlinePass.thickness = params.thickness;
+				drawThoughPass.thickness = params.thickness;
+
+				switch( parseFloat( params.mode ) ) {
+					case DRAW_THROUGH:
+						drawThoughPass.enabled = false;
+						pixelOutlinePass.renderDepth = false;
+						break;
+					case VISIBLE:
+						drawThoughPass.enabled = false;
+						pixelOutlinePass.renderDepth = true;
+						break;
+					case BOTH:
+						drawThoughPass.enabled = true;
+						pixelOutlinePass.renderDepth = true;
+						drawThoughPass.renderDepth = false;
+						break;
+
+
+				}
 
 				composer.render();
 
