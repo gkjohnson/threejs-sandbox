@@ -11,7 +11,6 @@ import {
 	UnsignedByteType
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
-import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { PackedMipMapGenerator } from '../../custom-mipmap-generation/src/PackedMipMapGenerator.js';
 import { LinearDepthShader } from '../../screenSpaceReflectionsPass/src/LinearDepthShader.js';
@@ -21,6 +20,7 @@ import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/
 import { GTAOShader } from './GTAOShader.js';
 import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
+// import { DepthAwareUpscaleBlurShader } from './DepthAwareUpscaleBlurShader.js';
 
 const _gtaoMaterial = new ShaderMaterial( GTAOShader );
 const _gtaoQuad = new Pass.FullScreenQuad( _gtaoMaterial );
@@ -31,9 +31,6 @@ const _singlePassGtaoQuad = new Pass.FullScreenQuad( _singlePassGtaoMaterial );
 const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
 const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
 
-const _copyMaterial = new ShaderMaterial( CopyShader );
-const _copyQuad = new Pass.FullScreenQuad( _copyMaterial );
-
 const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
 const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
 
@@ -42,6 +39,9 @@ const _debugMipDepthQuad = new Pass.FullScreenQuad( _debugMipDepthMaterial );
 
 const _compositeMaterial = new ShaderMaterial( CompositeShader );
 const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
+
+// const _upscaleMaterial = new ShaderMaterial( DepthAwareUpscaleBlurShader );
+// const _upscaleQuad = new Pass.FullScreenQuad( _upscaleMaterial );
 
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
@@ -149,8 +149,8 @@ export class GTAOPass extends Pass {
 		const renderWidth = width * renderTargetScale;
 		const renderHeight = height * renderTargetScale;
 
-		this._depthBuffer.setSize( renderWidth, renderHeight );
-		this._normalBuffer.setSize( renderWidth, renderHeight );
+		this._depthBuffer.setSize( width, height );
+		this._normalBuffer.setSize( width, height );
 		this._gtaoBuffer.setSize( renderWidth, renderHeight );
 
 	}
@@ -330,6 +330,9 @@ export class GTAOPass extends Pass {
 
 		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
 		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
+		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
+		_compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
+
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		_compositeQuad.render( renderer );

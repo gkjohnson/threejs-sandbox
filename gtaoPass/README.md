@@ -32,7 +32,7 @@ TODO
 - Clean up shader, add comments
 - Composite
 - Pull and run original implementation to compare
-- Add a depth aware blur
+- Add a depth aware blur (https://eleni.mutantstargoat.com/hikiko/depth_aware_texture_upscaling)
 - Unroll loop in the GTAO shader
 - Try different mip map techniques for the depth pyramid
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
