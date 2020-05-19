@@ -67,7 +67,7 @@ export class NormalPass extends ShaderReplacement {
 		// TODO: Handle object space normal map
 		// TODO: Handle displacement map
 
-		const originalDefine = target.defines.USE_NORMALMAP;
+		let originalDefine = target.defines.USE_NORMALMAP;
 		if ( ! target.uniforms.map.value ) {
 
 			delete target.defines.USE_NORMALMAP;
