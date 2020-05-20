@@ -60,7 +60,7 @@
 			// globals
 			var stats;
 			var params = {
-				useReplacementShader: true,
+				shaderReplacement: true,
 				display: 'DEFAULT',
 				model: 'damagedHelmet'
 			};
@@ -99,7 +99,7 @@
 				floor.position.set( 0, - 1, 0 );
 				floor.rotation.x = - Math.PI / 2;
 				floor.receiveShadow = true;
-				scene.add( floor );
+				// scene.add( floor );
 
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
@@ -200,7 +200,7 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'useReplacementShader' );
+				gui.add( params, 'shaderReplacement' );
 
 				gui.add( params, 'display', [
 					'DEFAULT',
@@ -417,7 +417,7 @@
 				if ( replacer ) {
 
 					scene.background = null;
-					if ( params.useReplacementShader ) {
+					if ( params.shaderReplacement ) {
 
 						replacer.replace( scene, true );
 
@@ -434,7 +434,7 @@
 				if ( replacer ) {
 
 					scene.background = ogBackground;
-					if ( params.useReplacementShader ) {
+					if ( params.shaderReplacement ) {
 
 						replacer.reset( scene, true );
 

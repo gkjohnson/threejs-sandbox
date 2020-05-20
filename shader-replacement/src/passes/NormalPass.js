@@ -45,7 +45,7 @@ export class NormalPass extends ShaderReplacement {
 				#include <logdepthbuf_pars_fragment>
 				#include <clipping_planes_pars_fragment>
 				void main() {
-					vec4 diffuse = vec4( 0.0, 0.0, 0.0, opacity );
+					vec4 diffuseColor = vec4( 0.0, 0.0, 0.0, opacity );
 					#include <clipping_planes_fragment>
 					#include <logdepthbuf_fragment>
 					#include <map_fragment>
