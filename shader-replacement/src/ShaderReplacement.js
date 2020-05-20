@@ -1,5 +1,29 @@
 import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
+export function setMaterialDefine( material, define, value ) {
+
+	if ( value === undefined ) {
+
+		if ( define in material.defines ) {
+
+			delete material.defines[ define ];
+			material.needsUpdate = true;
+
+		}
+
+	} else {
+
+		if ( value !== material.defines[ define ] ) {
+
+			material.defines[ define ] = value;
+			material.needsUpdate = true;
+
+		}
+
+	}
+
+}
+
 const _originalMaterials = new WeakMap();
 export class ShaderReplacement {
 
