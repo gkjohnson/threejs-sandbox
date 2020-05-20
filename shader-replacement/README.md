@@ -20,7 +20,45 @@ shader.defines.TANGENTSPACE_NORMALMAP = '';
 shader.defines.USE_UV = '';
 
 const shaderReplacement = new ShaderReplacement( ShaderLib.normal );
-shaderReplacement.reploace( scene, true );
+shaderReplacement.replace( scene, true );
+renderer.render( scene, camera );
+shaderReplacement.reset( scene, true );
+```
+
+Or with per-material logic
+
+```js
+// ...
+const shader = ShaderLib.normal;
+const shaderReplacement = new ShaderReplacement( ShaderLib.normal );
+shaderReplacement.updateUniforms = function( object, material, target ) {
+
+	super.updateUniforms( object, material, target );
+	if ( ! target.uniforms.map.value ) {
+		
+		if ( 'USE_NORMALMAP' in target.defines ) {
+			
+			delete target.defines.USE_NORMALMAP;
+			target.needsUpdate = true;
+			
+		}
+	
+	} else {
+	
+		if ( ! ( 'USE_NORMALMAP' in target.defines.USE_NORMALMAP ) ) {
+			
+			target.defines.USE_NORMALMAP = '';
+			target.needsUpdate = true;
+			
+		}
+	
+	}
+
+};
+
+// ...
+
+shaderReplacement.replace( scene, true );
 renderer.render( scene, camera );
 shaderReplacement.reset( scene, true );
 ```
@@ -59,6 +97,16 @@ reset(
 ```
 
 Resets all materials to the originally cached one. Recurses to all children if `recursive` is true.
+
+### .dispose
+
+```js
+dispose() : void
+```
+
+Disposes of all materials created by the object.
+
+_NOTE: Unimplemented for the moment._
 
 ### updateUniforms
 
