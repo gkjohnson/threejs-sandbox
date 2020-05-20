@@ -57,7 +57,7 @@ export const velocity_vertex =
 		newPosition =  projectionMatrix * newPosition;
 		prevPosition = prevProjectionMatrix * prevPosition;
 
-		gl_Position = mix( newPosition, prevPosition, interpolateGeometry * ( 1.0 - step( 0.0, stretchDot ) ) );
+		gl_Position = mix( newPosition, prevPosition, interpolateGeometry );
 
 	`;
 
