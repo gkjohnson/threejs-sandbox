@@ -14,6 +14,7 @@ export class VelocityPass extends ShaderReplacement {
 		this.prevViewMatrix = new Matrix4();
 		this.prevInfo = new Map();
 		this.lastFrame = 0;
+		this.autoUpdateCameraMatrix = true;
 
 	}
 
@@ -21,19 +22,20 @@ export class VelocityPass extends ShaderReplacement {
 
 		this.lastFrame ++;
 
-		const camera = this.camera;
 		if ( ! this.initialized || ! this.includeCameraVelocity ) {
 
-			this.prevProjectionMatrix.copy( camera.projectionMatrix );
-			this.prevViewMatrix.copy( camera.matrixWorldInverse );
+			this.updateCameraMatrix();
 			this.initialized = true;
 
 		}
 
 		super.replace( ...args );
 
-		this.prevProjectionMatrix.copy( camera.projectionMatrix );
-		this.prevViewMatrix.copy( camera.matrixWorldInverse );
+		if ( this.autoUpdateCameraMatrix ) {
+
+			this.updateCameraMatrix();
+
+		}
 
 		const lastFrame = this.lastFrame;
 		const prevInfo = this.prevInfo;
@@ -50,7 +52,7 @@ export class VelocityPass extends ShaderReplacement {
 
 			} else {
 
-				info.modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, object.matrixWorld );
+				info.modelViewMatrix.multiplyMatrices( this.prevViewMatrix, object.matrixWorld );
 
 				if ( info.boneMatrices ) {
 
@@ -62,6 +64,14 @@ export class VelocityPass extends ShaderReplacement {
 			}
 
 		} );
+
+	}
+
+	updateCameraMatrix() {
+
+		const camera = this.camera;
+		this.prevProjectionMatrix.copy( camera.projectionMatrix );
+		this.prevViewMatrix.copy( camera.matrixWorldInverse );
 
 	}
 

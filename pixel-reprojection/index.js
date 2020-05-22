@@ -16,6 +16,9 @@ import {
 	NearestFilter,
 	RGBFormat,
 	FloatType,
+	MeshBasicMaterial,
+	ShaderMaterial,
+	UnsignedIntType,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
@@ -27,8 +30,8 @@ import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
 
 let renderer, scene, camera, controls, prevCamMatrixWorld;
 let reprojectQuad, copyQuad;
-let frontBuffer, backBuffer, colorBuffer, velocityBuffer;
-let frontDepth, backDepth;
+let prevColorBuffer, blendTarget, currColorBuffer, velocityBuffer;
+let currDepth, prevDepth;
 let velocityPass;
 let stats;
 let rendererState;
@@ -39,7 +42,108 @@ const params = {
 	autoRender: true,
 	rerender() {
 
+		updateColor();
+
 	}
+
+};
+
+const reprojectShader = {
+
+	uniforms: {
+
+		opacity: { value: 1 },
+		velocityBuffer: { value: null },
+
+		prevColorBuffer: { value: null },
+		currColorBuffer: { value: null },
+
+		prevDepthBuffer: { value: null },
+		currDepthBuffer: { value: null },
+
+		prevInvProjectionMatrix: { value: new Matrix4() },
+		prevInvCameraMatrix: { value: new Matrix4() },
+
+		currProjectionMatrix: { value: new Matrix4() },
+		currCameraMatrix: { value: new Matrix4() },
+
+	},
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+
+			#include <begin_vertex>
+			#include <project_vertex>
+			vUv = uv;
+
+		}
+	`,
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D velocityBuffer;
+
+		uniform sampler2D currColorBuffer;
+		uniform sampler2D prevColorBuffer;
+
+		uniform sampler2D prevDepthBuffer;
+		uniform sampler2D currDepthBuffer;
+
+		uniform mat4 prevInvProjectionMatrix;
+		uniform mat4 prevInvCameraMatrix;
+
+		uniform mat4 currProjectionMatrix;
+		uniform mat4 currCameraMatrix;
+
+		uniform float opacity;
+
+		void main() {
+
+			vec2 velocity = texture2D( velocityBuffer, vUv ).xy;
+			vec2 prevUv = vUv - velocity;
+
+			vec4 currSample = texture2D( currColorBuffer, vUv );
+			vec4 prevSample = texture2D( prevColorBuffer, prevUv );
+
+			float currDepth = texture2D( currDepthBuffer, vUv ).r;
+			float prevDepth = texture2D( prevDepthBuffer, prevUv ).r;
+
+			if ( prevDepth == 1.0 ) {
+
+				gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
+				return;
+
+			}
+
+			vec4 prevNdc = vec4(
+				( prevUv.x - 0.5 ) * 2.0,
+				( prevUv.y - 0.5 ) * 2.0,
+				( prevDepth - 0.5 ) * 2.0,
+				1.0
+			);
+			prevNdc = prevInvProjectionMatrix * prevNdc;
+			prevNdc = prevInvCameraMatrix * prevNdc;
+			prevNdc = currCameraMatrix * prevNdc;
+			prevNdc = currProjectionMatrix * prevNdc;
+			prevNdc /= prevNdc.w;
+
+			float reprojectedPrevDepth = ( prevNdc.z / 2.0 ) + 0.5;
+
+			float t = reprojectedPrevDepth >= currDepth ? 1.0 : 0.0;
+
+
+			gl_FragColor = prevSample; // mix( prevSample, currSample, 0.5 );
+
+			// gl_FragColor = mix( vec4( 0.0 ), prevSample , t );
+
+			// gl_FragColor = vec4( prevDepth );
+
+			// gl_FragColor = vec4(
+			// 	reprojectedPrevDepth < 0.99 ? 1.0 : 0.0,
+			// 	currDepth < 0.99 ? 1.0 : 0.0,
+			// 	0.0, 1.0 );
+
+		}
+	`,
 
 };
 
@@ -57,19 +161,19 @@ function init() {
 
 	rendererState = new RendererState();
 
-	colorBuffer = new WebGLRenderTarget( 1, 1, {
+	currColorBuffer = new WebGLRenderTarget( 1, 1, {
 		minFilter: NearestFilter,
 		magFilter: NearestFilter,
 		format: RGBFormat,
 	} );
 
-	frontBuffer = new WebGLRenderTarget( 1, 1, {
+	prevColorBuffer = new WebGLRenderTarget( 1, 1, {
 		minFilter: NearestFilter,
 		magFilter: NearestFilter,
 		format: RGBFormat,
 	} );
 
-	backBuffer = new WebGLRenderTarget( 1, 1, {
+	blendTarget = new WebGLRenderTarget( 1, 1, {
 		minFilter: NearestFilter,
 		magFilter: NearestFilter,
 		format: RGBFormat,
@@ -82,13 +186,13 @@ function init() {
 		type: FloatType,
 	} );
 
-	frontDepth = new DepthTexture( 1, 1 );
+	currDepth = new DepthTexture( 1, 1, UnsignedIntType );
 
-	backDepth = new DepthTexture( 1, 1 );
+	prevDepth = new DepthTexture( 1, 1, UnsignedIntType );
 
 	scene = new Scene();
 
-	camera = new PerspectiveCamera( 40, 1, 0.1, 2000 );
+	camera = new PerspectiveCamera( 40, 1, 0.1, 200 );
 	camera.position.set( 4, 4, - 10 );
 
 	prevCamMatrixWorld = new Matrix4();
@@ -120,10 +224,10 @@ function init() {
 	box.castShadow = true;
 	scene.add( box );
 
-	const blendMaterial = null;
-	reprojectQuad = new Pass.FullScreenQuad( blendMaterial );
+	const repreojectMaterial = new ShaderMaterial( reprojectShader );
+	reprojectQuad = new Pass.FullScreenQuad( repreojectMaterial );
 
-	const copyMaterial = null;
+	const copyMaterial = new MeshBasicMaterial();
 	copyQuad = new Pass.FullScreenQuad( copyMaterial );
 
 	velocityPass = new VelocityPass();
@@ -135,7 +239,14 @@ function init() {
 	const gui = new dat.GUI();
 	gui.width = 300;
 
-	gui.add( params, 'autoRender' );
+	gui.add( params, 'autoRender' ).onChange( () => {
+
+		velocityPass.updateCameraMatrix();
+
+		[ prevColorBuffer, currColorBuffer ] = [ currColorBuffer, prevColorBuffer ];
+		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
+
+	} );
 	gui.add( params, 'blendOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 	gui.add( params, 'rerender' );
 
@@ -153,65 +264,85 @@ function render() {
 	requestAnimationFrame( render );
 	stats.update();
 
-	velocityPass.replace( scene, true );
-	renderer.render( scene, camera );
-	velocityPass.reset( scene, true );
-	return;
-
-
 	// render color frame to colorBuffer with front depth
-	colorBuffer.depthTexture = frontDepth;
-	renderer.setRenderTarget( colorBuffer );
+	currColorBuffer.depthTexture = currDepth;
+	renderer.setRenderTarget( currColorBuffer );
 	renderer.render( scene, camera );
 
 	// render velocity frame
-	rendererState.copy( renderer, scene );
-	velocityPass.replace( scene, true );
-
 	renderer.setRenderTarget( velocityBuffer );
-	renderer.render( scene, camera );
 
+	rendererState.copy( renderer, scene );
+	velocityPass.autoUpdateCameraMatrix = params.autoRender;
+	velocityPass.replace( scene, true );
+	renderer.render( scene, camera );
 	velocityPass.reset( scene, true );
 	rendererState.apply( renderer, scene );
 
 	// blend to front buffer using color, velocity, back buffer, and both depth info
-	renderer.setRenderTarget( backBuffer );
+	renderer.setRenderTarget( blendTarget );
+
+	reprojectQuad.material.uniforms.prevInvProjectionMatrix.value.getInverse( velocityPass.prevProjectionMatrix );
+	reprojectQuad.material.uniforms.prevInvCameraMatrix.value.getInverse( velocityPass.prevViewMatrix );
+
+	reprojectQuad.material.uniforms.currProjectionMatrix.value.copy( camera.projectionMatrix );
+	reprojectQuad.material.uniforms.currCameraMatrix.value.copy( camera.matrixWorldInverse );
+
+	reprojectQuad.material.uniforms.opacity.value = params.opacity;
+	reprojectQuad.material.uniforms.velocityBuffer.value = velocityBuffer.texture;
+
+	reprojectQuad.material.uniforms.currColorBuffer.value = currColorBuffer.texture;
+	reprojectQuad.material.uniforms.prevColorBuffer.value = prevColorBuffer.texture;
+
+	reprojectQuad.material.uniforms.prevDepthBuffer.value = currDepth;
+	reprojectQuad.material.uniforms.currDepthBuffer.value = prevDepth;
+
 	reprojectQuad.render( renderer );
 
 	// copy to screen
 	renderer.setRenderTarget( null );
+	copyQuad.material.map = blendTarget.texture;
 	copyQuad.render( renderer );
-
-	// swap front and back buffer
-	[ frontBuffer, backBuffer ] = [ backBuffer, frontBuffer ];
-
-	// swap front and back depth
-	[ frontDepth, backDepth ] = [ backDepth, frontDepth ];
 
 	if ( params.autoRender ) {
 
-		prevCamMatrixWorld.copy( camera.matrixWorld );
+		// swap front and back buffer
+		[ prevColorBuffer, currColorBuffer ] = [ currColorBuffer, prevColorBuffer ];
+
+		// swap front and back depth
+		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
 
 	}
 
 }
 
+function updateColor() {
+
+	// render color frame to colorBuffer with front depth
+	prevColorBuffer.depthTexture = prevDepth;
+	renderer.setRenderTarget( prevColorBuffer );
+	renderer.render( scene, camera );
+
+	velocityPass.updateCameraMatrix();
+
+}
+
 function onWindowResize() {
 
-	const w = window.innerWidth;
-	const h = window.innerHeight;
+	let w = window.innerWidth;
+	let h = window.innerHeight;
 
 	renderer.setSize( w, h );
+
+	w *= renderer.getPixelRatio();
+	h *= renderer.getPixelRatio();
 
 	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
 
-	frontBuffer.setSize( w, h );
-	backBuffer.setSize( w, h );
+	currColorBuffer.setSize( w, h );
+	prevColorBuffer.setSize( w, h );
+	blendTarget.setSize( w, h );
 	velocityBuffer.setSize( w, h );
-	// frontDepth.setSize( w, h );
-	// backDepth.setSize( w, h );
-
-	// TODO: force rerender
 
 }
