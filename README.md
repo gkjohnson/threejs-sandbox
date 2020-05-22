@@ -7,6 +7,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Deferred Renderer
 - SSRR
 - Translucent material with refraction, diffusion, depth peeling
+  - gem refraction ([link 1](https://www.shadertoy.com/view/ltfXDM), [link 2](https://github.com/amsXYZ/three-multifaceted-refraction))
 - Bicubic filtering
 - use GLSL syntax parser for debugger
 - TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
