@@ -38,7 +38,7 @@ let rendererState;
 
 const params = {
 
-	blendOpacity: 1.0,
+	blendOpacity: 0.05,
 	autoRender: true,
 	rerender() {
 
@@ -107,10 +107,17 @@ const reprojectShader = {
 			float currDepth = texture2D( currDepthBuffer, vUv ).r;
 			float prevDepth = texture2D( prevDepthBuffer, prevUv ).r;
 
-			if ( prevDepth == 1.0 ) {
+			float alpha = 1.0;
+			if (
+				prevDepth >= 1.0 ||
+				prevDepth <= 0.0 ||
+				prevUv.x > 1.0 || prevUv.x < 0.0 ||
+				prevUv.y > 1.0 || prevUv.y < 0.0
+			) {
 
-				gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
-				return;
+				// gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
+				// return;
+				alpha = 0.0;
 
 			}
 
@@ -121,26 +128,25 @@ const reprojectShader = {
 				1.0
 			);
 			prevNdc = prevInvProjectionMatrix * prevNdc;
+			prevNdc /= prevNdc.w;
+
 			prevNdc = prevInvCameraMatrix * prevNdc;
 			prevNdc = currCameraMatrix * prevNdc;
+
 			prevNdc = currProjectionMatrix * prevNdc;
 			prevNdc /= prevNdc.w;
 
 			float reprojectedPrevDepth = ( prevNdc.z / 2.0 ) + 0.5;
 
-			float t = reprojectedPrevDepth >= currDepth ? 1.0 : 0.0;
+			float t = abs( reprojectedPrevDepth - currDepth ) < 1e-4 ? 1.0 : 0.0;
 
-
-			gl_FragColor = prevSample; // mix( prevSample, currSample, 0.5 );
-
-			// gl_FragColor = mix( vec4( 0.0 ), prevSample , t );
-
-			// gl_FragColor = vec4( prevDepth );
+			gl_FragColor = mix( currSample * opacity, prevSample , t * alpha );
 
 			// gl_FragColor = vec4(
 			// 	reprojectedPrevDepth < 0.99 ? 1.0 : 0.0,
+			// 	0.0,
 			// 	currDepth < 0.99 ? 1.0 : 0.0,
-			// 	0.0, 1.0 );
+			// 	1.0 );
 
 		}
 	`,
@@ -288,14 +294,14 @@ function render() {
 	reprojectQuad.material.uniforms.currProjectionMatrix.value.copy( camera.projectionMatrix );
 	reprojectQuad.material.uniforms.currCameraMatrix.value.copy( camera.matrixWorldInverse );
 
-	reprojectQuad.material.uniforms.opacity.value = params.opacity;
+	reprojectQuad.material.uniforms.opacity.value = params.blendOpacity;
 	reprojectQuad.material.uniforms.velocityBuffer.value = velocityBuffer.texture;
 
 	reprojectQuad.material.uniforms.currColorBuffer.value = currColorBuffer.texture;
 	reprojectQuad.material.uniforms.prevColorBuffer.value = prevColorBuffer.texture;
 
-	reprojectQuad.material.uniforms.prevDepthBuffer.value = currDepth;
-	reprojectQuad.material.uniforms.currDepthBuffer.value = prevDepth;
+	reprojectQuad.material.uniforms.currDepthBuffer.value = currDepth;
+	reprojectQuad.material.uniforms.prevDepthBuffer.value = prevDepth;
 
 	reprojectQuad.render( renderer );
 
