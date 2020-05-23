@@ -1,8 +1,8 @@
 # Ground Truth Ambient Occlusion
 
-# Use
+GTAO implementation based on Asylum Tutorials work [here](- https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/).
 
-TODO
+[Demo here](https://gkjohnson.github.io/gtaoPass/)
 
 # TODO
 
@@ -24,7 +24,6 @@ TODO
 
 **Features**
 - Control over which sample is displayed
-- Display full set of angles in a single pass
 
 # References
 
