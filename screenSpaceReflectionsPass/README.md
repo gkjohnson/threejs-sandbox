@@ -84,13 +84,15 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Resolve color using sibling pixels to improve detail. Should ray direction affect this? Should the values be flipped?
-- Use a different jitter technique such as Halton or Poisson disks.
+- Use a different jitter technique such as Halton or Poisson disks -- `rand( gl_FragCoord )` works too.
 - Understand how to render depth target mip pyramid.
 - Use mip LoDs for normals, color, depth? to blend the pixels
 - Provide a minimum thickness for potentially thin objects?
 - Add an option to only use a front side depth and a thickness because non water tight meshes will having streaming coming off like the helmet
 - Add alpha test clipping to the pass shaders so the leaves on the planters look correct
-- Performe a reuseable depth prepass to improve performance on all subsequent passes.
+- Add spatial denoising blur
+- Add temporal denoising
+- Perform a reuseable depth prepass to improve performance on all subsequent passes.
 - Add a max loop iteration and unroll loop to see if performance improves.
 
 ### Stretch

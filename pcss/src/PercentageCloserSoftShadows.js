@@ -5,7 +5,7 @@
 // TODO: Remove dependency on shadow texture size
 // TODO: Find a way to keep the contact shadows hard
 
-const poissonDefinitions = `
+const poissonDefinitions = /* glsl */`
 
 // Better poisson disk generation taken from another PCSS implmentation
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_shadowmap_pcss.html#L54
@@ -28,7 +28,7 @@ for( int i = 0; i < NUM_SAMPLES; i ++ ) {
 
 `;
 
-const functionDefinitions = `
+const functionDefinitions = /* glsl */`
 
 #define NEAR_PLANE .5
 uniform vec2 lightSize;
@@ -131,7 +131,7 @@ float getPCSSShadow(vec2 lightSize, sampler2D shadowMap, vec2 shadowMapSize, vec
 }
 `;
 
-const shadowLogic = `
+const shadowLogic = /* glsl */`
 shadow = getPCSSShadow(lightSize, shadowMap, shadowMapSize, shadowCoord);
 `;
 
@@ -142,7 +142,7 @@ THREE.ShaderChunk.shadowmap_pars_fragment =
 		.replace( /#if defined\( SHADOWMAP_TYPE_PCF \)(.|\n)*?#endif/, shadowLogic );
 
 
-THREE.ShaderChunk.lights_fragment_begin = `
+THREE.ShaderChunk.lights_fragment_begin = /* glsl */`
 GeometricContext geometry;
 geometry.position = - vViewPosition;
 geometry.normal = normal;
