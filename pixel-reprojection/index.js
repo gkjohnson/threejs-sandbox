@@ -11,7 +11,6 @@ import {
 	BoxBufferGeometry,
 	PlaneBufferGeometry,
 	MeshStandardMaterial,
-	Matrix4,
 	Mesh,
 	PCFSoftShadowMap,
 	NearestFilter,
@@ -20,9 +19,13 @@ import {
 	MeshBasicMaterial,
 	ShaderMaterial,
 	UnsignedIntType,
+	PMREMGenerator,
+	UnsignedByteType,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
+import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
 import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
@@ -38,9 +41,11 @@ let stats;
 
 const params = {
 
-	blendOpacity: 0.05,
+	baseOpacity: 0.05,
+	blendOpacity: 1.0,
 	autoRender: true,
 	accumulate: false,
+	display: 'cube',
 	rerender() {
 
 		updateColor();
@@ -48,6 +53,12 @@ const params = {
 	}
 
 };
+
+const models = {
+	helmet: null,
+	cube: null,
+};
+
 
 
 init();
@@ -105,7 +116,7 @@ function init() {
 		new PlaneBufferGeometry(),
 		new MeshStandardMaterial(),
 	);
-	ground.scale.setScalar( 50 );
+	ground.scale.setScalar( 10 );
 	ground.rotation.x = - Math.PI / 2;
 	ground.receiveShadow = true;
 	scene.add( ground );
@@ -118,6 +129,36 @@ function init() {
 	box.receiveShadow = true;
 	box.castShadow = true;
 	scene.add( box );
+
+	models.cube = box;
+
+	new GLTFLoader().load(
+		'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+		gltf => {
+
+			const roughnessMipmapper = new RoughnessMipmapper( renderer );
+
+			gltf.scene.traverse( function ( child ) {
+
+				if ( child.isMesh ) {
+
+					roughnessMipmapper.generateMipmaps( child.material );
+					child.castShadow = true;
+					child.receiveShadow = true;
+
+				}
+
+			} );
+
+			scene.add( gltf.scene );
+
+			roughnessMipmapper.dispose();
+
+			models.helmet = gltf.scene;
+			gltf.scene.position.y = 1;
+
+		}
+	);
 
 	const repreojectMaterial = new ShaderMaterial( ReprojectShader );
 	reprojectQuad = new Pass.FullScreenQuad( repreojectMaterial );
@@ -142,8 +183,10 @@ function init() {
 		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
 
 	} );
+	gui.add( params, 'baseOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 	gui.add( params, 'blendOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
-	gui.add( params, 'accumulate' );
+	// gui.add( params, 'accumulate' );
+	gui.add( params, 'display', Object.keys( models ) );
 	gui.add( params, 'rerender' );
 
 	gui.open();
@@ -164,6 +207,20 @@ function animate() {
 
 function render() {
 
+	// For some reason not having the cube render causes display webgl issues?
+	// specifically the velocity shader.
+	for ( const key in models ) {
+
+		const model = models[ key ];
+		if ( model ) {
+
+			model.scale.setScalar( key === params.display ? 1.0 : 0.0001 );
+			// model.visible = key === params.display;
+
+		}
+
+	}
+
 	stats.update();
 
 	// render color frame to colorBuffer with front depth
@@ -178,6 +235,7 @@ function render() {
 	velocityPass.replace( scene, true );
 	renderer.render( scene, camera );
 	velocityPass.reset( scene, true );
+	window.velocityPass = velocityPass;
 
 	// blend to blend target using color, prevColor, velocity, and both depth info
 	renderer.setRenderTarget( blendTarget );
@@ -194,7 +252,8 @@ function render() {
 	reprojectQuad.material.uniforms.currInvProjectionMatrix.value.getInverse( camera.projectionMatrix );
 	reprojectQuad.material.uniforms.currInvCameraMatrix.value.getInverse( camera.matrixWorldInverse );
 
-	reprojectQuad.material.uniforms.opacity.value = params.blendOpacity;
+	reprojectQuad.material.uniforms.blendOpacity.value = params.blendOpacity;
+	reprojectQuad.material.uniforms.baseOpacity.value = params.baseOpacity;
 	reprojectQuad.material.uniforms.velocityBuffer.value = velocityBuffer.texture;
 
 	reprojectQuad.material.uniforms.currColorBuffer.value = currColorBuffer.texture;
@@ -234,12 +293,6 @@ function updateColor() {
 	renderer.render( scene, camera );
 
 	velocityPass.updateTransforms();
-
-
-
-	// velocityPass.replace( scene, true );
-	// // // renderer.render( scene, camera );
-	// velocityPass.reset( scene, true );
 
 }
 

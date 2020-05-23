@@ -4,7 +4,8 @@ export const ReprojectShader = {
 
 	uniforms: {
 
-		opacity: { value: 1 },
+		blendOpacity: { value: 1 },
+		baseOpacity: { value: 1 },
 		velocityBuffer: { value: null },
 
 		prevColorBuffer: { value: null },
@@ -62,7 +63,8 @@ export const ReprojectShader = {
 		uniform mat4 currInvProjectionMatrix;
 		uniform mat4 currInvCameraMatrix;
 
-		uniform float opacity;
+		uniform float blendOpacity;
+		uniform float baseOpacity;
 		uniform vec2 resolution;
 
 		void main() {
@@ -134,8 +136,7 @@ export const ReprojectShader = {
 
 			float t = reprojectedCurrDepth < prevDepth + 2e-5 ? 1.0 : 0.0;
 
-
-			gl_FragColor = mix( currSample * opacity, prevSample , t * alpha );
+			gl_FragColor = mix( currSample * baseOpacity, prevSample , t * alpha * blendOpacity );
 
 			// gl_FragColor = vec4(
 			// 	reprojectedPrevDepth < 0.99 ? 1.0 : 0.0,

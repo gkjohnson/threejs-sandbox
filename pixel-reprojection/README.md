@@ -12,3 +12,5 @@ Example demonstrating pixel reprojection from a previous frame using velocity bu
 - Add jitter
 - use multiple samples
 - See Insides [TRAA](https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader example)
+- Add accumulated data over multiple frames
+- Make depth grab more precise to avoid pixels at edges of models getting data from behind.
