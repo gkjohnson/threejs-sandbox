@@ -1,4 +1,4 @@
-import { ShaderReplacement } from '../ShaderReplacement.js';
+import { ShaderReplacement, setMaterialDefine } from '../ShaderReplacement.js';
 import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
 export class NormalPass extends ShaderReplacement {
