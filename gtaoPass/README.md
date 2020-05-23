@@ -18,7 +18,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Performance
 - Memory
 - Clean up shader, add comments
-- Unroll loop in the GTAO shader
+- Unroll second loop in single pass GTAO shader
 - Try different mip map techniques for the depth pyramid
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 
