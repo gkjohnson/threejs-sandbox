@@ -2,7 +2,7 @@
 
 Set of experiments and extensions to THREE.js intended to eventually be contributed to the core library, examples folder, or moved into their own repo.
 
-## Upcoming Projects
+## Potential Projects
 
 - Deferred Renderer
 - SSRR
@@ -15,6 +15,7 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
 - Subsurface Scattering
 - SSDO
+- Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 
 **NEXT**
 - GTAO
