@@ -61,11 +61,15 @@
 			var stats;
 			var params = {
 				enabled: true,
+				singlePass: false,
+
+				fixedSample: - 1,
+
 				display: GTAOPass.DEFAULT,
 				depthLevel: -1,
 				renderTargetScale: 1.0,
 				noiseIntensity: 1.0,
-				scene: 'pyramid'
+				scene: 'pyramid',
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -96,13 +100,6 @@
 					}
 				);
 
-				sphere = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( 4, 50, 50 ),
-					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
-				);
-				sphere.castShadow = true;
-				sponzaGroup.add( sphere );
-
 				return sponzaGroup;
 
 			}
@@ -128,7 +125,7 @@
 
 						for ( let y = 0; y <= count; y ++ ) {
 
-							var sphere = new THREE.Mesh(
+							const sphere = new THREE.Mesh(
 								new THREE.SphereBufferGeometry( 1, 30, 30 ),
 								new THREE.MeshStandardMaterial( { color: 0x111111, roughness: 0.8 } )
 							);
@@ -145,64 +142,6 @@
 				}
 
 				group.scale.setScalar( 1 / 10 );
-
-				return group;
-
-			}
-
-			function createSphereScene() {
-
-				var group = new THREE.Group();
-
-				// sphere + mirror scene
-				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
-				plane.receiveShadow = true;
-				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.set( 2000, 2000, 0.1 );
-				plane.position.y = -4;
-				group.add( plane );
-
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
-					map.wrapS = THREE.RepeatWrapping;
-					map.wrapT = THREE.RepeatWrapping;
-					map.anisotropy = 4;
-					map.repeat.set( 50, 50 );
-					plane.material.roughnessMap = map;
-					plane.material.map = map;
-					plane.material.needsUpdate = true;
-				} );
-
-				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
-				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = -10;
-				group.add(sphere);
-
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = 0;
-				group.add(sphere);
-
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
-				sphere.castShadow = true;
-				sphere.receiveShadow = true;
-				sphere.position.x = 10;
-				group.add(sphere);
-
-				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0, side: THREE.DoubleSide, roughness: 0 }));
-				mirror.rotation.set( 0, 0, 0 );
-				mirror.scale.set(60, 20, 0.5);
-				mirror.position.y = -4;
-				mirror.position.z = -15;
-				group.add(mirror);
-
-				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
-				box.position.x = -20;
-				box.scale.set( 2, 10, 2 );
-				group.add(box);
 
 				return group;
 
@@ -226,7 +165,7 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				var standardMaterial = new THREE.MeshStandardMaterial( {
+				const standardMaterial = new THREE.MeshStandardMaterial( {
 					map: null,
 					color: 0xffffff,
 					metalness: 0.5,
@@ -236,22 +175,19 @@
 				// Lights
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
 
-				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 20, 200, 100 );
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 35, 200, 100 );
 				directionalLight.castShadow = true;
 
-				var shadowCam = directionalLight.shadow.camera;
+				const shadowCam = directionalLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -15;
 				shadowCam.right = shadowCam.top = 15;
 				directionalLight.shadow.mapSize.width = 2048;
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
 
-				var sponzaGroup = createSponza();
+				const sponzaGroup = createSponza();
 				scene.add( sponzaGroup );
-
-				var spheresScene = createSphereScene();
-				scene.add( spheresScene );
 
 				var pyramidScene = createBallPyramid();
 				scene.add( pyramidScene );
@@ -259,7 +195,6 @@
 				scenes = {
 					sponza: sponzaGroup,
 					pyramid: pyramidScene,
-					spheres: spheresScene,
 				};
 
 				// Render Pass Setup
@@ -296,7 +231,10 @@
 				gui.width = 300;
 
 				gui.add( params, 'enabled' );
-				gui.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.01 ).onChange( v => {
+				gui.add( params, 'singlePass' ).name( 'singlePass (slow)' );
+				gui.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
+
+				gui.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.05 ).onChange( v => {
 
 					gtaoPass.renderTargetScale = v;
 					onWindowResize();
@@ -309,11 +247,9 @@
 					NORMAL: GTAOPass.NORMAL,
 					AO_SAMPLE: GTAOPass.AO_SAMPLE,
 					AO_BLUR: GTAOPass.AO_BLUR,
-					AO_ACCUMULATED: GTAOPass.AO_ACCUMULATED,
-					ACCUMULATION: GTAOPass.ACCUMULATION,
 				} );
 				gui.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
-				gui.add( params, 'scene', [ 'sponza', 'spheres', 'pyramid' ] );
+				gui.add( params, 'scene', [ 'sponza', 'pyramid' ] );
 
 				gui.open();
 
@@ -354,7 +290,20 @@
 				gtaoPass.debug.depthLevel = params.depthLevel;
 				gtaoPass.noiseIntensity = params.noiseIntensity;
 				gtaoPass.enabled = params.enabled;
+				gtaoPass.singlePass = params.singlePass;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
+
+				if ( params.fixedSample === - 1 ) {
+
+					gtaoPass.fixedSample = false;
+
+				} else {
+
+					gtaoPass.fixedSample = true;
+					gtaoPass.sampleIndex = params.fixedSample;
+
+
+				}
 
 				composer.render();
 
