@@ -7,6 +7,7 @@ import {
 	PerspectiveCamera,
 	sRGBEncoding,
 	DirectionalLight,
+	AmbientLight,
 	BoxBufferGeometry,
 	PlaneBufferGeometry,
 	MeshStandardMaterial,
@@ -27,6 +28,7 @@ import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 import { RendererState } from './src/RendererState.js';
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
+import { ReprojectShader } from './src/ReprojectShader.js';
 
 let renderer, scene, camera, controls, prevCamMatrixWorld;
 let reprojectQuad, copyQuad;
@@ -40,6 +42,7 @@ const params = {
 
 	blendOpacity: 0.05,
 	autoRender: true,
+	accumulate: false,
 	rerender() {
 
 		updateColor();
@@ -48,113 +51,9 @@ const params = {
 
 };
 
-const reprojectShader = {
-
-	uniforms: {
-
-		opacity: { value: 1 },
-		velocityBuffer: { value: null },
-
-		prevColorBuffer: { value: null },
-		currColorBuffer: { value: null },
-
-		prevDepthBuffer: { value: null },
-		currDepthBuffer: { value: null },
-
-		prevInvProjectionMatrix: { value: new Matrix4() },
-		prevInvCameraMatrix: { value: new Matrix4() },
-
-		currProjectionMatrix: { value: new Matrix4() },
-		currCameraMatrix: { value: new Matrix4() },
-
-	},
-	vertexShader: /* glsl */`
-		varying vec2 vUv;
-		void main() {
-
-			#include <begin_vertex>
-			#include <project_vertex>
-			vUv = uv;
-
-		}
-	`,
-	fragmentShader: /* glsl */`
-		varying vec2 vUv;
-		uniform sampler2D velocityBuffer;
-
-		uniform sampler2D currColorBuffer;
-		uniform sampler2D prevColorBuffer;
-
-		uniform sampler2D prevDepthBuffer;
-		uniform sampler2D currDepthBuffer;
-
-		uniform mat4 prevInvProjectionMatrix;
-		uniform mat4 prevInvCameraMatrix;
-
-		uniform mat4 currProjectionMatrix;
-		uniform mat4 currCameraMatrix;
-
-		uniform float opacity;
-
-		void main() {
-
-			vec2 velocity = texture2D( velocityBuffer, vUv ).xy;
-			vec2 prevUv = vUv - velocity;
-
-			vec4 currSample = texture2D( currColorBuffer, vUv );
-			vec4 prevSample = texture2D( prevColorBuffer, prevUv );
-
-			float currDepth = texture2D( currDepthBuffer, vUv ).r;
-			float prevDepth = texture2D( prevDepthBuffer, prevUv ).r;
-
-			float alpha = 1.0;
-			if (
-				prevDepth >= 1.0 ||
-				prevDepth <= 0.0 ||
-				prevUv.x > 1.0 || prevUv.x < 0.0 ||
-				prevUv.y > 1.0 || prevUv.y < 0.0
-			) {
-
-				// gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
-				// return;
-				alpha = 0.0;
-
-			}
-
-			vec4 prevNdc = vec4(
-				( prevUv.x - 0.5 ) * 2.0,
-				( prevUv.y - 0.5 ) * 2.0,
-				( prevDepth - 0.5 ) * 2.0,
-				1.0
-			);
-			prevNdc = prevInvProjectionMatrix * prevNdc;
-			prevNdc /= prevNdc.w;
-
-			prevNdc = prevInvCameraMatrix * prevNdc;
-			prevNdc = currCameraMatrix * prevNdc;
-
-			prevNdc = currProjectionMatrix * prevNdc;
-			prevNdc /= prevNdc.w;
-
-			float reprojectedPrevDepth = ( prevNdc.z / 2.0 ) + 0.5;
-
-			float t = abs( reprojectedPrevDepth - currDepth ) < 1e-4 ? 1.0 : 0.0;
-
-			gl_FragColor = mix( currSample * opacity, prevSample , t * alpha );
-
-			// gl_FragColor = vec4(
-			// 	reprojectedPrevDepth < 0.99 ? 1.0 : 0.0,
-			// 	0.0,
-			// 	currDepth < 0.99 ? 1.0 : 0.0,
-			// 	1.0 );
-
-		}
-	`,
-
-};
 
 init();
-render();
+animate();
 
 function init() {
 
@@ -168,20 +67,14 @@ function init() {
 	rendererState = new RendererState();
 
 	currColorBuffer = new WebGLRenderTarget( 1, 1, {
-		minFilter: NearestFilter,
-		magFilter: NearestFilter,
 		format: RGBFormat,
 	} );
 
 	prevColorBuffer = new WebGLRenderTarget( 1, 1, {
-		minFilter: NearestFilter,
-		magFilter: NearestFilter,
 		format: RGBFormat,
 	} );
 
 	blendTarget = new WebGLRenderTarget( 1, 1, {
-		minFilter: NearestFilter,
-		magFilter: NearestFilter,
 		format: RGBFormat,
 	} );
 
@@ -209,8 +102,10 @@ function init() {
 	directionalLight.position.set( 25, 30, - 35 );
 	directionalLight.castShadow = true;
 	directionalLight.shadow.mapSize.set( 1024, 1024 );
-
 	scene.add( directionalLight );
+
+	const ambientLight = new AmbientLight( 0xffffff, 0.3 );
+	scene.add( ambientLight );
 
 	const ground = new Mesh(
 		new PlaneBufferGeometry(),
@@ -230,7 +125,7 @@ function init() {
 	box.castShadow = true;
 	scene.add( box );
 
-	const repreojectMaterial = new ShaderMaterial( reprojectShader );
+	const repreojectMaterial = new ShaderMaterial( ReprojectShader );
 	reprojectQuad = new Pass.FullScreenQuad( repreojectMaterial );
 
 	const copyMaterial = new MeshBasicMaterial();
@@ -247,13 +142,14 @@ function init() {
 
 	gui.add( params, 'autoRender' ).onChange( () => {
 
-		velocityPass.updateCameraMatrix();
+		velocityPass.updateTransforms();
 
 		[ prevColorBuffer, currColorBuffer ] = [ currColorBuffer, prevColorBuffer ];
 		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
 
 	} );
 	gui.add( params, 'blendOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
+	gui.add( params, 'accumulate' );
 	gui.add( params, 'rerender' );
 
 	gui.open();
@@ -265,9 +161,15 @@ function init() {
 
 }
 
+function animate() {
+
+	requestAnimationFrame( animate );
+	render();
+
+}
+
 function render() {
 
-	requestAnimationFrame( render );
 	stats.update();
 
 	// render color frame to colorBuffer with front depth
@@ -278,21 +180,31 @@ function render() {
 	// render velocity frame
 	renderer.setRenderTarget( velocityBuffer );
 
-	rendererState.copy( renderer, scene );
-	velocityPass.autoUpdateCameraMatrix = params.autoRender;
+	velocityPass.autoUpdate = false;
 	velocityPass.replace( scene, true );
 	renderer.render( scene, camera );
 	velocityPass.reset( scene, true );
-	rendererState.apply( renderer, scene );
+
+	if ( params.autoRender ) {
+
+		// velocityPass.updateTransforms();
+
+	}
 
 	// blend to front buffer using color, velocity, back buffer, and both depth info
 	renderer.setRenderTarget( blendTarget );
 
-	reprojectQuad.material.uniforms.prevInvProjectionMatrix.value.getInverse( velocityPass.prevProjectionMatrix );
-	reprojectQuad.material.uniforms.prevInvCameraMatrix.value.getInverse( velocityPass.prevViewMatrix );
+	// reprojectQuad.material.uniforms.prevInvProjectionMatrix.value.getInverse( velocityPass.prevProjectionMatrix );
+	// reprojectQuad.material.uniforms.prevInvCameraMatrix.value.getInverse( velocityPass.prevViewMatrix );
 
-	reprojectQuad.material.uniforms.currProjectionMatrix.value.copy( camera.projectionMatrix );
-	reprojectQuad.material.uniforms.currCameraMatrix.value.copy( camera.matrixWorldInverse );
+	// reprojectQuad.material.uniforms.currProjectionMatrix.value.copy( camera.projectionMatrix );
+	// reprojectQuad.material.uniforms.currCameraMatrix.value.copy( camera.matrixWorldInverse );
+
+	reprojectQuad.material.uniforms.prevProjectionMatrix.value.copy( velocityPass.prevProjectionMatrix );
+	reprojectQuad.material.uniforms.prevCameraMatrix.value.copy( velocityPass.prevViewMatrix );
+
+	reprojectQuad.material.uniforms.currInvProjectionMatrix.value.getInverse( camera.projectionMatrix );
+	reprojectQuad.material.uniforms.currInvCameraMatrix.value.getInverse( camera.matrixWorldInverse );
 
 	reprojectQuad.material.uniforms.opacity.value = params.blendOpacity;
 	reprojectQuad.material.uniforms.velocityBuffer.value = velocityBuffer.texture;
@@ -302,6 +214,8 @@ function render() {
 
 	reprojectQuad.material.uniforms.currDepthBuffer.value = currDepth;
 	reprojectQuad.material.uniforms.prevDepthBuffer.value = prevDepth;
+
+	renderer.getSize( reprojectQuad.material.uniforms.resolution.value );
 
 	reprojectQuad.render( renderer );
 
@@ -318,6 +232,8 @@ function render() {
 		// swap front and back depth
 		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
 
+		velocityPass.updateTransforms();
+
 	}
 
 }
@@ -329,7 +245,13 @@ function updateColor() {
 	renderer.setRenderTarget( prevColorBuffer );
 	renderer.render( scene, camera );
 
-	velocityPass.updateCameraMatrix();
+	velocityPass.updateTransforms();
+
+
+
+	// velocityPass.replace( scene, true );
+	// // // renderer.render( scene, camera );
+	// velocityPass.reset( scene, true );
 
 }
 

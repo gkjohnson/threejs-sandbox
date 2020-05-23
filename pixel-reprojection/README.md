@@ -10,3 +10,5 @@ Example demonstrating pixel reprojection from a previous frame.
 - Fix data oddity when zooming out
 - Fix depth comparison (scale delta based on curr z because depth is 1 / z) -- possibly why we get weird curvy artifacts?
 - Fix velocity "pop" on rerender click
+- Add jitter
+- use multiple samples
