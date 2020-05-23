@@ -26,17 +26,15 @@ import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass
 import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-import { RendererState } from './src/RendererState.js';
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
 import { ReprojectShader } from './src/ReprojectShader.js';
 
-let renderer, scene, camera, controls, prevCamMatrixWorld;
+let renderer, scene, camera, controls;
 let reprojectQuad, copyQuad;
 let prevColorBuffer, blendTarget, currColorBuffer, velocityBuffer;
 let currDepth, prevDepth;
 let velocityPass;
 let stats;
-let rendererState;
 
 const params = {
 
@@ -63,8 +61,6 @@ function init() {
 	renderer.shadowMap.type = PCFSoftShadowMap;
 	renderer.outputEncoding = sRGBEncoding;
 	document.body.appendChild(renderer.domElement);
-
-	rendererState = new RendererState();
 
 	currColorBuffer = new WebGLRenderTarget( 1, 1, {
 		format: RGBFormat,
@@ -93,8 +89,6 @@ function init() {
 
 	camera = new PerspectiveCamera( 40, 1, 0.1, 200 );
 	camera.position.set( 4, 4, - 10 );
-
-	prevCamMatrixWorld = new Matrix4();
 
 	controls = new OrbitControls( camera, renderer.domElement );
 
@@ -185,13 +179,7 @@ function render() {
 	renderer.render( scene, camera );
 	velocityPass.reset( scene, true );
 
-	if ( params.autoRender ) {
-
-		// velocityPass.updateTransforms();
-
-	}
-
-	// blend to front buffer using color, velocity, back buffer, and both depth info
+	// blend to blend target using color, prevColor, velocity, and both depth info
 	renderer.setRenderTarget( blendTarget );
 
 	// reprojectQuad.material.uniforms.prevInvProjectionMatrix.value.getInverse( velocityPass.prevProjectionMatrix );
