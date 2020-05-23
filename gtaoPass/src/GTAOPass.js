@@ -107,7 +107,7 @@ export class GTAOPass extends Pass {
 			/* glsl */`
 			float depth = 0.0;
 
-			#pragma unroll_loop
+			#pragma unroll_loop_start
 			for ( int i = 0; i < SAMPLES; i ++ ) {
 
 				float sample = samples[ i ].r;
@@ -121,6 +121,7 @@ export class GTAOPass extends Pass {
 				}
 
 			}
+			#pragma unroll_loop_end
 
 			gl_FragColor = vec4( depth );
 
