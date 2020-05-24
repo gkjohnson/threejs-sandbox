@@ -6,9 +6,6 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 
 # TODO
 
-**Other**
-- The pyramid atlas seems to be bleeding
-
 **Noise**
 - Add a depth aware blur
 - Add a spatial denoising blur
