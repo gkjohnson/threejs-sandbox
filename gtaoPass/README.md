@@ -2,7 +2,7 @@
 
 GTAO implementation based on Asylum Tutorials work [here](https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/).
 
-[Demo here](https://gkjohnson.github.io/gtaoPass/)
+[Demo here](https://gkjohnson.github.io/threejs-sandbox/gtaoPass/)
 
 # TODO
 
