@@ -265,7 +265,9 @@
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
-				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				
+				const pixelRatio = window.devicePixelRatio;
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
 
 			}
 
