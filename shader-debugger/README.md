@@ -1,6 +1,6 @@
 # Shader Debugger
 
-A wrapper for WebGLRenderer intended to help with debugging and reading data from shaders.
+A hacky wrapper with some fancy regex for WebGLRenderer intended to help with debugging and reading data from shaders.
 
 ![](./images/screenshot.png)
 
