@@ -280,6 +280,8 @@ function render() {
 
 	}
 
+	// Accumulate depends on changing the depth buffer see mrdoob/three.js#19447
+
 }
 
 function updateColor() {
