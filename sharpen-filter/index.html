@@ -142,18 +142,19 @@
 
 			function onWindowResize() {
 
-				var width = window.innerWidth;
-				var height = window.innerHeight;
+				let width = window.innerWidth;
+				let height = window.innerHeight;
 
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
-				fxaaPass.uniforms.resolution.value.set( 1 / width, 1 / height );
-				sharpenPass.uniforms.resolution.value.set( 1 / width, 1 / height );
+				
+				const pixelRatio = window.devicePixelRatio;
+				fxaaPass.uniforms.resolution.value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
+				sharpenPass.uniforms.resolution.value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
 
-				console.log(sharpenPass)
 			}
 
 			function animate() {
