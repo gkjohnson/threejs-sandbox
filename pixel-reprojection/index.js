@@ -19,14 +19,12 @@ import {
 	MeshBasicMaterial,
 	ShaderMaterial,
 	UnsignedIntType,
-	PMREMGenerator,
-	UnsignedByteType,
-} from '//unpkg.com/three@0.116.1/build/three.module.js';
-import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
-import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+} from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
 import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
-import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
@@ -133,7 +131,7 @@ function init() {
 	models.cube = box;
 
 	new GLTFLoader().load(
-		'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+		'https://rawgit.com/mrdoob/three.js/master/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf',
 		gltf => {
 
 			const roughnessMipmapper = new RoughnessMipmapper( renderer );
@@ -214,8 +212,7 @@ function render() {
 		const model = models[ key ];
 		if ( model ) {
 
-			model.scale.setScalar( key === params.display ? 1.0 : 0.0001 );
-			// model.visible = key === params.display;
+			model.visible = key === params.display;
 
 		}
 
