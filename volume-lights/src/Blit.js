@@ -4,7 +4,7 @@ import {
 	Mesh,
 	PlaneBufferGeometry,
 	ShaderMaterial,
-} from '//unpkg.com/three@0.112.0/build/three.module.js';
+} from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export const blit = ( function() {
 
