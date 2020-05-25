@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - textures - sharpen filter</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Sharpen Filter by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { FXAAShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { UnsharpMaskShader } from './src/UnsharpMaskShader.js';
+
+			// globals
+			var stats;
+			var params = {
+				enabled: true,
+				intensity: 1,
+				size: 1,
+				blurType: 'GAUSSIAN_BLUR',
+			};
+			var camera, scene, renderer, controls;
+			var composer, fxaaPass, sharpenPass, gammaPass, renderPass;
+			var plane;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 2000 );
+				camera.position.set( 0.0, 0.5, 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0d0912 ).convertSRGBToLinear();
+				console.log(scene.background)
+
+				new THREE.TextureLoader().load('../custom-mipmap-generation/images/voyager-record-cover.jpg', texture => {
+
+					plane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					plane.material.side = THREE.DoubleSide;
+					plane.material.map = texture;
+					texture.encoding = THREE.sRGBEncoding;
+					scene.add( plane );
+
+				} );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+
+				sharpenPass = new ShaderPass( UnsharpMaskShader );
+
+				composer = new EffectComposer( renderer, new THREE.WebGLRenderTarget( 1, 1, { type: THREE.HalfFloatType }) );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.addPass( renderPass );
+				composer.addPass( sharpenPass );
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
+
+				document.body.appendChild( renderer.domElement );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.add( params, 'enabled' );
+				gui.add( params, 'intensity' ).min( 0 ).max( 25 ).step( 0.1 );
+				gui.add( params, 'size' ).min( 0 ).max( 4 ).step( 0.1 );
+				gui.add( params, 'blurType', [ 'GAUSSIAN_BLUR', 'BOX_BLUR', 'CROSS_BLUR', 'DIAGONAL_BLUR' ] ).onChange( field => {
+
+					const material = sharpenPass.material;
+					const defines = material.defines;
+
+					for ( const key in defines ) {
+
+						defines[ key ] = 0;
+
+					}
+					defines[ field ] = 1;
+					material.needsUpdate = true;
+
+				});
+				gui.width = 300;
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+				fxaaPass.uniforms.resolution.value.set( 1 / width, 1 / height );
+				sharpenPass.uniforms.resolution.value.set( 1 / width, 1 / height );
+
+				console.log(sharpenPass)
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				sharpenPass.uniforms.intensity.value = params.intensity;
+				sharpenPass.uniforms.size.value = params.size;
+				sharpenPass.enabled = params.enabled;
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

@@ -102,7 +102,6 @@
 
 						void main() {
 
-							gl_FragColor = texture2DLodEXT( map, vUv, level );
 							gl_FragColor = textureBicubicLOD( map, vUv, mapSize, level );
 
 						}
