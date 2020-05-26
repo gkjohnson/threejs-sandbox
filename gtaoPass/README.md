@@ -22,6 +22,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 **Features**
 - Variable sample count for perf
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
+- See toystory presentation on sample reuse.
 
 # References
 
