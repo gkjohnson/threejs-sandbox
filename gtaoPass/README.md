@@ -19,6 +19,10 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Try different mip map techniques for the depth pyramid
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 
+**Features**
+- Variable sample count
+- Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
+
 # References
 
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/main.cpp
