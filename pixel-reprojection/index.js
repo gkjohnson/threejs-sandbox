@@ -301,6 +301,7 @@ function onWindowResize() {
 	let h = window.innerHeight;
 
 	renderer.setSize( w, h );
+	composer.setPixelRatio( window.devicePixelRatio );
 
 	w *= renderer.getPixelRatio();
 	h *= renderer.getPixelRatio();
