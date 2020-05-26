@@ -160,6 +160,7 @@
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( drawThoughPass );
 				composer.addPass( pixelOutlinePass );
@@ -188,16 +189,20 @@
 
 			function onWindowResize() {
 
-				var width = window.innerWidth;
-				var height = window.innerHeight;
-
+				const width = window.innerWidth;
+				const height = window.innerHeight;
+				const pixelRatio = window.devicePixelRatio;
+				
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
 
 				composer.setSize( width, height );
-				renderer.setSize( width, height );
+				composer.setPixelRatio( pixelRatio );
 
-				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / width, 1 / height );
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( pixelRatio );
+
+				fxaaPass.uniforms.resolution.value.set( 1 / ( width * pixelRatio ), 1 / ( height * pixelRatio ) );
 				line.material.resolution.set( width, height );
 
 			}
