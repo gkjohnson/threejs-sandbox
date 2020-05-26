@@ -20,7 +20,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 
 **Features**
-- Variable sample count
+- Variable sample count for perf
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 
 # References
