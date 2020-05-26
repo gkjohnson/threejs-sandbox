@@ -104,6 +104,7 @@
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( colorBlindPass );
 				composer.addPass( gammaPass );
@@ -141,7 +142,10 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				
 				composer.setSize( width, height );
+				composer.setPixelRatio( window.devicePixelRatio );
 
 			}
 
