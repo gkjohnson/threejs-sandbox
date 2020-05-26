@@ -144,14 +144,17 @@
 
 				let width = window.innerWidth;
 				let height = window.innerHeight;
+				const pixelRatio = window.devicePixelRatio;
 
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
-				composer.setSize( width, height );
+				renderer.setPixelRatio( pixelRatio );
 				
-				const pixelRatio = window.devicePixelRatio;
+				composer.setSize( width, height );
+				composer.setPixelRatio( pixelRatio );
+
 				fxaaPass.uniforms.resolution.value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
 				sharpenPass.uniforms.resolution.value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
 
