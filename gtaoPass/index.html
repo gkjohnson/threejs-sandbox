@@ -210,6 +210,7 @@
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( gtaoPass );
 				composer.addPass( fxaaPass );
@@ -263,10 +264,13 @@
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( width, height );
-				composer.setSize( width, height );
-				
 				const pixelRatio = window.devicePixelRatio;
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( pixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( pixelRatio );
+
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
 
 			}
