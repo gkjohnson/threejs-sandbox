@@ -1,4 +1,4 @@
-import { ShaderReplacement } from '../ShaderReplacement.js';
+import { ShaderReplacement, setMaterialDefine } from '../ShaderReplacement.js';
 import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
 export class NormalPass extends ShaderReplacement {
@@ -45,7 +45,7 @@ export class NormalPass extends ShaderReplacement {
 				#include <logdepthbuf_pars_fragment>
 				#include <clipping_planes_pars_fragment>
 				void main() {
-					vec4 diffuse = vec4( 0.0, 0.0, 0.0, opacity );
+					vec4 diffuseColor = vec4( 0.0, 0.0, 0.0, opacity );
 					#include <clipping_planes_fragment>
 					#include <logdepthbuf_fragment>
 					#include <map_fragment>
@@ -67,7 +67,7 @@ export class NormalPass extends ShaderReplacement {
 		// TODO: Handle object space normal map
 		// TODO: Handle displacement map
 
-		const originalDefine = target.defines.USE_NORMALMAP;
+		let originalDefine = target.defines.USE_NORMALMAP;
 		if ( ! target.uniforms.map.value ) {
 
 			delete target.defines.USE_NORMALMAP;

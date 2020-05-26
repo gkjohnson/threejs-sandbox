@@ -14,16 +14,19 @@ export class VelocityPass extends ShaderReplacement {
 		this.prevViewMatrix = new Matrix4();
 		this.prevInfo = new Map();
 		this.lastFrame = 0;
+		this.autoUpdate = true;
 
 	}
 
 	replace( ...args ) {
 
+		// NOTE: As it is this can only really be used for one scene because of how this frame
+		// index works. Instead we'll need a different frame id per scene.
 		this.lastFrame ++;
 
-		const camera = this.camera;
 		if ( ! this.initialized || ! this.includeCameraVelocity ) {
 
+			const camera = this.camera;
 			this.prevProjectionMatrix.copy( camera.projectionMatrix );
 			this.prevViewMatrix.copy( camera.matrixWorldInverse );
 			this.initialized = true;
@@ -32,6 +35,24 @@ export class VelocityPass extends ShaderReplacement {
 
 		super.replace( ...args );
 
+	}
+
+	reset( ...args ) {
+
+		super.reset( ...args );
+
+		// NOTE: We expect that the camera and object transforms are all up to date here so we can cache them for the next frame.
+		if ( this.autoUpdate ) {
+
+			this.updateTransforms();
+
+		}
+
+	}
+
+	updateTransforms() {
+
+		const camera = this.camera;
 		this.prevProjectionMatrix.copy( camera.projectionMatrix );
 		this.prevViewMatrix.copy( camera.matrixWorldInverse );
 
@@ -50,7 +71,7 @@ export class VelocityPass extends ShaderReplacement {
 
 			} else {
 
-				info.modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, object.matrixWorld );
+				info.modelViewMatrix.multiplyMatrices( this.prevViewMatrix, object.matrixWorld );
 
 				if ( info.boneMatrices ) {
 
@@ -73,14 +94,13 @@ export class VelocityPass extends ShaderReplacement {
 		// TODO: Handle displacement map
 
 		const prevInfo = this.prevInfo;
-		const camera = this.camera;
 		let info;
 		if ( ! prevInfo.has( object ) ) {
 
 			info = {
 
 				lastFrame: this.lastFrame,
-				modelViewMatrix: new Matrix4().multiplyMatrices( camera.matrixWorldInverse, object.matrixWorld ),
+				modelViewMatrix: new Matrix4().multiplyMatrices( this.prevViewMatrix, object.matrixWorld ),
 				boneMatrices: null,
 				boneTexture: null,
 

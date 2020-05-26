@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - textures - bicubic texture filtering</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Bicubic Texture Filtering by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Example of Bicubic texture filtering using technique from <a href="https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl">here</a>.
+
+			<br/>
+
+			Nearest filtering, linear filtering, cubic filtering
+
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { bicubicShaderFunctions } from './src/bicubicShaderFunctions.js';
+
+			// globals
+			var stats;
+			var params = {
+				mipLevel: 0,
+			};
+			var camera, scene, renderer, controls;
+			var nearestPlane, linearPlane, cubicPlane;
+
+			init();
+			animate();
+
+			// TODO: Make this work
+			function getCubicShader() {
+
+				return {
+
+					extensions: {
+
+						shaderTextureLOD: true
+
+					},
+
+					uniforms: {
+
+						map: { value: null },
+						mapSize: { value: new THREE.Vector2() },
+						level: { value: 0 },
+
+					},
+
+					vertexShader: /* glsl */`
+						varying vec2 vUv;
+						void main() {
+
+							#include <begin_vertex>
+							#include <project_vertex>
+							vUv = uv;
+
+						}
+					`,
+
+					fragmentShader: /* glsl */`
+						varying vec2 vUv;
+						uniform sampler2D map;
+						uniform vec2 mapSize;
+						uniform float level;
+
+						${ bicubicShaderFunctions }
+
+						void main() {
+
+							gl_FragColor = textureBicubicLOD( map, vUv, mapSize, level );
+
+						}
+					`,
+
+				};
+			}
+
+			function getMipShader() {
+
+				return {
+
+					extensions: {
+
+						shaderTextureLOD: true
+
+					},
+
+					uniforms: {
+						map: { value: null },
+						level: { value: 0 },
+					},
+
+					vertexShader: /* glsl */`
+						varying vec2 vUv;
+						void main() {
+
+							#include <begin_vertex>
+							#include <project_vertex>
+							vUv = uv;
+
+						}
+					`,
+
+					fragmentShader: /* glsl */`
+						varying vec2 vUv;
+						uniform sampler2D map;
+						uniform float level;
+
+						void main() {
+
+							gl_FragColor = texture2DLodEXT( map, vUv, level );
+
+						}
+					`,
+
+				}
+
+			}
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 2000 );
+				camera.position.set( 0.0, 2, 2 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0d0912 );
+
+				new THREE.TextureLoader().load('../custom-mipmap-generation/images/voyager-record-cover.jpg', nearestTexture => {
+
+					nearestTexture.minFilter = THREE.NearestMipmapNearestFilter;
+					nearestTexture.magFilter = THREE.NearestFilter;
+					nearestTexture.needsUpdate = true;
+
+					nearestPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					nearestPlane.material = new THREE.ShaderMaterial( getMipShader() );
+					nearestPlane.material.side = THREE.DoubleSide;
+					nearestPlane.material.uniforms.map.value = nearestTexture;
+					nearestPlane.position.x = - 1.1;
+					scene.add( nearestPlane );
+
+				} );
+
+				new THREE.TextureLoader().load('../custom-mipmap-generation/images/voyager-record-cover.jpg', linearTexture => {
+
+					linearTexture.minFilter = THREE.LinearMipmapNearestFilter;
+					linearTexture.magFilter = THREE.LinearFilter;
+
+					linearPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					linearPlane.material = new THREE.ShaderMaterial( getMipShader() );
+					linearPlane.material.side = THREE.DoubleSide;
+					linearPlane.material.uniforms.map.value = linearTexture;
+					scene.add( linearPlane );
+
+					cubicPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					cubicPlane.material = new THREE.ShaderMaterial( getCubicShader() );
+					cubicPlane.material.side = THREE.DoubleSide;
+					cubicPlane.material.uniforms.map.value = linearTexture;
+					cubicPlane.position.x = 1.1;
+					scene.add( cubicPlane );
+
+				} );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.add( params, 'mipLevel' ).min( 0 ).max( 15 ).step( 1 );
+				gui.width = 300;
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				if ( nearestPlane ) {
+
+					nearestPlane.material.uniforms.level.value = params.mipLevel;
+					linearPlane.material.uniforms.level.value = params.mipLevel;
+
+
+					const ogWidth = 2048;
+					const level = params.mipLevel;
+					const newWidth = Math.max( 2048 >> level, 1 );
+					cubicPlane.material.uniforms.level.value = params.mipLevel;
+					cubicPlane.material.uniforms.mapSize.value.setScalar( newWidth );
+
+
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - postprocessing - screen-space raytraced reflections</title>
+		<title>threejs webgl - shader replacement</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -60,7 +60,7 @@
 			// globals
 			var stats;
 			var params = {
-				useReplacementShader: true,
+				shaderReplacement: true,
 				display: 'DEFAULT',
 				model: 'damagedHelmet'
 			};
@@ -200,7 +200,7 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'useReplacementShader' );
+				gui.add( params, 'shaderReplacement' );
 
 				gui.add( params, 'display', [
 					'DEFAULT',
@@ -370,6 +370,7 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
 
 			}
 
@@ -417,7 +418,7 @@
 				if ( replacer ) {
 
 					scene.background = null;
-					if ( params.useReplacementShader ) {
+					if ( params.shaderReplacement ) {
 
 						replacer.replace( scene, true );
 
@@ -434,7 +435,7 @@
 				if ( replacer ) {
 
 					scene.background = ogBackground;
-					if ( params.useReplacementShader ) {
+					if ( params.shaderReplacement ) {
 
 						replacer.reset( scene, true );
 

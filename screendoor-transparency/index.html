@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - Screendoor Transparency</title>
+		<title>threejs webgl - screendoor transparency</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -222,6 +222,7 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
 
 			}
 
@@ -255,7 +256,8 @@
 
 				}
 
-				directionalLight.shadow.radius = params.shadowRadius;
+				// directionalLight.shadow.radius = params.shadowRadius;
+				window.dl = directionalLight;
 
 				// update the sphere textures
 				spheres.forEach(s => s.material = params.useScreendoor ? s._ditherMat : s._transparentMat);

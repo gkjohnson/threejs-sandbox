@@ -108,6 +108,10 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### References
 
+- https://github.com/Domenicobrz/WebGL2-Screen-space-reflections
+
+- https://lettier.github.io/3d-game-shaders-for-beginners/screen-space-reflection.html
+
 - http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
 
 - https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs

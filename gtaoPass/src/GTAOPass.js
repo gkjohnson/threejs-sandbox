@@ -107,7 +107,7 @@ export class GTAOPass extends Pass {
 			/* glsl */`
 			float depth = 0.0;
 
-			#pragma unroll_loop
+			#pragma unroll_loop_start
 			for ( int i = 0; i < SAMPLES; i ++ ) {
 
 				float sample = samples[ i ].r;
@@ -121,6 +121,7 @@ export class GTAOPass extends Pass {
 				}
 
 			}
+			#pragma unroll_loop_end
 
 			gl_FragColor = vec4( depth );
 
@@ -157,14 +158,17 @@ export class GTAOPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		const sampleIndex = this.sampleIndex;
-
 		if ( ! this.fixedSample ) {
 
-			this.sampleIndex = ( sampleIndex + 1 ) % 6;
+			this.sampleIndex = ( this.sampleIndex + 1 ) % 6;
+
+		} else {
+
+			this.sampleIndex = this.sampleIndex % 6;
 
 		}
 
+		const sampleIndex = this.sampleIndex;
 		const scene = this.scene;
 		const camera = this.camera;
 		const debug = this.debug;
@@ -353,5 +357,3 @@ GTAOPass.DEPTH_PYRAMID = 1;
 GTAOPass.NORMAL = 2;
 GTAOPass.AO_SAMPLE = 3;
 GTAOPass.AO_BLUR = 3;
-GTAOPass.AO_ACCUMULATED = 4;
-GTAOPass.ACCUMULATION = 5;

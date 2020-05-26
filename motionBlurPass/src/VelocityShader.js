@@ -69,6 +69,9 @@ export const VelocityShader = {
 			varying vec4 newPosition;
 
 			void main() {
+
+				// NOTE: It seems the velociyt is incorrectly calculated here -- see the velocity pass
+				// in shader replacement to see how to compute velocities in screen uv space.
 				vec3 vel;
 				vel = (newPosition.xyz / newPosition.w) - (prevPosition.xyz / prevPosition.w);
 

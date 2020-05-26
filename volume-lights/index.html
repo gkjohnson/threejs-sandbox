@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - Source Film Maker Loader</title>
+		<title>threejs webgl - iterative volumetric lights</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -13,7 +13,7 @@
 				font-family: Monospace;
 				font-size: 13px;
 				text-align: center;
-				color: #fff;
+				color: #023;
 			}
 
 			a {
@@ -36,11 +36,13 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
-			import { FBXLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/FBXLoader.js';
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { FBXLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/FBXLoader.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/GLTFLoader.js';
+			import { TransformControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/TransformControls.js';
 
-			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { MeshLight } from './src/VolumeLight.js'
@@ -67,8 +69,8 @@
 			};
 			var camera, scene, renderer, controls;
 			var volumeLight, directionalLight, ambientLight;
-			var plane;
 			var currentFrameBuffer, blendedFrameBuffer, prevFrameBuffer, initialFrameBuffer;
+			var transformControls;
 			let clock;
 
 			var blendMat = getBlendMaterial();
@@ -124,14 +126,21 @@
 				volumeLight.updateLights();
 				scene.add( volumeLight );
 
-				ambientLight = new THREE.AmbientLight( 0xffffff, 0.05 );
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
 				scene.add( ambientLight );
 
-				plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial( { roughness: 0.025 } ) );
-				plane.rotation.x = -Math.PI / 2;
-				plane.scale.set( 500, 500, 500 );
-				plane.receiveShadow = true;
-				scene.add(plane);
+				// plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshStandardMaterial( { roughness: 0.025 } ) );
+				// plane.rotation.x = -Math.PI / 2;
+				// plane.scale.set( 500, 500, 500 );
+				// plane.receiveShadow = true;
+				// // scene.add(plane);
+
+
+				var env = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { roughness: 0.1, side: 1 } ) );
+				env.scale.set( 150, 50, 150 );
+				env.position.y = env.scale.y / 2;
+				env.receiveShadow = true;
+				scene.add( env );
 
 				var mesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 1, 10, 1 ), new THREE.MeshStandardMaterial() );
 				mesh.castShadow = true;
@@ -148,14 +157,29 @@
 				mesh2.rotation.y = Math.PI / 2;
 				scene.add( mesh2 );
 
-				new FBXLoader().load( 'https://rawgit.com/mrdoob/three.js/r112/examples/models/fbx/stanford-bunny.fbx', obj => {
+				// new FBXLoader().load( 'https://rawgit.com/mrdoob/three.js/r113/examples/models/fbx/stanford-bunny.fbx', obj => {
 
-					scene.add( obj );
-					obj.scale.multiplyScalar( 0.00025 );
-					obj.position.y += 6;
-					obj.children[ 0 ].castShadow = true;
-					obj.children[ 0 ].receiveShadow = true;
-					obj.children[ 0 ].material = new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0.5, metalness: 0.1 });
+				// 	scene.add( obj );
+				// 	obj.scale.multiplyScalar( 0.00025 );
+				// 	obj.position.y += 6;
+				// 	obj.children[ 0 ].castShadow = true;
+				// 	obj.children[ 0 ].receiveShadow = true;
+				// 	obj.children[ 0 ].material = new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0.5, metalness: 0.1 });
+				// 	volumeLight.iteration = 0;
+
+				// } );
+
+				new GLTFLoader().load( 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf', gltf => {
+
+					scene.add( gltf.scene );
+					gltf.scene.traverse( c => {
+
+						c.castShadow = true;
+						c.receiveShadow = true;
+
+					} );
+					gltf.scene.rotation.y = Math.PI / 10;
+					gltf.scene.scale.setScalar( 30 );
 					volumeLight.iteration = 0;
 
 				} );
@@ -164,6 +188,14 @@
 				stats = new Stats();
 				document.body.appendChild( stats.dom );
 
+				transformControls = new TransformControls( camera, renderer.domElement );
+				transformControls.attach( volumeLight );
+				transformControls.addEventListener( 'dragging-changed', e => controls.enabled = ! e.value);
+				transformControls.addEventListener( 'change', e => volumeLight.iteration = 0 );
+				transformControls.visible = false;
+				transformControls.enabled = false;
+				scene.add( transformControls );
+
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
@@ -171,6 +203,22 @@
 				controls.addEventListener( 'change', () => volumeLight.iteration = 0 );
 
 				window.addEventListener( 'resize', onWindowResize, false );
+				window.addEventListener( 'keydown', e => {
+
+					switch ( e.key ) {
+						case 'w':
+							transformControls.setMode( 'translate' );
+							break;
+						case 'e':
+							transformControls.setMode( 'rotate' );
+							break;
+						case 'r':
+							transformControls.setMode( 'scale' );
+							break;
+					}
+
+				} );
+
 
 				// dat gui
 				var gui = new dat.GUI();
@@ -216,6 +264,13 @@
 
 				} );
 
+				gui.add( transformControls, 'visible' ).name( 'enable transform controls' ).onChange( v => {
+
+					transformControls.enabled = v;
+					volumeLight.iteration = 0;
+
+				} );
+
 				gui.open();
 
 			}
@@ -229,6 +284,7 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
 
 				width *= window.devicePixelRatio;
 				height *= window.devicePixelRatio;

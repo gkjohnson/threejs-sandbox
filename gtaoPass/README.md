@@ -1,5 +1,26 @@
 # Ground Truth Ambient Occlusion
 
+GTAO implementation based on Asylum Tutorials work [here](https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/).
+
+[Demo here](https://gkjohnson.github.io/threejs-sandbox/gtaoPass/)
+
+# TODO
+
+**Noise**
+- Add a depth aware blur
+- Add a spatial denoising blur
+- Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
+
+**Code**
+- Performance
+- Memory
+- Clean up shader, add comments
+- Unroll second loop in single pass GTAO shader
+- Try different mip map techniques for the depth pyramid
+  - Make the sample fetches a function so we don't incur all texture taps if they're not needed
+
+# References
+
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/main.cpp
 - https://github.com/asylum2010/Asylum_Tutorials/blob/4f2bc39a8ae69db1ceb59e9a763ef91c7b3dc6de/ShaderTutors/Common/gtaorenderer.cpp
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/Media/ShadersGL/gtao.frag
@@ -13,27 +34,3 @@
 - https://developer.download.nvidia.com/presentations/2008/SIGGRAPH/HBAO_SIG08b.pdf
 - http://advances.realtimerendering.com/s2010/Ownby,Hall%20and%20Hall%20-%20Toystory3%20(SIGGRAPH%202010%20Advanced%20RealTime%20Rendering%20Course).pdf
 
-# Use
-
-TODO
-
-# API
-
-TODO
-
-# TODO
-
-- Understand why the first sample seems particularly dark compared to the rest
-- The pyramid atlas seems to be bleeding
-- Add a spatial denoising blur
-- Add temporal reprojection denoising
-- Performance
-- Memory
-- Clean up shader, add comments
-- Composite
-- Pull and run original implementation to compare
-- Add a depth aware blur (https://eleni.mutantstargoat.com/hikiko/depth_aware_texture_upscaling)
-- Unroll loop in the GTAO shader
-- Try different mip map techniques for the depth pyramid
-  - Make the sample fetches a function so we don't incur all texture taps if they're not needed
-- Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
