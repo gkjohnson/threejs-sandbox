@@ -8,7 +8,8 @@ import {
 	RGBFormat,
 	Math as MathUtils,
 	DataTexture,
-	UnsignedByteType
+	UnsignedByteType,
+	MeshBasicMaterial,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
@@ -42,6 +43,9 @@ const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
 
 // const _upscaleMaterial = new ShaderMaterial( DepthAwareUpscaleBlurShader );
 // const _upscaleQuad = new Pass.FullScreenQuad( _upscaleMaterial );
+
+const _copyMaterial = new MeshBasicMaterial();
+const _copyQuad = new Pass.FullScreenQuad( _copyMaterial );
 
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
@@ -147,8 +151,8 @@ export class GTAOPass extends Pass {
 	setSize( width, height ) {
 
 		const renderTargetScale = this.renderTargetScale;
-		const renderWidth = width * renderTargetScale;
-		const renderHeight = height * renderTargetScale;
+		const renderWidth = Math.floor( width * renderTargetScale );
+		const renderHeight = Math.floor( height * renderTargetScale );
 
 		this._depthBuffer.setSize( width, height );
 		this._normalBuffer.setSize( width, height );
@@ -263,6 +267,8 @@ export class GTAOPass extends Pass {
 
 		}
 
+		window.gtaoPass = this;
+
 		// Run the GTAO sampling
 		let gtaoMaterial, gtaoQuad;
 		if ( this.singlePass ) {
@@ -309,9 +315,14 @@ export class GTAOPass extends Pass {
 
 		if ( debug.display === GTAOPass.AO_SAMPLE ) {
 
-			renderer.setRenderTarget( finalBuffer );
+			renderer.setRenderTarget( gtaoBuffer );
 			renderer.clear();
 			gtaoQuad.render( renderer );
+
+			_copyMaterial.map = gtaoBuffer.texture;
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+			_copyQuad.render( renderer );
 
 			replaceOriginalValues();
 			return;
