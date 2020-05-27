@@ -65,9 +65,11 @@ export const CompositeShader = {
 			vec2 currAoTexel = vUv * aoSize + aoTexelSize / 2.0;
 			vec2 ratio = aoSize / fullSize;
 
+			// TODO: this normal and depth should be based on what's used for the GTAO buffer.
 			vec3 currNormal = texture2D( normalBuffer, vUv ).rgb;
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
+			// TODO: Try different blurs -- gaussian, cross, diagonal, box
 			float gtao = 0.0;
 			float total = 0.0;
 			#pragma unroll_loop_start
