@@ -235,7 +235,15 @@ export class GTAOPass extends Pass {
 				);
 				_debugMipDepthMaterial.uniforms.level.value = level;
 				_debugMipDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
+
+				renderer.setRenderTarget( this._gtaoBuffer );
+				renderer.clear();
 				_debugMipDepthQuad.render( renderer );
+
+				renderer.setRenderTarget( finalBuffer );
+				renderer.clear();
+				_copyMaterial.uniforms.tDiffuse.value = this._gtaoBuffer.texture;
+				_copyQuad.render( renderer );
 
 			}
 
@@ -308,6 +316,10 @@ export class GTAOPass extends Pass {
 		gtaoMaterial.uniforms.depthPyramidSize.value.set(
 			Math.floor( depthBuffer.texture.image.width ),
 			Math.floor( depthBuffer.texture.image.height )
+		);
+		gtaoMaterial.uniforms.renderSize.value.set(
+			Math.floor( gtaoBuffer.texture.image.width ),
+			Math.floor( gtaoBuffer.texture.image.height )
 		);
 		gtaoMaterial.uniforms.noiseTexture.value = noiseTexture;
 

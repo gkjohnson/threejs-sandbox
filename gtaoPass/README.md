@@ -24,6 +24,14 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
 
+**Performance Knobs**
+- How many depth mips to generate / sample
+- Render target scale (1, 1/2, 1/4, others?)
+- Number of samples / "reused" samples
+- Generate normal / use normal in upscale
+- use upscale at all?
+- do we need a depth pyramid?
+
 # References
 
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/main.cpp
