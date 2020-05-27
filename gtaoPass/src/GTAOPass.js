@@ -9,9 +9,9 @@ import {
 	Math as MathUtils,
 	DataTexture,
 	UnsignedByteType,
-	MeshBasicMaterial,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { PackedMipMapGenerator } from '../../custom-mipmap-generation/src/PackedMipMapGenerator.js';
 import { LinearDepthShader } from '../../screenSpaceReflectionsPass/src/LinearDepthShader.js';
@@ -44,7 +44,7 @@ const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
 // const _upscaleMaterial = new ShaderMaterial( DepthAwareUpscaleBlurShader );
 // const _upscaleQuad = new Pass.FullScreenQuad( _upscaleMaterial );
 
-const _copyMaterial = new MeshBasicMaterial();
+const _copyMaterial = new ShaderMaterial( CopyShader );
 const _copyQuad = new Pass.FullScreenQuad( _copyMaterial );
 
 const _blackColor = new Color( 0 );
@@ -225,7 +225,6 @@ export class GTAOPass extends Pass {
 			if ( level < 0 ) {
 
 				_debugDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-				_debugDepthMaterial.uniforms.divide.value = camera.far;
 				_debugDepthQuad.render( renderer );
 
 			} else {
@@ -236,7 +235,6 @@ export class GTAOPass extends Pass {
 				);
 				_debugMipDepthMaterial.uniforms.level.value = level;
 				_debugMipDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-				_debugMipDepthMaterial.uniforms.divide.value = camera.far;
 				_debugMipDepthQuad.render( renderer );
 
 			}
@@ -319,9 +317,9 @@ export class GTAOPass extends Pass {
 			renderer.clear();
 			gtaoQuad.render( renderer );
 
-			_copyMaterial.map = gtaoBuffer.texture;
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
+			_copyMaterial.uniforms.tDiffuse.value = gtaoBuffer.texture;
 			_copyQuad.render( renderer );
 
 			replaceOriginalValues();
