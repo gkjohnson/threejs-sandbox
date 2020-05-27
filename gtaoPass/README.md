@@ -8,7 +8,6 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 
 **Noise**
 - Add a depth aware blur
-- Add a spatial denoising blur
 - Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
 
 **Code**
@@ -23,6 +22,8 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Variable sample count for perf
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
+- Remove halos around balls?
+- Use proper normal and depth passes with alpha cutouts
 
 **Performance Knobs**
 - How many depth mips to generate / sample

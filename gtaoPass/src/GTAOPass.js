@@ -84,6 +84,7 @@ export class GTAOPass extends Pass {
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
 		this.noiseIntensity = 'noiseIntensity' in options ? options.noiseIntensity : 1.0;
 		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
+		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -321,7 +322,7 @@ export class GTAOPass extends Pass {
 			Math.floor( gtaoBuffer.texture.image.width ),
 			Math.floor( gtaoBuffer.texture.image.height )
 		);
-		gtaoMaterial.uniforms.noiseTexture.value = noiseTexture;
+		gtaoMaterial.uniforms.noiseTexture.value = this.enableJitter ? noiseTexture : null;
 
 		if ( debug.display === GTAOPass.AO_SAMPLE ) {
 
