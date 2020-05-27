@@ -1,6 +1,13 @@
 import { Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 export const CompositeShader = {
 
+	defines: {
+
+		ENABLE_BLUR: 1,
+		AO_ONLY: 0
+
+	},
+
 	uniforms: {
 
 		fullSize: { value: new Vector2() },
@@ -50,6 +57,8 @@ export const CompositeShader = {
 
 			vec4 color = texture2D( colorBuffer, vUv );
 
+			#if ENABLE_BLUR
+
 			vec2 texelSize = 1.0 / fullSize;
 			vec2 aoTexelSize = 1.0 / aoSize;
 			vec2 currTexel = vUv * fullSize + texelSize / 2.0;
@@ -61,7 +70,7 @@ export const CompositeShader = {
 
 			float gtao = 0.0;
 			float total = 0.0;
-			// #pragma unroll_loop_start
+			#pragma unroll_loop_start
 			for ( int i = 0; i < 5; i ++ ) {
 
 				vec2 xAoUv = currAoTexel + vec2( - 2.0 + float( i ), 0.0 );
@@ -93,13 +102,25 @@ export const CompositeShader = {
 				}
 
 			}
-			// #pragma unroll_loop_end
+			#pragma unroll_loop_end
 
 			gtao /= total;
 
+			#else
 
-			// float gtao = texture2D( gtaoBuffer, vUv ).r;
+			float gtao = texture2D( gtaoBuffer, vUv ).r;
+
+			#endif
+
+			#if AO_ONLY
+
+			gl_FragColor = vec4( gtao );
+
+			#else
+
 			gl_FragColor = vec4( color.rgb * MultiBounce( gtao, color.rgb ), color.a );
+
+			#endif
 
 		}
 		`

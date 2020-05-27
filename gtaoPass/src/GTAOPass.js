@@ -359,6 +359,27 @@ export class GTAOPass extends Pass {
 		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
 		_compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
 
+
+		if ( debug.display === GTAOPass.AO_BLUR ) {
+
+			if ( _compositeMaterial.defines.AO_ONLY !== 1 ) {
+
+				_compositeMaterial.defines.AO_ONLY = 1;
+				_compositeMaterial.needsUpdate = true;
+
+			}
+
+		} else {
+
+			if ( _compositeMaterial.defines.AO_ONLY !== 0 ) {
+
+				_compositeMaterial.defines.AO_ONLY = 0;
+				_compositeMaterial.needsUpdate = true;
+
+			}
+
+		}
+
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		_compositeQuad.render( renderer );
@@ -378,4 +399,4 @@ GTAOPass.DEFAULT = 0;
 GTAOPass.DEPTH_PYRAMID = 1;
 GTAOPass.NORMAL = 2;
 GTAOPass.AO_SAMPLE = 3;
-GTAOPass.AO_BLUR = 3;
+GTAOPass.AO_BLUR = 4;
