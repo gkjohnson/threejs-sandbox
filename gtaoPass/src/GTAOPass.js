@@ -8,7 +8,7 @@ import {
 	RGBFormat,
 	Math as MathUtils,
 	DataTexture,
-	UnsignedByteType
+	UnsignedByteType,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
@@ -147,8 +147,8 @@ export class GTAOPass extends Pass {
 	setSize( width, height ) {
 
 		const renderTargetScale = this.renderTargetScale;
-		const renderWidth = width * renderTargetScale;
-		const renderHeight = height * renderTargetScale;
+		const renderWidth = Math.floor( width * renderTargetScale );
+		const renderHeight = Math.floor( height * renderTargetScale );
 
 		this._depthBuffer.setSize( renderWidth, renderHeight );
 		this._normalBuffer.setSize( renderWidth, renderHeight );
@@ -221,7 +221,6 @@ export class GTAOPass extends Pass {
 			if ( level < 0 ) {
 
 				_debugDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-				_debugDepthMaterial.uniforms.divide.value = camera.far;
 				_debugDepthQuad.render( renderer );
 
 			} else {
@@ -232,7 +231,6 @@ export class GTAOPass extends Pass {
 				);
 				_debugMipDepthMaterial.uniforms.level.value = level;
 				_debugMipDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-				_debugMipDepthMaterial.uniforms.divide.value = camera.far;
 				_debugMipDepthQuad.render( renderer );
 
 			}
@@ -309,9 +307,14 @@ export class GTAOPass extends Pass {
 
 		if ( debug.display === GTAOPass.AO_SAMPLE ) {
 
-			renderer.setRenderTarget( finalBuffer );
+			renderer.setRenderTarget( gtaoBuffer );
 			renderer.clear();
 			gtaoQuad.render( renderer );
+
+			renderer.setRenderTarget( finalBuffer );
+			renderer.clear();
+			_copyMaterial.uniforms.tDiffuse.value = gtaoBuffer.texture;
+			_copyQuad.render( renderer );
 
 			replaceOriginalValues();
 			return;

@@ -6,7 +6,6 @@ export const LinearDepthDisplayShader = {
 	uniforms: {
 
 		texture: { value: null },
-		divide: { value: 1 }
 
 	},
 
@@ -26,12 +25,12 @@ export const LinearDepthDisplayShader = {
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
 		uniform sampler2D texture;
-		uniform float divide;
 		void main() {
 
 			vec4 texVal = texture2D( texture, vUv );
 			float depthVal = - texVal.r;
-			gl_FragColor = vec4( depthVal / divide );
+			depthVal = mod( depthVal, 1.0 );
+			gl_FragColor = vec4( depthVal );
 
 		}
 	`
@@ -45,7 +44,6 @@ export const LinearMipDepthDisplayShader = {
 		originalSize: { value: new Vector2() },
 		level: { value: 0 },
 		texture: { value: null },
-		divide: { value: 1 }
 
 	},
 
@@ -67,7 +65,6 @@ export const LinearMipDepthDisplayShader = {
 		uniform vec2 originalSize;
 		uniform int level;
 		uniform sampler2D texture;
-		uniform float divide;
 
 		${ sampleFunctions }
 
@@ -75,7 +72,8 @@ export const LinearMipDepthDisplayShader = {
 
 			vec4 texVal = packedTexture2DLOD( texture, vUv, level, originalSize );
 			float depthVal = - texVal.r;
-			gl_FragColor = vec4( depthVal / divide );
+			depthVal = mod( depthVal, 1.0 );
+			gl_FragColor = vec4( depthVal );
 
 		}
 	`
