@@ -19,6 +19,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
 - remove halos -- compare to single pass
 - ensure loops are unrolled with custom unroll -- only works with i
+- remove need for noise texture (generate jitter)
 
 **Features**
 - Variable sample count for perf
