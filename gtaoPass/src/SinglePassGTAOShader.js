@@ -9,6 +9,7 @@ export const SinglePassGTAOShader = {
 		normalBuffer: { value: null },
 		depthPyramid: { value: null },
 		depthPyramidSize: { value: new Vector2() },
+		renderSize: { value: new Vector2() },
 
 		clipInfo: { value: new Vector4 },
 		projInfo: { value: new Vector4() },
@@ -51,6 +52,7 @@ export const SinglePassGTAOShader = {
 		uniform sampler2D normalBuffer;
 		uniform sampler2D depthPyramid;
 		uniform vec2 depthPyramidSize;
+		uniform vec2 renderSize;
 
 		uniform vec4 projInfo;
 		uniform vec4 clipInfo;
@@ -62,7 +64,7 @@ export const SinglePassGTAOShader = {
 			float near = clipInfo.x;
 			float far = clipInfo.y;
 
-			vec2 basesize = depthPyramidSize;
+			vec2 basesize = renderSize;
 			vec2 coord = ( uv / basesize );
 
 			// d is expected to be [ 0.0, 1.0 ]
@@ -100,7 +102,7 @@ export const SinglePassGTAOShader = {
 
 		void main() {
 
-			vec2 screenCoord = floor( depthPyramidSize * vUv );
+			vec2 screenCoord = floor( renderSize * vUv );
 			vec2 loc = floor( screenCoord );
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 

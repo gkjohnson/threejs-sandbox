@@ -7,8 +7,6 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 # TODO
 
 **Noise**
-- Add a depth aware blur
-- Add a spatial denoising blur
 - Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
 
 **Code**
@@ -18,11 +16,27 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Unroll second loop in single pass GTAO shader
 - Try different mip map techniques for the depth pyramid
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
+- Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
+- remove halos -- compare to single pass
+- ensure loops are unrolled with custom unroll -- only works with i
+- remove need for noise texture (generate jitter)
 
 **Features**
 - Variable sample count for perf
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
+- Use proper normal and depth passes with alpha cutouts
+- Toggle blur, blur type
+- Compare to single pass -- it's much darker further away
+
+**Performance Knobs**
+- How many depth mips to generate / sample
+- Render target scale (1, 1/2, 1/4, others?)
+- Number of samples / "reused" samples
+- Generate normal / use normal in upscale
+- use upscale at all?
+- do we need a depth pyramid? (probably not -- causes issues)
+- Blur counts
 
 # References
 
@@ -38,3 +52,4 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - https://docs.nvidia.com/gameworks/content/gameworkslibrary/visualfx/hbao/product.html
 - https://developer.download.nvidia.com/presentations/2008/SIGGRAPH/HBAO_SIG08b.pdf
 - http://advances.realtimerendering.com/s2010/Ownby,Hall%20and%20Hall%20-%20Toystory3%20(SIGGRAPH%202010%20Advanced%20RealTime%20Rendering%20Course).pdf
+

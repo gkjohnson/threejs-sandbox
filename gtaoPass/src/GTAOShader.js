@@ -9,12 +9,11 @@ export const GTAOShader = {
 		normalBuffer: { value: null },
 		depthPyramid: { value: null },
 		depthPyramidSize: { value: new Vector2() },
+		renderSize: { value: new Vector2() },
 
 		clipInfo: { value: new Vector4 },
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
-
-		noiseIntensity: { value: 1.0 }
 
 	},
 
@@ -49,12 +48,11 @@ export const GTAOShader = {
 		uniform sampler2D normalBuffer;
 		uniform sampler2D depthPyramid;
 		uniform vec2 depthPyramidSize;
+		uniform vec2 renderSize;
 
 		uniform vec4 clipInfo;
 		uniform vec4 projInfo;
 		uniform vec2 params;
-
-		uniform float noiseIntensity;
 
 		${ sampleFunctions }
 
@@ -83,6 +81,7 @@ export const GTAOShader = {
 			float near = clipInfo.x;
 			float far = clipInfo.y;
 
+			// TODO: ideally this mip level corresponds to the renderSize scale?
 			int miplevel = int(
 				clamp(
 					floor(
@@ -90,13 +89,15 @@ export const GTAOShader = {
 							currStep / float( PREFETCH_CACHE_SIZE )
 						)
 					),
-					0.0,
+					1.0,
 					float( NUM_MIP_LEVELS - 1 )
 				)
 			);
-			// miplevel = 0;
 
-			vec2 basesize = depthPyramidSize;
+			// not really worth it to use the other mips
+			miplevel = 0;
+
+			vec2 basesize = renderSize;
 			vec2 mipcoord = uv / basesize;
 
 			// d is expected to be [ 0.0, 1.0 ]
@@ -128,8 +129,8 @@ export const GTAOShader = {
 
 		void main() {
 
-			vec2 screenCoord = floor( depthPyramidSize * vUv );
-			vec2 loc = floor( screenCoord );
+			vec2 screenCoord = floor( renderSize * vUv );
+			vec2 loc = screenCoord; // floor( screenCoord );
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
 			if ( vpos.w == 1.0 ) {
@@ -147,7 +148,7 @@ export const GTAOShader = {
 			// calculation uses left handed system
 			vnorm.z = - vnorm.z;
 
-			// TODO: use a noise function o texture here. Halton? Poisson?
+			// TODO: use a noise function or texture here. Halton? Poisson?
 			vec2 texelPos = vec2( 0.125 ) + mod( screenCoord, vec2( 4.0 ) ) / 4.0;
 			vec2 noises	= texture2D( noiseTexture, texelPos ).rg;//getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
 
