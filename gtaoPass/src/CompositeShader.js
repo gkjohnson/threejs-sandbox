@@ -3,6 +3,7 @@ export const CompositeShader = {
 
 	defines: {
 
+		BLUR_ITERATIONS: 14,
 		ENABLE_BLUR: 1,
 		AO_ONLY: 0
 
@@ -69,7 +70,7 @@ export const CompositeShader = {
 			vec2 currAoTexel = vUv * aoSize;
 
 			// aoPixels per full size ones. Should be 1/2 at
-			vec2 ratio = aoSize / fullSize;
+			vec2 texelRatio = aoSize / fullSize;
 
 			// TODO: this normal and depth should be based on what's used for the GTAO buffer.
 			vec3 currNormal = UnpackNormal( texture2D( normalBuffer, vUv ) );
@@ -78,24 +79,26 @@ export const CompositeShader = {
 			// TODO: Try different blurs -- gaussian, cross, diagonal, box
 			// TODO: pull this sampling out into a function
 			float gtao = 0.0;
-			float total = 1e-10;
+			float totalWeight = 1e-10;
+			float pixelOffset = - ( ( float( BLUR_ITERATIONS ) / 2.0 ) - 0.5 );
+			vec2 offsetRatio = pixelOffset / texelRatio;
+
             #pragma unroll_loop_start
-			for ( int x = 0; x < 4; x ++ ) {
+			for ( int x = 0; x < BLUR_ITERATIONS; x ++ ) {
 
 				#pragma unroll_loop_start
-				for ( int y = 0; y < 4; y ++ ) {
+				for ( int y = 0; y < BLUR_ITERATIONS; y ++ ) {
 
 					// iterate over full res pixels
-					vec2 r = - 1.5 / ratio;
-					vec2 offsetUv = currTexel + vec2( r.x + float( x ), r.y + float( y ) );
+					vec2 offsetUv = currTexel + vec2( offsetRatio.x + float( x ), offsetRatio.y + float( y ) );
 					offsetUv /= fullSize;
 
-					vec2 aoUv = currAoTexel + vec2( - 1.5 + float( x ), - 1.5 + float( y ) );
+					vec2 aoUv = currAoTexel + vec2( pixelOffset + float( x ), pixelOffset + float( y ) );
 					aoUv /= aoSize;
 
 					// further more negative
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					if ( abs(offsetDepth - currDepth) < 0.5 ) {
+					if ( abs(offsetDepth - currDepth) <= 2.0 ) {
 
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
@@ -103,7 +106,7 @@ export const CompositeShader = {
 
 						float val = texture2D( gtaoBuffer, aoUv ).r;
 						gtao += val * weight;
-						total += weight;
+						totalWeight += weight;
 
 					}
 
@@ -113,7 +116,7 @@ export const CompositeShader = {
 			}
 			#pragma unroll_loop_end
 
-			gtao /= total;
+			gtao /= totalWeight;
 
 			#else
 

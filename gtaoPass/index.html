@@ -66,6 +66,9 @@
 
 				fixedSample: 0,
 
+				enableBlur: true,
+				blurIterations: 4,
+
 				display: GTAOPass.DEFAULT,
 				depthLevel: - 1,
 				renderTargetScale: 0.5,
@@ -109,7 +112,7 @@
 				var group = new THREE.Group();
 				var plane = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(),
-					new THREE.MeshStandardMaterial( { color: 0x111111, roughness: 0.8 } )
+					new THREE.MeshStandardMaterial( { color: 0x191919, roughness: 0.8 } )
 				);
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
@@ -127,7 +130,7 @@
 
 							const sphere = new THREE.Mesh(
 								new THREE.SphereBufferGeometry( 1, 30, 30 ),
-								new THREE.MeshStandardMaterial( { color: 0x111111, roughness: 0.8 } )
+								new THREE.MeshStandardMaterial( { color: 0x191919, roughness: 0.8 } )
 							);
 
 							const offsetx = 2 * x - count;
@@ -236,6 +239,10 @@
 				gui.add( params, 'enableJitter' );
 				gui.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
 
+				gui.add( params, 'enableBlur' );
+				gui.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
+
+
 				gui.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.25 ).onChange( v => {
 
 					gtaoPass.renderTargetScale = v;
@@ -297,6 +304,8 @@
 				gtaoPass.enabled = params.enabled;
 				gtaoPass.singlePass = params.singlePass;
 				gtaoPass.enableJitter = params.enableJitter;
+				gtaoPass.enableBlur = params.enableBlur;
+				gtaoPass.blurIterations = params.blurIterations;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				if ( params.fixedSample === - 1 ) {

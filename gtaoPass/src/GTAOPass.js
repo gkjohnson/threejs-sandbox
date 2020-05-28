@@ -84,6 +84,7 @@ export class GTAOPass extends Pass {
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
 		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
 		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
+		this.blurIterations = 'blurIterations' in options ? options.blurIterations : 4;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -358,7 +359,19 @@ export class GTAOPass extends Pass {
 		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
 		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
 		_compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
+		if ( this.blurIterations !== _compositeMaterial.defines.BLUR_ITERATIONS ) {
 
+			_compositeMaterial.defines.BLUR_ITERATIONS = this.blurIterations;
+			_compositeMaterial.needsUpdate = true;
+
+		}
+
+		if ( this.enableBlur !== Boolean( _compositeMaterial.defines.ENABLE_BLUR ) ) {
+
+			_compositeMaterial.defines.ENABLE_BLUR = this.enableBlur ? 1 : 0;
+			_compositeMaterial.needsUpdate = true;
+
+		}
 
 		if ( debug.display === GTAOPass.AO_BLUR ) {
 

@@ -18,6 +18,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 - Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
 - remove halos -- compare to single pass
+- ensure loops are unrolled with custom unroll -- only works with i
 
 **Features**
 - Variable sample count for perf
