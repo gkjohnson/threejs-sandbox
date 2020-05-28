@@ -44,8 +44,6 @@ export const SinglePassGTAOShader = {
 		#include <common>
 		#include <packing>
 
-		${ sampleFunctions }
-
 		varying vec2 vUv;
 
 		uniform sampler2D noiseTexture;
@@ -58,6 +56,28 @@ export const SinglePassGTAOShader = {
 		uniform vec4 clipInfo;
 		uniform vec3 eyePos;
 		uniform vec4 params;
+
+		${ sampleFunctions }
+
+		float round( float f ) {
+
+			return f < 0.5 ? floor( f ) : ceil( f );
+
+		}
+
+		vec2 round( vec2 v ) {
+
+			v.x = round( v.x );
+			v.y = round( v.y );
+			return v;
+
+		}
+
+		vec3 UnpackNormal( vec4 d ) {
+
+			return d.xyz * 2.0 - 1.0;
+
+		}
 
 		vec4 GetViewPosition( vec2 uv, float currstep ) {
 
@@ -77,26 +97,6 @@ export const SinglePassGTAOShader = {
 			ret.xy = ( uv * projInfo.xy + projInfo.zw ) * ret.z;
 
 			return ret;
-
-		}
-
-		float round( float f ) {
-
-			return f < 0.5 ? floor( f ) : ceil( f );
-
-		}
-
-		vec2 round( vec2 v ) {
-
-			v.x = round( v.x );
-			v.y = round( v.y );
-			return v;
-
-		}
-
-		vec3 UnpackNormal( vec4 d ) {
-
-			return d.xyz * 2.0 - 1.0;
 
 		}
 
