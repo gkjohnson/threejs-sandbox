@@ -354,6 +354,8 @@ export class GTAOPass extends Pass {
 
 		}
 
+		_compositeMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
+		_compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
 		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
 		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );

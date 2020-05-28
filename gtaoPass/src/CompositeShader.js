@@ -61,48 +61,52 @@ export const CompositeShader = {
 
 			vec2 texelSize = 1.0 / fullSize;
 			vec2 aoTexelSize = 1.0 / aoSize;
-			vec2 currTexel = vUv * fullSize + texelSize / 2.0;
-			vec2 currAoTexel = vUv * aoSize + aoTexelSize / 2.0;
+			vec2 currTexel = vUv * fullSize;
+			vec2 currAoTexel = vUv * aoSize;
+
+			// aoPixels per full size ones. Should be 1/2 at
 			vec2 ratio = aoSize / fullSize;
 
 			// TODO: this normal and depth should be based on what's used for the GTAO buffer.
 			vec3 currNormal = texture2D( normalBuffer, vUv ).rgb;
+			currNormal -= 0.5;
+			currNormal *= 2.0;
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
 			// TODO: Try different blurs -- gaussian, cross, diagonal, box
+			// TODO: pull this sampling out into a function
 			float gtao = 0.0;
 			float total = 0.0;
-			#pragma unroll_loop_start
-			for ( int i = 0; i < 5; i ++ ) {
+            #pragma unroll_loop_start
+			for ( int x = 0; x < 5; x ++ ) {
+				for ( int y = 0; y < 5; y ++ ) {
 
-				vec2 xAoUv = currAoTexel + vec2( - 2.0 + float( i ), 0.0 );
-				vec2 yAoUv = currAoTexel + vec2( 0.0, - 2.0 + float( i ) );
+					// iterate over full res pixels
+					vec2 r = - 2.0 / ratio;
+					vec2 offsetUv = currTexel + vec2( r.x + float( x ), r.y + float( y ) );
+					offsetUv /= fullSize;
 
-				vec2 r = - 2.0 / ratio;
-				vec2 xUv = currTexel + vec2( r.x + float( i ), 0.0 );
-				vec2 yUv = currTexel + vec2( 0.0, r.y + float( i ) );
+					vec2 aoUv = currAoTexel + vec2( - 2.0 + float( x ), - 2.0 + float( y ) );
+					aoUv /= aoSize;
 
-				float xTexelDepth = texture2D( depthBuffer, xUv ).r;
-				if ( abs( currDepth - xTexelDepth ) < 0.1 ) {
+					// further more negative
+					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+					vec3 offsetNormal = texture2D( normalBuffer, offsetUv ).rgb;
+					offsetNormal -= 0.5;
+					offsetNormal *= 2.0;
 
-					gtao += texture2D( gtaoBuffer, xAoUv / aoSize ).r;
-					total ++;
+					if ( abs(offsetDepth - currDepth) < 0.2 ) {
 
-				}
+						float weight = max(0.0, dot( offsetNormal, currNormal ) );
+						weight *= weight;
 
-
-				if ( i != 0 ) {
-
-					float yTexelDepth = texture2D( depthBuffer, yUv ).r;
-					if ( abs( currDepth - yTexelDepth ) < 0.1 ) {
-
-						gtao += texture2D( gtaoBuffer, yAoUv / aoSize ).r;
-						total ++;
+						float val = texture2D( gtaoBuffer, aoUv ).r;
+						gtao += val * weight;
+						total += weight;
 
 					}
 
 				}
-
 			}
 			#pragma unroll_loop_end
 
