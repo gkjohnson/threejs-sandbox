@@ -65,6 +65,7 @@
 				enableJitter: true,
 
 				fixedSample: 0,
+				numSteps: 8,
 
 				enableBlur: true,
 				blurIterations: 4,
@@ -157,7 +158,7 @@
 				camera.position.set( 0.0, 1, 1 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x0 );
+				scene.background = new THREE.Color( 0x13191c ).convertSRGBToLinear();
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -237,6 +238,7 @@
 				gui.add( params, 'enabled' );
 				gui.add( params, 'singlePass' ).name( 'singlePass (slow)' );
 				gui.add( params, 'enableJitter' );
+				gui.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
 				gui.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
 
 				gui.add( params, 'enableBlur' );
@@ -260,6 +262,9 @@
 				gui.add( params, 'scene', [ 'sponza', 'pyramid' ] );
 
 				gui.open();
+
+				gtaoPass.renderTargetScale = params.renderTargetScale;
+				onWindowResize();
 
 			}
 
@@ -306,6 +311,7 @@
 				gtaoPass.enableJitter = params.enableJitter;
 				gtaoPass.enableBlur = params.enableBlur;
 				gtaoPass.blurIterations = params.blurIterations;
+				gtaoPass.numSteps = params.numSteps;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				if ( params.fixedSample === - 1 ) {

@@ -3,6 +3,14 @@ import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFun
 
 export const SinglePassGTAOShader = {
 
+	defines: {
+
+		NUM_DIRECTIONS: 32,
+		NUM_STEPS: 16,
+		RADIUS: '2.0', // in world space
+
+	},
+
 	uniforms: {
 
 		noiseTexture: { value: null },
@@ -32,10 +40,6 @@ export const SinglePassGTAOShader = {
 
 	fragmentShader:
 		/* glsl */`
-		#define NUM_DIRECTIONS	32
-		#define NUM_STEPS		16
-		#define RADIUS			2.0		// in world space
-
 		// #define PI				3.1415926535897932
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
@@ -77,7 +81,7 @@ export const SinglePassGTAOShader = {
 
 		}
 
-		vec4 GetViewPosition( vec2 uv, float currstep ) {
+		vec4 GetViewPosition( vec2 uv, float currStep ) {
 
 			float near = clipInfo.x;
 			float far = clipInfo.y;
@@ -105,9 +109,10 @@ export const SinglePassGTAOShader = {
 			vec2 loc = floor( screenCoord );
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
+			// if it's the background
 			if ( vpos.w == 1.0 ) {
 
-				gl_FragColor = vec4(0.0, 0.0103, 0.0707, 1.0);
+				gl_FragColor = vec4(1.0);
 				return;
 
 			}
@@ -128,11 +133,11 @@ export const SinglePassGTAOShader = {
 			float radius = ( RADIUS * clipInfo.z ) / vpos.z;
 			radius = max( float( NUM_STEPS ), radius );
 
-			float stepsize	= radius / float( NUM_STEPS );
+			float stepSize	= radius / float( NUM_STEPS );
 			float phi		= 0.0;
 			float ao		= 0.0;
-			float division	= noises.y * stepsize;
-			float currstep	= 1.0 + division + 0.25 * stepsize * params.y;
+			float division	= noises.y * stepSize;
+			float currStep	= 1.0 + division + 0.25 * stepSize * params.y;
 			float dist2, invdist, falloff, cosh;
 
 			#pragma unroll_loop_start
@@ -140,7 +145,7 @@ export const SinglePassGTAOShader = {
 
 				int k = i;
 				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) );
-				currstep = 1.0;
+				currStep = 1.0;
 
 				dir = vec3( cos( phi ), sin( phi ), 0.0 );
 				horizons = vec2( - 1.0 );
@@ -148,10 +153,10 @@ export const SinglePassGTAOShader = {
 				// calculate horizon angles
 				for ( int j = 0; j < NUM_STEPS; ++ j ) {
 
-					offset = round( dir.xy * currstep );
+					offset = round( dir.xy * currStep );
 
 					// h1
-					s = GetViewPosition( screenCoord + offset, currstep );
+					s = GetViewPosition( screenCoord + offset, currStep );
 					ws = s.xyz - vpos.xyz;
 
 					dist2 = dot( ws, ws );
@@ -161,7 +166,7 @@ export const SinglePassGTAOShader = {
 					horizons.x = max( horizons.x, cosh );
 
 					// h2
-					s = GetViewPosition( screenCoord - offset, currstep );
+					s = GetViewPosition( screenCoord - offset, currStep );
 					ws = s.xyz - vpos.xyz;
 
 					dist2 = dot( ws, ws );
@@ -171,7 +176,7 @@ export const SinglePassGTAOShader = {
 					horizons.y = max( horizons.y, cosh );
 
 					// increment
-					currstep += stepsize;
+					currStep += stepSize;
 
 				}
 

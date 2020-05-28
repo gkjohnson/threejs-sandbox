@@ -3,6 +3,13 @@ import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFun
 
 export const GTAOShader = {
 
+	defines: {
+
+		NUM_STEPS: 8,
+		RADIUS: '2.0'
+
+	},
+
 	uniforms: {
 
 		noiseTexture: { value: null },
@@ -32,8 +39,6 @@ export const GTAOShader = {
 		/* glsl */`
 		#define PREFETCH_CACHE_SIZE 8
 		#define NUM_MIP_LEVELS 5
-		#define NUM_STEPS		8
-		#define RADIUS			2.0		// in world space
 
 		// #define PI				3.1415926535897932
 		#define TWO_PI			6.2831853071795864
@@ -130,9 +135,10 @@ export const GTAOShader = {
 		void main() {
 
 			vec2 screenCoord = floor( renderSize * vUv );
-			vec2 loc = screenCoord; // floor( screenCoord );
+			vec2 loc = floor( screenCoord );
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
+			// if it's the background
 			if ( vpos.w == 1.0 ) {
 
 				gl_FragColor = vec4( 1.0 );
@@ -158,11 +164,11 @@ export const GTAOShader = {
 			float radius = ( RADIUS * clipInfo.z ) / vpos.z;
 			radius = max( float( NUM_STEPS ), radius );
 
-			float stepsize	= radius / float( NUM_STEPS );
+			float stepSize	= radius / float( NUM_STEPS );
 			float phi		= ( params.x + noises.x ) * PI;
 			float ao		= 0.0;
-			float division	= noises.y * stepsize;
-			float currstep	= 1.0 + division + 0.25 * stepsize * params.y;
+			float division	= noises.y * stepSize;
+			float currStep	= 1.0 + division + 0.25 * stepSize * params.y;
 			float dist2, invdist, falloff, cosh;
 
 			dir = vec3( cos( phi ), sin( phi ), 0.0 );
@@ -173,10 +179,10 @@ export const GTAOShader = {
 			for ( int i = 0; i < NUM_STEPS; i ++ ) {
 
 				int j = i;
-				offset = round( dir.xy * currstep );
+				offset = round( dir.xy * currStep );
 
 				// h1
-				s = GetViewPosition( screenCoord + offset, currstep );
+				s = GetViewPosition( screenCoord + offset, currStep );
 				ws = s.xyz - vpos.xyz;
 
 				dist2 = dot( ws, ws );
@@ -187,7 +193,7 @@ export const GTAOShader = {
 				horizons.x = max( horizons.x, cosh - falloff );
 
 				// h2
-				s = GetViewPosition( screenCoord - offset, currstep );
+				s = GetViewPosition( screenCoord - offset, currStep );
 				ws = s.xyz - vpos.xyz;
 
 				dist2 = dot( ws, ws );
@@ -198,7 +204,7 @@ export const GTAOShader = {
 				horizons.y = max( horizons.y, cosh - falloff );
 
 				// increment
-				currstep += stepsize;
+				currStep += stepSize;
 
 			}
 			#pragma unroll_loop_end

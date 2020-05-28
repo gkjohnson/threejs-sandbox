@@ -85,6 +85,7 @@ export class GTAOPass extends Pass {
 		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
 		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
 		this.blurIterations = 'blurIterations' in options ? options.blurIterations : 4;
+		this.numSteps = 'numSteps' in options ? options.numSteps : 8;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -210,6 +211,7 @@ export class GTAOPass extends Pass {
 		const depthReplacement = this._depthReplacement;
 		const depthBuffer = this._depthBuffer;
 		const depthPyramidBuffer = this._depthPyramidBuffer;
+		scene.background = null;
 		depthReplacement.replace( scene, true, true );
 		renderer.setRenderTarget( depthBuffer );
 		renderer.setClearColor( _blackColor, 0.0 );
@@ -289,6 +291,14 @@ export class GTAOPass extends Pass {
 			gtaoQuad = _gtaoQuad;
 
 		}
+
+		if ( this.numSteps !== gtaoMaterial.defines.NUM_STEPS ) {
+
+			gtaoMaterial.defines.NUM_STEPS = this.numSteps;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
 		const gtaoBuffer = this._gtaoBuffer;
 		const width = Math.floor( gtaoBuffer.texture.image.width );
 		const height = Math.floor( gtaoBuffer.texture.image.height );
