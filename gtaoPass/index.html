@@ -67,6 +67,11 @@
 				fixedSample: 0,
 				numSteps: 8,
 				intensity: 1.0,
+				radius: 2.0,
+
+				enableFalloff: true,
+				falloffStart: 0.4,
+				falloffEnd: 2.0,
 
 				enableBlur: true,
 				blurIterations: 4,
@@ -237,31 +242,44 @@
 				gui.width = 300;
 
 				gui.add( params, 'enabled' );
-				gui.add( params, 'singlePass' ).name( 'singlePass (slow)' );
-				gui.add( params, 'enableJitter' );
-				gui.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
-				gui.add( params, 'intensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
-				gui.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
+				gui.add( params, 'scene', [ 'sponza', 'pyramid' ] );
 
-				gui.add( params, 'enableBlur' );
-				gui.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
+				const settingsFolder = gui.addFolder( 'settings' );
+				settingsFolder.add( params, 'singlePass' ).name( 'singlePass (slow)' );
+				settingsFolder.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
+				settingsFolder.add( params, 'enableJitter' );
+				settingsFolder.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
+				settingsFolder.add( params, 'intensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
+				settingsFolder.add( params, 'radius' ).min( 0 ).max( 10.0 ).step( 0.01 );
+
+				settingsFolder.add( params, 'enableFalloff' );
+				settingsFolder.add( params, 'falloffStart' ).min( 0 ).max( 10.0 ).step( 0.01 );
+				settingsFolder.add( params, 'falloffEnd' ).min( 0 ).max( 10.0 ).step( 0.01 );
 
 
-				gui.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.25 ).onChange( v => {
+				settingsFolder.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.25 ).onChange( v => {
 
 					gtaoPass.renderTargetScale = v;
 					onWindowResize();
 
 				} );
-				gui.add( params, 'display', {
+				settingsFolder.open();
+
+				const blurFolder = gui.addFolder( 'blur' );
+				blurFolder.add( params, 'enableBlur' );
+				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
+				blurFolder.open();
+
+				const debugFolder = gui.addFolder( 'debug' );
+				debugFolder.add( params, 'display', {
 					DEFAULT: GTAOPass.DEFAULT,
 					DEPTH_PYRAMID: GTAOPass.DEPTH_PYRAMID,
 					NORMAL: GTAOPass.NORMAL,
 					AO_SAMPLE: GTAOPass.AO_SAMPLE,
 					AO_BLUR: GTAOPass.AO_BLUR,
 				} );
-				gui.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
-				gui.add( params, 'scene', [ 'sponza', 'pyramid' ] );
+				debugFolder.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
+				debugFolder.open();
 
 				gui.open();
 
@@ -315,6 +333,10 @@
 				gtaoPass.blurIterations = params.blurIterations;
 				gtaoPass.numSteps = params.numSteps;
 				gtaoPass.intensity = params.intensity;
+				gtaoPass.radius = params.radius;
+				gtaoPass.falloffStart = params.falloffStart;
+				gtaoPass.falloffEnd = params.falloffEnd;
+				gtaoPass.enableFalloff = params.enableFalloff;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				if ( params.fixedSample === - 1 ) {

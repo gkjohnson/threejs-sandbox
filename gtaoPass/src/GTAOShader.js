@@ -6,7 +6,11 @@ export const GTAOShader = {
 	defines: {
 
 		NUM_STEPS: 8,
-		RADIUS: '2.0'
+		RADIUS: '2.0',
+
+		ENABLE_FALLOFF: 1,
+		FALLOFF_START2: '0.16',
+		FALLOFF_END2: '4.0'
 
 	},
 
@@ -44,8 +48,6 @@ export const GTAOShader = {
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
-		#define FALLOFF_START2	0.16
-		#define FALLOFF_END2	4.0
 
 		#include <common>
 		#include <packing>
@@ -108,7 +110,7 @@ export const GTAOShader = {
 			vec2 mipcoord = uv / basesize;
 
 			// d is expected to be [ 0.0, 1.0 ]
-			float d = packedTexture2DLOD( depthPyramid, mipcoord, miplevel, depthPyramidSize ).r;
+			float d = packedTexture2DLOD( depthPyramid, mipcoord, 0, depthPyramidSize ).r;
 			d = d == 0.0 ? far : d;
 			d = ( abs( d ) - near ) / ( far - near );
 
@@ -188,7 +190,9 @@ export const GTAOShader = {
 				invdist = inversesqrt( dist2 );
 				cosh = invdist * dot( ws, vdir );
 
+				#if ENABLE_FALLOFF
 				falloff = Falloff( dist2 );
+				#endif
 				horizons.x = max( horizons.x, cosh - falloff );
 
 				// h2
@@ -199,7 +203,9 @@ export const GTAOShader = {
 				invdist = inversesqrt( dist2 );
 				cosh = invdist * dot( ws, vdir );
 
+				#if ENABLE_FALLOFF
 				falloff = Falloff( dist2 );
+				#endif
 				horizons.y = max( horizons.y, cosh - falloff );
 
 				// increment

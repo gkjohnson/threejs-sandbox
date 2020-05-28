@@ -87,6 +87,11 @@ export class GTAOPass extends Pass {
 		this.blurIterations = 'blurIterations' in options ? options.blurIterations : 4;
 		this.numSteps = 'numSteps' in options ? options.numSteps : 8;
 		this.intensity = 'intensity' in options ? options.intensity : 1.0;
+		this.radius = 'radius' in options ? options.radius : 2.0;
+
+		this.enableFalloff = true;
+		this.falloffStart = 0.4;
+		this.falloffEnd = 2.0;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -299,6 +304,27 @@ export class GTAOPass extends Pass {
 			gtaoMaterial.needsUpdate = true;
 
 		}
+
+		if ( this.radius.toFixed( 16 ) !== gtaoMaterial.defines.RADIUS ) {
+
+			gtaoMaterial.defines.RADIUS = this.radius.toFixed( 16 );
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
+		if (
+			Math.pow( this.falloffStart, 2.0 ).toFixed( 16 ) !== gtaoMaterial.defines.FALLOFF_START2 ||
+			Math.pow( this.falloffEnd, 2.0 ).toFixed( 16 ) !== gtaoMaterial.defines.FALLOFF_END2 ||
+			this.enableFalloff !== Boolean( gtaoMaterial.defines.ENABLE_FALLOFF )
+		) {
+
+			gtaoMaterial.defines.FALLOFF_START2 = Math.pow( this.falloffStart, 2.0 ).toFixed( 16 );
+			gtaoMaterial.defines.FALLOFF_END2 = Math.pow( this.falloffEnd, 2.0 ).toFixed( 16 );
+			gtaoMaterial.defines.ENABLE_FALLOFF = this.enableFalloff ? 1 : 0;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
 
 		const gtaoBuffer = this._gtaoBuffer;
 		const width = Math.floor( gtaoBuffer.texture.image.width );

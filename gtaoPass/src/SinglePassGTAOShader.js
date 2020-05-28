@@ -9,6 +9,10 @@ export const SinglePassGTAOShader = {
 		NUM_STEPS: 16,
 		RADIUS: '2.0', // in world space
 
+		ENABLE_FALLOFF: 1,
+		FALLOFF_START2: '0.16',
+		FALLOFF_END2: '4.0'
+
 	},
 
 	uniforms: {
@@ -44,8 +48,6 @@ export const SinglePassGTAOShader = {
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
-		#define FALLOFF_START2	0.16
-		#define FALLOFF_END2	4.0
 
 		#include <common>
 		#include <packing>
@@ -115,7 +117,6 @@ export const SinglePassGTAOShader = {
 
 		}
 
-
 		void main() {
 
 			vec2 screenCoord = floor( renderSize * vUv );
@@ -176,7 +177,10 @@ export const SinglePassGTAOShader = {
 					invdist = inversesqrt( dist2 );
 					cosh = invdist * dot( ws, vdir );
 
-					// falloff = Falloff( dist2 );
+					#if ENABLE_FALLOFF
+					falloff = Falloff( dist2 );
+					#endif
+
 					horizons.x = max( horizons.x, cosh - falloff );
 
 					// h2
@@ -187,7 +191,10 @@ export const SinglePassGTAOShader = {
 					invdist = inversesqrt( dist2 );
 					cosh = invdist * dot( ws, vdir );
 
-					// falloff = Falloff( dist2 );
+					#if ENABLE_FALLOFF
+					falloff = Falloff( dist2 );
+					#endif
+
 					horizons.y = max( horizons.y, cosh - falloff );
 
 					// increment
