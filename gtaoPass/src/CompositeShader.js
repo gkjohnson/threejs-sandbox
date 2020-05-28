@@ -17,6 +17,7 @@ export const CompositeShader = {
 		depthBuffer: { value: null },
 		colorBuffer: { value : null },
 		gtaoBuffer: { value : null },
+		intensity: { value : 1.0 }
 
 	},
 
@@ -41,6 +42,7 @@ export const CompositeShader = {
 		uniform sampler2D depthBuffer;
 		uniform sampler2D normalBuffer;
 		uniform sampler2D gtaoBuffer;
+		uniform float intensity;
 
 		vec3 UnpackNormal( vec4 d ) {
 
@@ -130,7 +132,8 @@ export const CompositeShader = {
 
 			#else
 
-			gl_FragColor = vec4( color.rgb * MultiBounce( gtao, color.rgb ), color.a );
+			vec3 rgb = mix( color.rgb, color.rgb * MultiBounce( gtao, color.rgb ), intensity );
+			gl_FragColor = vec4( rgb, color.a );
 
 			#endif
 

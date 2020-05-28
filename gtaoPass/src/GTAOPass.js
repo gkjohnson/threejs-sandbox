@@ -86,6 +86,7 @@ export class GTAOPass extends Pass {
 		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
 		this.blurIterations = 'blurIterations' in options ? options.blurIterations : 4;
 		this.numSteps = 'numSteps' in options ? options.numSteps : 8;
+		this.intensity = 'intensity' in options ? options.intensity : 1.0;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -367,6 +368,7 @@ export class GTAOPass extends Pass {
 		_compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
 		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
+		_compositeMaterial.uniforms.intensity.value = this.intensity;
 		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
 		_compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
 		if ( this.blurIterations !== _compositeMaterial.defines.BLUR_ITERATIONS ) {

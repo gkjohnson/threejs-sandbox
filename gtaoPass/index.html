@@ -66,6 +66,7 @@
 
 				fixedSample: 0,
 				numSteps: 8,
+				intensity: 1.0,
 
 				enableBlur: true,
 				blurIterations: 4,
@@ -239,6 +240,7 @@
 				gui.add( params, 'singlePass' ).name( 'singlePass (slow)' );
 				gui.add( params, 'enableJitter' );
 				gui.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
+				gui.add( params, 'intensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
 				gui.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
 
 				gui.add( params, 'enableBlur' );
@@ -312,6 +314,7 @@
 				gtaoPass.enableBlur = params.enableBlur;
 				gtaoPass.blurIterations = params.blurIterations;
 				gtaoPass.numSteps = params.numSteps;
+				gtaoPass.intensity = params.intensity;
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				if ( params.fixedSample === - 1 ) {
