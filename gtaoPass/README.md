@@ -22,21 +22,17 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - remove need for noise texture (generate jitter)
 
 **Features**
-- Variable sample count for perf
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
 - Use proper normal and depth passes with alpha cutouts
 - Toggle blur, blur type
-- Compare to single pass -- it's much darker further away
 
 **Performance Knobs**
 - How many depth mips to generate / sample
 - Render target scale (1, 1/2, 1/4, others?)
 - Number of samples / "reused" samples
 - Generate normal / use normal in upscale
-- use upscale at all?
 - do we need a depth pyramid? (probably not -- causes issues)
-- Blur counts
 
 # References
 
