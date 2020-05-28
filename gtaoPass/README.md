@@ -24,6 +24,8 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - See toystory presentation on sample reuse.
 - Remove halos around balls?
 - Use proper normal and depth passes with alpha cutouts
+- Toggle blur, blur type
+- Compare to single pass -- it's much darker further away
 
 **Performance Knobs**
 - How many depth mips to generate / sample
@@ -31,7 +33,8 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Number of samples / "reused" samples
 - Generate normal / use normal in upscale
 - use upscale at all?
-- do we need a depth pyramid?
+- do we need a depth pyramid? (probably not -- causes issues)
+- Blur counts
 
 # References
 

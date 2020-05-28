@@ -97,7 +97,9 @@ export const GTAOShader = {
 					float( NUM_MIP_LEVELS - 1 )
 				)
 			);
-			// miplevel = 0;
+
+			// not really worth it to use the other mips
+			miplevel = 0;
 
 			vec2 basesize = renderSize;
 			vec2 mipcoord = uv / basesize;
@@ -150,7 +152,7 @@ export const GTAOShader = {
 			// calculation uses left handed system
 			vnorm.z = - vnorm.z;
 
-			// TODO: use a noise function o texture here. Halton? Poisson?
+			// TODO: use a noise function or texture here. Halton? Poisson?
 			vec2 texelPos = vec2( 0.125 ) + mod( screenCoord, vec2( 4.0 ) ) / 4.0;
 			vec2 noises	= texture2D( noiseTexture, texelPos ).rg;//getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
 

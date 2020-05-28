@@ -76,17 +76,17 @@ export const CompositeShader = {
 			// TODO: Try different blurs -- gaussian, cross, diagonal, box
 			// TODO: pull this sampling out into a function
 			float gtao = 0.0;
-			float total = 0.0;
+			float total = 1e-10;
             #pragma unroll_loop_start
-			for ( int x = 0; x < 5; x ++ ) {
-				for ( int y = 0; y < 5; y ++ ) {
+			for ( int x = 0; x < 4; x ++ ) {
+				for ( int y = 0; y < 4; y ++ ) {
 
 					// iterate over full res pixels
-					vec2 r = - 2.0 / ratio;
+					vec2 r = - 1.5 / ratio;
 					vec2 offsetUv = currTexel + vec2( r.x + float( x ), r.y + float( y ) );
 					offsetUv /= fullSize;
 
-					vec2 aoUv = currAoTexel + vec2( - 2.0 + float( x ), - 2.0 + float( y ) );
+					vec2 aoUv = currAoTexel + vec2( - 1.5 + float( x ), - 1.5 + float( y ) );
 					aoUv /= aoSize;
 
 					// further more negative
