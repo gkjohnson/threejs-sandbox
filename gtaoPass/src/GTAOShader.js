@@ -150,7 +150,7 @@ export const GTAOShader = {
 
 			// TODO: use a noise function or texture here. Halton? Poisson?
 			vec2 texelPos = vec2( 0.125 ) + mod( screenCoord, vec2( 4.0 ) ) / 4.0;
-			vec2 noises	= texture2D( noiseTexture, texelPos ).rg;//getDiskPoint( 0 ) * noiseIntensity; // vec2( 0.0 ); // texelFetch( noise, mod( loc, 4.0 ), 0.0 ).rg;
+			vec2 noises = texture2D( noiseTexture, texelPos ).rg;
 
 			vec2 offset;
 			vec2 horizons = vec2( - 1.0, - 1.0 );
