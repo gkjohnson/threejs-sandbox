@@ -44,6 +44,8 @@ export const GTAOShader = {
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
+		#define FALLOFF_START2	0.16
+		#define FALLOFF_END2	4.0
 
 		#include <common>
 		#include <packing>
@@ -119,10 +121,7 @@ export const GTAOShader = {
 
 		}
 
-		float Falloff( float dist2, float cosh ) {
-
-			#define FALLOFF_START2	0.16
-			#define FALLOFF_END2	4.0
+		float Falloff( float dist2 ) {
 
 			return 2.0 * clamp(
 				( dist2 - FALLOFF_START2 ) / ( FALLOFF_END2 - FALLOFF_START2 ),
@@ -189,7 +188,7 @@ export const GTAOShader = {
 				invdist = inversesqrt( dist2 );
 				cosh = invdist * dot( ws, vdir );
 
-				falloff = Falloff( dist2, cosh );
+				falloff = Falloff( dist2 );
 				horizons.x = max( horizons.x, cosh - falloff );
 
 				// h2
@@ -200,7 +199,7 @@ export const GTAOShader = {
 				invdist = inversesqrt( dist2 );
 				cosh = invdist * dot( ws, vdir );
 
-				falloff = Falloff( dist2, cosh );
+				falloff = Falloff( dist2 );
 				horizons.y = max( horizons.y, cosh - falloff );
 
 				// increment

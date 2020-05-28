@@ -44,6 +44,8 @@ export const SinglePassGTAOShader = {
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
+		#define FALLOFF_START2	0.16
+		#define FALLOFF_END2	4.0
 
 		#include <common>
 		#include <packing>
@@ -102,6 +104,17 @@ export const SinglePassGTAOShader = {
 			return ret;
 
 		}
+
+		float Falloff( float dist2 ) {
+
+			return 2.0 * clamp(
+				( dist2 - FALLOFF_START2 ) / ( FALLOFF_END2 - FALLOFF_START2 ),
+				0.0,
+				1.0
+			);
+
+		}
+
 
 		void main() {
 
@@ -163,7 +176,8 @@ export const SinglePassGTAOShader = {
 					invdist = inversesqrt( dist2 );
 					cosh = invdist * dot( ws, vdir );
 
-					horizons.x = max( horizons.x, cosh );
+					// falloff = Falloff( dist2 );
+					horizons.x = max( horizons.x, cosh - falloff );
 
 					// h2
 					s = GetViewPosition( screenCoord - offset, currStep );
@@ -173,7 +187,8 @@ export const SinglePassGTAOShader = {
 					invdist = inversesqrt( dist2 );
 					cosh = invdist * dot( ws, vdir );
 
-					horizons.y = max( horizons.y, cosh );
+					// falloff = Falloff( dist2 );
+					horizons.y = max( horizons.y, cosh - falloff );
 
 					// increment
 					currStep += stepSize;
