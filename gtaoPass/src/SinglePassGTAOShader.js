@@ -43,7 +43,6 @@ export const SinglePassGTAOShader = {
 
 		#include <common>
 		#include <packing>
-
 		varying vec2 vUv;
 
 		uniform sampler2D noiseTexture;
@@ -54,7 +53,6 @@ export const SinglePassGTAOShader = {
 
 		uniform vec4 projInfo;
 		uniform vec4 clipInfo;
-		uniform vec3 eyePos;
 		uniform vec4 params;
 
 		${ sampleFunctions }
@@ -92,7 +90,8 @@ export const SinglePassGTAOShader = {
 			d = d == 0.0 ? far : d;
 			d = ( abs( d ) - near ) / ( far - near );
 
-			vec4 ret = vec4( 0.0, 0.0, 0.0, d );
+			vec4 ret = vec4( 0.0 );
+			ret.w = d;
 			ret.z = near + d * ( far - near );
 			ret.xy = ( uv * projInfo.xy + projInfo.zw ) * ret.z;
 
