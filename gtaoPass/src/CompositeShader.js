@@ -41,6 +41,12 @@ export const CompositeShader = {
 		uniform sampler2D normalBuffer;
 		uniform sampler2D gtaoBuffer;
 
+		vec3 UnpackNormal( vec4 d ) {
+
+			return d.xyz * 2.0 - 1.0;
+
+		}
+
 		vec3 MultiBounce( float ao, vec3 albedo ) {
 
 			vec3 x = vec3( ao );
@@ -59,8 +65,6 @@ export const CompositeShader = {
 
 			#if ENABLE_BLUR
 
-			vec2 texelSize = 1.0 / fullSize;
-			vec2 aoTexelSize = 1.0 / aoSize;
 			vec2 currTexel = vUv * fullSize;
 			vec2 currAoTexel = vUv * aoSize;
 
@@ -68,9 +72,7 @@ export const CompositeShader = {
 			vec2 ratio = aoSize / fullSize;
 
 			// TODO: this normal and depth should be based on what's used for the GTAO buffer.
-			vec3 currNormal = texture2D( normalBuffer, vUv ).rgb;
-			currNormal -= 0.5;
-			currNormal *= 2.0;
+			vec3 currNormal = UnpackNormal( texture2D( normalBuffer, vUv ) );
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
 			// TODO: Try different blurs -- gaussian, cross, diagonal, box
@@ -79,6 +81,8 @@ export const CompositeShader = {
 			float total = 1e-10;
             #pragma unroll_loop_start
 			for ( int x = 0; x < 4; x ++ ) {
+
+				#pragma unroll_loop_start
 				for ( int y = 0; y < 4; y ++ ) {
 
 					// iterate over full res pixels
@@ -91,12 +95,9 @@ export const CompositeShader = {
 
 					// further more negative
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					vec3 offsetNormal = texture2D( normalBuffer, offsetUv ).rgb;
-					offsetNormal -= 0.5;
-					offsetNormal *= 2.0;
+					if ( abs(offsetDepth - currDepth) < 0.5 ) {
 
-					if ( abs(offsetDepth - currDepth) < 0.2 ) {
-
+						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
 						weight *= weight;
 
@@ -107,6 +108,8 @@ export const CompositeShader = {
 					}
 
 				}
+				#pragma unroll_loop_end
+
 			}
 			#pragma unroll_loop_end
 

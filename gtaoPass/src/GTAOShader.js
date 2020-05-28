@@ -15,8 +15,6 @@ export const GTAOShader = {
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
 
-		noiseIntensity: { value: 1.0 }
-
 	},
 
 	vertexShader:
@@ -55,8 +53,6 @@ export const GTAOShader = {
 		uniform vec4 clipInfo;
 		uniform vec4 projInfo;
 		uniform vec2 params;
-
-		uniform float noiseIntensity;
 
 		${ sampleFunctions }
 

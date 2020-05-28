@@ -82,7 +82,6 @@ export class GTAOPass extends Pass {
 		this.sampleIndex = 0;
 
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
-		this.noiseIntensity = 'noiseIntensity' in options ? options.noiseIntensity : 1.0;
 		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
 		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
 
@@ -311,7 +310,6 @@ export class GTAOPass extends Pass {
 			0.5 * ( height / ( 2.0 * Math.tan( fovRadians * 0.5 ) ) ),
 			0.0
 		);
-		gtaoMaterial.uniforms.noiseIntensity.value = this.noiseIntensity;
 		gtaoMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		gtaoMaterial.uniforms.depthPyramid.value = depthPyramidBuffer.texture;
 		gtaoMaterial.uniforms.depthPyramidSize.value.set(
