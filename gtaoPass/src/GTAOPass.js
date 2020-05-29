@@ -23,6 +23,7 @@ import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/
 import { GTAOShader } from './GTAOShader.js';
 import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
+import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
 const _gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
 const _singlePassGtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( SinglePassGTAOShader ) );
@@ -31,6 +32,7 @@ const _debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepth
 const _compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 const _copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
+const rendererState = new RendererState();
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
 const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
@@ -164,28 +166,10 @@ export class GTAOPass extends Pass {
 		const debug = this.debug;
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 
-		const _prevClearColor = new Color();
+		rendererState.copy( renderer, scene );
+		const restoreOriginalValues = () => {
 
-		// Save the previous scene state
-		const prevClearAlpha = renderer.getClearAlpha();
-		const prevAutoClear = renderer.autoClear;
-		const prevOverride = scene.overrideMaterial;
-		const prevAutoUpdate = scene.autoUpdate;
-		const prevRenderTarget = renderer.getRenderTarget();
-		const pevShadowEnabled = renderer.shadowMap.enabled;
-		const prevSceneBackground = scene.background;
-		_prevClearColor.copy( renderer.getClearColor() );
-
-		const replaceOriginalValues = () => {
-
-			// Restore renderer settings
-			scene.overrideMaterial = prevOverride;
-			renderer.setRenderTarget( prevRenderTarget );
-			renderer.setClearColor( this._prevClearColor, prevClearAlpha );
-			renderer.autoClear = prevAutoClear;
-			renderer.shadowMap.enabled = pevShadowEnabled;
-			scene.autoUpdate = prevAutoUpdate;
-			scene.background = prevSceneBackground;
+			rendererState.restore( renderer, scene );
 			depthReplacement.reset( scene, true );
 
 		};
@@ -208,7 +192,7 @@ export class GTAOPass extends Pass {
 			_debugDepthQuad.render( renderer );
 
 			// copy the pyramid at the target level to the screen
-			replaceOriginalValues();
+			restoreOriginalValues();
 			return;
 
 		}
@@ -228,7 +212,7 @@ export class GTAOPass extends Pass {
 			_debugPackedQuad.material.uniforms.displayRoughness.value = 0.0;
 			_debugPackedQuad.material.uniforms.texture.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
-			replaceOriginalValues();
+			restoreOriginalValues();
 			return;
 
 		}
@@ -317,7 +301,7 @@ export class GTAOPass extends Pass {
 			_copyQuad.material.uniforms.tDiffuse.value = gtaoBuffer.texture;
 			_copyQuad.render( renderer );
 
-			replaceOriginalValues();
+			restoreOriginalValues();
 			return;
 
 		} else {
@@ -375,7 +359,7 @@ export class GTAOPass extends Pass {
 		renderer.clear();
 		_compositeQuad.render( renderer );
 
-		replaceOriginalValues();
+		restoreOriginalValues();
 
 	}
 
