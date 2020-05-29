@@ -32,6 +32,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Number of samples / "reused" samples
 - option to generate normal / use normal in upscale
 - seperable blur
+- switch float buffer to simpler type
 
 # Steps
 - Understand haloing / depth lines / verify pixel sample spots
