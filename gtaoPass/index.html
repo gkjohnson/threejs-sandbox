@@ -214,7 +214,7 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				gtaoPass = new GTAOPass( scene, camera, { raymarchTargetScale: 1.0 } );
+				gtaoPass = new GTAOPass( scene, camera );
 				window.gtaoPass = gtaoPass;
 
 				composer = new EffectComposer( renderer );

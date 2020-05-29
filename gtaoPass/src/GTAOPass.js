@@ -24,23 +24,12 @@ import { GTAOShader } from './GTAOShader.js';
 import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 
-const _gtaoMaterial = new ShaderMaterial( GTAOShader );
-const _gtaoQuad = new Pass.FullScreenQuad( _gtaoMaterial );
-
-const _singlePassGtaoMaterial = new ShaderMaterial( SinglePassGTAOShader );
-const _singlePassGtaoQuad = new Pass.FullScreenQuad( _singlePassGtaoMaterial );
-
-const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
-const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
-
-const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
-const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
-
-const _compositeMaterial = new ShaderMaterial( CompositeShader );
-const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
-
-const _copyMaterial = new ShaderMaterial( CopyShader );
-const _copyQuad = new Pass.FullScreenQuad( _copyMaterial );
+const _gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
+const _singlePassGtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( SinglePassGTAOShader ) );
+const _debugPackedQuad = new Pass.FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
+const _debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
+const _compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+const _copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
 const _blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
@@ -75,14 +64,13 @@ export class GTAOPass extends Pass {
 		};
 		this.sampleIndex = 0;
 
-		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1.0;
-		this.fixedSample = 'fixedSample' in options ? options.fixedSample : false;
-		this.enableJitter = 'enableJitter' in options ? options.enableJitter : true;
-		this.blurIterations = 'blurIterations' in options ? options.blurIterations : 4;
-		this.numSteps = 'numSteps' in options ? options.numSteps : 8;
-		this.intensity = 'intensity' in options ? options.intensity : 1.0;
-		this.radius = 'radius' in options ? options.radius : 2.0;
-
+		this.renderTargetScale = 1.0;
+		this.fixedSample = false;
+		this.enableJitter = true;
+		this.blurIterations = 4;
+		this.numSteps = 8;
+		this.intensity = 1.0;
+		this.radius = 2.0;
 		this.blurMode = GTAOPass.BOX_BLUR;
 		this.enableFalloff = true;
 		this.falloffStart = 0.4;
@@ -216,7 +204,7 @@ export class GTAOPass extends Pass {
 
 			renderer.setRenderTarget( finalBuffer );
 
-			_debugDepthMaterial.uniforms.texture.value = depthBuffer.texture;
+			_debugDepthQuad.material.uniforms.texture.value = depthBuffer.texture;
 			_debugDepthQuad.render( renderer );
 
 			// copy the pyramid at the target level to the screen
@@ -237,8 +225,8 @@ export class GTAOPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_debugPackedMaterial.uniforms.displayRoughness.value = 0.0;
-			_debugPackedMaterial.uniforms.texture.value = packedBuffer.texture;
+			_debugPackedQuad.material.uniforms.displayRoughness.value = 0.0;
+			_debugPackedQuad.material.uniforms.texture.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -249,12 +237,12 @@ export class GTAOPass extends Pass {
 		let gtaoMaterial, gtaoQuad;
 		if ( this.singlePass ) {
 
-			gtaoMaterial = _singlePassGtaoMaterial;
+			gtaoMaterial = _singlePassGtaoQuad.material;
 			gtaoQuad = _singlePassGtaoQuad;
 
 		} else {
 
-			gtaoMaterial = _gtaoMaterial;
+			gtaoMaterial = _gtaoQuad.material;
 			gtaoQuad = _gtaoQuad;
 
 		}
@@ -326,7 +314,7 @@ export class GTAOPass extends Pass {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
-			_copyMaterial.uniforms.tDiffuse.value = gtaoBuffer.texture;
+			_copyQuad.material.uniforms.tDiffuse.value = gtaoBuffer.texture;
 			_copyQuad.render( renderer );
 
 			replaceOriginalValues();
@@ -341,42 +329,43 @@ export class GTAOPass extends Pass {
 		}
 
 		// blur and composite
-		_compositeMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
-		_compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
-		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
-		_compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
-		_compositeMaterial.uniforms.intensity.value = this.intensity;
-		_compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
-		_compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
-		if ( this.blurIterations !== _compositeMaterial.defines.BLUR_ITERATIONS ) {
+		const compositeMaterial = _compositeQuad.material;
+		compositeMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
+		compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
+		compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
+		compositeMaterial.uniforms.gtaoBuffer.value = gtaoBuffer.texture;
+		compositeMaterial.uniforms.intensity.value = this.intensity;
+		compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
+		compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
+		if ( this.blurIterations !== compositeMaterial.defines.BLUR_ITERATIONS ) {
 
-			_compositeMaterial.defines.BLUR_ITERATIONS = this.blurIterations;
-			_compositeMaterial.needsUpdate = true;
+			compositeMaterial.defines.BLUR_ITERATIONS = this.blurIterations;
+			compositeMaterial.needsUpdate = true;
 
 		}
 
-		if ( this.blurMode !== _compositeMaterial.defines.BLUR_MODE ) {
+		if ( this.blurMode !== compositeMaterial.defines.BLUR_MODE ) {
 
-			_compositeMaterial.defines.BLUR_MODE = this.blurMode;
-			_compositeMaterial.needsUpdate = true;
+			compositeMaterial.defines.BLUR_MODE = this.blurMode;
+			compositeMaterial.needsUpdate = true;
 
 		}
 
 		if ( debug.display === GTAOPass.AO_BLUR ) {
 
-			if ( _compositeMaterial.defines.AO_ONLY !== 1 ) {
+			if ( compositeMaterial.defines.AO_ONLY !== 1 ) {
 
-				_compositeMaterial.defines.AO_ONLY = 1;
-				_compositeMaterial.needsUpdate = true;
+				compositeMaterial.defines.AO_ONLY = 1;
+				compositeMaterial.needsUpdate = true;
 
 			}
 
 		} else {
 
-			if ( _compositeMaterial.defines.AO_ONLY !== 0 ) {
+			if ( compositeMaterial.defines.AO_ONLY !== 0 ) {
 
-				_compositeMaterial.defines.AO_ONLY = 0;
-				_compositeMaterial.needsUpdate = true;
+				compositeMaterial.defines.AO_ONLY = 0;
+				compositeMaterial.needsUpdate = true;
 
 			}
 
@@ -385,11 +374,6 @@ export class GTAOPass extends Pass {
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		_compositeQuad.render( renderer );
-
-
-		// renderer.setRenderTarget( finalBuffer );
-		// _copyMaterial.uniforms.tDiffuse.value = readBuffer.texture;
-		// _copyQuad.render( renderer );
 
 		replaceOriginalValues();
 
