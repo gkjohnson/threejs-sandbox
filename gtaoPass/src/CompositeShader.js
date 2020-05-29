@@ -247,7 +247,8 @@ export const CompositeShader = {
 
 			#if AO_ONLY
 
-			gl_FragColor = vec4( gtao );
+			vec3 rgb = mix( vec3( 1.0 ), vec3( gtao ), intensity );
+			gl_FragColor = vec4( rgb, 1.0 );
 
 			#else
 

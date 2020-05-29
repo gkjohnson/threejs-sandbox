@@ -21,6 +21,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - why does background get lighter?
 - ensure loops are unrolled with custom unroll -- only works with i
 - remove need for noise texture (generate jitter)
+- spiral rotations on single pass
 
 **Features**
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
@@ -31,8 +32,8 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - How many depth mips to generate / sample
 - Render target scale (1, 1/2, 1/4, others?)
 - Number of samples / "reused" samples
-- Generate normal / use normal in upscale
-- do we need a depth pyramid? (probably not -- causes issues)
+- option to generate normal / use normal in upscale
+- seperable blur
 
 # References
 

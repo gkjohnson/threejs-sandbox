@@ -55,7 +55,7 @@
 			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { GTAOPass, NO_BLUR, BOX_BLUR, CROSS_BLUR, DIAGONAL_BLUR } from './src/GTAOPass.js';
+			import { GTAOPass } from './src/GTAOPass.js';
 
 			// globals
 			var stats;
@@ -73,11 +73,10 @@
 				falloffStart: 0.4,
 				falloffEnd: 2.0,
 
-				blurMode: BOX_BLUR,
+				blurMode: GTAOPass.BOX_BLUR,
 				blurIterations: 4,
 
 				display: GTAOPass.DEFAULT,
-				depthLevel: - 1,
 				renderTargetScale: 0.5,
 				scene: 'pyramid',
 			};
@@ -257,7 +256,7 @@
 				settingsFolder.add( params, 'falloffEnd' ).min( 0 ).max( 10.0 ).step( 0.01 );
 
 
-				settingsFolder.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.25 ).onChange( v => {
+				settingsFolder.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.01 ).onChange( v => {
 
 					gtaoPass.renderTargetScale = v;
 					onWindowResize();
@@ -266,19 +265,23 @@
 				settingsFolder.open();
 
 				const blurFolder = gui.addFolder( 'blur' );
-				blurFolder.add( params, 'blurMode', { NO_BLUR, BOX_BLUR, CROSS_BLUR, DIAGONAL_BLUR } );
+				blurFolder.add( params, 'blurMode', {
+					NO_BLUR: GTAOPass.NO_BLUR,
+					BOX_BLUR: GTAOPass.BOX_BLUR,
+					CROSS_BLUR: GTAOPass.CROSS_BLUR,
+					DIAGONAL_BLUR: GTAOPass.DIAGONAL_BLUR,
+				} );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
 				blurFolder.open();
 
 				const debugFolder = gui.addFolder( 'debug' );
 				debugFolder.add( params, 'display', {
 					DEFAULT: GTAOPass.DEFAULT,
-					DEPTH_PYRAMID: GTAOPass.DEPTH_PYRAMID,
+					DEPTH: GTAOPass.DEPTH,
 					NORMAL: GTAOPass.NORMAL,
 					AO_SAMPLE: GTAOPass.AO_SAMPLE,
 					AO_BLUR: GTAOPass.AO_BLUR,
 				} );
-				debugFolder.add( params, 'depthLevel' ).min( - 1 ).max( 10 ).step( 1 );
 				debugFolder.open();
 
 				gui.open();
@@ -326,7 +329,6 @@
 				}
 				window.gtaoPass = gtaoPass;
 				gtaoPass.debug.display = parseInt( params.display );
-				gtaoPass.debug.depthLevel = params.depthLevel;
 				gtaoPass.enabled = params.enabled;
 				gtaoPass.singlePass = params.singlePass;
 				gtaoPass.enableJitter = params.enableJitter;

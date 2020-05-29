@@ -13,15 +13,13 @@ import {
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
-import { PackedMipMapGenerator } from '../../custom-mipmap-generation/src/PackedMipMapGenerator.js';
 import { LinearDepthShader } from '../../screenSpaceReflectionsPass/src/LinearDepthShader.js';
 import { PackedShader } from '../../screenSpaceReflectionsPass/src/PackedShader.js';
-import { LinearDepthDisplayShader, LinearMipDepthDisplayShader } from './DebugShaders.js';
+import { LinearDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
 import { GTAOShader } from './GTAOShader.js';
 import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
-// import { DepthAwareUpscaleBlurShader } from './DepthAwareUpscaleBlurShader.js';
 
 const _gtaoMaterial = new ShaderMaterial( GTAOShader );
 const _gtaoQuad = new Pass.FullScreenQuad( _gtaoMaterial );
@@ -35,14 +33,8 @@ const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
 const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
 const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
 
-const _debugMipDepthMaterial = new ShaderMaterial( LinearMipDepthDisplayShader );
-const _debugMipDepthQuad = new Pass.FullScreenQuad( _debugMipDepthMaterial );
-
 const _compositeMaterial = new ShaderMaterial( CompositeShader );
 const _compositeQuad = new Pass.FullScreenQuad( _compositeMaterial );
-
-// const _upscaleMaterial = new ShaderMaterial( DepthAwareUpscaleBlurShader );
-// const _upscaleQuad = new Pass.FullScreenQuad( _upscaleMaterial );
 
 const _copyMaterial = new ShaderMaterial( CopyShader );
 const _copyQuad = new Pass.FullScreenQuad( _copyMaterial );
@@ -64,10 +56,6 @@ for (let i = 0; i < 4; ++i) {
 
 const noiseTexture = new DataTexture( data, 4, 4, RGBAFormat, UnsignedByteType );
 
-export const NO_BLUR = 0;
-export const BOX_BLUR = 1;
-export const CROSS_BLUR = 2;
-export const DIAGONAL_BLUR = 3;
 export class GTAOPass extends Pass {
 
 	constructor( scene, camera, options = {} ) {
@@ -81,7 +69,6 @@ export class GTAOPass extends Pass {
 		this.camera = camera;
 		this.debug = {
 			display: GTAOPass.DEFAULT,
-			depthLevel: - 1,
 		};
 		this.sampleIndex = 0;
 
@@ -93,7 +80,7 @@ export class GTAOPass extends Pass {
 		this.intensity = 'intensity' in options ? options.intensity : 1.0;
 		this.radius = 'radius' in options ? options.radius : 2.0;
 
-		this.blurMode = BOX_BLUR;
+		this.blurMode = GTAOPass.BOX_BLUR;
 		this.enableFalloff = true;
 		this.falloffStart = 0.4;
 		this.falloffEnd = 2.0;
@@ -221,35 +208,12 @@ export class GTAOPass extends Pass {
 		renderer.clear();
 		renderer.render( scene, camera );
 
-		if ( debug.display === GTAOPass.DEPTH_PYRAMID ) {
+		if ( debug.display === GTAOPass.DEPTH ) {
 
 			renderer.setRenderTarget( finalBuffer );
 
-			const level = debug.depthLevel;
-			if ( level < 0 ) {
-
-				_debugDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-				_debugDepthQuad.render( renderer );
-
-			} else {
-
-				_debugMipDepthMaterial.uniforms.originalSize.value.set(
-					Math.floor( depthBuffer.texture.image.width ),
-					Math.floor( depthBuffer.texture.image.height )
-				);
-				_debugMipDepthMaterial.uniforms.level.value = level;
-				_debugMipDepthMaterial.uniforms.texture.value = depthPyramidBuffer.texture;
-
-				renderer.setRenderTarget( this._gtaoBuffer );
-				renderer.clear();
-				_debugMipDepthQuad.render( renderer );
-
-				renderer.setRenderTarget( finalBuffer );
-				renderer.clear();
-				_copyMaterial.uniforms.tDiffuse.value = this._gtaoBuffer.texture;
-				_copyQuad.render( renderer );
-
-			}
+			_debugDepthMaterial.uniforms.texture.value = depthBuffer.texture;
+			_debugDepthQuad.render( renderer );
 
 			// copy the pyramid at the target level to the screen
 			replaceOriginalValues();
@@ -430,7 +394,12 @@ export class GTAOPass extends Pass {
 }
 
 GTAOPass.DEFAULT = 0;
-GTAOPass.DEPTH_PYRAMID = 1;
+GTAOPass.DEPTH = 1;
 GTAOPass.NORMAL = 2;
 GTAOPass.AO_SAMPLE = 3;
 GTAOPass.AO_BLUR = 4;
+
+GTAOPass.NO_BLUR = 0;
+GTAOPass.BOX_BLUR = 1;
+GTAOPass.CROSS_BLUR = 2;
+GTAOPass.DIAGONAL_BLUR = 3;
