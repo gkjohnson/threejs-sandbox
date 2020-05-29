@@ -37,8 +37,8 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 # Steps
 - Rotate angle over steps
 - Add new jitter / noise effect
-- Code cleanup
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
+- Code cleanup
 - Color bleed
 
 # Other

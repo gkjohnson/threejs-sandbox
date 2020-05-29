@@ -25,15 +25,8 @@ import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
-const _gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
-const _singlePassGtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( SinglePassGTAOShader ) );
-const _debugPackedQuad = new Pass.FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
-const _debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
-const _compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
-const _copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
-
 const rendererState = new RendererState();
-const _blackColor = new Color( 0 );
+const blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
 const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
 
@@ -130,6 +123,14 @@ export class GTAOPass extends Pass {
 		// this._normalReplacement = new ShaderReplacement( PackedShader );
 		this._normalReplacement = new NormalPass();
 
+		// quads
+		this.gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
+		this.singlePassGtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( SinglePassGTAOShader ) );
+		this.debugPackedQuad = new Pass.FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
+		this.debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
+		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+		this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
+
 	}
 
 	dispose() {
@@ -160,11 +161,21 @@ export class GTAOPass extends Pass {
 
 		}
 
-		const sampleIndex = this.sampleIndex;
-		const scene = this.scene;
-		const camera = this.camera;
-		const debug = this.debug;
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
+		const {
+			sampleIndex,
+			scene,
+			camera,
+			debug,
+
+			debugPackedQuad,
+			debugDepthQuad,
+			compositeQuad,
+			copyQuad,
+		} = this;
+
+		const gtaoQuad = this.singlePass ? this.singlePassGtaoQuad : this.gtaoQuad;
+		const gtaoMaterial = gtaoQuad.material;
 
 		rendererState.copy( renderer, scene );
 		const restoreOriginalValues = () => {
@@ -180,7 +191,7 @@ export class GTAOPass extends Pass {
 		scene.background = null;
 		depthReplacement.replace( scene, true, true );
 		renderer.setRenderTarget( depthBuffer );
-		renderer.setClearColor( _blackColor, 0.0 );
+		renderer.setClearColor( blackColor, 0.0 );
 		renderer.clear();
 		renderer.render( scene, camera );
 
@@ -188,8 +199,8 @@ export class GTAOPass extends Pass {
 
 			renderer.setRenderTarget( finalBuffer );
 
-			_debugDepthQuad.material.uniforms.texture.value = depthBuffer.texture;
-			_debugDepthQuad.render( renderer );
+			debugDepthQuad.material.uniforms.texture.value = depthBuffer.texture;
+			debugDepthQuad.render( renderer );
 
 			// copy the pyramid at the target level to the screen
 			restoreOriginalValues();
@@ -209,28 +220,15 @@ export class GTAOPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_debugPackedQuad.material.uniforms.displayRoughness.value = 0.0;
-			_debugPackedQuad.material.uniforms.texture.value = packedBuffer.texture;
-			_debugPackedQuad.render( renderer );
+			debugPackedQuad.material.uniforms.displayRoughness.value = 0.0;
+			debugPackedQuad.material.uniforms.texture.value = packedBuffer.texture;
+			debugPackedQuad.render( renderer );
 			restoreOriginalValues();
 			return;
 
 		}
 
 		// Run the GTAO sampling
-		let gtaoMaterial, gtaoQuad;
-		if ( this.singlePass ) {
-
-			gtaoMaterial = _singlePassGtaoQuad.material;
-			gtaoQuad = _singlePassGtaoQuad;
-
-		} else {
-
-			gtaoMaterial = _gtaoQuad.material;
-			gtaoQuad = _gtaoQuad;
-
-		}
-
 		if ( this.numSteps !== gtaoMaterial.defines.NUM_STEPS ) {
 
 			gtaoMaterial.defines.NUM_STEPS = this.numSteps;
@@ -298,8 +296,8 @@ export class GTAOPass extends Pass {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
-			_copyQuad.material.uniforms.tDiffuse.value = gtaoBuffer.texture;
-			_copyQuad.render( renderer );
+			copyQuad.material.uniforms.tDiffuse.value = gtaoBuffer.texture;
+			copyQuad.render( renderer );
 
 			restoreOriginalValues();
 			return;
@@ -313,7 +311,7 @@ export class GTAOPass extends Pass {
 		}
 
 		// blur and composite
-		const compositeMaterial = _compositeQuad.material;
+		const compositeMaterial = compositeQuad.material;
 		compositeMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
 		compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;
@@ -357,7 +355,7 @@ export class GTAOPass extends Pass {
 
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
-		_compositeQuad.render( renderer );
+		compositeQuad.render( renderer );
 
 		restoreOriginalValues();
 
