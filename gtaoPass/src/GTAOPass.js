@@ -112,38 +112,32 @@ export class GTAOPass extends Pass {
 				format: RGBFormat,
 				type: FloatType
 			} );
-		this._depthPyramidBuffer =
-			new WebGLRenderTarget( 256, 256, {
-				minFilter: NearestFilter,
-				magFilter: NearestFilter,
-				format: RGBFormat,
-				type: FloatType
-			} );
+
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
-		this._depthPyramidGenerator = new PackedMipMapGenerator(
-			/* glsl */`
-			float depth = 0.0;
+		// this._depthPyramidGenerator = new PackedMipMapGenerator(
+		// 	/* glsl */`
+		// 	float depth = 0.0;
 
-			#pragma unroll_loop_start
-			for ( int i = 0; i < SAMPLES; i ++ ) {
+		// 	#pragma unroll_loop_start
+		// 	for ( int i = 0; i < SAMPLES; i ++ ) {
 
-				float sample = samples[ i ].r;
-				if ( sample != 0.0 ) {
+		// 		float sample = samples[ i ].r;
+		// 		if ( sample != 0.0 ) {
 
-					depth =
-						depth == 0.0 ?
-							sample :
-							max( sample, depth );
+		// 			depth =
+		// 				depth == 0.0 ?
+		// 					sample :
+		// 					max( sample, depth );
 
-				}
+		// 		}
 
-			}
-			#pragma unroll_loop_end
+		// 	}
+		// 	#pragma unroll_loop_end
 
-			gl_FragColor = vec4( depth );
+		// 	gl_FragColor = vec4( depth );
 
-			`
-		);
+		// 	`
+		// );
 
 
 		this._normalBuffer =
@@ -218,18 +212,14 @@ export class GTAOPass extends Pass {
 		};
 
 		// draw depth pyramid
-		const depthPyramidGenerator = this._depthPyramidGenerator;
 		const depthReplacement = this._depthReplacement;
 		const depthBuffer = this._depthBuffer;
-		const depthPyramidBuffer = this._depthPyramidBuffer;
 		scene.background = null;
 		depthReplacement.replace( scene, true, true );
 		renderer.setRenderTarget( depthBuffer );
 		renderer.setClearColor( _blackColor, 0.0 );
 		renderer.clear();
 		renderer.render( scene, camera );
-
-		depthPyramidGenerator.update( depthBuffer, depthPyramidBuffer, renderer, false );
 
 		if ( debug.display === GTAOPass.DEPTH_PYRAMID ) {
 
@@ -328,7 +318,7 @@ export class GTAOPass extends Pass {
 
 		}
 
-
+		// gtao
 		const gtaoBuffer = this._gtaoBuffer;
 		const width = Math.floor( gtaoBuffer.texture.image.width );
 		const height = Math.floor( gtaoBuffer.texture.image.height );
@@ -352,11 +342,8 @@ export class GTAOPass extends Pass {
 			0.0
 		);
 		gtaoMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
-		gtaoMaterial.uniforms.depthPyramid.value = depthPyramidBuffer.texture;
-		gtaoMaterial.uniforms.depthPyramidSize.value.set(
-			Math.floor( depthBuffer.texture.image.width ),
-			Math.floor( depthBuffer.texture.image.height )
-		);
+		gtaoMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
+
 		gtaoMaterial.uniforms.renderSize.value.set(
 			Math.floor( gtaoBuffer.texture.image.width ),
 			Math.floor( gtaoBuffer.texture.image.height )
@@ -385,14 +372,7 @@ export class GTAOPass extends Pass {
 
 		}
 
-		if ( ! this.singlePass ) {
-
-			// TODO spatial denoise via blur
-
-			// TODO temporal reproject denoise and accumulate
-
-		}
-
+		// blur and composite
 		_compositeMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
 		_compositeMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		_compositeMaterial.uniforms.colorBuffer.value = readBuffer.texture;

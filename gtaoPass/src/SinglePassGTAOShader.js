@@ -19,8 +19,9 @@ export const SinglePassGTAOShader = {
 
 		noiseTexture: { value: null },
 		normalBuffer: { value: null },
-		depthPyramid: { value: null },
-		depthPyramidSize: { value: new Vector2() },
+		depthBuffer: { value: null },
+		// depthPyramid: { value: null },
+		// depthPyramidSize: { value: new Vector2() },
 		renderSize: { value: new Vector2() },
 
 		clipInfo: { value: new Vector4 },
@@ -55,8 +56,7 @@ export const SinglePassGTAOShader = {
 
 		uniform sampler2D noiseTexture;
 		uniform sampler2D normalBuffer;
-		uniform sampler2D depthPyramid;
-		uniform vec2 depthPyramidSize;
+		uniform sampler2D depthBuffer;
 		uniform vec2 renderSize;
 
 		uniform vec4 projInfo;
@@ -94,7 +94,8 @@ export const SinglePassGTAOShader = {
 			vec2 coord = ( uv / basesize );
 
 			// d is expected to be [ 0.0, 1.0 ]
-			float d = packedTexture2DLOD( depthPyramid, coord, 0, depthPyramidSize ).r;
+			// float d = packedTexture2DLOD( depthPyramid, coord, 0, depthPyramidSize ).r;
+			float d = texture2D( depthBuffer, coord ).r;
 			d = d == 0.0 ? far : d;
 			d = ( abs( d ) - near ) / ( far - near );
 

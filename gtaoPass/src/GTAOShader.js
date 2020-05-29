@@ -18,8 +18,9 @@ export const GTAOShader = {
 
 		noiseTexture: { value: null },
 		normalBuffer: { value: null },
-		depthPyramid: { value: null },
-		depthPyramidSize: { value: new Vector2() },
+		depthBuffer: { value: null },
+		// depthPyramid: { value: null },
+		// depthPyramidSize: { value: new Vector2() },
 		renderSize: { value: new Vector2() },
 
 		clipInfo: { value: new Vector4 },
@@ -55,8 +56,7 @@ export const GTAOShader = {
 
 		uniform sampler2D noiseTexture;
 		uniform sampler2D normalBuffer;
-		uniform sampler2D depthPyramid;
-		uniform vec2 depthPyramidSize;
+		uniform sampler2D depthBuffer;
 		uniform vec2 renderSize;
 
 		uniform vec4 clipInfo;
@@ -90,27 +90,25 @@ export const GTAOShader = {
 			float near = clipInfo.x;
 			float far = clipInfo.y;
 
-			// TODO: ideally this mip level corresponds to the renderSize scale?
-			int miplevel = int(
-				clamp(
-					floor(
-						log2(
-							currStep / float( PREFETCH_CACHE_SIZE )
-						)
-					),
-					1.0,
-					float( NUM_MIP_LEVELS - 1 )
-				)
-			);
-
-			// not really worth it to use the other mips
-			miplevel = 0;
+			// unused code for depthPyramid to sample higher level mip maps
+			// int miplevel = int(
+			// 	clamp(
+			// 		floor(
+			// 			log2(
+			// 				currStep / float( PREFETCH_CACHE_SIZE )
+			// 			)
+			// 		),
+			// 		1.0,
+			// 		float( NUM_MIP_LEVELS - 1 )
+			// 	)
+			// );
 
 			vec2 basesize = renderSize;
 			vec2 mipcoord = uv / basesize;
 
 			// d is expected to be [ 0.0, 1.0 ]
-			float d = packedTexture2DLOD( depthPyramid, mipcoord, 0, depthPyramidSize ).r;
+			// float d = packedTexture2DLOD( depthPyramid, mipcoord, 0, depthPyramidSize ).r;
+			float d = texture2D( depthBuffer, mipcoord ).r;
 			d = d == 0.0 ? far : d;
 			d = ( abs( d ) - near ) / ( far - near );
 

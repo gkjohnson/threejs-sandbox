@@ -18,6 +18,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
   - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 - Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
 - remove halos -- compare to single pass
+- why does background get lighter?
 - ensure loops are unrolled with custom unroll -- only works with i
 - remove need for noise texture (generate jitter)
 
@@ -25,7 +26,6 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
 - Use proper normal and depth passes with alpha cutouts
-- Toggle blur, blur type
 
 **Performance Knobs**
 - How many depth mips to generate / sample
