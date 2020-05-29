@@ -55,7 +55,7 @@
 			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { GTAOPass, NO_BLUR, BOX_BLUR, GAUSSIAN_BLUR, CROSS_BLUR, DIAGONAL_BLUR } from './src/GTAOPass.js';
+			import { GTAOPass, NO_BLUR, BOX_BLUR, CROSS_BLUR, DIAGONAL_BLUR } from './src/GTAOPass.js';
 
 			// globals
 			var stats;
@@ -266,7 +266,7 @@
 				settingsFolder.open();
 
 				const blurFolder = gui.addFolder( 'blur' );
-				blurFolder.add( params, 'blurMode', { NO_BLUR, BOX_BLUR, GAUSSIAN_BLUR, CROSS_BLUR, DIAGONAL_BLUR } );
+				blurFolder.add( params, 'blurMode', { NO_BLUR, BOX_BLUR, CROSS_BLUR, DIAGONAL_BLUR } );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
 				blurFolder.open();
 

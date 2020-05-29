@@ -125,11 +125,8 @@ export const CompositeShader = {
 			}
 			#pragma unroll_loop_end
 
-			// GAUSSIAN_BLUR
-			#elif BLUR_MODE == 2
-
 			// CROSS_BLUR
-			#elif BLUR_MODE == 3
+			#elif BLUR_MODE == 2
 
 			#pragma unroll_loop_start
 			for ( int i = 0; i < BLUR_ITERATIONS; i ++ ) {
@@ -186,7 +183,7 @@ export const CompositeShader = {
 			#pragma unroll_loop_end
 
 			// DIAGONAL_BLUR
-			#elif BLUR_MODE == 4
+			#elif BLUR_MODE == 3
 
 			#pragma unroll_loop_start
 			for ( int i = 0; i < BLUR_ITERATIONS; i ++ ) {

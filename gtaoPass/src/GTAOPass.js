@@ -66,9 +66,8 @@ const noiseTexture = new DataTexture( data, 4, 4, RGBAFormat, UnsignedByteType )
 
 export const NO_BLUR = 0;
 export const BOX_BLUR = 1;
-export const GAUSSIAN_BLUR = 2;
-export const CROSS_BLUR = 3;
-export const DIAGONAL_BLUR = 4;
+export const CROSS_BLUR = 2;
+export const DIAGONAL_BLUR = 3;
 export class GTAOPass extends Pass {
 
 	constructor( scene, camera, options = {} ) {
