@@ -5,6 +5,7 @@ import {
 	NearestFilter,
 	RGBAFormat,
 	FloatType,
+	HalfFloatType,
 	RGBFormat,
 	Math as MathUtils,
 	DataTexture,
@@ -99,7 +100,7 @@ export class GTAOPass extends Pass {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
 				format: RGBFormat,
-				type: FloatType
+				type: FloatType,
 			} );
 
 		// this._depthReplacement = new ShaderReplacement( LinearDepthShader );
@@ -134,8 +135,7 @@ export class GTAOPass extends Pass {
 			new WebGLRenderTarget( 1, 1, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
-				format: RGBAFormat,
-				type: FloatType
+				format: RGBAFormat
 			} );
 		// this._normalReplacement = new ShaderReplacement( PackedShader );
 		this._normalReplacement = new NormalPass();

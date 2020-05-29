@@ -86,8 +86,8 @@ export const CompositeShader = {
 			// TODO: pull this sampling out into a function
 			float gtao = 0.0;
 			float totalWeight = 1e-10;
-			float pixelOffset = - ( ( float( BLUR_ITERATIONS ) / 2.0 ) - 0.5 );
-			vec2 offsetRatio = pixelOffset / texelRatio;
+			float pixelOffset = - float( BLUR_ITERATIONS ) / 2.0;
+			pixelOffset += mod( float( BLUR_ITERATIONS ), 2.0 ) == 0.0 ? 0.0 : 0.5;
 
 			// BOX_BLUR
 			#if BLUR_MODE == 1
@@ -98,16 +98,18 @@ export const CompositeShader = {
 				#pragma unroll_loop_start
 				for ( int y = 0; y < BLUR_ITERATIONS; y ++ ) {
 
+					vec2 step = vec2( float( x ), float( y ) );
+
 					// iterate over full res pixels
-					vec2 offsetUv = currTexel + vec2( offsetRatio.x + float( x ), offsetRatio.y + float( y ) );
+					vec2 offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
 					offsetUv /= fullSize;
 
-					vec2 aoUv = currAoTexel + vec2( pixelOffset + float( x ), pixelOffset + float( y ) );
+					vec2 aoUv = currAoTexel + pixelOffset + step;
 					aoUv /= aoSize;
 
 					// further more negative
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+					if ( abs(offsetDepth - currDepth) <= 5e-1 ) {
 
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );

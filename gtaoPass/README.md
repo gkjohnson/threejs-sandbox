@@ -35,17 +35,16 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - switch float buffer to simpler type
 
 # Steps
-- Understand haloing / depth lines / verify pixel sample spots (why does blur create some lighter spots where it shouldn't)
-- in blur weight blur based on distance?
-- ensure pixel sampling is precise
+- Understand dark line in distance when upping blur
+- weight blur based on distance?
 - Rotate angle over steps
-- Add new jitter / noise effect
-- Ensure all texture samples are correct
+- Add new jitter / noise effect / variable scale repeat (make it odd? blur is correct at odd intervals)
 - Fix loop unroll
 - separable blur
 - Code cleanup
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - merge depth and normal maps
+- Color bleed
 
 # References
 
