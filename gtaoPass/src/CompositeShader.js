@@ -5,7 +5,8 @@ export const CompositeShader = {
 
 		BLUR_ITERATIONS: 14,
 		BLUR_MODE: 0,
-		AO_ONLY: 0
+		AO_ONLY: 0,
+		DEPTH_THRESHOLD: '5e-1',
 
 	},
 
@@ -109,7 +110,7 @@ export const CompositeShader = {
 
 					// further more negative
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					if ( abs(offsetDepth - currDepth) <= 5e-1 ) {
+					if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
@@ -138,7 +139,7 @@ export const CompositeShader = {
 
 				// X sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( offsetRatio.x + float( i ), 0.0 );
+				offsetUv = currTexel + vec2( pixelOffset + float( i ), 0.0 ) / texelRatio;
 				offsetUv /= fullSize;
 
 				aoUv = currAoTexel + vec2( pixelOffset + float( i ), 0.0 );
@@ -146,7 +147,7 @@ export const CompositeShader = {
 
 				// further more negative
 				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+				if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
@@ -161,7 +162,7 @@ export const CompositeShader = {
 				// TODO: this should not be here if on the center pixel
 				// Y sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( 0.0, offsetRatio.x + float( i ) );
+				offsetUv = currTexel + vec2( 0.0, pixelOffset + float( i ) ) / texelRatio;
 				offsetUv /= fullSize;
 
 				aoUv = currAoTexel + vec2( 0.0, pixelOffset + float( i ) );
@@ -169,7 +170,7 @@ export const CompositeShader = {
 
 				// further more negative
 				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+				if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
@@ -195,7 +196,7 @@ export const CompositeShader = {
 
 				// X sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( offsetRatio.x + float( i ), offsetRatio.y + float( i ) );
+				offsetUv = currTexel + vec2( pixelOffset + float( i ), pixelOffset + float( i ) ) / texelRatio;
 				offsetUv /= fullSize;
 
 				aoUv = currAoTexel + vec2( pixelOffset + float( i ), pixelOffset + float( i ) );
@@ -203,7 +204,7 @@ export const CompositeShader = {
 
 				// further more negative
 				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+				if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
@@ -218,7 +219,7 @@ export const CompositeShader = {
 				// TODO: this should not be here if on the center pixel
 				// Y sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( - offsetRatio.x - float( i ), offsetRatio.y + float( i ) );
+				offsetUv = currTexel + vec2( - pixelOffset - float( i ), pixelOffset + float( i ) ) / texelRatio;
 				offsetUv /= fullSize;
 
 				aoUv = currAoTexel + vec2( - pixelOffset - float( i ), pixelOffset + float( i ) );
@@ -226,7 +227,7 @@ export const CompositeShader = {
 
 				// further more negative
 				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+				if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
