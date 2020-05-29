@@ -14,14 +14,12 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Memory
 - Clean up shader, add comments
 - Unroll second loop in single pass GTAO shader
-- Try different mip map techniques for the depth pyramid
-  - Make the sample fetches a function so we don't incur all texture taps if they're not needed
 - Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
 - remove halos -- compare to single pass
-- why does background get lighter?
 - ensure loops are unrolled with custom unroll -- only works with i
 - remove need for noise texture (generate jitter)
 - spiral rotations on single pass
+- better jitter effect
 
 **Features**
 - Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
@@ -34,6 +32,16 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Number of samples / "reused" samples
 - option to generate normal / use normal in upscale
 - seperable blur
+
+# Steps
+- Fix alpha cutout of shaders
+- Understand haloing / depth lines
+- Rotate angle over steps
+- Add new jitter / noise effect
+- Ensure all texture samples are correct
+- Fix loop unroll
+- separable blur
+- Code cleanup
 
 # References
 
