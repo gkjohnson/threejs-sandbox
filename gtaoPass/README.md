@@ -41,9 +41,12 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Fix loop unroll
 - separable blur
 - Code cleanup
+- Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
+- merge depth and normal maps
 
 # References
 
+- https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/main.cpp
 - https://github.com/asylum2010/Asylum_Tutorials/blob/4f2bc39a8ae69db1ceb59e9a763ef91c7b3dc6de/ShaderTutors/Common/gtaorenderer.cpp
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/Media/ShadersGL/gtao.frag
