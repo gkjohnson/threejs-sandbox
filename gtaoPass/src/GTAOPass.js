@@ -12,9 +12,11 @@ import {
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
-import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
-import { LinearDepthShader } from '../../screenSpaceReflectionsPass/src/LinearDepthShader.js';
-import { PackedShader } from '../../screenSpaceReflectionsPass/src/PackedShader.js';
+// import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
+// import { LinearDepthShader } from '../../screenSpaceReflectionsPass/src/LinearDepthShader.js';
+// import { PackedShader } from '../../screenSpaceReflectionsPass/src/PackedShader.js';
+import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
+import { LinearDepthPass } from './LinearDepthPass.js';
 import { LinearDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
 import { GTAOShader } from './GTAOShader.js';
@@ -86,21 +88,22 @@ export class GTAOPass extends Pass {
 		this.falloffEnd = 2.0;
 
 		this._gtaoBuffer =
-			new WebGLRenderTarget( 256, 256, {
+			new WebGLRenderTarget( 1, 1, {
 				// minFilter: NearestFilter,
 				// magFilter: NearestFilter,
 				format: RGBFormat,
 			} );
 
 		this._depthBuffer =
-			new WebGLRenderTarget( 256, 256, {
+			new WebGLRenderTarget( 1, 1, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
 				format: RGBFormat,
 				type: FloatType
 			} );
 
-		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
+		// this._depthReplacement = new ShaderReplacement( LinearDepthShader );
+		this._depthReplacement = new LinearDepthPass();
 		// this._depthPyramidGenerator = new PackedMipMapGenerator(
 		// 	/* glsl */`
 		// 	float depth = 0.0;
@@ -128,13 +131,14 @@ export class GTAOPass extends Pass {
 
 
 		this._normalBuffer =
-			new WebGLRenderTarget( 256, 256, {
+			new WebGLRenderTarget( 1, 1, {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
 				format: RGBAFormat,
 				type: FloatType
 			} );
-		this._normalReplacement = new ShaderReplacement( PackedShader );
+		// this._normalReplacement = new ShaderReplacement( PackedShader );
+		this._normalReplacement = new NormalPass();
 
 	}
 

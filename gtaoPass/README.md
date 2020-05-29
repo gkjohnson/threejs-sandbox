@@ -34,8 +34,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - seperable blur
 
 # Steps
-- Fix alpha cutout of shaders
-- Understand haloing / depth lines
+- Understand haloing / depth lines / verify pixel sample spots
 - Rotate angle over steps
 - Add new jitter / noise effect
 - Ensure all texture samples are correct
