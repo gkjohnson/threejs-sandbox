@@ -133,8 +133,9 @@ export const GTAOShader = {
 
 		void main() {
 
-			vec2 screenCoord = floor( renderSize * vUv );
-			vec2 loc = floor( screenCoord );
+			// removing 'floor' gets rid of some haloing
+			// vec2 screenCoord = floor( renderSize * vUv );
+			vec2 screenCoord = renderSize * vUv;
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
 			// if it's the background

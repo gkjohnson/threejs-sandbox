@@ -35,7 +35,9 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - switch float buffer to simpler type
 
 # Steps
-- Understand haloing / depth lines / verify pixel sample spots
+- Understand haloing / depth lines / verify pixel sample spots (why does blur create some lighter spots where it shouldn't)
+- in blur weight blur based on distance?
+- ensure pixel sampling is precise
 - Rotate angle over steps
 - Add new jitter / noise effect
 - Ensure all texture samples are correct

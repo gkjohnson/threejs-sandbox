@@ -120,8 +120,7 @@ export const SinglePassGTAOShader = {
 
 		void main() {
 
-			vec2 screenCoord = floor( renderSize * vUv );
-			vec2 loc = floor( screenCoord );
+			vec2 screenCoord = renderSize * vUv;
 			vec4 vpos = GetViewPosition( screenCoord, 1.0 );
 
 			// if it's the background
