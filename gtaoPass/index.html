@@ -55,7 +55,7 @@
 			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { GTAOPass } from './src/GTAOPass.js';
+			import { GTAOPass, NO_BLUR, BOX_BLUR, GAUSSIAN_BLUR, CROSS_BLUR, DIAGONAL_BLUR } from './src/GTAOPass.js';
 
 			// globals
 			var stats;
@@ -73,7 +73,7 @@
 				falloffStart: 0.4,
 				falloffEnd: 2.0,
 
-				enableBlur: true,
+				blurMode: BOX_BLUR,
 				blurIterations: 4,
 
 				display: GTAOPass.DEFAULT,
@@ -266,7 +266,7 @@
 				settingsFolder.open();
 
 				const blurFolder = gui.addFolder( 'blur' );
-				blurFolder.add( params, 'enableBlur' );
+				blurFolder.add( params, 'blurMode', { NO_BLUR, BOX_BLUR, GAUSSIAN_BLUR, CROSS_BLUR, DIAGONAL_BLUR } );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
 				blurFolder.open();
 
@@ -324,12 +324,13 @@
 					if ( scenes[key] ) scenes[key].visible = key === params.scene;
 
 				}
+				window.gtaoPass = gtaoPass;
 				gtaoPass.debug.display = parseInt( params.display );
 				gtaoPass.debug.depthLevel = params.depthLevel;
 				gtaoPass.enabled = params.enabled;
 				gtaoPass.singlePass = params.singlePass;
 				gtaoPass.enableJitter = params.enableJitter;
-				gtaoPass.enableBlur = params.enableBlur;
+				gtaoPass.blurMode = parseFloat( params.blurMode );
 				gtaoPass.blurIterations = params.blurIterations;
 				gtaoPass.numSteps = params.numSteps;
 				gtaoPass.intensity = params.intensity;

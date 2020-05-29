@@ -4,7 +4,7 @@ export const CompositeShader = {
 	defines: {
 
 		BLUR_ITERATIONS: 14,
-		ENABLE_BLUR: 1,
+		BLUR_MODE: 0,
 		AO_ONLY: 0
 
 	},
@@ -66,7 +66,12 @@ export const CompositeShader = {
 
 			vec4 color = texture2D( colorBuffer, vUv );
 
-			#if ENABLE_BLUR
+			// NO_BLUR
+			#if BLUR_MODE == 0
+
+			float gtao = texture2D( gtaoBuffer, vUv ).r;
+
+			#else
 
 			vec2 currTexel = vUv * fullSize;
 			vec2 currAoTexel = vUv * aoSize;
@@ -78,12 +83,14 @@ export const CompositeShader = {
 			vec3 currNormal = UnpackNormal( texture2D( normalBuffer, vUv ) );
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
-			// TODO: Try different blurs -- gaussian, cross, diagonal, box
 			// TODO: pull this sampling out into a function
 			float gtao = 0.0;
 			float totalWeight = 1e-10;
 			float pixelOffset = - ( ( float( BLUR_ITERATIONS ) / 2.0 ) - 0.5 );
 			vec2 offsetRatio = pixelOffset / texelRatio;
+
+			// BOX_BLUR
+			#if BLUR_MODE == 1
 
             #pragma unroll_loop_start
 			for ( int x = 0; x < BLUR_ITERATIONS; x ++ ) {
@@ -118,11 +125,126 @@ export const CompositeShader = {
 			}
 			#pragma unroll_loop_end
 
+			// GAUSSIAN_BLUR
+			#elif BLUR_MODE == 2
+
+			// CROSS_BLUR
+			#elif BLUR_MODE == 3
+
+			#pragma unroll_loop_start
+			for ( int i = 0; i < BLUR_ITERATIONS; i ++ ) {
+
+				vec2 offsetUv, aoUv;
+				float offsetDepth;
+
+				// X sample
+				// iterate over full res pixels
+				offsetUv = currTexel + vec2( offsetRatio.x + float( i ), 0.0 );
+				offsetUv /= fullSize;
+
+				aoUv = currAoTexel + vec2( pixelOffset + float( i ), 0.0 );
+				aoUv /= aoSize;
+
+				// further more negative
+				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+
+					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
+					float weight = max(0.0, dot( offsetNormal, currNormal ) );
+					weight *= weight;
+
+					float val = texture2D( gtaoBuffer, aoUv ).r;
+					gtao += val * weight;
+					totalWeight += weight;
+
+				}
+
+				// TODO: this should not be here if on the center pixel
+				// Y sample
+				// iterate over full res pixels
+				offsetUv = currTexel + vec2( 0.0, offsetRatio.x + float( i ) );
+				offsetUv /= fullSize;
+
+				aoUv = currAoTexel + vec2( 0.0, pixelOffset + float( i ) );
+				aoUv /= aoSize;
+
+				// further more negative
+				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+
+					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
+					float weight = max(0.0, dot( offsetNormal, currNormal ) );
+					weight *= weight;
+
+					float val = texture2D( gtaoBuffer, aoUv ).r;
+					gtao += val * weight;
+					totalWeight += weight;
+
+				}
+
+			}
+			#pragma unroll_loop_end
+
+			// DIAGONAL_BLUR
+			#elif BLUR_MODE == 4
+
+			#pragma unroll_loop_start
+			for ( int i = 0; i < BLUR_ITERATIONS; i ++ ) {
+
+				vec2 offsetUv, aoUv;
+				float offsetDepth;
+
+				// X sample
+				// iterate over full res pixels
+				offsetUv = currTexel + vec2( offsetRatio.x + float( i ), offsetRatio.y + float( i ) );
+				offsetUv /= fullSize;
+
+				aoUv = currAoTexel + vec2( pixelOffset + float( i ), pixelOffset + float( i ) );
+				aoUv /= aoSize;
+
+				// further more negative
+				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+
+					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
+					float weight = max(0.0, dot( offsetNormal, currNormal ) );
+					weight *= weight;
+
+					float val = texture2D( gtaoBuffer, aoUv ).r;
+					gtao += val * weight;
+					totalWeight += weight;
+
+				}
+
+				// TODO: this should not be here if on the center pixel
+				// Y sample
+				// iterate over full res pixels
+				offsetUv = currTexel + vec2( - offsetRatio.x - float( i ), offsetRatio.y + float( i ) );
+				offsetUv /= fullSize;
+
+				aoUv = currAoTexel + vec2( - pixelOffset - float( i ), pixelOffset + float( i ) );
+				aoUv /= aoSize;
+
+				// further more negative
+				offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+				if ( abs(offsetDepth - currDepth) <= 2.0 ) {
+
+					vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
+					float weight = max(0.0, dot( offsetNormal, currNormal ) );
+					weight *= weight;
+
+					float val = texture2D( gtaoBuffer, aoUv ).r;
+					gtao += val * weight;
+					totalWeight += weight;
+
+				}
+
+			}
+			#pragma unroll_loop_end
+
+			#endif
+
 			gtao /= totalWeight;
-
-			#else
-
-			float gtao = texture2D( gtaoBuffer, vUv ).r;
 
 			#endif
 

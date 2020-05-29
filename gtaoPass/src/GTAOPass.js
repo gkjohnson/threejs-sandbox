@@ -64,6 +64,11 @@ for (let i = 0; i < 4; ++i) {
 
 const noiseTexture = new DataTexture( data, 4, 4, RGBAFormat, UnsignedByteType );
 
+export const NO_BLUR = 0;
+export const BOX_BLUR = 1;
+export const GAUSSIAN_BLUR = 2;
+export const CROSS_BLUR = 3;
+export const DIAGONAL_BLUR = 4;
 export class GTAOPass extends Pass {
 
 	constructor( scene, camera, options = {} ) {
@@ -89,6 +94,7 @@ export class GTAOPass extends Pass {
 		this.intensity = 'intensity' in options ? options.intensity : 1.0;
 		this.radius = 'radius' in options ? options.radius : 2.0;
 
+		this.blurMode = BOX_BLUR;
 		this.enableFalloff = true;
 		this.falloffStart = 0.4;
 		this.falloffEnd = 2.0;
@@ -282,8 +288,6 @@ export class GTAOPass extends Pass {
 
 		}
 
-		window.gtaoPass = this;
-
 		// Run the GTAO sampling
 		let gtaoMaterial, gtaoQuad;
 		if ( this.singlePass ) {
@@ -404,9 +408,9 @@ export class GTAOPass extends Pass {
 
 		}
 
-		if ( this.enableBlur !== Boolean( _compositeMaterial.defines.ENABLE_BLUR ) ) {
+		if ( this.blurMode !== _compositeMaterial.defines.BLUR_MODE ) {
 
-			_compositeMaterial.defines.ENABLE_BLUR = this.enableBlur ? 1 : 0;
+			_compositeMaterial.defines.BLUR_MODE = this.blurMode;
 			_compositeMaterial.needsUpdate = true;
 
 		}
