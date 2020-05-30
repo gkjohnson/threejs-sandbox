@@ -29,6 +29,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - consider a single sample per tap? Reuse horizon?
 
 # Steps
+- fix white color in ao sample
 - Code cleanup
 - Fix loop unroll
 - separable blur

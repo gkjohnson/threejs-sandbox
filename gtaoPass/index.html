@@ -84,7 +84,7 @@
 				ambientLightColor: [ 255, 255, 255 ],
 				ambientLightIntensity: 0,
 
-				colorBounceIntensity: 1.0,
+				colorBounceIntensity: 0.0,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -114,6 +114,17 @@
 						sponzaGroup.add(o);
 					}
 				);
+
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 35, 200, 100 );
+				directionalLight.castShadow = true;
+
+				const shadowCam = directionalLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -15;
+				shadowCam.right = shadowCam.top = 15;
+				directionalLight.shadow.mapSize.width = 2048;
+				directionalLight.shadow.mapSize.height = 2048;
+				sponzaGroup.add( directionalLight );
 
 				return sponzaGroup;
 
@@ -158,6 +169,17 @@
 
 				group.scale.setScalar( 1 / 10 );
 
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 35, 200, 100 );
+				directionalLight.castShadow = true;
+
+				const shadowCam = directionalLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -15;
+				shadowCam.right = shadowCam.top = 15;
+				directionalLight.shadow.mapSize.width = 2048;
+				directionalLight.shadow.mapSize.height = 2048;
+				group.add( directionalLight );
+
 				return group;
 
 			}
@@ -190,17 +212,6 @@
 				// Lights
 				ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
 				scene.add( ambientLight );
-
-				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 35, 200, 100 );
-				directionalLight.castShadow = true;
-
-				const shadowCam = directionalLight.shadow.camera;
-				shadowCam.left = shadowCam.bottom = -15;
-				shadowCam.right = shadowCam.top = 15;
-				directionalLight.shadow.mapSize.width = 2048;
-				directionalLight.shadow.mapSize.height = 2048;
-				scene.add( directionalLight );
 
 				const sponzaGroup = createSponza();
 				scene.add( sponzaGroup );
