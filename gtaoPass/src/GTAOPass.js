@@ -177,7 +177,7 @@ export class GTAOPass extends Pass {
 			copyQuad,
 		} = this;
 
-		const gtaoQuad = this.singlePass ? this.singlePassGtaoQuad : this.gtaoQuad;
+		const gtaoQuad = this.singlePassGtaoQuad;
 		const gtaoMaterial = gtaoQuad.material;
 
 		rendererState.copy( renderer, scene );
