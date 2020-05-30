@@ -40,6 +40,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - variable scale repeat (make it odd? blur is correct at odd intervals)
 - expose offset variables explicitly
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
+- add pixel stride
 - toggle normal map / alpha map support
 - http://www.klayge.org/material/4_1/SSGI/SSDO.pdf
 - https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/
@@ -48,6 +49,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 
 # References
 
+- https://aras-p.info/blog/2009/09/17/strided-blur-and-other-tips-for-ssao/
 - https://www.reddit.com/r/Unity3D/comments/a64ybh/ssil_lighting_in_screen_space/
 - http://www.klayge.org/material/4_1/SSGI/SSDO.pdf
 - https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/

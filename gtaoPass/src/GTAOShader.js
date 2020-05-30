@@ -164,7 +164,7 @@ export const GTAOShader = {
 			vec3 color = vec3( 0.0 );
 			#endif
 
-			#pragma unroll_loop_start
+			#pragma unroll_named_loop_start DIRECTIONS
 			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
 				int k = i;
@@ -186,7 +186,8 @@ export const GTAOShader = {
 				horizons = vec2( - 1.0 );
 
 				// calculate horizon angles
-				for ( int j = 0; j < NUM_STEPS; ++ j ) {
+				#pragma unroll_named_loop_start STEPS
+				for ( int j = 0; j < NUM_STEPS; j ++ ) {
 
 					offset = round( dir.xy * currStep );
 
@@ -240,6 +241,7 @@ export const GTAOShader = {
 					#endif
 
 				}
+				#pragma unroll_named_loop_end STEPS
 
 				horizons = acos( horizons );
 
@@ -265,7 +267,7 @@ export const GTAOShader = {
 					( horizons.y * singamma2 + cosgamma - cos( 2.0 * horizons.y - gamma ) ) );
 
 			}
-			#pragma unroll_loop_end
+			#pragma unroll_named_loop_end DIRECTIONS
 
 			// PDF = 1 / pi and must normalize with pi because of Lambert
 			ao = ao / float( NUM_DIRECTIONS );

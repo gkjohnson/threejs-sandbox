@@ -22,6 +22,7 @@ import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/
 import { GTAOShader } from './GTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
+import { unrollNamedLoops } from './unrollNamedLoops.js';
 
 const rendererState = new RendererState();
 const blackColor = new Color( 0 );
@@ -121,6 +122,13 @@ export class GTAOPass extends Pass {
 		this.debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
 		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 		// this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
+
+
+
+		this.gtaoQuad.material.fragmentShader =
+			unrollNamedLoops( GTAOShader.fragmentShader, this.gtaoQuad.material.defines );
+		this.compositeQuad.material.fragmentShader =
+			unrollNamedLoops( CompositeShader.fragmentShader, this.compositeQuad.material.defines );
 
 	}
 
@@ -223,6 +231,8 @@ export class GTAOPass extends Pass {
 
 			gtaoMaterial.defines.NUM_STEPS = this.numSteps;
 			gtaoMaterial.needsUpdate = true;
+			gtaoMaterial.fragmentShader =
+				unrollNamedLoops( GTAOShader.fragmentShader, gtaoMaterial.defines );
 
 		}
 
@@ -230,6 +240,8 @@ export class GTAOPass extends Pass {
 
 			gtaoMaterial.defines.NUM_DIRECTIONS = this.numDirections;
 			gtaoMaterial.needsUpdate = true;
+			gtaoMaterial.fragmentShader =
+				unrollNamedLoops( GTAOShader.fragmentShader, gtaoMaterial.defines );
 
 		}
 
@@ -327,6 +339,8 @@ export class GTAOPass extends Pass {
 
 			compositeMaterial.defines.BLUR_ITERATIONS = this.blurIterations;
 			compositeMaterial.needsUpdate = true;
+			compositeMaterial.fragmentShader =
+				unrollNamedLoops( CompositeShader.fragmentShader, compositeMaterial.defines );
 
 		}
 

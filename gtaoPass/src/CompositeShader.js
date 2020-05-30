@@ -100,23 +100,25 @@ export const CompositeShader = {
 			// BOX_BLUR
 			#if BLUR_MODE == 1
 
-            #pragma unroll_loop_start
+			vec2 step, offsetUv, aoUv;
+			float offsetDepth;
+            #pragma unroll_named_loop_start BLURX
 			for ( int x = 0; x < BLUR_ITERATIONS; x ++ ) {
 
-				#pragma unroll_loop_start
+				#pragma unroll_named_loop_start BLURY
 				for ( int y = 0; y < BLUR_ITERATIONS; y ++ ) {
 
-					vec2 step = vec2( float( x ), float( y ) );
+					step = vec2( float( x ), float( y ) );
 
 					// iterate over full res pixels
-					vec2 offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
+					offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
 					offsetUv /= fullSize;
 
-					vec2 aoUv = currAoTexel + pixelOffset + step;
+					aoUv = currAoTexel + pixelOffset + step;
 					aoUv /= aoSize;
 
 					// further more negative
-					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
+					offsetDepth = texture2D( depthBuffer, offsetUv ).r;
 					if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
@@ -130,10 +132,10 @@ export const CompositeShader = {
 					}
 
 				}
-				#pragma unroll_loop_end
+				#pragma unroll_named_loop_end BLURY
 
 			}
-			#pragma unroll_loop_end
+            #pragma unroll_named_loop_end BLURX
 
 			// CROSS_BLUR
 			#elif BLUR_MODE == 2

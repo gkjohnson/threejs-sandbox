@@ -295,7 +295,6 @@
 				const ambientLightFolder = gui.addFolder( 'ambient light' );
 				ambientLightFolder.addColor( params, 'ambientLightColor' ).name( 'color' );
 				ambientLightFolder.add( params, 'ambientLightIntensity' ).name( 'intensity' ).min( 0 ).max( 1 ).step( 0.1 );
-				ambientLightFolder.open();
 
 				const colorBounceFolder = gui.addFolder( 'gi' );
 				colorBounceFolder.add( params, 'colorBounceIntensity' ).min( 0.0 ).max( 5.0 ).step( 0.01 );
