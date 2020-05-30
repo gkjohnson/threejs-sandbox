@@ -40,6 +40,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - Code cleanup
 - Color bleed
+- Tint from ambient lighting
 
 # Other
 - merge depth and normal maps?
