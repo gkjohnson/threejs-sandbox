@@ -22,25 +22,22 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Manually assignable rotation and radius offsets
 
 **Performance Knobs**
-- How many depth mips to generate / sample
-- Render target scale (1, 1/2, 1/4, others?)
-- Number of samples / "reused" samples
 - option to generate normal / use normal in upscale
 - seperable blur
-- switch float buffer to simpler type
+- switch float depth buffer to simpler type
 - toggle normal map / alpha map support
 - consider a single sample per tap? Reuse horizon?
 
 # Steps
 - Code cleanup
-- Color bleed
 - Fix loop unroll
+- separable blur
 
 # Other
 - merge depth and normal maps?
 - weight blur based on distance?
 - variable scale repeat (make it odd? blur is correct at odd intervals)
-- separable blur
+- expose offset variables explicitly
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - toggle normal map / alpha map support
 - http://www.klayge.org/material/4_1/SSGI/SSDO.pdf

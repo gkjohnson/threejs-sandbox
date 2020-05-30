@@ -274,7 +274,7 @@ export const GTAOShader = {
 			color /= float( NUM_STEPS * NUM_DIRECTIONS ) * 2.0 / colorBounceIntensity;
 			gl_FragColor = vec4( color, ao );
 			#else
-			gl_FragColor = vec4( ao );
+			gl_FragColor = vec4( 0.0, 0.0, 0.0, ao );
 			#endif
 		}
 

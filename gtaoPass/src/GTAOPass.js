@@ -267,6 +267,13 @@ export class GTAOPass extends Pass {
 
 		}
 
+		if ( ( this.colorBounceIntensity !== 0.0 ) !== Boolean( gtaoMaterial.defines.ENABLE_COLOR_BOUNCE ) ) {
+
+			gtaoMaterial.defines.ENABLE_COLOR_BOUNCE = this.colorBounceIntensity !== 0.0 ? 1 : 0;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
 		// gtao
 		const gtaoBuffer = this._gtaoBuffer;
 		const width = Math.floor( gtaoBuffer.texture.image.width );
