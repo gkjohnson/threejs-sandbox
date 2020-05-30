@@ -19,7 +19,7 @@ import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { LinearDepthPass } from './LinearDepthPass.js';
 import { LinearDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
-import { GTAOShader } from './SinglePassGTAOShader.js';
+import { GTAOShader } from './GTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
