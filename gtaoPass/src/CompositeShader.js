@@ -76,7 +76,7 @@ export const CompositeShader = {
 			// NO_BLUR
 			#if BLUR_MODE == 0
 
-			float gtao = texture2D( gtaoBuffer, vUv ).r;
+			float gtao = texture2D( gtaoBuffer, vUv ).a;
 
 			#else
 
@@ -122,7 +122,7 @@ export const CompositeShader = {
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
 						weight *= weight;
 
-						float val = texture2D( gtaoBuffer, aoUv ).r;
+						float val = texture2D( gtaoBuffer, aoUv ).a;
 						gtao += val * weight;
 						totalWeight += weight;
 
@@ -159,7 +159,7 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).r;
+					float val = texture2D( gtaoBuffer, aoUv ).a;
 					gtao += val * weight;
 					totalWeight += weight;
 
@@ -182,7 +182,7 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).r;
+					float val = texture2D( gtaoBuffer, aoUv ).a;
 					gtao += val * weight;
 					totalWeight += weight;
 
@@ -216,7 +216,7 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).r;
+					float val = texture2D( gtaoBuffer, aoUv ).a;
 					gtao += val * weight;
 					totalWeight += weight;
 
@@ -239,7 +239,7 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).r;
+					float val = texture2D( gtaoBuffer, aoUv ).a;
 					gtao += val * weight;
 					totalWeight += weight;
 

@@ -242,7 +242,7 @@ export const SinglePassGTAOShader = {
 			// PDF = 1 / pi and must normalize with pi because of Lambert
 			ao = ao / float( NUM_DIRECTIONS );
 
-			gl_FragColor = vec4( ao, ao, ao, 1.0 );
+			gl_FragColor = vec4( ao );
 
 		}
 

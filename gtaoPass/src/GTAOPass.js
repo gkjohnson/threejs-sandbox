@@ -67,7 +67,7 @@ export class GTAOPass extends Pass {
 			new WebGLRenderTarget( 1, 1, {
 				// minFilter: NearestFilter,
 				// magFilter: NearestFilter,
-				format: RGBFormat,
+				format: RGBAFormat,
 			} );
 
 		this._depthBuffer =
