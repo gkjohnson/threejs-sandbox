@@ -11,7 +11,10 @@ export const SinglePassGTAOShader = {
 
 		ENABLE_FALLOFF: 1,
 		FALLOFF_START2: '0.16',
-		FALLOFF_END2: '4.0'
+		FALLOFF_END2: '4.0',
+
+		ENABLE_ROTATION_JITTER: 1,
+		ENABLE_RADIUS_JITTER: 1,
 
 	},
 
@@ -158,8 +161,18 @@ export const SinglePassGTAOShader = {
 			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
 				int k = i;
-				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) );
-				currStep = 1.0;
+				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) ) + params.x * PI;
+
+				#if ENABLE_ROTATION_JITTER
+				// https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion/blob/9cc30e0f31eb950a994c71866d79b2798d1c508e/Shaders/GTAO_Common.cginc#L152-L155
+				phi += PI * fract( 52.9829189 * fract( dot( screenCoord, vec2( 0.06711056, 0.00583715 ) ) ) );
+				#endif
+
+				currStep = 1.0 + 0.25 * stepSize * params.y;
+
+				#if ENABLE_RADIUS_JITTER
+				currStep += rand( screenCoord.xy * vec2( float( i ) ) ) * stepSize * 0.25;
+				#endif
 
 				dir = vec3( cos( phi ), sin( phi ), 0.0 );
 				horizons = vec2( - 1.0 );

@@ -62,6 +62,8 @@ export class GTAOPass extends Pass {
 		this.renderTargetScale = 1.0;
 		this.fixedSample = false;
 		this.enableJitter = true;
+		this.enableRadiusJitter = true;
+		this.enableRotationJitter = true;
 		this.blurIterations = 4;
 		this.numSteps = 8;
 		this.numDirections = 8;
@@ -260,6 +262,20 @@ export class GTAOPass extends Pass {
 			gtaoMaterial.defines.FALLOFF_START2 = Math.pow( this.falloffStart, 2.0 ).toFixed( 16 );
 			gtaoMaterial.defines.FALLOFF_END2 = Math.pow( this.falloffEnd, 2.0 ).toFixed( 16 );
 			gtaoMaterial.defines.ENABLE_FALLOFF = this.enableFalloff ? 1 : 0;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
+		if ( this.enableRotationJitter !== Boolean( gtaoMaterial.defines.ENABLE_ROTATION_JITTER ) ) {
+
+			gtaoMaterial.defines.ENABLE_ROTATION_JITTER = this.enableRotationJitter ? 1 : 0;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
+		if ( this.enableRadiusJitter !== Boolean( gtaoMaterial.defines.ENABLE_RADIUS_JITTER ) ) {
+
+			gtaoMaterial.defines.ENABLE_RADIUS_JITTER = this.enableRadiusJitter ? 1 : 0;
 			gtaoMaterial.needsUpdate = true;
 
 		}
