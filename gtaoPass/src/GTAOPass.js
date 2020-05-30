@@ -64,6 +64,7 @@ export class GTAOPass extends Pass {
 		this.enableJitter = true;
 		this.blurIterations = 4;
 		this.numSteps = 8;
+		this.numDirections = 8;
 		this.intensity = 1.0;
 		this.radius = 2.0;
 		this.blurMode = GTAOPass.BOX_BLUR;
@@ -232,6 +233,13 @@ export class GTAOPass extends Pass {
 		if ( this.numSteps !== gtaoMaterial.defines.NUM_STEPS ) {
 
 			gtaoMaterial.defines.NUM_STEPS = this.numSteps;
+			gtaoMaterial.needsUpdate = true;
+
+		}
+
+		if ( this.numDirections !== gtaoMaterial.defines.NUM_DIRECTIONS ) {
+
+			gtaoMaterial.defines.NUM_DIRECTIONS = this.numDirections;
 			gtaoMaterial.needsUpdate = true;
 
 		}

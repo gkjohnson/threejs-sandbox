@@ -66,6 +66,7 @@
 
 				fixedSample: 0,
 				numSteps: 8,
+				numDirections: 8,
 				intensity: 1.0,
 				radius: 2.0,
 
@@ -248,6 +249,7 @@
 				settingsFolder.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
 				settingsFolder.add( params, 'enableJitter' );
 				settingsFolder.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
+				settingsFolder.add( params, 'numDirections' ).min( 1 ).max( 32 ).step( 1 );
 				settingsFolder.add( params, 'intensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
 				settingsFolder.add( params, 'radius' ).min( 0 ).max( 10.0 ).step( 0.01 );
 
@@ -335,6 +337,7 @@
 				gtaoPass.blurMode = parseFloat( params.blurMode );
 				gtaoPass.blurIterations = params.blurIterations;
 				gtaoPass.numSteps = params.numSteps;
+				gtaoPass.numDirections = params.numDirections;
 				gtaoPass.intensity = params.intensity;
 				gtaoPass.radius = params.radius;
 				gtaoPass.falloffStart = params.falloffStart;
