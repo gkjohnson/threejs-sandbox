@@ -1,7 +1,7 @@
 import { Vector2, Vector4 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFunctions.js';
 
-export const SinglePassGTAOShader = {
+export const GTAOShader = {
 
 	defines: {
 

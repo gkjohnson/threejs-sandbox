@@ -8,7 +8,6 @@ import {
 	HalfFloatType,
 	RGBFormat,
 	Math as MathUtils,
-	DataTexture,
 	UnsignedByteType,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
@@ -20,8 +19,7 @@ import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { LinearDepthPass } from './LinearDepthPass.js';
 import { LinearDepthDisplayShader } from './DebugShaders.js';
 import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/DebugShaders.js';
-import { GTAOShader } from './GTAOShader.js';
-import { SinglePassGTAOShader } from './SinglePassGTAOShader.js';
+import { GTAOShader } from './SinglePassGTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
@@ -75,7 +73,7 @@ export class GTAOPass extends Pass {
 				minFilter: NearestFilter,
 				magFilter: NearestFilter,
 				format: RGBFormat,
-				type: FloatType,
+				type: HalfFloatType,
 			} );
 
 		// this._depthReplacement = new ShaderReplacement( LinearDepthShader );
@@ -117,7 +115,6 @@ export class GTAOPass extends Pass {
 
 		// quads
 		this.gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
-		this.singlePassGtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( SinglePassGTAOShader ) );
 		this.debugPackedQuad = new Pass.FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
 		this.debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
 		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
@@ -164,9 +161,9 @@ export class GTAOPass extends Pass {
 			debugDepthQuad,
 			compositeQuad,
 			copyQuad,
+			gtaoQuad,
 		} = this;
 
-		const gtaoQuad = this.singlePassGtaoQuad;
 		const gtaoMaterial = gtaoQuad.material;
 
 		rendererState.copy( renderer, scene );
