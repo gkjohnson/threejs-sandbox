@@ -6,6 +6,7 @@ export const CompositeShader = {
 		BLUR_ITERATIONS: 14,
 		BLUR_MODE: 0,
 		AO_ONLY: 0,
+		COLOR_ONLY: 0,
 		DEPTH_THRESHOLD: '5e-1',
 
 	},
@@ -76,7 +77,7 @@ export const CompositeShader = {
 			// NO_BLUR
 			#if BLUR_MODE == 0
 
-			float gtao = texture2D( gtaoBuffer, vUv ).a;
+			vec4 accumSample = texture2D( gtaoBuffer, vUv );
 
 			#else
 
@@ -91,7 +92,7 @@ export const CompositeShader = {
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
 			// TODO: pull this sampling out into a function
-			float gtao = 0.0;
+			vec4 accumSample = vec4( 0.0 );
 			float totalWeight = 1e-10;
 			float pixelOffset = - float( BLUR_ITERATIONS ) / 2.0;
 			pixelOffset += mod( float( BLUR_ITERATIONS ), 2.0 ) == 0.0 ? 0.0 : 0.5;
@@ -122,8 +123,8 @@ export const CompositeShader = {
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
 						weight *= weight;
 
-						float val = texture2D( gtaoBuffer, aoUv ).a;
-						gtao += val * weight;
+						vec4 val = texture2D( gtaoBuffer, aoUv );
+						accumSample += val * weight;
 						totalWeight += weight;
 
 					}
@@ -159,8 +160,8 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).a;
-					gtao += val * weight;
+					vec4 val = texture2D( gtaoBuffer, aoUv );
+					accumSample += val * weight;
 					totalWeight += weight;
 
 				}
@@ -182,8 +183,8 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).a;
-					gtao += val * weight;
+					vec4 val = texture2D( gtaoBuffer, aoUv );
+					accumSample += val * weight;
 					totalWeight += weight;
 
 				}
@@ -216,8 +217,8 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).a;
-					gtao += val * weight;
+					vec4 val = texture2D( gtaoBuffer, aoUv );
+					accumSample += val * weight;
 					totalWeight += weight;
 
 				}
@@ -239,8 +240,8 @@ export const CompositeShader = {
 					float weight = max(0.0, dot( offsetNormal, currNormal ) );
 					weight *= weight;
 
-					float val = texture2D( gtaoBuffer, aoUv ).a;
-					gtao += val * weight;
+					vec4 val = texture2D( gtaoBuffer, aoUv );
+					accumSample += val * weight;
 					totalWeight += weight;
 
 				}
@@ -250,13 +251,19 @@ export const CompositeShader = {
 
 			#endif
 
-			gtao /= totalWeight;
+			accumSample /= totalWeight;
 
 			#endif
 
-			#if AO_ONLY
+			float gtao = accumSample.a;
 
-			vec3 rgb = mix( vec3( 1.0 ), vec3( gtao ), intensity );
+			#if COLOR_ONLY
+
+			gl_FragColor = vec4( accumSample.rgb, 1.0 );
+
+			#elif AO_ONLY
+
+			vec3 rgb = mix( vec3( 1.0 ), vec3( accumSample.a ), intensity );
 			gl_FragColor = vec4( rgb, 1.0 );
 
 			#else
@@ -264,7 +271,9 @@ export const CompositeShader = {
 			vec3 rgb = mix( color.rgb, color.rgb * MultiBounce( gtao, color.rgb ), intensity );
 			vec3 delta = color.rgb - rgb;
 			vec3 ambient = ambientColor * delta * ambientIntensity;
-			gl_FragColor = vec4( rgb + ambient, color.a );
+
+			float colorFade = ( 1.0 - pow( 1.0 - gtao, 2.0 ) );
+			gl_FragColor = vec4( rgb + ambient + accumSample.rgb * ( 0.75 + colorFade * 0.25 ), color.a );
 
 			#endif
 

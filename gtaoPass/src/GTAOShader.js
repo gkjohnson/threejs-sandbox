@@ -15,11 +15,13 @@ export const GTAOShader = {
 
 		ENABLE_ROTATION_JITTER: 1,
 		ENABLE_RADIUS_JITTER: 1,
+		ENABLE_COLOR_BOUNCE: 1,
 
 	},
 
 	uniforms: {
 
+		colorBuffer: { value: null },
 		normalBuffer: { value: null },
 		depthBuffer: { value: null },
 		// depthPyramid: { value: null },
@@ -29,6 +31,8 @@ export const GTAOShader = {
 		clipInfo: { value: new Vector4 },
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
+
+		colorBounceIntensity: { value: 1.0 },
 
 	},
 
@@ -57,11 +61,13 @@ export const GTAOShader = {
 		uniform sampler2D noiseTexture;
 		uniform sampler2D normalBuffer;
 		uniform sampler2D depthBuffer;
+		uniform sampler2D colorBuffer;
 		uniform vec2 renderSize;
 
 		uniform vec4 projInfo;
 		uniform vec4 clipInfo;
 		uniform vec4 params;
+		uniform float colorBounceIntensity;
 
 		${ sampleFunctions }
 
@@ -154,6 +160,10 @@ export const GTAOShader = {
 			float currStep	= 1.0 + division + 0.25 * stepSize * params.y;
 			float dist2, invdist, falloff, cosh;
 
+			#if ENABLE_COLOR_BOUNCE
+			vec3 color = vec3( 0.0 );
+			#endif
+
 			#pragma unroll_loop_start
 			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
@@ -194,6 +204,15 @@ export const GTAOShader = {
 
 					horizons.x = max( horizons.x, cosh - falloff );
 
+					#if ENABLE_COLOR_BOUNCE
+					{
+						vec3 ptColor = texture2D( colorBuffer, ( screenCoord + offset ) / renderSize ).rgb;
+						vec3 ptDir = normalize( ws );
+						float alpha = saturate( length( ws ) / float( RADIUS ) );
+						color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
+					}
+					#endif
+
 					// h2
 					s = GetViewPosition( screenCoord - offset, currStep );
 					ws = s.xyz - vpos.xyz;
@@ -210,6 +229,15 @@ export const GTAOShader = {
 
 					// increment
 					currStep += stepSize;
+
+					#if ENABLE_COLOR_BOUNCE
+					{
+						vec3 ptColor = texture2D( colorBuffer, ( screenCoord + offset ) / renderSize ).rgb;
+						vec3 ptDir = normalize( ws );
+						float alpha = saturate( length( ws ) / float( RADIUS ) );
+						color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
+					}
+					#endif
 
 				}
 
@@ -242,8 +270,12 @@ export const GTAOShader = {
 			// PDF = 1 / pi and must normalize with pi because of Lambert
 			ao = ao / float( NUM_DIRECTIONS );
 
+			#if ENABLE_COLOR_BOUNCE
+			color /= float( NUM_STEPS * NUM_DIRECTIONS ) * 2.0 / colorBounceIntensity;
+			gl_FragColor = vec4( color, ao );
+			#else
 			gl_FragColor = vec4( ao );
-
+			#endif
 		}
 
 	`

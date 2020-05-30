@@ -43,9 +43,16 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - separable blur
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - toggle normal map / alpha map support
+- http://www.klayge.org/material/4_1/SSGI/SSDO.pdf
+- https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/
+- https://www.reddit.com/r/Unity3D/comments/a64ybh/ssil_lighting_in_screen_space/
+- https://twitter.com/marcinignac/status/1266307922679775234
 
 # References
 
+- https://www.reddit.com/r/Unity3D/comments/a64ybh/ssil_lighting_in_screen_space/
+- http://www.klayge.org/material/4_1/SSGI/SSDO.pdf
+- https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/
 - https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/main.cpp
 - https://github.com/asylum2010/Asylum_Tutorials/blob/4f2bc39a8ae69db1ceb59e9a763ef91c7b3dc6de/ShaderTutors/Common/gtaorenderer.cpp
