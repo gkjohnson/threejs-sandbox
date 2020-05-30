@@ -80,12 +80,15 @@
 				display: GTAOPass.DEFAULT,
 				renderTargetScale: 0.5,
 				scene: 'pyramid',
+
+				ambientLightColor: [ 255, 255, 255 ],
+				ambientLightIntensity: 0,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var sphere;
 			var fxaaPass, gtaoPass, gammaPass, motionPass, renderPass;
-			var scenes;
+			var scenes, ambientLight;
 
 			init();
 			animate();
@@ -183,7 +186,8 @@
 
 
 				// Lights
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+				scene.add( ambientLight );
 
 				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
 				directionalLight.position.set( 35, 200, 100 );
@@ -257,7 +261,6 @@
 				settingsFolder.add( params, 'falloffStart' ).min( 0 ).max( 10.0 ).step( 0.01 );
 				settingsFolder.add( params, 'falloffEnd' ).min( 0 ).max( 10.0 ).step( 0.01 );
 
-
 				settingsFolder.add( params, 'renderTargetScale' ).min( 0.1 ).max( 1.0 ).step( 0.01 ).onChange( v => {
 
 					gtaoPass.renderTargetScale = v;
@@ -275,6 +278,11 @@
 				} );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
 				blurFolder.open();
+
+				const ambientLightFolder = gui.addFolder( 'ambient light' );
+				ambientLightFolder.addColor( params, 'ambientLightColor' ).name( 'color' );
+				ambientLightFolder.add( params, 'ambientLightIntensity' ).name( 'intensity' ).min( 0 ).max( 1 ).step( 0.1 );
+				ambientLightFolder.open();
 
 				const debugFolder = gui.addFolder( 'debug' );
 				debugFolder.add( params, 'display', {
@@ -344,6 +352,13 @@
 				gtaoPass.falloffStart = params.falloffStart;
 				gtaoPass.falloffEnd = params.falloffEnd;
 				gtaoPass.enableFalloff = params.enableFalloff;
+
+				// ambientLight.color.setRGB( ...params.ambientLightColor.map( c => c / 255 ) );
+				// ambientLight.intensity = params.ambientLightIntensity;
+
+				gtaoPass.ambientColor.setRGB( ...params.ambientLightColor.map( c => c / 255 ) );
+				gtaoPass.ambientIntensity = params.ambientLightIntensity;
+
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
 
 				if ( params.fixedSample === - 1 ) {

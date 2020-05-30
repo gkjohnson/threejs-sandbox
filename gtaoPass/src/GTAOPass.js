@@ -30,19 +30,6 @@ const blackColor = new Color( 0 );
 const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
 const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
 
-const data = new Uint8Array( 16 * 4 );
-for (let i = 0; i < 4; ++i) {
-	for (let j = 0; j < 4; ++j) {
-		let dirnoise = 0.0625 * ((((i + j) & 0x3) << 2) + (i & 0x3));
-		let offnoise = 0.25 * ((j - i) & 0x3);
-
-		data[(i * 4 + j) * 4 + 0] = dirnoise * 255.0;
-		data[(i * 4 + j) * 4 + 1] = offnoise * 255.0;
-	}
-}
-
-const noiseTexture = new DataTexture( data, 4, 4, RGBAFormat, UnsignedByteType );
-
 export class GTAOPass extends Pass {
 
 	constructor( scene, camera, options = {} ) {
@@ -73,6 +60,8 @@ export class GTAOPass extends Pass {
 		this.enableFalloff = true;
 		this.falloffStart = 0.4;
 		this.falloffEnd = 2.0;
+		this.ambientColor = new Color();
+		this.ambientIntensity = 0;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 1, 1, {
@@ -310,7 +299,6 @@ export class GTAOPass extends Pass {
 			Math.floor( gtaoBuffer.texture.image.width ),
 			Math.floor( gtaoBuffer.texture.image.height )
 		);
-		gtaoMaterial.uniforms.noiseTexture.value = this.enableJitter ? noiseTexture : null;
 
 		if ( debug.display === GTAOPass.AO_SAMPLE ) {
 
@@ -343,6 +331,9 @@ export class GTAOPass extends Pass {
 		compositeMaterial.uniforms.intensity.value = this.intensity;
 		compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
 		compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
+
+		compositeMaterial.uniforms.ambientColor.value.copy( this.ambientColor );
+		compositeMaterial.uniforms.ambientIntensity.value = this.ambientIntensity;
 		if ( this.blurIterations !== compositeMaterial.defines.BLUR_ITERATIONS ) {
 
 			compositeMaterial.defines.BLUR_ITERATIONS = this.blurIterations;

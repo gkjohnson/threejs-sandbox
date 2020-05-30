@@ -1,4 +1,4 @@
-import { Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Vector2, Color } from '//unpkg.com/three@0.114.0/build/three.module.js';
 export const CompositeShader = {
 
 	defines: {
@@ -18,7 +18,10 @@ export const CompositeShader = {
 		depthBuffer: { value: null },
 		colorBuffer: { value : null },
 		gtaoBuffer: { value : null },
-		intensity: { value : 1.0 }
+		intensity: { value : 1.0 },
+
+		ambientColor: { value : new Color() },
+		ambientIntensity: { value : 0 },
 
 	},
 
@@ -36,6 +39,9 @@ export const CompositeShader = {
 	fragmentShader:
 		/* glsl */`
 		varying vec2 vUv;
+
+		uniform vec3 ambientColor;
+		uniform float ambientIntensity;
 
 		uniform vec2 aoSize;
 		uniform vec2 fullSize;
@@ -256,7 +262,9 @@ export const CompositeShader = {
 			#else
 
 			vec3 rgb = mix( color.rgb, color.rgb * MultiBounce( gtao, color.rgb ), intensity );
-			gl_FragColor = vec4( rgb, color.a );
+			vec3 delta = color.rgb - rgb;
+			vec3 ambient = ambientColor * delta * ambientIntensity;
+			gl_FragColor = vec4( rgb + ambient, color.a );
 
 			#endif
 

@@ -20,7 +20,6 @@ export const SinglePassGTAOShader = {
 
 	uniforms: {
 
-		noiseTexture: { value: null },
 		normalBuffer: { value: null },
 		depthBuffer: { value: null },
 		// depthPyramid: { value: null },
@@ -30,8 +29,6 @@ export const SinglePassGTAOShader = {
 		clipInfo: { value: new Vector4 },
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
-
-		noiseIntensity: { value: 1.0 }
 
 	},
 

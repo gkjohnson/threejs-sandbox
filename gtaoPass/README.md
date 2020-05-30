@@ -14,17 +14,12 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Memory
 - Clean up shader, add comments
 - Unroll second loop in single pass GTAO shader
-- Validate scaling of gtaoPass -- why doesn't it work at 1 / 4 scale?
-- remove halos -- compare to single pass
 - ensure loops are unrolled with custom unroll -- only works with i
-- remove need for noise texture (generate jitter)
-- spiral rotations on single pass
-- better jitter effect
 
 **Features**
-- Provide option that looks good with just a single sample (vary angles and distances? Jitter rotation per pixel?)
 - See toystory presentation on sample reuse.
 - Use proper normal and depth passes with alpha cutouts
+- Manually assignable rotation and radius offsets
 
 **Performance Knobs**
 - How many depth mips to generate / sample
@@ -34,21 +29,20 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - seperable blur
 - switch float buffer to simpler type
 - toggle normal map / alpha map support
+- consider a single sample per tap? Reuse horizon?
 
 # Steps
-- Rotate angle over steps
-- Add new jitter / noise effect
-- Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - Code cleanup
 - Color bleed
-- Tint from ambient lighting
+- Fix loop unroll
 
 # Other
 - merge depth and normal maps?
-- Fix loop unroll
 - weight blur based on distance?
 - variable scale repeat (make it odd? blur is correct at odd intervals)
 - separable blur
+- Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
+- toggle normal map / alpha map support
 
 # References
 
