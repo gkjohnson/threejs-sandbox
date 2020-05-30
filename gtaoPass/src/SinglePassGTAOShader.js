@@ -171,7 +171,8 @@ export const SinglePassGTAOShader = {
 				currStep = 1.0 + 0.25 * stepSize * params.y;
 
 				#if ENABLE_RADIUS_JITTER
-				currStep += rand( screenCoord.xy * vec2( float( i ) ) ) * stepSize * 0.25;
+				float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
+				currStep += mod( jitterMod, 1.0 ) * stepSize * 0.25;
 				#endif
 
 				dir = vec3( cos( phi ), sin( phi ), 0.0 );
