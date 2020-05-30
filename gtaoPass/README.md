@@ -33,6 +33,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - option to generate normal / use normal in upscale
 - seperable blur
 - switch float buffer to simpler type
+- toggle normal map / alpha map support
 
 # Steps
 - Rotate angle over steps
