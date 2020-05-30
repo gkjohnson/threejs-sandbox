@@ -10,8 +10,6 @@ export class LinearDepthPass extends ShaderReplacement {
 				derivatives: true
 			},
 			defines: {
-				// USE_NORMALMAP : '',
-				// TANGENTSPACE_NORMALMAP : '',
 				USE_UV : ''
 			},
 			uniforms: {
@@ -50,7 +48,6 @@ export class LinearDepthPass extends ShaderReplacement {
 			fragmentShader: /* glsl */`
 				uniform float opacity;
 				varying vec3 vViewPosition;
-				#include <packing>
 				#include <uv_pars_fragment>
 				#include <map_pars_fragment>
 				#include <bumpmap_pars_fragment>
@@ -122,6 +119,23 @@ export class LinearDepthPass extends ShaderReplacement {
 		} else {
 
 			target.defines.USE_MAP = '';
+
+		}
+
+		if ( originalDefine !== target.defines.USE_MAP ) {
+
+			target.needsUpdate = true;
+		}
+
+		// uv
+		originalDefine = target.defines.USE_UV;
+		if ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) {
+
+			target.defines.USE_UV = '';
+
+		} else {
+
+			delete target.defines.USE_UV;
 
 		}
 

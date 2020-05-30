@@ -138,6 +138,23 @@ export class NormalPass extends ShaderReplacement {
 			target.needsUpdate = true;
 		}
 
+		// uv
+		originalDefine = target.defines.USE_UV;
+		if ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) {
+
+			target.defines.USE_UV = '';
+
+		} else {
+
+			delete target.defines.USE_UV;
+
+		}
+
+		if ( originalDefine !== target.defines.USE_MAP ) {
+
+			target.needsUpdate = true;
+		}
+
 	}
 
 }
