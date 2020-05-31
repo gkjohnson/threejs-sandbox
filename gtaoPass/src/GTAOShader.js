@@ -91,7 +91,7 @@ export const GTAOShader = {
 
 		}
 
-		vec4 GetViewPosition( vec2 uv, float currStep ) {
+		vec4 GetViewPosition( vec2 uv ) {
 
 			float near = clipInfo.x;
 			float far = clipInfo.y;
@@ -127,12 +127,12 @@ export const GTAOShader = {
 		void main() {
 
 			vec2 screenCoord = gl_FragCoord.xy;
-			vec4 vpos = GetViewPosition( renderSize * vUv, 1.0 );
+			vec4 vpos = GetViewPosition( renderSize * vUv );
 
 			// if it's the background
 			if ( vpos.w == 1.0 ) {
 
-				gl_FragColor = vec4(1.0);
+				gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0);
 				return;
 
 			}
@@ -167,8 +167,7 @@ export const GTAOShader = {
 			#pragma unroll_loop_start
 			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
-				int k = i;
-				phi = float( k ) * ( PI / float( NUM_DIRECTIONS ) ) + params.x * PI;
+				phi = float( i ) * ( PI / float( NUM_DIRECTIONS ) ) + params.x * PI;
 
 				#if ENABLE_ROTATION_JITTER
 				// https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion/blob/9cc30e0f31eb950a994c71866d79b2798d1c508e/Shaders/GTAO_Common.cginc#L152-L155
@@ -191,7 +190,7 @@ export const GTAOShader = {
 					offset = round( dir.xy * currStep );
 
 					// h1
-					s = GetViewPosition( screenCoord + offset, currStep );
+					s = GetViewPosition( screenCoord + offset );
 					ws = s.xyz - vpos.xyz;
 
 					dist2 = dot( ws, ws );
@@ -214,7 +213,7 @@ export const GTAOShader = {
 					#endif
 
 					// h2
-					s = GetViewPosition( screenCoord - offset, currStep );
+					s = GetViewPosition( screenCoord - offset );
 					ws = s.xyz - vpos.xyz;
 
 					dist2 = dot( ws, ws );
@@ -232,7 +231,7 @@ export const GTAOShader = {
 
 					#if ENABLE_COLOR_BOUNCE
 					{
-						vec3 ptColor = texture2D( colorBuffer, ( screenCoord + offset ) / renderSize ).rgb;
+						vec3 ptColor = texture2D( colorBuffer, ( screenCoord - offset ) / renderSize ).rgb;
 						vec3 ptDir = normalize( ws );
 						float alpha = saturate( length( ws ) / float( RADIUS ) );
 						color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
