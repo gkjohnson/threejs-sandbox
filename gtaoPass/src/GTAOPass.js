@@ -49,12 +49,15 @@ export class GTAOPass extends Pass {
 		this.enableJitter = true;
 		this.enableRadiusJitter = true;
 		this.enableRotationJitter = true;
-		this.blurIterations = 4;
 		this.numSteps = 8;
 		this.numDirections = 8;
 		this.intensity = 1.0;
 		this.radius = 2.0;
+
 		this.blurMode = GTAOPass.BOX_BLUR;
+		this.blurIterations = 4;
+		this.blurStride = 1;
+
 		this.enableFalloff = true;
 		this.falloffStart = 0.4;
 		this.falloffEnd = 2.0;
@@ -321,6 +324,7 @@ export class GTAOPass extends Pass {
 		compositeMaterial.uniforms.aoSize.value.set( gtaoBuffer.width, gtaoBuffer.height );
 		compositeMaterial.uniforms.fullSize.value.set( readBuffer.width, readBuffer.height );
 
+		compositeMaterial.uniforms.blurStride.value = this.blurStride;
 		compositeMaterial.uniforms.ambientColor.value.copy( this.ambientColor );
 		compositeMaterial.uniforms.ambientIntensity.value = this.ambientIntensity;
 		if ( this.blurIterations !== compositeMaterial.defines.BLUR_ITERATIONS ) {
