@@ -76,6 +76,7 @@
 
 				blurMode: GTAOPass.BOX_BLUR,
 				blurIterations: 5,
+				blurStride: 1,
 
 				display: GTAOPass.DEFAULT,
 				renderTargetScale: 0.5,
@@ -290,6 +291,7 @@
 					DIAGONAL_BLUR: GTAOPass.DIAGONAL_BLUR,
 				} );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 20 ).step( 1 );
+				blurFolder.add( params, 'blurStride' ).min( 1 ).max( 5 ).step( 1 );
 				blurFolder.open();
 
 				const ambientLightFolder = gui.addFolder( 'ambient light' );
@@ -362,6 +364,7 @@
 				gtaoPass.enableRadiusJitter = params.enableRadiusJitter;
 				gtaoPass.blurMode = parseFloat( params.blurMode );
 				gtaoPass.blurIterations = params.blurIterations;
+				gtaoPass.blurStride = params.blurStride;
 				gtaoPass.numSteps = params.numSteps;
 				gtaoPass.numDirections = params.numDirections;
 				gtaoPass.intensity = params.intensity;

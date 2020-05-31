@@ -3,7 +3,7 @@ export const CompositeShader = {
 
 	defines: {
 
-		BLUR_ITERATIONS: 14,
+		BLUR_ITERATIONS: 5,
 		BLUR_MODE: 0,
 		AO_ONLY: 0,
 		COLOR_ONLY: 0,
@@ -20,6 +20,7 @@ export const CompositeShader = {
 		colorBuffer: { value : null },
 		gtaoBuffer: { value : null },
 		intensity: { value : 1.0 },
+		blurStride: { value : 1.0 },
 
 		ambientColor: { value : new Color() },
 		ambientIntensity: { value : 0 },
@@ -51,6 +52,7 @@ export const CompositeShader = {
 		uniform sampler2D normalBuffer;
 		uniform sampler2D gtaoBuffer;
 		uniform float intensity;
+		uniform int blurStride;
 
 		vec3 UnpackNormal( vec4 d ) {
 
@@ -96,6 +98,7 @@ export const CompositeShader = {
 			float totalWeight = 1e-10;
 			float pixelOffset = - float( BLUR_ITERATIONS ) / 2.0;
 			pixelOffset += mod( float( BLUR_ITERATIONS ), 2.0 ) == 0.0 ? 0.0 : 0.5;
+			pixelOffset *= float( blurStride );
 
 			// BOX_BLUR
 			#if BLUR_MODE == 1
@@ -106,7 +109,7 @@ export const CompositeShader = {
 				#pragma unroll_loop_start
 				for ( int y = 0; y < BLUR_ITERATIONS; y ++ ) {
 
-					vec2 step = vec2( float( x ), float( y ) );
+					vec2 step = vec2( float( x ), float( y ) ) * float( blurStride );
 
 					// iterate over full res pixels
 					vec2 offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
@@ -146,10 +149,10 @@ export const CompositeShader = {
 
 				// X sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( pixelOffset + float( i ), 0.0 ) / texelRatio;
+				offsetUv = currTexel + vec2( pixelOffset + float( i * blurStride ), 0.0 ) / texelRatio;
 				offsetUv /= fullSize;
 
-				aoUv = currAoTexel + vec2( pixelOffset + float( i ), 0.0 );
+				aoUv = currAoTexel + vec2( pixelOffset + float( i * blurStride ), 0.0 );
 				aoUv /= aoSize;
 
 				// further more negative
@@ -169,10 +172,10 @@ export const CompositeShader = {
 				// TODO: this should not be here if on the center pixel
 				// Y sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( 0.0, pixelOffset + float( i ) ) / texelRatio;
+				offsetUv = currTexel + vec2( 0.0, pixelOffset + float( i * blurStride ) ) / texelRatio;
 				offsetUv /= fullSize;
 
-				aoUv = currAoTexel + vec2( 0.0, pixelOffset + float( i ) );
+				aoUv = currAoTexel + vec2( 0.0, pixelOffset + float( i * blurStride ) );
 				aoUv /= aoSize;
 
 				// further more negative
@@ -203,10 +206,10 @@ export const CompositeShader = {
 
 				// X sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( pixelOffset + float( i ), pixelOffset + float( i ) ) / texelRatio;
+				offsetUv = currTexel + vec2( pixelOffset + float( i * blurStride ), pixelOffset + float( i * blurStride ) ) / texelRatio;
 				offsetUv /= fullSize;
 
-				aoUv = currAoTexel + vec2( pixelOffset + float( i ), pixelOffset + float( i ) );
+				aoUv = currAoTexel + vec2( pixelOffset + float( i * blurStride ), pixelOffset + float( i * blurStride ) );
 				aoUv /= aoSize;
 
 				// further more negative
@@ -226,10 +229,10 @@ export const CompositeShader = {
 				// TODO: this should not be here if on the center pixel
 				// Y sample
 				// iterate over full res pixels
-				offsetUv = currTexel + vec2( - pixelOffset - float( i ), pixelOffset + float( i ) ) / texelRatio;
+				offsetUv = currTexel + vec2( - pixelOffset - float( i * blurStride ), pixelOffset + float( i * blurStride ) ) / texelRatio;
 				offsetUv /= fullSize;
 
-				aoUv = currAoTexel + vec2( - pixelOffset - float( i ), pixelOffset + float( i ) );
+				aoUv = currAoTexel + vec2( - pixelOffset - float( i * blurStride ), pixelOffset + float( i * blurStride ) );
 				aoUv /= aoSize;
 
 				// further more negative
