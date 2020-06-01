@@ -15,15 +15,14 @@ import {
 	RGBAFormat,
 	FloatType,
 	ShaderMaterial
-} from '//unpkg.com/three@0.112.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass.js';
+} from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { traverseVisibleMeshes } from './utils.js';
 
-const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
 const _rendererState = new RendererState();
@@ -371,7 +370,7 @@ export class MotionBlurPass extends Pass {
 
 
 		projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
-		this._frustum.setFromMatrix( projScreenMatrix );
+		this._frustum.setFromProjectionMatrix( projScreenMatrix );
 
 	}
 

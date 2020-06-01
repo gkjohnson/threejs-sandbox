@@ -1,4 +1,4 @@
-import { ShaderChunk } from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { ShaderChunk } from '//unpkg.com/three@0.114.0/build/three.module.js';
 
 // Modified ShaderChunk.skinning_pars_vertex to handle
 // a second set of bone information from the previou frame

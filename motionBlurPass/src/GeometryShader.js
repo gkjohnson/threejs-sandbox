@@ -1,4 +1,4 @@
-import { Matrix4, ShaderChunk } from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { Matrix4, ShaderChunk } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderChunks.js';
 
 export const GeometryShader = {

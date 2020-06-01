@@ -39,16 +39,16 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.112.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.112.0/examples/jsm/controls/OrbitControls.js';
-			import { FXAAShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/FXAAShader.js';
-			import { GammaCorrectionShader } from '//unpkg.com/three@0.112.0/examples/jsm/shaders/GammaCorrectionShader.js';
-			import { EffectComposer } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/ShaderPass.js';
-			import { FBXLoader } from '//unpkg.com/three@0.112.0/examples/jsm/loaders/FBXLoader.js';
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { FBXLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/FBXLoader.js';
 
-			import Stats from '//unpkg.com/three@0.112.0/examples/jsm/libs/stats.module.js';
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			import { MotionBlurPass } from './src/MotionBlurPass.js';
@@ -259,7 +259,7 @@
 				const pixelRatio = window.devicePixelRatio;
 				renderer.setSize( width, height );
 				renderer.setPixelRatio( pixelRatio );
-				
+
 				composer.setSize( width, height );
 				composer.setPixelRatio( pixelRatio );
 				fxaaPass.uniforms.resolution.value.set( 1 / ( width * pixelRatio ), 1 / ( height * pixelRatio ) );
