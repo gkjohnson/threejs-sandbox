@@ -139,7 +139,7 @@ export class LinearDepthPass extends ShaderReplacement {
 
 		}
 
-		if ( originalDefine !== target.defines.USE_MAP ) {
+		if ( originalDefine !== target.defines.USE_UV ) {
 
 			target.needsUpdate = true;
 		}

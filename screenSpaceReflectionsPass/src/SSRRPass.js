@@ -1,9 +1,6 @@
 import {
 	NearestFilter,
 	FloatType,
-	BackSide,
-	FrontSide,
-	DoubleSide,
 	WebGLRenderTarget,
 	RGBAFormat,
 	Color,
@@ -11,7 +8,6 @@ import {
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
-import { LinearDepthShader } from './LinearDepthShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
 import {
 	PackedNormalDisplayShader,
@@ -21,8 +17,8 @@ import {
 	IntersectUvShader,
 	IntersectColorShader
 } from './DebugShaders.js';
-import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { PackedNormalPass } from './PackedNormalPass.js';
+import { LinearDepthPass } from './LinearDepthPass.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
@@ -81,23 +77,11 @@ export class SSRRPass extends Pass {
 				type: FloatType
 			} );
 		this._depthBuffer.texture.name = 'SSRRPass.Depth';
-		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
-		this._depthReplacement.updateUniforms = function( object, material, target ) {
-
-			this.constructor.prototype.updateUniforms.apply( this, arguments );
-			target.side = material.side === DoubleSide ? DoubleSide : FrontSide;
-
-		};
+		this._depthReplacement = new LinearDepthPass();
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = 'SSRRPass.Depth';
-		this._backfaceDepthReplacement = new ShaderReplacement( LinearDepthShader );
-		this._backfaceDepthReplacement.updateUniforms = function( object, material, target ) {
-
-			this.constructor.prototype.updateUniforms.apply( this, arguments );
-			target.side = material.side === DoubleSide ? DoubleSide : BackSide;
-
-		};
+		this._backfaceDepthReplacement = new LinearDepthPass();
 
 		this._packedReplacement = new PackedNormalPass();
 

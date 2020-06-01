@@ -1,5 +1,5 @@
-import { PackedShader } from './PackedShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
+import { PackedShader } from './PackedShader.js';
 
 export class PackedNormalPass extends ShaderReplacement {
 
@@ -12,8 +12,6 @@ export class PackedNormalPass extends ShaderReplacement {
 	updateUniforms( object, material, target ) {
 
 		super.updateUniforms( object, material, target );
-
-		target.defines.USE_UV = '';
 
 		let originalDefine;
 
@@ -102,6 +100,23 @@ export class PackedNormalPass extends ShaderReplacement {
 		}
 
 		if ( originalDefine !== target.defines.USE_MAP ) {
+
+			target.needsUpdate = true;
+		}
+
+		// uv
+		originalDefine = target.defines.USE_UV;
+		if ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) {
+
+			target.defines.USE_UV = '';
+
+		} else {
+
+			delete target.defines.USE_UV;
+
+		}
+
+		if ( originalDefine !== target.defines.USE_UV ) {
 
 			target.needsUpdate = true;
 		}
