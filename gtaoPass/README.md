@@ -2,7 +2,11 @@
 
 ![](./docs/sponza.png)
 
+_ambient occlusion_
+
 ![](./docs/bouncelight.png)
+
+_bounce light_
 
 GTAO implementation based on Asylum Tutorials work [here](https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/).
 
