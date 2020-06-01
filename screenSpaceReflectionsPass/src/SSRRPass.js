@@ -11,7 +11,6 @@ import {
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
-import { PackedShader } from './PackedShader.js';
 import { LinearDepthShader } from './LinearDepthShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
 import {
@@ -23,14 +22,11 @@ import {
 	IntersectColorShader
 } from './DebugShaders.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
+import { PackedNormalPass } from './PackedNormalPass.js';
 
-/**
- * @author Garrett Johnson / http://gkjohnson.github.io/
- *
- * Approach from
- * http://jcgt.org/published/0003/04/04/paper.pdf
- * https://github.com/kode80/kode80SSR
- */
+// Approach from
+// http://jcgt.org/published/0003/04/04/paper.pdf
+// https://github.com/kode80/kode80SSR
 
 const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
 const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
@@ -84,7 +80,7 @@ export class SSRRPass extends Pass {
 				format: RGBAFormat,
 				type: FloatType
 			} );
-		this._depthBuffer.texture.name = "SSRRPass.Depth";
+		this._depthBuffer.texture.name = 'SSRRPass.Depth';
 		this._depthReplacement = new ShaderReplacement( LinearDepthShader );
 		this._depthReplacement.updateUniforms = function( object, material, target ) {
 
@@ -94,7 +90,7 @@ export class SSRRPass extends Pass {
 		};
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
-		this._backfaceDepthBuffer.texture.name = "SSRRPass.Depth";
+		this._backfaceDepthBuffer.texture.name = 'SSRRPass.Depth';
 		this._backfaceDepthReplacement = new ShaderReplacement( LinearDepthShader );
 		this._backfaceDepthReplacement.updateUniforms = function( object, material, target ) {
 
@@ -103,105 +99,7 @@ export class SSRRPass extends Pass {
 
 		};
 
-		this._packedReplacement = new ShaderReplacement( PackedShader );
-		this._packedReplacement.updateUniforms = function( object, material, target ) {
-
-			this.constructor.prototype.updateUniforms.apply( this, arguments );
-
-			target.defines.USE_UV = '';
-
-			let originalDefine;
-
-			// roughness
-			originalDefine = target.defines.USE_ROUGHNESSMAP;
-			if ( target.uniforms.roughnessMap.value ) {
-
-				target.defines.USE_ROUGHNESSMAP = '';
-
-			} else {
-
-				delete target.defines.USE_ROUGHNESSMAP;
-
-			}
-
-			if ( originalDefine !== target.defines.USE_ROUGHNESSMAP ) {
-
-				target.needsUpdate = true;
-			}
-
-			// normalmap
-			originalDefine = target.defines.USE_NORMALMAP;
-			if ( target.uniforms.normalMap.value ) {
-
-				target.defines.USE_NORMALMAP = '';
-				target.defines.TANGENTSPACE_NORMALMAP = '';
-
-			} else {
-
-				delete target.defines.USE_NORMALMAP;
-				delete target.defines.TANGENTSPACE_NORMALMAP;
-
-			}
-
-			if ( originalDefine !== target.defines.USE_NORMALMAP ) {
-
-				target.needsUpdate = true;
-			}
-
-			// alphatest
-			// TODO: Ensure depth shader supports alphatest
-			// originalDefine = target.defines.ALPHATEST;
-			// if ( target.uniforms.alphaTest.value === 0 ) {
-
-			// 	delete target.defines.ALPHATEST;
-
-			// } else {
-
-			// 	target.defines.ALPHATEST = target.uniforms.alphaTest.value;
-
-			// }
-
-			// if ( originalDefine !== target.defines.ALPHATEST ) {
-
-			// 	target.needsUpdate = true;
-
-			// }
-
-			// alphamap
-			originalDefine = target.defines.USE_ALPHAMAP;
-			if ( ! target.uniforms.alphaMap.value ) {
-
-				delete target.defines.USE_ALPHAMAP;
-
-			} else {
-
-				target.defines.USE_ALPHAMAP = '';
-
-			}
-
-			if ( originalDefine !== target.defines.USE_ALPHAMAP ) {
-
-				target.needsUpdate = true;
-			}
-
-			// map
-			originalDefine = target.defines.USE_MAP;
-			if ( ! target.uniforms.map.value ) {
-
-				delete target.defines.USE_MAP;
-
-			} else {
-
-				target.defines.USE_MAP = '';
-
-			}
-
-			if ( originalDefine !== target.defines.USE_MAP ) {
-
-				target.needsUpdate = true;
-			}
-
-		}
+		this._packedReplacement = new PackedNormalPass();
 
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -210,7 +108,7 @@ export class SSRRPass extends Pass {
 				type: FloatType,
 				format: RGBAFormat
 			} );
-		this._packedBuffer.texture.name = "SSRRPass.Packed";
+		this._packedBuffer.texture.name = 'SSRRPass.Packed';
 
 		this._marchResultsBuffer =
 			new WebGLRenderTarget( 256, 256, {
@@ -219,7 +117,7 @@ export class SSRRPass extends Pass {
 				type: FloatType,
 				format: RGBAFormat
 			} );
-		this._marchResultsBuffer.texture.name = "SSRRPass.MarchResults";
+		this._marchResultsBuffer.texture.name = 'SSRRPass.MarchResults';
 
 		const marchMaterial = new ShaderMaterial( MarchResultsShader );
 		this._marchQuad = new Pass.FullScreenQuad( marchMaterial );
