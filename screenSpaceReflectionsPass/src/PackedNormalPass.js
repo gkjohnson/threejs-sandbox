@@ -52,23 +52,22 @@ export class PackedNormalPass extends ShaderReplacement {
 		}
 
 		// alphatest
-		// TODO: Ensure depth shader supports alphatest
-		// originalDefine = target.defines.ALPHATEST;
-		// if ( target.uniforms.alphaTest.value === 0 ) {
+		originalDefine = target.defines.ALPHATEST;
+		if ( target.uniforms.alphaTest.value === 0 ) {
 
-		// 	delete target.defines.ALPHATEST;
+			delete target.defines.ALPHATEST;
 
-		// } else {
+		} else {
 
-		// 	target.defines.ALPHATEST = target.uniforms.alphaTest.value;
+			target.defines.ALPHATEST = target.uniforms.alphaTest.value;
 
-		// }
+		}
 
-		// if ( originalDefine !== target.defines.ALPHATEST ) {
+		if ( originalDefine !== target.defines.ALPHATEST ) {
 
-		// 	target.needsUpdate = true;
+			target.needsUpdate = true;
 
-		// }
+		}
 
 		// alphamap
 		originalDefine = target.defines.USE_ALPHAMAP;

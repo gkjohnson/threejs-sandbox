@@ -20,8 +20,8 @@ import {
 	IntersectColorShader
 } from './DebugShaders.js';
 import { PackedNormalPass } from './PackedNormalPass.js';
-import { LinearDepthPass } from './LinearDepthPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
+import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf

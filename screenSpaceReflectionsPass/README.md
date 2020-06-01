@@ -70,12 +70,10 @@ constructor( scene : Scene, camera : Camera, options : Object )
 ### Upcoming
 
 - Depth / normal aware upscale / blur
-- Support normal maps and alpha clip
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
 - Look into a different jitter technique
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
-- Use HalfFloat render target
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
 - Provide jitter adjustment for multiple frames
 - Test orthographic camera
