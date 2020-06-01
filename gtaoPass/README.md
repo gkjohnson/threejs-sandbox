@@ -9,7 +9,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 [Demo here](https://gkjohnson.github.io/threejs-sandbox/gtaoPass/)
 
 # Future Work
-- horizon reuse
+- horizon sample reuse
 - Code cleanup
 - Fix loop unroll
 - separable blur
