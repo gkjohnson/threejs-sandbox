@@ -5,6 +5,8 @@ import {
 	RGBAFormat,
 	Color,
 	ShaderMaterial,
+	FrontSide,
+	BackSide,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
@@ -78,10 +80,12 @@ export class SSRRPass extends Pass {
 			} );
 		this._depthBuffer.texture.name = 'SSRRPass.Depth';
 		this._depthReplacement = new LinearDepthPass();
+		this._depthReplacement.side = FrontSide;
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = 'SSRRPass.Depth';
 		this._backfaceDepthReplacement = new LinearDepthPass();
+		this._depthReplacement.side = BackSide;
 
 		this._packedReplacement = new PackedNormalPass();
 
@@ -229,7 +233,6 @@ export class SSRRPass extends Pass {
 			renderer.clear();
 
 			_debugDepthMaterial.uniforms.texture.value = depthBuffer.texture;
-			_debugDepthMaterial.uniforms.divide.value = camera.far;
 			_debugDepthQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -250,7 +253,6 @@ export class SSRRPass extends Pass {
 				renderer.clear();
 
 				_debugDepthMaterial.uniforms.texture.value = backfaceDepthBuffer.texture;
-				_debugDepthMaterial.uniforms.divide.value = camera.far;
 				_debugDepthQuad.render( renderer );
 				replaceOriginalValues();
 				return;
@@ -264,7 +266,6 @@ export class SSRRPass extends Pass {
 
 				_debugDepthDeltaMaterial.uniforms.backSideTexture.value = backfaceDepthBuffer.texture;
 				_debugDepthDeltaMaterial.uniforms.frontSideTexture.value = depthBuffer.texture;
-				_debugDepthDeltaMaterial.uniforms.divide.value = camera.far;
 				_debugDepthDeltaQuad.render( renderer );
 				replaceOriginalValues();
 				return;

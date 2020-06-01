@@ -46,7 +46,6 @@ export const LinearDepthDisplayShader = {
 	uniforms: {
 
 		texture: { value: null },
-		divide: { value: 1 }
 
 	},
 
@@ -70,8 +69,8 @@ export const LinearDepthDisplayShader = {
 		void main() {
 
 			vec4 texVal = texture2D( texture, vUv );
-			float depthVal = - texVal.r;
-			gl_FragColor = vec4( depthVal / divide );
+			float depthVal = mod( - texVal.r, 1.0 );
+			gl_FragColor = vec4( depthVal );
 
 		}
 	`
