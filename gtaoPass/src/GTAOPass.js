@@ -64,7 +64,7 @@ export class GTAOPass extends Pass {
 		this.ambientColor = new Color();
 		this.ambientIntensity = 0;
 
-		this.colorBounceIntensity = 1;
+		this.lightBounceIntensity = 1;
 
 		this._gtaoBuffer =
 			new WebGLRenderTarget( 1, 1, {
@@ -270,9 +270,9 @@ export class GTAOPass extends Pass {
 
 		}
 
-		if ( ( this.colorBounceIntensity !== 0.0 ) !== Boolean( gtaoMaterial.defines.ENABLE_COLOR_BOUNCE ) ) {
+		if ( ( this.lightBounceIntensity !== 0.0 ) !== Boolean( gtaoMaterial.defines.ENABLE_COLOR_BOUNCE ) ) {
 
-			gtaoMaterial.defines.ENABLE_COLOR_BOUNCE = this.colorBounceIntensity !== 0.0 ? 1 : 0;
+			gtaoMaterial.defines.ENABLE_COLOR_BOUNCE = this.lightBounceIntensity !== 0.0 ? 1 : 0;
 			gtaoMaterial.needsUpdate = true;
 
 		}
@@ -303,7 +303,7 @@ export class GTAOPass extends Pass {
 		gtaoMaterial.uniforms.normalBuffer.value = packedBuffer.texture;
 		gtaoMaterial.uniforms.depthBuffer.value = depthBuffer.texture;
 		gtaoMaterial.uniforms.colorBuffer.value = readBuffer.texture;
-		gtaoMaterial.uniforms.colorBounceIntensity.value = this.colorBounceIntensity;
+		gtaoMaterial.uniforms.lightBounceIntensity.value = this.lightBounceIntensity;
 
 		gtaoMaterial.uniforms.renderSize.value.set(
 			Math.floor( gtaoBuffer.texture.image.width ),

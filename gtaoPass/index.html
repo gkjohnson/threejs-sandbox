@@ -85,7 +85,8 @@
 				ambientLightColor: [ 255, 255, 255 ],
 				ambientLightIntensity: 0,
 
-				colorBounceIntensity: 0.0,
+				enableLightBounce: false,
+				lightBounceIntensity: 1.0,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -185,6 +186,69 @@
 
 			}
 
+			function createKnotScene() {
+
+				const group = new THREE.Group();
+
+				const ground = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshStandardMaterial( { color: 0x444444, roughness: 0.8 } )
+				);
+				ground.receiveShadow = true;
+				ground.scale.set( 50, 0.1, 50 );
+				ground.position.y = - 1;
+				group.add( ground );
+
+				const wall = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshStandardMaterial( { color: 0xff8700, roughness: 0.8 } )
+				);
+				wall.receiveShadow = true;
+				wall.castShadow = true;
+				wall.scale.set( 0.1, 3, 3 );
+				wall.position.x = -1.25
+				group.add( wall );
+
+				const knot = new THREE.Mesh(
+					new THREE.TorusKnotBufferGeometry( 1, 0.35, 200, 32, 2, 5 ),
+					new THREE.MeshStandardMaterial( { color: 0xcf031f, roughness: 1 } )
+				);
+				knot.position.y = 0.1;
+				knot.castShadow = true;
+				knot.scale.setScalar( 0.5 );
+				knot.receiveShadow = true;
+				group.add( knot );
+
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				directionalLight.position.set( 3, 2, 1 );
+				directionalLight.castShadow = true;
+
+				const shadowCam = directionalLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -3;
+				shadowCam.right = shadowCam.top = 3;
+				directionalLight.shadow.mapSize.width = 2048;
+				directionalLight.shadow.mapSize.height = 2048;
+				group.add( directionalLight );
+
+				const sphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry()
+				);
+				directionalLight.add( sphere );
+
+				group.update = function() {
+
+					const t = ( Math.sin( window.performance.now() * 0.001 ) + 1.0 ) / 2.0;
+					const angle = THREE.MathUtils.lerp( - Math.PI / 10.0, Math.PI / 2.0, t );
+
+					directionalLight.position.set( 10.0, 0.0, 0.0 );
+					directionalLight.position.applyAxisAngle( new THREE.Vector3( 0, 0, 1 ), angle );
+
+				};
+
+				return group;
+
+			}
+
 			function init() {
 
 				// initialize renderer, scene, camera
@@ -211,7 +275,7 @@
 
 
 				// Lights
-				ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
 				scene.add( ambientLight );
 
 				const sponzaGroup = createSponza();
@@ -220,9 +284,13 @@
 				var pyramidScene = createBallPyramid();
 				scene.add( pyramidScene );
 
+				const knotScene = createKnotScene();
+				scene.add( knotScene );
+
 				scenes = {
 					sponza: sponzaGroup,
 					pyramid: pyramidScene,
+					knot: knotScene,
 				};
 
 				// Render Pass Setup
@@ -260,7 +328,7 @@
 				gui.width = 300;
 
 				gui.add( params, 'enabled' );
-				gui.add( params, 'scene', [ 'sponza', 'pyramid' ] );
+				gui.add( params, 'scene', Object.keys( scenes ) );
 
 				const settingsFolder = gui.addFolder( 'settings' );
 				settingsFolder.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
@@ -297,11 +365,12 @@
 				const ambientLightFolder = gui.addFolder( 'ambient light' );
 				ambientLightFolder.addColor( params, 'ambientLightColor' ).name( 'color' );
 				ambientLightFolder.add( params, 'ambientLightIntensity' ).name( 'intensity' ).min( 0 ).max( 1 ).step( 0.1 );
-				ambientLightFolder.open();
+				// ambientLightFolder.open();
 
-				const colorBounceFolder = gui.addFolder( 'gi' );
-				colorBounceFolder.add( params, 'colorBounceIntensity' ).min( 0.0 ).max( 5.0 ).step( 0.01 );
-				colorBounceFolder.open();
+				const lightBounceFolder = gui.addFolder( 'illumination' );
+				lightBounceFolder.add( params, 'enableLightBounce' );
+				lightBounceFolder.add( params, 'lightBounceIntensity' ).min( 0.0 ).max( 5.0 ).step( 0.01 );
+				lightBounceFolder.open();
 
 				const debugFolder = gui.addFolder( 'debug' );
 				debugFolder.add( params, 'display', {
@@ -353,10 +422,13 @@
 
 				for ( const key in scenes ) {
 
-					if ( scenes[key] ) scenes[key].visible = key === params.scene;
+					scenes[ key ].visible = key === params.scene;
 
 				}
-				window.gtaoPass = gtaoPass;
+
+				const scene = scenes[ params.scene ];
+				if ( scene.update ) scene.update();
+
 				gtaoPass.debug.display = parseInt( params.display );
 				gtaoPass.enabled = params.enabled;
 				gtaoPass.singlePass = params.singlePass;
@@ -373,7 +445,7 @@
 				gtaoPass.falloffEnd = params.falloffEnd;
 				gtaoPass.enableFalloff = params.enableFalloff;
 
-				gtaoPass.colorBounceIntensity = params.colorBounceIntensity;
+				gtaoPass.lightBounceIntensity = params.enableLightBounce ? params.lightBounceIntensity : 0.0;
 
 				// ambientLight.color.setRGB( ...params.ambientLightColor.map( c => c / 255 ) );
 				// ambientLight.intensity = params.ambientLightIntensity;

@@ -32,7 +32,7 @@ export const GTAOShader = {
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
 
-		colorBounceIntensity: { value: 1.0 },
+		lightBounceIntensity: { value: 1.0 },
 
 	},
 
@@ -67,7 +67,7 @@ export const GTAOShader = {
 		uniform vec4 projInfo;
 		uniform vec4 clipInfo;
 		uniform vec4 params;
-		uniform float colorBounceIntensity;
+		uniform float lightBounceIntensity;
 
 		${ sampleFunctions }
 
@@ -270,7 +270,7 @@ export const GTAOShader = {
 			ao = ao / float( NUM_DIRECTIONS );
 
 			#if ENABLE_COLOR_BOUNCE
-			color /= float( NUM_STEPS * NUM_DIRECTIONS ) * 2.0 / colorBounceIntensity;
+			color /= float( NUM_STEPS * NUM_DIRECTIONS ) * 2.0 / lightBounceIntensity;
 			gl_FragColor = vec4( color, ao );
 			#else
 			gl_FragColor = vec4( 0.0, 0.0, 0.0, ao );
