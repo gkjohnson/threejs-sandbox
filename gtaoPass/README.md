@@ -4,7 +4,17 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 
 [Demo here](https://gkjohnson.github.io/threejs-sandbox/gtaoPass/)
 
-# TODO
+# Future Work
+- horizon reuse
+- Code cleanup
+- Fix loop unroll
+- separable blur
+- Manually assignable rotation and radius offsets
+- expose offset variables explicitly
+- toggle normal map / alpha map support
+- Use depth texture
+
+# Other considerations
 
 **Noise**
 - Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
@@ -13,12 +23,9 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - Performance
 - Memory
 - Clean up shader, add comments
-- Unroll second loop in single pass GTAO shader
-- ensure loops are unrolled with custom unroll -- only works with i
 
 **Features**
 - See toystory presentation on sample reuse.
-- Use proper normal and depth passes with alpha cutouts
 - Manually assignable rotation and radius offsets
 
 **Performance Knobs**
@@ -27,16 +34,9 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - switch float depth buffer to simpler type
 - toggle normal map / alpha map support
 - consider a single sample per tap? Reuse horizon?
-
-# Steps
-- Code cleanup
-- Fix loop unroll
-- separable blur
-
-# Other
 - merge depth and normal maps?
-- weight blur based on distance?
-- variable scale repeat (make it odd? blur is correct at odd intervals)
+
+**More**
 - expose offset variables explicitly
 - Check out https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion
 - toggle normal map / alpha map support
