@@ -103,7 +103,7 @@ export const CompositeShader = {
 			// BOX_BLUR
 			#if BLUR_MODE == 1
 
-            #pragma unroll_loop_start
+			#pragma unroll_loop_start
 			for ( int x = 0; x < BLUR_ITERATIONS; x ++ ) {
 
 				#pragma unroll_loop_start
