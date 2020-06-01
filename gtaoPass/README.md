@@ -23,11 +23,6 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 **Noise**
 - Disocclusion Blur (https://www.youtube.com/watch?v=3EdE38iRn2A @ 3:08)
 
-**Code**
-- Performance
-- Memory
-- Clean up shader, add comments
-
 **Features**
 - See toystory presentation on sample reuse.
 - Manually assignable rotation and radius offsets
@@ -39,6 +34,7 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - toggle normal map / alpha map support
 - consider a single sample per tap? Reuse horizon?
 - merge depth and normal maps?
+- improve gpu memory use
 
 **More**
 - expose offset variables explicitly
