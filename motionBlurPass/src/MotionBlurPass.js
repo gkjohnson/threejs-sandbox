@@ -20,11 +20,13 @@ import { Pass } from '//unpkg.com/three@0.112.0/examples/jsm/postprocessing/Pass
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
+import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { traverseVisibleMeshes } from './utils.js';
 
 const _prevClearColor = new Color();
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
+const _rendererState = new RendererState();
 
 export class MotionBlurPass extends Pass {
 
@@ -124,16 +126,14 @@ export class MotionBlurPass extends Pass {
 		const compositeQuad = this._compositeQuad;
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 
-		// Set the clear state
-		const prevClearAlpha = renderer.getClearAlpha();
-		const prevAutoClear = renderer.autoClear;
-		const prevRenderTarget = renderer.getRenderTarget();
-		_prevClearColor.copy( renderer.getClearColor() );
+		_rendererState.copy( renderer, scene );
 
+		// Set the clear state
 		renderer.autoClear = false;
 		renderer.setClearColor( _blackColor, 0 );
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
+		// NOTE -- why do we need this?
 		renderer.compile( scene, camera );
 		this._ensurePrevCameraTransform();
 
@@ -190,9 +190,7 @@ export class MotionBlurPass extends Pass {
 		this._prevCamProjection.copy( camera.projectionMatrix );
 
 		// Restore renderer settings
-		renderer.setClearColor( _prevClearColor, prevClearAlpha );
-		renderer.setRenderTarget( prevRenderTarget );
-		renderer.autoClear = prevAutoClear;
+		_rendererState.restore( renderer, scene );
 
 	}
 
