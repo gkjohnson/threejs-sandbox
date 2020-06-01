@@ -115,17 +115,22 @@ export const CompositeShader = {
 					vec2 offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
 					offsetUv /= fullSize;
 
+					// get the associated pixel in the AO buffer
 					vec2 aoUv = currAoTexel + pixelOffset + step;
 					aoUv /= aoSize;
 
-					// further more negative
+					// if the pixels are close enough in space then blur them togethre
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
 					if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
 
+						// Weigh the sample based on normal similarity
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
 						float weight = max(0.0, dot( offsetNormal, currNormal ) );
+
+						// square the weight to give pixels with a closer normal even higher priority
 						weight *= weight;
 
+						// accumulate
 						vec4 val = texture2D( gtaoBuffer, aoUv );
 						accumSample += val * weight;
 						totalWeight += weight;
