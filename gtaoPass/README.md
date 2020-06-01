@@ -48,9 +48,11 @@ GTAO implementation based on Asylum Tutorials work [here](https://github.com/asy
 - https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/
 - https://www.reddit.com/r/Unity3D/comments/a64ybh/ssil_lighting_in_screen_space/
 - https://twitter.com/marcinignac/status/1266307922679775234
+- https://github.com/haolange/Unity_ScreenSpaceTechStack
 
 # References
 
+- https://github.com/haolange/Unity_ScreenSpaceTechStack
 - https://www.reddit.com/r/Unity3D/comments/a64ybh/ssil_lighting_in_screen_space/
 - http://www.klayge.org/material/4_1/SSGI/SSDO.pdf
 - https://80.lv/articles/ssrtgi-toughest-challenge-in-real-time-3d/
