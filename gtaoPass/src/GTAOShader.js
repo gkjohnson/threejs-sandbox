@@ -1,6 +1,6 @@
 import { Vector2, Vector4 } from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFunctions.js';
 
+// https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/
 export const GTAOShader = {
 
 	defines: {
@@ -24,8 +24,6 @@ export const GTAOShader = {
 		colorBuffer: { value: null },
 		normalBuffer: { value: null },
 		depthBuffer: { value: null },
-		// depthPyramid: { value: null },
-		// depthPyramidSize: { value: new Vector2() },
 		renderSize: { value: new Vector2() },
 
 		clipInfo: { value: new Vector4 },
@@ -49,7 +47,6 @@ export const GTAOShader = {
 
 	fragmentShader:
 		/* glsl */`
-		// #define PI				3.1415926535897932
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
@@ -68,8 +65,6 @@ export const GTAOShader = {
 		uniform vec4 clipInfo;
 		uniform vec4 params;
 		uniform float lightBounceIntensity;
-
-		${ sampleFunctions }
 
 		float round( float f ) {
 
@@ -100,7 +95,6 @@ export const GTAOShader = {
 			vec2 coord = ( uv / basesize );
 
 			// d is expected to be [ 0.0, 1.0 ]
-			// float d = packedTexture2DLOD( depthPyramid, coord, 0, depthPyramidSize ).r;
 			float d = texture2D( depthBuffer, coord ).r;
 			d = d == 0.0 ? far : d;
 			d = ( abs( d ) - near ) / ( far - near );
@@ -170,15 +164,20 @@ export const GTAOShader = {
 				phi = float( i ) * ( PI / float( NUM_DIRECTIONS ) ) + params.x * PI;
 
 				#if ENABLE_ROTATION_JITTER
+
+				// Rotation jitter approach from
 				// https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion/blob/9cc30e0f31eb950a994c71866d79b2798d1c508e/Shaders/GTAO_Common.cginc#L152-L155
 				phi += PI * fract( 52.9829189 * fract( dot( screenCoord, vec2( 0.06711056, 0.00583715 ) ) ) );
+
 				#endif
 
 				currStep = 1.0 + 0.25 * stepSize * params.y;
 
 				#if ENABLE_RADIUS_JITTER
+
 				float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
 				currStep += mod( jitterMod, 1.0 ) * stepSize * 0.25;
+
 				#endif
 
 				dir = vec3( cos( phi ), sin( phi ), 0.0 );
@@ -198,18 +197,22 @@ export const GTAOShader = {
 					cosh = invdist * dot( ws, vdir );
 
 					#if ENABLE_FALLOFF
+
 					falloff = Falloff( dist2 );
+
 					#endif
 
 					horizons.x = max( horizons.x, cosh - falloff );
 
 					#if ENABLE_COLOR_BOUNCE
-					{
-						vec3 ptColor = texture2D( colorBuffer, ( screenCoord + offset ) / renderSize ).rgb;
-						vec3 ptDir = normalize( ws );
-						float alpha = saturate( length( ws ) / float( RADIUS ) );
-						color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
-					}
+
+					vec3 ptColor, ptDir;
+					float alpha;
+					ptColor = texture2D( colorBuffer, ( screenCoord + offset ) / renderSize ).rgb;
+					ptDir = normalize( ws );
+					alpha = saturate( length( ws ) / float( RADIUS ) );
+					color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
+
 					#endif
 
 					// h2
@@ -221,7 +224,9 @@ export const GTAOShader = {
 					cosh = invdist * dot( ws, vdir );
 
 					#if ENABLE_FALLOFF
+
 					falloff = Falloff( dist2 );
+
 					#endif
 
 					horizons.y = max( horizons.y, cosh - falloff );
@@ -230,12 +235,12 @@ export const GTAOShader = {
 					currStep += stepSize;
 
 					#if ENABLE_COLOR_BOUNCE
-					{
-						vec3 ptColor = texture2D( colorBuffer, ( screenCoord - offset ) / renderSize ).rgb;
-						vec3 ptDir = normalize( ws );
-						float alpha = saturate( length( ws ) / float( RADIUS ) );
-						color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
-					}
+
+					ptColor = texture2D( colorBuffer, ( screenCoord - offset ) / renderSize ).rgb;
+					ptDir = normalize( ws );
+					alpha = saturate( length( ws ) / float( RADIUS ) );
+					color += ptColor * saturate( dot( ptDir, vnorm ) ) * pow( ( 1.0 - alpha ), 2.0 );
+
 					#endif
 
 				}
@@ -270,10 +275,14 @@ export const GTAOShader = {
 			ao = ao / float( NUM_DIRECTIONS );
 
 			#if ENABLE_COLOR_BOUNCE
+
 			color /= float( NUM_STEPS * NUM_DIRECTIONS ) * 2.0 / lightBounceIntensity;
 			gl_FragColor = vec4( color, ao );
+
 			#else
+
 			gl_FragColor = vec4( 0.0, 0.0, 0.0, ao );
+
 			#endif
 		}
 

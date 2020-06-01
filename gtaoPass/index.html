@@ -304,13 +304,19 @@
 				gtaoPass = new GTAOPass( scene, camera );
 				window.gtaoPass = gtaoPass;
 
-				composer = new EffectComposer( renderer );
+				const floatRT = new THREE.WebGLRenderTarget( 1, 1, {
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					format: THREE.RGBAFormat,
+					type: THREE.HalfFloatType,
+				} );
+				composer = new EffectComposer( renderer, floatRT );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( gtaoPass );
-				composer.addPass( fxaaPass );
 				composer.addPass( gammaPass );
+				composer.addPass( fxaaPass );
 
 				// stats
 				stats = new Stats();
