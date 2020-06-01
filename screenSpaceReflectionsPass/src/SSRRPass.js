@@ -21,6 +21,7 @@ import {
 } from './DebugShaders.js';
 import { PackedNormalPass } from './PackedNormalPass.js';
 import { LinearDepthPass } from './LinearDepthPass.js';
+import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
@@ -44,7 +45,7 @@ const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
 const _intersectColorMaterial = new ShaderMaterial( IntersectColorShader );
 const _intersectColorQuad = new Pass.FullScreenQuad( _intersectColorMaterial );
 
-const _prevClearColor = new Color();
+const _rendererState = new RendererState();
 const _blackColor = new Color( 0 );
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
@@ -143,21 +144,11 @@ export class SSRRPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		// console.time('TEST')
 		const scene = this.scene;
 		const camera = this.camera;
 		const debug = this.debug;
 
 		// Save the previous scene state
-		const prevClearAlpha = renderer.getClearAlpha();
-		const prevAutoClear = renderer.autoClear;
-		const prevOverride = scene.overrideMaterial;
-		const prevAutoUpdate = scene.autoUpdate;
-		const prevRenderTarget = renderer.getRenderTarget();
-		const pevShadowEnabled = renderer.shadowMap.enabled;
-		const prevSceneBackground = scene.background;
-		_prevClearColor.copy( renderer.getClearColor() );
-
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const depthBuffer = this._depthBuffer;
 		const packedBuffer = this._packedBuffer;
@@ -168,17 +159,11 @@ export class SSRRPass extends Pass {
 		const backfaceDepthReplacement = this._backfaceDepthReplacement;
 		const packedReplacement = this._packedReplacement;
 
+		_rendererState.copy( renderer, scene );
 		const replaceOriginalValues = () => {
 
-			// Restore renderer settings
-			scene.overrideMaterial = prevOverride;
-			renderer.setRenderTarget( prevRenderTarget );
-			renderer.setClearColor( this._prevClearColor, prevClearAlpha );
-			renderer.autoClear = prevAutoClear;
-			renderer.shadowMap.enabled = pevShadowEnabled;
-			scene.autoUpdate = prevAutoUpdate;
+			_rendererState.restore( renderer, scene );
 			packedReplacement.reset( scene, true );
-			scene.background = prevSceneBackground;
 
 		};
 

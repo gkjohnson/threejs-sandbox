@@ -3,6 +3,7 @@ import { Color, LinearEncoding } from '//unpkg.com/three@0.116.1/build/three.mod
 export class RendererState {
 
 	constructor() {
+
 		this.clearAlpha = 0;
 		this.clearColor = new Color();
 		this.renderTarget = null;
@@ -17,6 +18,7 @@ export class RendererState {
 
 		this.background = null;
 		this.autoUpdate = true;
+
 	}
 
 	copy( renderer, scene ) {
