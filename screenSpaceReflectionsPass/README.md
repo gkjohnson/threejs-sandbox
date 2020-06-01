@@ -69,8 +69,16 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
-- Blur output based on roughness and ray distance
-- For some reason where there are gaps ray marching still seems to occur. Maybe because the case of `F      B     F` (where F is front face is B is back face) is not handled. This is apparent in the spheres scene.
+- Depth / normal aware upscale / blur
+- Support normal maps and alpha clip
+- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
+- Fix reflections of non retrieved hits. At glacncing angles the unrendered background is hit and a color sample is taken (see helmet scene).
+- Look into a different jitter technique
+- Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
+- Use HalfFloat render target
+- Use depth pyramid to raymarch to improve performance, diffuse rough results
+- Provide jitter adjustment for multiple frames
+- Test orthographic camera
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
@@ -88,10 +96,8 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Understand how to render depth target mip pyramid.
 - Use mip LoDs for normals, color, depth? to blend the pixels
 - Provide a minimum thickness for potentially thin objects?
-- Add an option to only use a front side depth and a thickness because non water tight meshes will having streaming coming off like the helmet
 - Add alpha test clipping to the pass shaders so the leaves on the planters look correct
 - Add spatial denoising blur
-- Add temporal denoising
 - Perform a reuseable depth prepass to improve performance on all subsequent passes.
 - Add a max loop iteration and unroll loop to see if performance improves.
 
