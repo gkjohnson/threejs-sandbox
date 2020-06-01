@@ -125,13 +125,15 @@ export class SSRRPass extends Pass {
 
 	setSize( width, height ) {
 
-		const raymarchWidth = width * this.raymarchTargetScale;
-		const raymarchHeight = height * this.raymarchTargetScale;
+		const raymarchTargetScale = this.raymarchTargetScale;
+		const raymarchWidth = width * raymarchTargetScale;
+		const raymarchHeight = height * raymarchTargetScale;
 
 		this._marchResultsBuffer.setSize( raymarchWidth, raymarchHeight );
 
-		const renderWidth = width * this.renderTargetScale;
-		const renderHeight = height * this.renderTargetScale;
+		const renderTargetScale = this.renderTargetScale;
+		const renderWidth = width * renderTargetScale;
+		const renderHeight = height * renderTargetScale;
 
 		this._depthBuffer.setSize( renderWidth, renderHeight );
 		this._backfaceDepthBuffer.setSize( renderWidth, renderHeight );
@@ -276,6 +278,7 @@ export class SSRRPass extends Pass {
 		}
 
 		// Render march results
+		const marchResultsBuffer = this._marchResultsBuffer;
 		const marchQuad = this._marchQuad;
 		const marchMaterial = marchQuad.material;
 		const marchUniforms = marchMaterial.uniforms;
@@ -285,7 +288,7 @@ export class SSRRPass extends Pass {
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
 		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
 		marchUniforms.projMatrix.value.copy( camera.projectionMatrix );
-		marchUniforms.resolution.value.set( packedBuffer.width, packedBuffer.height );
+		marchUniforms.resolution.value.set( marchResultsBuffer.width, marchResultsBuffer.height );
 		marchUniforms.jitter.value = this.jitter;
 		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
@@ -311,7 +314,7 @@ export class SSRRPass extends Pass {
 
 		}
 
-		renderer.setRenderTarget( this._marchResultsBuffer );
+		renderer.setRenderTarget( marchResultsBuffer );
 		renderer.clear();
 		marchQuad.render( renderer );
 
@@ -320,7 +323,7 @@ export class SSRRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_intersectUvQuad.material.uniforms.texture.value = this._marchResultsBuffer.texture;
+			_intersectUvQuad.material.uniforms.texture.value = marchResultsBuffer.texture;
 			_intersectUvQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -332,7 +335,7 @@ export class SSRRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_intersectDistQuad.material.uniforms.texture.value = this._marchResultsBuffer.texture;
+			_intersectDistQuad.material.uniforms.texture.value = marchResultsBuffer.texture;
 			_intersectDistQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -346,7 +349,7 @@ export class SSRRPass extends Pass {
 
 			_intersectColorQuad.material.uniforms.sourceBuffer.value = readBuffer.texture;
 			_intersectColorQuad.material.uniforms.packedBuffer.value = packedBuffer.texture;
-			_intersectColorQuad.material.uniforms.intersectBuffer.value = this._marchResultsBuffer.texture;
+			_intersectColorQuad.material.uniforms.intersectBuffer.value = marchResultsBuffer.texture;
 
 			_intersectColorQuad.render( renderer );
 			replaceOriginalValues();
@@ -367,14 +370,13 @@ export class SSRRPass extends Pass {
 		const resolveUniforms = resolveMaterial.uniforms;
 		resolveUniforms.sourceBuffer.value = readBuffer.texture;
 		resolveUniforms.packedBuffer.value = packedBuffer.texture;
-		resolveUniforms.intersectBuffer.value = this._marchResultsBuffer.texture;
+		resolveUniforms.intersectBuffer.value = marchResultsBuffer.texture;
 		resolveUniforms.intensity.value = this.intensity;
 
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		resolveQuad.render( renderer );
 		replaceOriginalValues();
-		// console.timeEnd('TEST');
 
 	}
 
