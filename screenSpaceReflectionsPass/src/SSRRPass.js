@@ -85,7 +85,7 @@ export class SSRRPass extends Pass {
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
 		this._backfaceDepthBuffer.texture.name = 'SSRRPass.Depth';
 		this._backfaceDepthReplacement = new LinearDepthPass();
-		this._depthReplacement.side = BackSide;
+		this._backfaceDepthReplacement.side = BackSide;
 
 		this._packedReplacement = new PackedNormalPass();
 
@@ -266,6 +266,7 @@ export class SSRRPass extends Pass {
 
 				_debugDepthDeltaMaterial.uniforms.backSideTexture.value = backfaceDepthBuffer.texture;
 				_debugDepthDeltaMaterial.uniforms.frontSideTexture.value = depthBuffer.texture;
+				_debugDepthDeltaMaterial.uniforms.divide.value = 30.0;
 				_debugDepthDeltaQuad.render( renderer );
 				replaceOriginalValues();
 				return;

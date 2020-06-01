@@ -91,9 +91,8 @@
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Sponza/glTF/Sponza.gltf',
 					g => {
 						const o = g.scene.children[0];
-						o.position.y = -20;
+						o.position.y = - 2 / 3;
 						o.rotation.set(0, Math.PI / 2, 0);
-						o.scale.multiplyScalar(30);
 
 						o.traverse(c => {
 							c.castShadow = true;
@@ -104,7 +103,7 @@
 				);
 
 				sphere = new THREE.Mesh(
-					new THREE.SphereBufferGeometry( 4, 50, 50 ),
+					new THREE.SphereBufferGeometry( .1, 50, 50 ),
 					new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0 } )
 				);
 				sphere.castShadow = true;
@@ -122,8 +121,6 @@
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
 					g => {
 						const o = g.scene.children[0];
-						// o.position.y = 20;
-
 						o.traverse(c => {
 							c.castShadow = true;
 							c.receiveShadow = true;
@@ -142,7 +139,6 @@
 				floor.receiveShadow = true;
 				group.add( floor );
 
-				group.scale.multiplyScalar( 20 );
 				return group;
 
 			}
@@ -177,7 +173,7 @@
 				sphere.position.x = -10;
 				group.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 'red', metalness: 0.25, roughness: 0.25 } ) );
+				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xff0000, metalness: 0.25, roughness: 0.25 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
 				sphere.position.x = 0;
@@ -209,7 +205,7 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 50, 50 * 3.5 );
+				camera.position.set( 0.0, 50, 50 * 3.5 ).multiplyScalar( 1 / 30 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0 );
@@ -229,17 +225,16 @@
 					metalness: 0.5,
 				} );
 
-
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 30, 200, 230 );
+				directionalLight.position.set( 30, 200, 130 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
-				shadowCam.left = shadowCam.bottom = -400;
-				shadowCam.right = shadowCam.top = 400;
+				shadowCam.left = shadowCam.bottom = -20;
+				shadowCam.right = shadowCam.top = 20;
 				directionalLight.shadow.mapSize.width = 2048;
 				directionalLight.shadow.mapSize.height = 2048;
 				scene.add( directionalLight );
@@ -363,9 +358,8 @@
 			}
 
 			function render() {
-				camera.lookAt( scene.position );
 
-				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 10;
+				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 0.3;
 				if ( scenes.helmet.children.length > 1 ) scenes.helmet.children[ 1 ].rotation.z = window.performance.now() / 5000;
 
 				ssrrPass.intensity = params.intensity;
@@ -385,6 +379,7 @@
 
 				gammaPass.enabled = ssrrPass.debug.display === SSRRPass.DEFAULT;
 				composer.render();
+
 			}
 
 		</script>
