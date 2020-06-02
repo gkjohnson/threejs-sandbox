@@ -89,7 +89,6 @@ export const CompositeShader = {
 			// aoPixels per full size ones. Should be 1/2 at
 			vec2 texelRatio = aoSize / fullSize;
 
-			// TODO: this normal and depth should be based on what's used for the GTAO buffer.
 			vec3 currNormal = UnpackNormal( texture2D( normalBuffer, vUv ) );
 			float currDepth = texture2D( depthBuffer, vUv ).r;
 
@@ -119,13 +118,13 @@ export const CompositeShader = {
 					vec2 aoUv = currAoTexel + pixelOffset + step;
 					aoUv /= aoSize;
 
-					// if the pixels are close enough in space then blur them togethre
+					// if the pixels are close enough in space then blur them together
 					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					if ( abs(offsetDepth - currDepth) <= DEPTH_THRESHOLD ) {
+					if ( abs( offsetDepth - currDepth ) <= DEPTH_THRESHOLD ) {
 
 						// Weigh the sample based on normal similarity
 						vec3 offsetNormal = UnpackNormal( texture2D( normalBuffer, offsetUv ) );
-						float weight = max(0.0, dot( offsetNormal, currNormal ) );
+						float weight = max( 0.0, dot( offsetNormal, currNormal ) );
 
 						// square the weight to give pixels with a closer normal even higher priority
 						weight *= weight;
