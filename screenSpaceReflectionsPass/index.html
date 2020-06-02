@@ -65,13 +65,19 @@
 				steps: 10,
 				binarySearchSteps: 4,
 				intensity: 0.5,
+				jitter: 1,
+
 				renderTargetScale: 0.5,
 				raymarchTargetScale: 0.5,
-				jitter: 1,
 				useThickness: true,
 				thickness: 0.025,
+
+				enableBlur: false,
+				blurStride: 1,
+				blurIterations: 5,
+
 				display: SSRRPass.DEFAULT,
-				scene: 'sponza'
+				scene: 'sponza',
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -133,9 +139,7 @@
 					new THREE.BoxBufferGeometry(),
 					new THREE.MeshStandardMaterial( { roughness: 0, color: 0x010101 } )
 				);
-				console.log( floor.material.color );
 				floor.material.color.setRGB( 0.0005, 0.0005, 0.0005 );
-				window.floor = floor;
 
 				floor.scale.set( 10, 1, 10 );
 				floor.position.y = -1.75;
@@ -265,7 +269,7 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				ssrrPass = new SSRRPass( scene, camera, { raymarchTargetScale: 1.0 } );
+				ssrrPass = new SSRRPass( scene, camera );
 				ssrrPass.raymarchTargetScale = params.raymarchTargetScale;
 				ssrrPass.renderTargetScale = params.renderTargetScale;
 				window.ssrrPass = ssrrPass;
@@ -300,27 +304,39 @@
 				gui.width = 325;
 
 				gui.add( params, 'enabled' );
-				gui.add( params, 'stride', 1, 60 );
-				gui.add( params, 'steps', 2, 200 );
-				gui.add( params, 'binarySearchSteps', 0, 20 );
-				gui.add( params, 'intensity', 0, 1 );
-				gui.add( params, 'jitter', 0, 5 ).step( 0.1 );
-				gui.add( params, 'useThickness' );
-				gui.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
-				gui.add( params, 'renderTargetScale', 0.1, 1 )
+
+				const raymarchingFolder = gui.addFolder( 'raymarching' );
+				raymarchingFolder.add( params, 'stride', 1, 60 );
+				raymarchingFolder.add( params, 'steps', 2, 200 );
+				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 );
+				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
+				raymarchingFolder.add( params, 'useThickness' );
+				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
+				raymarchingFolder.open();
+
+				const scaleFolder = gui.addFolder( 'effect scale' );
+				scaleFolder.add( params, 'intensity', 0, 1 );
+				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 )
 					.onChange( v => {
 
 						ssrrPass.renderTargetScale = v;
 						onWindowResize();
 
 					} );
-				gui.add( params, 'raymarchTargetScale', 0.1, 1 )
+				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 )
 					.onChange( v => {
 
 						ssrrPass.raymarchTargetScale = v;
 						onWindowResize();
 
 					} );
+				scaleFolder.open();
+
+				const blurFolder = gui.addFolder( 'blur' );
+				blurFolder.add( params, 'enableBlur' );
+				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 10 ).step( 1 );
+				blurFolder.add( params, 'blurStride' ).min( 1 ).max( 10 ).step( 1 );
+				blurFolder.open();
 
 				gui.add(
 					params,
@@ -380,6 +396,10 @@
 				ssrrPass.jitter = params.jitter;
 				ssrrPass.useThickness = params.useThickness;
 				ssrrPass.thickness = params.thickness;
+
+				ssrrPass.enableBlur = params.enableBlur;
+				ssrrPass.blurIterations = params.blurIterations;
+				ssrrPass.blurStride = params.blurStride;
 
 				for ( const key in scenes ) {
 

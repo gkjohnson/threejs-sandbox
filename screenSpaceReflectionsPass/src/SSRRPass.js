@@ -55,15 +55,19 @@ export class SSRRPass extends Pass {
 		this.enabled = true;
 		this.needsSwap = true;
 
-		this.intensity = 'intensity' in options ? options.intensity : 0.5;
-		this.steps = 'steps' in options ? options.steps : 10;
-		this.binarySearchSteps = 'binarySearchSteps' in options ? options.binarySearchSteps : 4;
-		this.stride = 'stride' in options ? options.stride : 30;
-		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 0.5;
-		this.raymarchTargetScale = 'raymarchTargetScale' in options ? options.raymarchTargetScale : 0.5;
-		this.jitter = 'jitter' in options ? options.jitter : 1;
-		this.thickness = 'thickness' in options ? options.thickness : 1;
-		this.useThickness = 'useThickness' in options ? options.useThickness : false;
+		this.intensity = 0.5;
+		this.steps = 10;
+		this.binarySearchSteps = 4;
+		this.stride = 30;
+		this.renderTargetScale = 0.5;
+		this.raymarchTargetScale = 0.5;
+		this.jitter = 1;
+		this.thickness = 1;
+		this.useThickness = false;
+
+		this.useBlur = true;
+		this.blurStride = 1;
+		this.blurIterations = 5;
 
 		this.scene = scene;
 		this.camera = camera;
@@ -346,17 +350,30 @@ export class SSRRPass extends Pass {
 		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
 		// larger than the target pixels so you can share the ray result with neighboring pixels and
 		// blend silhouette using roughness map.
-		// TODO: Jitter marching
-		// TODO: Add z fade towards the camera
-		// TODO: Add fade based on ray distance / closeness to end of steps
-
 		const resolveQuad = this._colorResolveQuad;
 		const resolveMaterial = resolveQuad.material;
 		const resolveUniforms = resolveMaterial.uniforms;
+		const resolveDefines = resolveMaterial.defines;
 		resolveUniforms.sourceBuffer.value = readBuffer.texture;
 		resolveUniforms.packedBuffer.value = packedBuffer.texture;
 		resolveUniforms.intersectBuffer.value = marchResultsBuffer.texture;
 		resolveUniforms.intensity.value = this.intensity;
+		resolveUniforms.renderSize.value.set( depthBuffer.width, depthBuffer.height );
+		resolveUniforms.marchSize.value.set( marchResultsBuffer.width, marchResultsBuffer.height );
+
+		if ( this.enableBlur !== Boolean( resolveDefines.ENABLE_BLUR ) ) {
+
+			resolveDefines.ENABLE_BLUR = this.enableBlur ? 1.0 : 0.0;
+			resolveMaterial.needsUpdate = true;
+
+		}
+
+		if ( this.blurIterations !== resolveDefines.BLUR_ITERATIONS ) {
+
+			resolveDefines.BLUR_ITERATIONS = this.blurIterations;
+			resolveMaterial.needsUpdate = true;
+
+		}
 
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();

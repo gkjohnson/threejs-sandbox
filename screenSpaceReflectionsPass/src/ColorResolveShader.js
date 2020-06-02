@@ -1,12 +1,24 @@
+import { Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 export const ColorResolveShader = {
+
+	defines: {
+		ENABLE_BLUR: 1,
+		BLUR_ITERATIONS: 5,
+		EDGE_FADE: 0.3,
+	},
 
 	uniforms: {
 
 		intersectBuffer: { value: null },
 		sourceBuffer: { value: null },
 		packedBuffer: { value: null },
+		depthBuffer: { value: null },
 
 		intensity: { value: 0.5 },
+
+		renderSize: { value: new Vector2() },
+		marchSize: { value: new Vector2() },
+		blurStride: { value: 1 },
 
 	},
 
@@ -25,11 +37,16 @@ export const ColorResolveShader = {
 		/* glsl */`
 		#include <common>
 		#include <packing>
-		#define EDGE_FADE 0.3
+
 		varying vec2 vUv;
 		uniform sampler2D intersectBuffer;
 		uniform sampler2D sourceBuffer;
 		uniform sampler2D packedBuffer;
+		uniform sampler2D depthBuffer;
+
+		uniform sampler2D renderSize;
+		uniform sampler2D marchSize;
+		uniform sampler2D blurStride;
 
 		uniform float intensity;
 		void main() {
@@ -40,6 +57,11 @@ export const ColorResolveShader = {
 			vec2 hitUV = intersect.xy;
 			float stepRatio = intersect.z;
 			float intersected = intersect.a;
+
+			#if ENABLE_BLUR
+			#else
+
+			// TODO: the buffer should come in with colors already -- we don't need a condition here...
 			if ( intersected > 0.5 ) {
 
 				vec4 col = texture2D( sourceBuffer, hitUV, 10.0 );
@@ -54,8 +76,9 @@ export const ColorResolveShader = {
 
 			}
 
+			#endif
+
 			gl_FragColor = source;
-			// gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 
 		}
 	`
