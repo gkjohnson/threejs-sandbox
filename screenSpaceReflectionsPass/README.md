@@ -76,6 +76,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
 - Provide jitter adjustment for multiple frames
 - Test orthographic camera
+- Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.
