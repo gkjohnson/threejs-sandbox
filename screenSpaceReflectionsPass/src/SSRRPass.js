@@ -16,8 +16,7 @@ import {
 	LinearDepthDisplayShader,
 	DepthDeltaShader,
 	IntersectDistanceShader,
-	IntersectUvShader,
-	IntersectColorShader
+	IntersectUvShader
 } from './DebugShaders.js';
 import { PackedNormalPass } from './PackedNormalPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
@@ -41,9 +40,6 @@ const _intersectUvQuad = new Pass.FullScreenQuad( _intersectUvMaterial );
 
 const _intersectDistMaterial = new ShaderMaterial( IntersectDistanceShader );
 const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
-
-const _intersectColorMaterial = new ShaderMaterial( IntersectColorShader );
-const _intersectColorQuad = new Pass.FullScreenQuad( _intersectColorMaterial );
 
 const _rendererState = new RendererState();
 const _blackColor = new Color( 0 );
