@@ -338,21 +338,6 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( debug.display === SSRRPass.INTERSECTION_COLOR ) {
-
-			renderer.setRenderTarget( finalBuffer );
-			renderer.clear();
-
-			_intersectColorQuad.material.uniforms.sourceBuffer.value = readBuffer.texture;
-			_intersectColorQuad.material.uniforms.packedBuffer.value = packedBuffer.texture;
-			_intersectColorQuad.material.uniforms.intersectBuffer.value = marchResultsBuffer.texture;
-
-			_intersectColorQuad.render( renderer );
-			replaceOriginalValues();
-			return;
-
-		}
-
 		// TODO: Raymarch in a separate buffer and keep distance and final position in the final buffer
 		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
 		// larger than the target pixels so you can share the ray result with neighboring pixels and
@@ -383,6 +368,14 @@ export class SSRRPass extends Pass {
 
 		}
 
+		const colorHitOnly = debug.display === SSRRPass.INTERSECTION_COLOR;
+		if ( colorHitOnly !== Boolean( resolveDefines.COLOR_HIT_ONLY ) ) {
+
+			resolveDefines.COLOR_HIT_ONLY = colorHitOnly ? 1.0 : 0.0;
+			resolveMaterial.needsUpdate = true;
+
+		}
+
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		resolveQuad.render( renderer );
@@ -401,4 +394,3 @@ SSRRPass.ROUGHNESS = 5;
 SSRRPass.INTERSECTION_RESULTS = 6;
 SSRRPass.INTERSECTION_DISTANCE = 7;
 SSRRPass.INTERSECTION_COLOR = 8;
-SSRRPass.INTERSECTION_BLUR = 8;

@@ -5,6 +5,7 @@ export const ColorResolveShader = {
 		ENABLE_BLUR: 1,
 		BLUR_ITERATIONS: 5,
 		DEPTH_THRESHOLD: '2e-1',
+		COLOR_HIT_ONLY: 0,
 	},
 
 	uniforms: {
@@ -129,20 +130,25 @@ export const ColorResolveShader = {
 			}
 
 			sample /= totalWeight;
-			source.rgb += sample * intensity;
-
-			gl_FragColor = source;
 
 			#else
 
 			sample = texture2D( intersectBuffer, vUv ).rgb;
 			// source += sample * intensity * ( 1.0 - roughness );
-			source.rgb += sample * intensity;
-
-			gl_FragColor = source;
 
 			#endif
 
+
+			#if COLOR_HIT_ONLY
+
+			gl_FragColor = vec4( sample, 1.0 );
+
+			#else
+
+			source.rgb += sample * intensity;
+			gl_FragColor = source;
+
+			#endif
 
 
 		}
