@@ -4,7 +4,6 @@ export const ColorResolveShader = {
 	defines: {
 		ENABLE_BLUR: 1,
 		BLUR_ITERATIONS: 5,
-		EDGE_FADE: 0.3,
 		DEPTH_THRESHOLD: '2e-1',
 	},
 
@@ -129,27 +128,9 @@ export const ColorResolveShader = {
 
 			#else
 
-			vec4 intersect = texture2D( intersectBuffer, vUv );
-			float intersected = intersect.a;
-			vec2 hitUV = intersect.xy;
-			float stepRatio = intersect.z;
-
-			if ( intersected > 0.5 ) {
-
-				sample = texture2D( sourceBuffer, hitUV, 10.0 ).rgb;
-
-				// TODO: the buffer should come in with colors already -- we don't need a condition here...
-
-				vec2 ndc = abs( hitUV * 2.0 - 1.0 );
-				float maxndc = max( abs( ndc.x ), abs( ndc.y ) ); // [ -1.0, 1.0 ]
-				float rayLengthFade = 1.0 - stepRatio;
-				float ndcFade = 1.0 - ( max( 0.0, maxndc - EDGE_FADE ) / ( 1.0 - EDGE_FADE )  );
-				float fadeVal = min( rayLengthFade, ndcFade );
-
-				// source += sample * intensity * ( 1.0 - roughness ) * fadeVal;
-				source.rgb += sample * intensity * fadeVal;
-
-			}
+			sample = texture2D( intersectBuffer, vUv ).rgb;
+			// source += sample * intensity * ( 1.0 - roughness );
+			source.rgb += sample * intensity;
 
 			#endif
 

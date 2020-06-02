@@ -7,12 +7,16 @@ export const MarchResultsShader = {
 		MAX_STEPS: 10,
 		BINARY_SEARCH_ITERATIONS: 4,
 		PYRAMID_DEPTH: 1,
-		USE_THICKNESS: 0
+		USE_THICKNESS: 0,
+		EDGE_FADE: 0.3,
+
+		ENABLE_DEBUG: 0,
 
 	},
 
 	uniforms: {
 
+		colorBuffer: { value: null },
 		packedBuffer: { value: null },
 		depthBuffer: { value: null },
 		backfaceDepthBuffer: { value: null },
@@ -42,6 +46,7 @@ export const MarchResultsShader = {
 		#include <common>
 		#include <packing>
 		varying vec2 vUv;
+		uniform sampler2D colorBuffer;
 		uniform sampler2D packedBuffer;
 		uniform sampler2D depthBuffer;
 		uniform sampler2D backfaceDepthBuffer;
@@ -254,7 +259,29 @@ export const MarchResultsShader = {
 				}
 			}
 
+			#if ENABLE_DEBUG
+
 			gl_FragColor = intersected ? vec4( hitUV, stepped / float( MAX_STEPS ), 1.0 ) : vec4( 0.0 );
+
+			#else
+
+			if ( intersected ) {
+
+				vec2 ndc = abs( hitUV * 2.0 - 1.0 );
+				float maxndc = max( abs( ndc.x ), abs( ndc.y ) ); // [ -1.0, 1.0 ]
+				float ndcFade = 1.0 - ( max( 0.0, maxndc - EDGE_FADE ) / ( 1.0 - EDGE_FADE )  );
+				float stepFade = 1.0 - ( stepped / float( MAX_STEPS ) );
+
+				vec4 color = texture2D( colorBuffer, hitUV );
+				gl_FragColor = vec4( color.rgb * ndcFade * stepFade, 1.0 );
+
+			} else {
+
+				gl_FragColor = vec4( 0.0 );
+
+			}
+
+			#endif
 
 		}
 		`

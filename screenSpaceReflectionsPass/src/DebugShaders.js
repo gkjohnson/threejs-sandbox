@@ -233,20 +233,7 @@ export const IntersectColorShader = {
 		uniform float intensity;
 		void main() {
 
-			// Found, blending
-			vec4 result = vec4( 0.0 );
-			vec4 intersect = texture2D( intersectBuffer, vUv );
-			vec2 hitUV = intersect.xy;
-			float stepRatio = intersect.z;
-			float intersected = intersect.a;
-			if ( intersected > 0.5 ) {
-
-				vec4 col = texture2D( sourceBuffer, hitUV, 10.0 );
-				result = col;
-
-			}
-
-			gl_FragColor = result;
+			gl_FragColor = texture2D( intersectBuffer, vUv );
 
 		}
 	`

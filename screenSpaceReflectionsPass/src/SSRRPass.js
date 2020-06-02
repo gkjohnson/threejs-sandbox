@@ -274,6 +274,7 @@ export class SSRRPass extends Pass {
 		marchUniforms.depthBuffer.value = depthBuffer.texture;
 		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
 
+		marchUniforms.colorBuffer.value = readBuffer.texture;
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
 		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
 		marchUniforms.projMatrix.value.copy( camera.projectionMatrix );
@@ -299,6 +300,14 @@ export class SSRRPass extends Pass {
 		if ( ( ! ! marchMaterial.defines.USE_THICKNESS ) !== useThickness ) {
 
 			marchMaterial.defines.USE_THICKNESS = useThickness ? 1.0 : 0.0;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		const needsDebug = debug.display === SSRRPass.INTERSECTION_RESULTS || debug.display === SSRRPass.INTERSECTION_DISTANCE;
+		if ( needsDebug !== Boolean( marchMaterial.defines.ENABLE_DEBUG ) ) {
+
+			marchMaterial.defines.ENABLE_DEBUG = needsDebug ? 1.0 : 0.0;
 			marchMaterial.needsUpdate = true;
 
 		}
@@ -393,3 +402,4 @@ SSRRPass.ROUGHNESS = 5;
 SSRRPass.INTERSECTION_RESULTS = 6;
 SSRRPass.INTERSECTION_DISTANCE = 7;
 SSRRPass.INTERSECTION_COLOR = 8;
+SSRRPass.INTERSECTION_BLUR = 8;
