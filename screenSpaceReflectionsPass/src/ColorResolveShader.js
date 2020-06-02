@@ -37,6 +37,7 @@ export const ColorResolveShader = {
 		/* glsl */`
 		#include <common>
 		#include <packing>
+		#define E 2.7182818
 
 		varying vec2 vUv;
 		uniform sampler2D intersectBuffer;
@@ -50,6 +51,15 @@ export const ColorResolveShader = {
 
 		uniform float intensity;
 
+		// https://danielilett.com/2019-05-08-tut1-3-smo-blur/
+		// One-dimensional Gaussian curve function.
+		float gaussian( int x, int spread) {
+
+			float sigmaSqu = float( spread * spread );
+			return ( 1.0 / sqrt( 2.0 * PI * sigmaSqu ) ) * pow( E, - float( x * x ) / ( 2.0 * sigmaSqu ) );
+
+		}
+
 		vec3 UnpackNormal( vec4 d ) {
 
 			return d.xyz * 2.0 - 1.0;
@@ -60,8 +70,6 @@ export const ColorResolveShader = {
 
 			// Found, blending
 			vec4 source = texture2D( sourceBuffer, vUv );
-
-
 			vec3 sample = vec3( 0.0 );
 
 			#if ENABLE_BLUR
@@ -94,28 +102,25 @@ export const ColorResolveShader = {
 
 
 					// if the pixels are close enough in space then blur them together
-					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-
+					float offsetDepth = texture2D( depthBuffer, marchUv ).r;
 					if ( abs( offsetDepth - currDepth ) <= DEPTH_THRESHOLD ) {
 
-						vec4 intersect = texture2D( intersectBuffer, marchUv );
-						float intersected = intersect.a;
-						vec2 hitUV = intersect.xy;
-
 						// Weigh the sample based on normal similarity
-						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, offsetUv ) );
+						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, marchUv ) );
 						float weight = max( 0.0, dot( offsetNormal, currNormal ) );
 
 						// square the weight to give pixels with a closer normal even higher priority
 						weight *= weight;
+
+						// gaussian distribution
+						weight *= gaussian( x, BLUR_ITERATIONS ) * gaussian( y, BLUR_ITERATIONS );
+
 						totalWeight += weight;
 
-						if ( intersected > 0.5  ) {
-
-							vec4 val = texture2D( sourceBuffer, hitUV );
-							sample += val.rgb * weight;
-
-						}
+						// accumulate
+						vec4 val = texture2D( intersectBuffer, marchUv );
+						sample += val.rgb * weight;
+						totalWeight += weight;
 
 					}
 
@@ -126,16 +131,19 @@ export const ColorResolveShader = {
 			sample /= totalWeight;
 			source.rgb += sample * intensity;
 
+			gl_FragColor = source;
+
 			#else
 
 			sample = texture2D( intersectBuffer, vUv ).rgb;
 			// source += sample * intensity * ( 1.0 - roughness );
 			source.rgb += sample * intensity;
 
+			gl_FragColor = source;
+
 			#endif
 
 
-			gl_FragColor = source;
 
 		}
 	`

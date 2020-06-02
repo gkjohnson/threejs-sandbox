@@ -105,8 +105,6 @@ export class SSRRPass extends Pass {
 
 		this._marchResultsBuffer =
 			new WebGLRenderTarget( 256, 256, {
-				minFilter: NearestFilter,
-				magFilter: NearestFilter,
 				type: FloatType,
 				format: RGBAFormat
 			} );
@@ -369,6 +367,7 @@ export class SSRRPass extends Pass {
 		resolveUniforms.intensity.value = this.intensity;
 		resolveUniforms.renderSize.value.set( depthBuffer.width, depthBuffer.height );
 		resolveUniforms.marchSize.value.set( marchResultsBuffer.width, marchResultsBuffer.height );
+		resolveUniforms.blurStride.value = this.blurStride;
 
 		if ( this.enableBlur !== Boolean( resolveDefines.ENABLE_BLUR ) ) {
 
