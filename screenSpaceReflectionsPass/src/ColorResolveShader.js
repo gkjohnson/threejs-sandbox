@@ -79,8 +79,8 @@ export const ColorResolveShader = {
 			vec2 currMarchTexel = vUv * marchSize;
 			vec2 texelRatio = marchSize / renderSize;
 
-			vec3 currNormal = UnpackNormal( texture2D( packedBuffer, vUv ) );
-			float currDepth = texture2D( depthBuffer, vUv ).r;
+			vec3 currNormal = UnpackNormal( texture2D( packedBuffer, currMarchTexel ) );
+			float currDepth = texture2D( depthBuffer, currMarchTexel ).r;
 
 			float totalWeight = 1e-10;
 			float pixelOffset = - float( BLUR_ITERATIONS ) / 2.0;
@@ -102,12 +102,15 @@ export const ColorResolveShader = {
 					marchUv /= marchSize;
 
 
+					// TODO: we need to be able to compare the depth normal used for raymarching to the current
+					// fragment. Above the sample is pulled from vUv, which is the current render fragment instead.
+
 					// if the pixels are close enough in space then blur them together
-					float offsetDepth = texture2D( depthBuffer, marchUv ).r;
+					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
 					if ( abs( offsetDepth - currDepth ) <= DEPTH_THRESHOLD ) {
 
 						// Weigh the sample based on normal similarity
-						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, marchUv ) );
+						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, offsetUv ) );
 						float weight = max( 0.0, dot( offsetNormal, currNormal ) );
 
 						// square the weight to give pixels with a closer normal even higher priority
