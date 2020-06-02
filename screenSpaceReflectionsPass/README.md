@@ -69,6 +69,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
+- Move color resolve to march shader rather than outputting values (except for debug) -- it makes it hard to blur.
 - Depth / normal aware upscale / blur
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).

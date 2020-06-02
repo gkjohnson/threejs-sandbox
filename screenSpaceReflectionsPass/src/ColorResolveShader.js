@@ -127,9 +127,6 @@ export const ColorResolveShader = {
 			sample /= totalWeight;
 			source.rgb += sample * intensity;
 
-			gl_FragColor = vec4( currNormal, 1.0 );
-			return;
-
 			#else
 
 			vec4 intersect = texture2D( intersectBuffer, vUv );
