@@ -137,10 +137,11 @@ export const ColorResolveShader = {
 			#else
 
 			sample = texture2D( intersectBuffer, vUv ).rgb;
-			// source += sample * intensity * ( 1.0 - roughness );
 
 			#endif
 
+			// enable roughness
+			// sample *= 1.0 - texture2D( packedBuffer, vUv ).a;
 
 			#if COLOR_HIT_ONLY
 

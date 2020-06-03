@@ -33,7 +33,6 @@ import { ReprojectShader } from './src/ReprojectShader.js';
 let renderer, scene, camera, controls;
 let reprojectQuad, copyQuad;
 let prevColorBuffer, blendTarget, currColorBuffer, velocityBuffer;
-let currDepth, prevDepth;
 let velocityPass;
 let stats;
 
@@ -90,9 +89,9 @@ function init() {
 		type: FloatType,
 	} );
 
-	currDepth = new DepthTexture( 1, 1, UnsignedIntType );
-
-	prevDepth = new DepthTexture( 1, 1, UnsignedIntType );
+	currColorBuffer.depthTexture = new DepthTexture( 1, 1, UnsignedIntType );
+	prevColorBuffer.depthTexture = new DepthTexture( 1, 1, UnsignedIntType );
+	blendTarget.depthTexture = new DepthTexture( 1, 1, UnsignedIntType );
 
 	scene = new Scene();
 
@@ -178,12 +177,11 @@ function init() {
 		velocityPass.updateTransforms();
 
 		[ prevColorBuffer, currColorBuffer ] = [ currColorBuffer, prevColorBuffer ];
-		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
 
 	} );
 	gui.add( params, 'baseOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 	gui.add( params, 'blendOpacity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
-	// gui.add( params, 'accumulate' );
+	gui.add( params, 'accumulate' );
 	gui.add( params, 'display', Object.keys( models ) );
 	gui.add( params, 'rerender' );
 
@@ -221,7 +219,6 @@ function render() {
 	stats.update();
 
 	// render color frame to colorBuffer with front depth
-	currColorBuffer.depthTexture = currDepth;
 	renderer.setRenderTarget( currColorBuffer );
 	renderer.render( scene, camera );
 
@@ -256,8 +253,8 @@ function render() {
 	reprojectQuad.material.uniforms.currColorBuffer.value = currColorBuffer.texture;
 	reprojectQuad.material.uniforms.prevColorBuffer.value = prevColorBuffer.texture;
 
-	reprojectQuad.material.uniforms.currDepthBuffer.value = currDepth;
-	reprojectQuad.material.uniforms.prevDepthBuffer.value = prevDepth;
+	reprojectQuad.material.uniforms.currDepthBuffer.value = currColorBuffer.depthTexture;
+	reprojectQuad.material.uniforms.prevDepthBuffer.value = prevColorBuffer.depthTexture;
 
 	renderer.getSize( reprojectQuad.material.uniforms.resolution.value );
 
@@ -273,21 +270,22 @@ function render() {
 		// swap front and back buffer
 		[ prevColorBuffer, currColorBuffer ] = [ currColorBuffer, prevColorBuffer ];
 
-		// swap front and back depth
-		[ currDepth, prevDepth ] = [ prevDepth, currDepth ];
-
 		velocityPass.updateTransforms();
 
 	}
 
 	// Accumulate depends on changing the depth buffer see mrdoob/three.js#19447
+	if ( params.accumulate ) {
+
+		[ prevColorBuffer, blendTarget ] = [ blendTarget, prevColorBuffer ];
+
+	}
 
 }
 
 function updateColor() {
 
 	// render color frame to colorBuffer with front depth
-	prevColorBuffer.depthTexture = prevDepth;
 	renderer.setRenderTarget( prevColorBuffer );
 	renderer.render( scene, camera );
 
