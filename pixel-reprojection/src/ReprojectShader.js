@@ -2,6 +2,12 @@ import { Matrix4, Vector2 } from '//unpkg.com/three@0.114/build/three.module.js'
 
 export const ReprojectShader = {
 
+	extensions: {
+
+		fragDepth: true
+
+	},
+
 	uniforms: {
 
 		blendOpacity: { value: 1 },
@@ -137,6 +143,7 @@ export const ReprojectShader = {
 			float t = reprojectedCurrDepth < prevDepth + 2e-5 ? 1.0 : 0.0;
 
 			gl_FragColor = mix( currSample * baseOpacity, prevSample , t * alpha * blendOpacity );
+			gl_FragDepthEXT = currDepth;
 
 			// gl_FragColor = vec4(
 			// 	reprojectedPrevDepth < 0.99 ? 1.0 : 0.0,
