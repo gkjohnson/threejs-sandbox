@@ -20,8 +20,10 @@ import { RendererState } from '../../shader-replacement/src/RendererState.js';
 
 const rendererState = new RendererState();
 const blackColor = new Color( 0 );
-const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
-const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
+
+// Original sample steps
+// const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
+// const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
 
 export class GTAOPass extends Pass {
 
@@ -37,10 +39,8 @@ export class GTAOPass extends Pass {
 		this.debug = {
 			display: GTAOPass.DEFAULT,
 		};
-		this.sampleIndex = 0;
 
 		this.renderTargetScale = 1.0;
-		this.fixedSample = false;
 		this.enableJitter = true;
 		this.enableRadiusJitter = true;
 		this.enableRotationJitter = true;
@@ -48,6 +48,8 @@ export class GTAOPass extends Pass {
 		this.numDirections = 8;
 		this.intensity = 1.0;
 		this.radius = 2.0;
+		this.directionOffset = 0.0;
+		this.stepOffset = 0.0;
 
 		this.blurMode = GTAOPass.BOX_BLUR;
 		this.blurIterations = 4;
@@ -140,19 +142,8 @@ export class GTAOPass extends Pass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
-		if ( ! this.fixedSample ) {
-
-			this.sampleIndex = ( this.sampleIndex + 1 ) % 6;
-
-		} else {
-
-			this.sampleIndex = this.sampleIndex % 6;
-
-		}
-
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const {
-			sampleIndex,
 			scene,
 			camera,
 			debug,
@@ -278,10 +269,7 @@ export class GTAOPass extends Pass {
 		const height = Math.floor( gtaoBuffer.texture.image.height );
 		const projection = camera.projectionMatrix;
 		const fovRadians = MathUtils.DEG2RAD * camera.fov;
-		gtaoMaterial.uniforms.params.value.set(
-			rotations[ sampleIndex % 6 ] / 360.0,
-			offsets[ sampleIndex % 4 ]
-		);
+		gtaoMaterial.uniforms.params.value.set( this.directionOffset, this.stepOffset );
 
 		gtaoMaterial.uniforms.projInfo.value.set(
 			2.0 / ( width * projection.elements[ 4 * 0 + 0 ] ),

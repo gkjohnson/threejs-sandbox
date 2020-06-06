@@ -64,7 +64,8 @@
 				enableRotationJitter: true,
 				enableRadiusJitter: false,
 
-				fixedSample: 0,
+				directionOffset: 0.0,
+				stepOffset: 0.0,
 				numSteps: 8,
 				numDirections: 1,
 				intensity: 1.0,
@@ -337,7 +338,8 @@
 				gui.add( params, 'scene', Object.keys( scenes ) );
 
 				const settingsFolder = gui.addFolder( 'settings' );
-				settingsFolder.add( params, 'fixedSample' ).min( - 1 ).max( 5 ).step( 1 );
+				settingsFolder.add( params, 'directionOffset' ).min( 0.0 ).max( 1 ).step( 0.01 );
+				settingsFolder.add( params, 'stepOffset' ).min( 0.0 ).max( 1 ).step( 0.01 );
 				settingsFolder.add( params, 'enableRotationJitter' );
 				settingsFolder.add( params, 'enableRadiusJitter' );
 				settingsFolder.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
@@ -450,6 +452,8 @@
 				gtaoPass.falloffStart = params.falloffStart;
 				gtaoPass.falloffEnd = params.falloffEnd;
 				gtaoPass.enableFalloff = params.enableFalloff;
+				gtaoPass.directionOffset = params.directionOffset;
+				gtaoPass.stepOffset = params.stepOffset;
 
 				gtaoPass.lightBounceIntensity = params.enableLightBounce ? params.lightBounceIntensity : 0.0;
 
@@ -460,18 +464,6 @@
 				gtaoPass.ambientIntensity = params.ambientLightIntensity;
 
 				gammaPass.enabled = gtaoPass.debug.display === GTAOPass.DEFAULT;
-
-				if ( params.fixedSample === - 1 ) {
-
-					gtaoPass.fixedSample = false;
-
-				} else {
-
-					gtaoPass.fixedSample = true;
-					gtaoPass.sampleIndex = params.fixedSample;
-
-
-				}
 
 				composer.render();
 
