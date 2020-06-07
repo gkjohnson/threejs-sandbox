@@ -1,5 +1,5 @@
 import { ShaderReplacement, setMaterialDefine } from '../ShaderReplacement.js';
-import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderLib } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export class NormalPass extends ShaderReplacement {
 
@@ -60,6 +60,15 @@ export class NormalPass extends ShaderReplacement {
 
 	}
 
+	createMaterial( ...args ) {
+
+		const mat = super.createMaterial( ...args );
+
+
+		return mat;
+
+	}
+
 	updateUniforms( object, material, target ) {
 
 		super.updateUniforms( object, material, target );
@@ -67,93 +76,16 @@ export class NormalPass extends ShaderReplacement {
 		// TODO: Handle object space normal map
 		// TODO: Handle displacement map
 
-		let originalDefine = target.defines.USE_NORMALMAP;
-		if ( ! target.uniforms.map.value ) {
+		target.setDefine( 'TANGENTSPACE_NORMALMAP', target.uniforms.map.value ? '' : undefined );
+		target.setDefine( 'USE_NORMALMAP', target.uniforms.map.value ? '' : undefined );
 
-			delete target.defines.USE_NORMALMAP;
-			delete target.defines.TANGENTSPACE_NORMALMAP;
+		target.setDefine( 'ALPHATEST', target.uniforms.alphaTest.value ? target.uniforms.alphaTest.value : undefined );
 
-		} else {
+		target.setDefine( 'USE_ALPHAMAP', ( target.defines.ALPHATEST === 0 || ! target.uniforms.alphaMap.value ) ? undefined : '' );
 
-			target.defines.TANGENTSPACE_NORMALMAP = '';
-			target.defines.USE_NORMALMAP = '';
+		target.setDefine( 'USE_MAP', ( target.defines.ALPHATEST === 0 || ! target.uniforms.map.value ) ? undefined : '' );
 
-		}
-
-		if ( originalDefine !== target.defines.USE_NORMALMAP ) {
-
-			target.needsUpdate = true;
-
-		}
-
-		// alphatest
-		originalDefine = target.defines.ALPHATEST;
-		if ( target.uniforms.alphaTest.value === 0 ) {
-
-			delete target.defines.ALPHATEST;
-
-		} else {
-
-			target.defines.ALPHATEST = target.uniforms.alphaTest.value;
-
-		}
-
-		if ( originalDefine !== target.defines.ALPHATEST ) {
-
-			target.needsUpdate = true;
-
-		}
-
-		// alphamap
-		originalDefine = target.defines.USE_ALPHAMAP;
-		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.alphaMap.value ) {
-
-			delete target.defines.USE_ALPHAMAP;
-
-		} else {
-
-			target.defines.USE_ALPHAMAP = '';
-
-		}
-
-		if ( originalDefine !== target.defines.USE_ALPHAMAP ) {
-
-			target.needsUpdate = true;
-		}
-
-		// map
-		originalDefine = target.defines.USE_MAP;
-		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.map.value ) {
-
-			delete target.defines.USE_MAP;
-
-		} else {
-
-			target.defines.USE_MAP = '';
-
-		}
-
-		if ( originalDefine !== target.defines.USE_MAP ) {
-
-			target.needsUpdate = true;
-		}
-
-		// uv
-		originalDefine = target.defines.USE_UV;
-		if ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) {
-
-			target.defines.USE_UV = '';
-
-		} else {
-
-			delete target.defines.USE_UV;
-
-		}
-
-		if ( originalDefine !== target.defines.USE_MAP ) {
-
-			target.needsUpdate = true;
-		}
+		target.setDefine( 'USE_UV', ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) ? '' : undefined );
 
 	}
 

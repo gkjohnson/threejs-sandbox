@@ -1,4 +1,4 @@
-import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { WrappedShaderMaterial } from './WrappedShaderMaterial.js';
 
 export function setMaterialDefine( material, define, value ) {
 
@@ -29,8 +29,11 @@ export class ShaderReplacement {
 
 	constructor( shader ) {
 
-		this._replacementMaterial = new ShaderMaterial( shader );
+		this._replacementMaterial = new WrappedShaderMaterial( shader );
 		this._replacementMaterials = new WeakMap();
+
+		this.overrideUniforms = {};
+		this.overrideDefines = {};
 
 	}
 
@@ -77,6 +80,11 @@ export class ShaderReplacement {
 			}
 
 			scope.updateUniforms( object, originalMaterial, replacementMaterial );
+			if ( replacementMaterial.finalize ) {
+
+				replacementMaterial.finalize();
+
+			}
 
 			object.material = replacementMaterial;
 
@@ -195,12 +203,7 @@ export class ShaderReplacement {
 
 			for ( const key in materialDefines ) {
 
-				if ( key in materialDefines && materialDefines[ key ] !== targetDefines[ key ] ) {
-
-					targetDefines[ key ] = materialDefines[ key ];
-					target.needsUpdate = true;
-
-				}
+				target.setDefine( key, materialDefines[ key ] );
 
 			}
 
@@ -208,26 +211,11 @@ export class ShaderReplacement {
 
 				if ( ! ( key in materialDefines ) ) {
 
-					if ( key in originalDefines ) {
+					target.setDefine( key, originalDefines[ key ] );
 
-						if ( originalDefines[ key ] !== targetDefines[ key ] ) {
+				} else {
 
-							targetDefines[ key ] = originalDefines[ key ];
-							target.needsUpdate = true;
-
-						}
-
-					} else {
-
-						delete targetDefines[ key ];
-						target.needsUpdate = true;
-
-					}
-
-				} else if ( materialDefines[ key ] !== targetDefines[ key ] ) {
-
-					targetDefines[ key ] = materialDefines[ key ];
-					target.needsUpdate = true;
+					target.setDefine( key, materialDefines[ key ] );
 
 				}
 
@@ -247,10 +235,16 @@ export class ShaderReplacement {
 				const targetUniform = targetUniforms[ key ];
 				if ( materialUniform && materialUniform.value !== targetUniform.value ) {
 
-					targetUniform.value = materialUniform.value;
-					if ( targetUniform.value.isTexture ) {
+					if (
+						targetUniform.value && targetUniform.value.isTexture ||
+						materialUniform.value && materialUniform.value.isTexture
+					) {
 
-						target.needsUpdate = true;
+						target.setTextureUniform( key, materialUniform.value );
+
+					} else {
+
+						targetUniform.value = materialUniform.value;
 
 					}
 
@@ -265,14 +259,50 @@ export class ShaderReplacement {
 				const targetUniform = targetUniforms[ key ];
 				if ( key in material && material[ key ] !== targetUniform.value ) {
 
-					targetUniform.value = material[ key ];
-					if ( targetUniform.value.isTexture ) {
+					if (
+						targetUniform.value && targetUniform.value.isTexture ||
+						material[ key ] && material[ key ].isTexture
+					) {
 
-						target.needsUpdate = true;
+						target.setTextureUniform( key, material[ key ] );
+
+					} else {
+
+						targetUniform.value = material[ key ];
 
 					}
 
 				}
+
+			}
+
+		}
+
+		const { overrideDefines, overrideUniforms } = this;
+		for ( const key in overrideDefines ) {
+
+			if ( overrideDefines[ key ] === null || overrideDefines[ key ] === undefined ) {
+
+				delete targetDefines[ key ];
+
+			} else {
+
+				if ( targetDefines[ key ] !== overrideDefines[ key ] ) {
+
+					targetDefines[ key ] = overrideDefines[ key ];
+					target.needsUpdate = true;
+
+				}
+
+			}
+
+		}
+
+		for ( const key in overrideUniforms ) {
+
+			if ( key in targetUniforms ) {
+
+				targetUniforms[ key ].value = overrideUniforms[ key ].value;
 
 			}
 

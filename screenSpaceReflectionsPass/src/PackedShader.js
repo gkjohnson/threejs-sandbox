@@ -1,4 +1,4 @@
-import { Matrix3, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Matrix3, Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export const PackedShader =  {
 
@@ -133,7 +133,6 @@ export const PackedShader =  {
 		#include <shadowmap_pars_fragment>
 		#include <bumpmap_pars_fragment>
 		#include <normalmap_pars_fragment>
-		#include <clearcoat_normalmap_pars_fragment>
 		#include <roughnessmap_pars_fragment>
 		#include <metalnessmap_pars_fragment>
 		#include <logdepthbuf_pars_fragment>

@@ -1,5 +1,5 @@
 import { ShaderReplacement } from '../ShaderReplacement.js';
-import { ShaderLib, BasicDepthPacking } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderLib, BasicDepthPacking } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export class DepthPass extends ShaderReplacement {
 
@@ -29,61 +29,13 @@ export class DepthPass extends ShaderReplacement {
 		// TODO: Handle displacement map
 		// TODO: support packing
 
-		target.defines.USE_UV = true;
+		target.setDefine( 'USE_UV', '' );
 
-		let originalDefine;
+		target.setDefine( 'ALPHATEST', target.uniforms.alphaTest.value ? target.uniforms.alphaTest.value : undefined );
 
-		// alphatest
-		originalDefine = target.defines.ALPHATEST;
-		if ( target.uniforms.alphaTest.value === 0 ) {
+		target.setDefine( 'USE_ALPHAMAP', ( target.defines.ALPHATEST === 0 || ! target.uniforms.alphaMap.value ) ? undefined : '' );
 
-			delete target.defines.ALPHATEST;
-
-		} else {
-
-			target.defines.ALPHATEST = target.uniforms.alphaTest.value;
-
-		}
-
-		if ( originalDefine !== target.defines.ALPHATEST ) {
-
-			target.needsUpdate = true;
-
-		}
-
-		// alphamap
-		originalDefine = target.defines.USE_ALPHAMAP;
-		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.alphaMap.value ) {
-
-			delete target.defines.USE_ALPHAMAP;
-
-		} else {
-
-			target.defines.USE_ALPHAMAP = '';
-
-		}
-
-		if ( originalDefine !== target.defines.USE_ALPHAMAP ) {
-
-			target.needsUpdate = true;
-		}
-
-		// map
-		originalDefine = target.defines.USE_MAP;
-		if ( target.defines.ALPHATEST === 0 || ! target.uniforms.map.value ) {
-
-			delete target.defines.USE_MAP;
-
-		} else {
-
-			target.defines.USE_MAP = '';
-
-		}
-
-		if ( originalDefine !== target.defines.USE_MAP ) {
-
-			target.needsUpdate = true;
-		}
+		target.setDefine( 'USE_MAP', ( target.defines.ALPHATEST === 0 || ! target.uniforms.map.value ) ? undefined : '' );
 
 	}
 
