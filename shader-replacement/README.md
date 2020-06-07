@@ -7,6 +7,8 @@ Utility for rendering a scene with a replacement shader. Similar to `Scene.overr
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/shader-replacement/)
 
+_NOTE: Currently defines are updated every time in `updateUniforms` meaning they will get reset and material updated if they appear to change. If defines need to be modified separately then that could should be reimplemented._
+
 # Use
 
 ```js
