@@ -124,10 +124,6 @@ export class LUTCubeLoader extends Loader {
 			domainMin,
 			domainMax,
 			texture,
-			lut: {
-				texture,
-				size,
-			}
 		};
 
 	}

@@ -145,8 +145,8 @@
 
 						lutMap[ l ] = {
 
-							texture: generateNoOpLUT( 128 ),
-							size: 128,
+							texture: generateNoOpLUT( 32 ),
+							size: 32,
 
 						};
 
@@ -154,7 +154,7 @@
 
 						new LUT3dlLoader().load( l, res => {
 
-							lutMap[ l ] = res.lut;
+							lutMap[ l ] = res;
 
 						} );
 
@@ -162,7 +162,7 @@
 
 						new LUTCubeLoader().load( l, res => {
 
-							lutMap[ l ] = res.lut;
+							lutMap[ l ] = res;
 
 						} );
 

@@ -120,10 +120,6 @@ export class LUT3dlLoader extends Loader {
 			domainMin,
 			domainMax,
 			texture,
-			lut: {
-				texture,
-				size,
-			}
 		};
 
 	}
