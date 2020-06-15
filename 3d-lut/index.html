@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - postprocessing - colorblindness utils</title>
+		<title>threejs webgl - postprocessing - 3d lut effect</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -30,10 +30,7 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Colorblindness Simulation Pass by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
-			</br>
-			Simulates deuteranopia, protanopia, and tritanopia colorblindness </br>
-			using color transform matrices described <a href="http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/">here</a>.
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - 3D LUT Effect by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 		</div>
 
 		<script type="module">
@@ -51,16 +48,24 @@
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
+			const luts = [
+				'./luts/Presetpro-Cinematic.3dl',
+				'./luts/Presetpro-Cinematic.cube'
+			];
+			const lutMap = {};
+
 			// globals
 			var stats;
 			var params = {
-				mode: 'cube'
+				lut: luts[ 0 ],
+				displayLut: false,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var renderPass, gammaPass;
 			var lut3dl, lutCube;
-			var material;
+			var lutMesh, mesh;
+
 
 			init();
 			animate();
@@ -72,7 +77,7 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
+				scene.background = new THREE.Color( 0x141b1e ).convertGammaToLinear();
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -80,46 +85,43 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( '../colorblindness-utils/images/pencils.jpg', function ( map ) {
 
-					// map.encoding = THREE.sRGBEncoding;
-					// material.map = map;
-					// material.needsUpdate = true;
-
-				} );
-
-				var mesh = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry(),
-					material
-				);
-				scene.add(mesh);
-
-				new LUTCubeLoader().load( './luts/Presetpro-Cinematic.cube', res => {
-
-					material.map = res.texture;
+					map.encoding = THREE.sRGBEncoding;
+					mesh.scale.set( 5 * 1.5, 5, 1 );
+					material.map = map;
 					material.needsUpdate = true;
 
-					mesh.scale.x = 10 / res.size;
-					mesh.scale.y = 10;
-					// console.log(res)
-
-					lutCube = res.texture;
-
 				} );
 
-				new LUT3dlLoader().load( './luts/Presetpro-Cinematic.3dl', res => {
+				const planeGeometry = new THREE.PlaneBufferGeometry();
+				lutMesh = new THREE.Mesh( planeGeometry );
+				scene.add( lutMesh );
 
-					// material.map = res.texture;
-					// material.needsUpdate = true;
+				mesh = new THREE.Mesh( planeGeometry, material );
+				scene.add( mesh );
 
-					mesh.scale.x = 10 / res.size;
-					mesh.scale.y = 10;
-					// console.log(res)
+				luts.forEach( l => {
 
-					lut3dl = res.texture;
+					if ( /3dl$/.test( l ) ) {
 
+						new LUT3dlLoader().load( l, res => {
+
+							lutMap[ l ] = res.lut;
+
+						} );
+
+					} else {
+
+						new LUTCubeLoader().load( l, res => {
+
+							lutMap[ l ] = res.lut;
+
+						} );
+
+					}
 
 				} );
 
@@ -142,9 +144,10 @@
 
 				// dat gui
 				var gui = new dat.GUI();
-				gui.width = 300;
+				gui.width = 450;
 
-				gui.add( params, 'mode', [ 'cube', '3dl' ] );
+				gui.add( params, 'lut', luts );
+				gui.add( params, 'displayLut' );
 
 				gui.open();
 
@@ -175,15 +178,28 @@
 
 			function render() {
 
-				if ( params.mode === 'cube' ) {
+				mesh.visible = ! params.displayLut;
+				lutMesh.visible = params.displayLut;
 
-					material.map = lutCube;
+				const prevMap = lutMesh.material.map;
+				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
 
-				} else {
+				if ( ! prevMap && lutMesh.material.map ) {
 
-					material.map = lut3dl;
+					if ( ! prevMap ) {
+
+						lutMesh.material.needsUpdate = true;
+
+					}
+
+					const image = lutMesh.material.map.image;
+					const aspect = image.width / image.height;
+
+					lutMesh.scale.x = 10 * aspect;
+					lutMesh.scale.y = 10;
 
 				}
+
 				composer.render();
 
 			}

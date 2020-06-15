@@ -109,18 +109,16 @@ export class LUTCubeLoader extends Loader {
 
 		}
 
-		const texture = new DataTexture(
-			data,
-			size,
-			size * size,
-			RGBFormat,
-			UnsignedByteType,
-			ClampToEdgeWrapping,
-			ClampToEdgeWrapping,
-		);
+		const texture = new DataTexture();
+		texture.image.data = data;
+		texture.image.width = size;
+		texture.image.height = size * size;
+		texture.format = RGBFormat;
+		texture.type = UnsignedByteType;
 		texture.magFilter = LinearFilter;
-		texture.needsUpdate = true;
 		texture.generateMipmaps = false;
+		texture.flipY = true;
+		texture.needsUpdate = true;
 
 		return {
 			title,
