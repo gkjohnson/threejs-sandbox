@@ -117,8 +117,6 @@ export class LUTCubeLoader extends Loader {
 		texture.type = UnsignedByteType;
 		texture.magFilter = LinearFilter;
 		texture.generateMipmaps = false;
-		// texture.flipY = true;
-		texture.needsUpdate = true;
 
 		return {
 			title,

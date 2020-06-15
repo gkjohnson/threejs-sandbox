@@ -42,6 +42,7 @@
 			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
 			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
 			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
 			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
 			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
 			import { LUTShader } from './src/shaders/LUTShader.js';
@@ -50,6 +51,7 @@
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			const luts = [
+				'none',
 				'./luts/Presetpro-Cinematic.3dl',
 				'./luts/Presetpro-Cinematic.cube'
 			];
@@ -63,13 +65,46 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var renderPass, lutPass, gammaPass;
+			var renderPass, lutPass, gammaPass, fxaaPass;
 			var lut3dl, lutCube;
 			var lutMesh, mesh;
 
 
 			init();
 			animate();
+
+			function generateNoOpLUT( size ) {
+
+				const data = new Uint8Array( size * size * size * 3 );
+				for ( let r = 0; r < size; r ++ ) {
+
+					for ( let g = 0; g < size; g ++ ) {
+
+						for ( let b = 0; b < size; b ++ ) {
+
+							const index = r + g * size + b * size * size;
+							data[ index * 3 + 0 ] = 255 * r / size;
+							data[ index * 3 + 1 ] = 255 * g / size;
+							data[ index * 3 + 2 ] = 255 * b / size;
+
+						}
+
+					}
+
+				}
+
+				const texture = new THREE.DataTexture();
+				texture.image.data = data;
+				texture.image.width = size;
+				texture.image.height = size * size;
+				texture.format = THREE.RGBFormat;
+				texture.type = THREE.UnsignedByteType;
+				texture.magFilter = THREE.LinearFilter;
+				texture.generateMipmaps = false;
+
+				return texture;
+
+			}
 
 			function init() {
 
@@ -106,7 +141,16 @@
 
 				luts.forEach( l => {
 
-					if ( /3dl$/.test( l ) ) {
+					if ( l === 'none' ) {
+
+						lutMap[ l ] = {
+
+							texture: generateNoOpLUT( 128 ),
+							size: 128,
+
+						};
+
+					} else if ( /3dl$/.test( l ) ) {
 
 						new LUT3dlLoader().load( l, res => {
 
@@ -130,6 +174,7 @@
 				renderPass = new RenderPass( scene, camera );
 				lutPass = new ShaderPass( LUTShader );
 				gammaPass = new ShaderPass( GammaCorrectionShader );
+				fxaaPass = new ShaderPass( FXAAShader );
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
@@ -137,6 +182,7 @@
 				composer.addPass( renderPass );
 				composer.addPass( gammaPass );
 				composer.addPass( lutPass );
+				composer.addPass( fxaaPass );
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -154,6 +200,8 @@
 
 				gui.open();
 
+				onWindowResize();
+
 			}
 
 			function onWindowResize() {
@@ -169,6 +217,9 @@
 
 				composer.setSize( width, height );
 				composer.setPixelRatio( window.devicePixelRatio );
+
+				fxaaPass.material.uniforms.resolution.value.set( 1 / width, 1 / height ).multiplyScalar( 1 / window.devicePixelRatio );
+				window.fxaaPass = fxaaPass;
 
 			}
 
@@ -208,6 +259,7 @@
 				}
 
 				lutPass.enabled = ! params.displayLut;
+				gammaPass.enabled = ! params.displayLut;
 
 				composer.render();
 

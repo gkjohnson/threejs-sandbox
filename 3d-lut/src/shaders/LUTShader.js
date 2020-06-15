@@ -33,12 +33,7 @@ export const LUTShader = {
 		void main() {
 
 			vec4 val = texture2D( tDiffuse, vUv );
-
 			gl_FragColor = vec4( lutLookup( lut, lutSize, val.rgb ), val.a );
-
-			// gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
-			// gl_FragColor = vec4( vUv, 0.0, 1.0 );
-			// gl_FragColor = val;
 
 		}
 
