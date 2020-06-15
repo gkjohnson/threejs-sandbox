@@ -19,10 +19,10 @@ Postprocessing effect to add lens distortion and chromatic aberation as well as 
 
 - https://danielilett.com/2019-10-17-tut3-1-something-fishy/
 - https://codea.io/talk/discussion/8708/barrel-distortion-shader
-- Barrel Blur Chroma https://www.shadertoy.com/view/XssGz8
-- Lens / Film Chromatic Aberration https://www.shadertoy.com/view/llK3RR
-- Barrel Blur https://www.shadertoy.com/view/XslGz8
-- Barrel Distortion https://www.shadertoy.com/view/lddGDN
-- Barrel Distortion Tutorial https://www.shadertoy.com/view/MlSXR3
+- [Barrel Blur Chroma](https://www.shadertoy.com/view/XssGz8)
+- [Lens / Film Chromatic Aberration](https://www.shadertoy.com/view/llK3RR)
+- [Barrel Blur](https://www.shadertoy.com/view/XslGz8)
+- [Barrel Distortion](https://www.shadertoy.com/view/lddGDN)
+- [Barrel Distortion Tutorial](https://www.shadertoy.com/view/MlSXR3)
 - * https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf
 - * https://www.taylorpetrick.com/portfolio/webgl/lense
