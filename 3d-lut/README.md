@@ -6,7 +6,7 @@ Example LUTs provided by [rocketstock.com](https://www.rocketstock.com/free-afte
 
 ![](./images/banner.png)
 
-_Car image from [wallpaperflare.com](https://www.wallpaperflare.com/tatra-tatra-603-czechoslovakia-socialist-car-v8-aerodynamic-wallpaper-pqflw)._
+_Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.com/tatra-tatra-603-czechoslovakia-socialist-car-v8-aerodynamic-wallpaper-pqflw)._
 
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/3d-lut/).
