@@ -17,9 +17,10 @@ _Car image from [wallpaperflare.com](https://www.wallpaperflare.com/tatra-tatra-
 - Possibly image-based LUT loader?
 - More formats: https://community.acescentral.com/t/best-of-existing-lut-formats/1703/2
 
-## TODO
+## Possible Improvements
 - Add a better interpolation approach (tetrahedral is what the adobe .3DL docs suggest).
 - Verify no-op lut looks correct.
+- Use a grid layout rather than a linear layout to avoid unusably long textures when using dense LUT table.
 
 ## References
 
