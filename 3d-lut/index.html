@@ -146,10 +146,10 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 5, 5 * 3.5 );
+				camera.position.set( 0.0, 0, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x141b1e ).convertGammaToLinear();
+				scene.background = new THREE.Color( 0 );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -159,10 +159,12 @@
 				// geometry
 				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( '../colorblindness-utils/images/pencils.jpg', function ( map ) {
+				textureLoader.load( './images/photo.jpg', function ( map ) {
 
 					map.encoding = THREE.sRGBEncoding;
-					mesh.scale.set( 5 * 1.5, 5, 1 );
+
+					const aspect = map.image.width / map.image.height;
+					mesh.scale.set( 7 * aspect, 7, 1 );
 					material.map = map;
 					material.needsUpdate = true;
 
