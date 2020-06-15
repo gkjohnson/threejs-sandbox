@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - colorblindness utils</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Colorblindness Simulation Pass by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Simulates deuteranopia, protanopia, and tritanopia colorblindness </br>
+			using color transform matrices described <a href="http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/">here</a>.
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
+			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
+
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			// globals
+			var stats;
+			var params = {
+				mode: 'cube'
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var renderPass, gammaPass;
+			var lut3dl, lutCube;
+			var material;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 5, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( '../colorblindness-utils/images/pencils.jpg', function ( map ) {
+
+					// map.encoding = THREE.sRGBEncoding;
+					// material.map = map;
+					// material.needsUpdate = true;
+
+				} );
+
+				var mesh = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					material
+				);
+				scene.add(mesh);
+
+				new LUTCubeLoader().load( './luts/Presetpro-Cinematic.cube', res => {
+
+					material.map = res.texture;
+					material.needsUpdate = true;
+
+					mesh.scale.x = 10 / res.size;
+					mesh.scale.y = 10;
+					// console.log(res)
+
+					lutCube = res.texture;
+
+				} );
+
+				new LUT3dlLoader().load( './luts/Presetpro-Cinematic.3dl', res => {
+
+					// material.map = res.texture;
+					// material.needsUpdate = true;
+
+					mesh.scale.x = 10 / res.size;
+					mesh.scale.y = 10;
+					// console.log(res)
+
+					lut3dl = res.texture;
+
+
+				} );
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( gammaPass );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'mode', [ 'cube', '3dl' ] );
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( window.devicePixelRatio );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				if ( params.mode === 'cube' ) {
+
+					material.map = lutCube;
+
+				} else {
+
+					material.map = lut3dl;
+
+				}
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
