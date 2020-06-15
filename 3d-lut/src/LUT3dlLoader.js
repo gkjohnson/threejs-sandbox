@@ -98,7 +98,7 @@ export class LUT3dlLoader extends Loader {
 
 		const bits = Math.ceil( Math.log2( maxOutputValue ) );
 		const maxBitValue = Math.pow( 2.0, bits );
-		for ( let i = 1, l = dataArray.length; i < l; i ++ ) {
+		for ( let i = 0, l = dataArray.length; i < l; i ++ ) {
 
 			const val = dataArray[ i ];
 			dataArray[ i ] = 255 * val / maxBitValue;
