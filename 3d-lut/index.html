@@ -44,6 +44,7 @@
 			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
 			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
 			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
+			import { LUTShader } from './src/shaders/LUTShader.js';
 
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
@@ -62,7 +63,7 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var renderPass, gammaPass;
+			var renderPass, lutPass, gammaPass;
 			var lut3dl, lutCube;
 			var lutMesh, mesh;
 
@@ -127,6 +128,7 @@
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
+				lutPass = new ShaderPass( LUTShader );
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 
 				composer = new EffectComposer( renderer );
@@ -134,6 +136,7 @@
 				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( gammaPass );
+				composer.addPass( lutPass );
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -184,7 +187,7 @@
 				const prevMap = lutMesh.material.map;
 				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
 
-				if ( ! prevMap && lutMesh.material.map ) {
+				if ( lutMesh.material.map ) {
 
 					if ( ! prevMap ) {
 
@@ -192,13 +195,19 @@
 
 					}
 
+					const lut = lutMap[ params.lut ];
 					const image = lutMesh.material.map.image;
 					const aspect = image.width / image.height;
 
 					lutMesh.scale.x = 10 * aspect;
 					lutMesh.scale.y = 10;
 
+					lutPass.material.uniforms.lutSize.value = lut.size;
+					lutPass.material.uniforms.lut.value = lut.texture;
+
 				}
+
+				lutPass.enabled = ! params.displayLut;
 
 				composer.render();
 

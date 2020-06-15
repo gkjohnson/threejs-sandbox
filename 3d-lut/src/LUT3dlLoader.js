@@ -114,7 +114,7 @@ export class LUT3dlLoader extends Loader {
 		texture.type = UnsignedByteType;
 		texture.magFilter = LinearFilter;
 		texture.generateMipmaps = false;
-		texture.flipY = true;
+		// texture.flipY = true;
 		texture.needsUpdate = true;
 
 		return {
