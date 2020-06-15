@@ -53,7 +53,42 @@
 			const luts = [
 				'none',
 				'./luts/Presetpro-Cinematic.3dl',
-				'./luts/Presetpro-Cinematic.cube'
+				'./luts/Presetpro-Cinematic.cube',
+				'./luts/Arabica 12.CUBE',
+				'./luts/Ava 614.CUBE',
+				'./luts/Azrael 93.CUBE',
+				'./luts/Bourbon 64.CUBE',
+				'./luts/Byers 11.CUBE',
+				'./luts/Chemical 168.CUBE',
+				'./luts/Clayton 33.CUBE',
+				'./luts/Clouseau 54.CUBE',
+				'./luts/Cobi 3.CUBE',
+				'./luts/Contrail 35.CUBE',
+				'./luts/Cubicle 99.CUBE',
+				'./luts/Django 25.CUBE',
+				'./luts/Domingo 145.CUBE',
+				'./luts/Faded 47.CUBE',
+				'./luts/Folger 50.CUBE',
+				'./luts/Fusion 88.CUBE',
+				'./luts/Hyla 68.CUBE',
+				'./luts/Korben 214.CUBE',
+				'./luts/Lenox 340.CUBE',
+				'./luts/Lucky 64.CUBE',
+				'./luts/McKinnon 75.CUBE',
+				'./luts/Milo 5.CUBE',
+				'./luts/Neon 770.CUBE',
+				'./luts/Paladin 1875.CUBE',
+				'./luts/Pasadena 21.CUBE',
+				'./luts/Pitaya 15.CUBE',
+				'./luts/Reeve 38.CUBE',
+				'./luts/Remy 24.CUBE',
+				'./luts/Sprocket 231.CUBE',
+				'./luts/Teigen 28.CUBE',
+				'./luts/Trent 18.CUBE',
+				'./luts/Tweed 71.CUBE',
+				'./luts/Vireo 37.CUBE',
+				'./luts/Zed 32.CUBE',
+				'./luts/Zeke 39.CUBE',
 			];
 			const lutMap = {};
 
@@ -61,6 +96,7 @@
 			var stats;
 			var params = {
 				lut: luts[ 0 ],
+				intensity: 1.0,
 				displayLut: false,
 			};
 			var camera, scene, renderer, controls;
@@ -196,6 +232,7 @@
 				gui.width = 450;
 
 				gui.add( params, 'lut', luts );
+				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
 
 				gui.open();
@@ -237,6 +274,7 @@
 
 				const prevMap = lutMesh.material.map;
 				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
+				lutPass.material.uniforms.intensity.value = params.intensity;
 
 				if ( lutMesh.material.map ) {
 
