@@ -4,6 +4,11 @@ Shader code and post processing effect for applying 3d color LUTS. Includes file
 
 Example LUTs provided by [rocketstock.com](https://www.rocketstock.com/free-after-effects-templates/35-free-luts-for-color-grading-videos/) and [freepresets.com](https://www.freepresets.com/product/free-luts-cinematic/).
 
+![](./images/banner.png)
+
+_Car image from [wallpaperflare.com](https://www.wallpaperflare.com/tatra-tatra-603-czechoslovakia-socialist-car-v8-aerodynamic-wallpaper-pqflw)._
+
+
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/3d-lut/).
 
 ## Other Formats
