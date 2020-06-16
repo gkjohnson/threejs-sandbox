@@ -23,6 +23,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Make parameters physically based.
 - Add option to adjust camera's FoV.
 - Update shader so chroma samples define quantity is replaced in the shader and we can unroll the loop
+- Perform distortion in linear color space
 
 # References
 
