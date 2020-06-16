@@ -2,9 +2,13 @@
 
 Postprocessing effect to add lens distortion and chromatic aberation as well as film grain.
 
-# TODO
+Grain technique based on [this ShaderToy project](https://www.shadertoy.com/view/4t2fRz) and image distortion based on [this article](https://www.taylorpetrick.com/blog/post/dispersion-opengl) and [this paper](https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf).
 
-- Use `refract` function to calculate aberration effects
+# Improvements
+
+- Use a jitter to blur bands.
+- Base the image distortion based on camera FoV and correct view normal.
+- Allow noise to darken pixels, as well.
 
 # References
 
