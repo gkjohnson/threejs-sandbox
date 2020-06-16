@@ -25,8 +25,6 @@ export const FilmGrainShader = {
 
 	fragmentShader: /* glsl */`
 
-		#define SHOW_NOISE 0
-
 		// 0: Addition, 1: Screen, 2: Overlay, 3: Soft Light, 4: Lighten-Only
 		#define BLEND_MODE 0
 
