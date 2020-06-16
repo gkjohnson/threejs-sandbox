@@ -60,6 +60,7 @@
 				distortionIntensity: 0.075,
 				bandOffset: 0.03,
 				jitterIntensity: 1.0,
+				samples: 5,
 				distortionMode: 'rygcbv',
 
 				image: 'car'
@@ -114,6 +115,7 @@
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 				distortPass = new ShaderPass( LensDistortionShader );
+				distortPass.material.defines.CHROMA_SAMPLES = params.samples;
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
@@ -148,6 +150,12 @@
 				distortionFolder.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
 				distortionFolder.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
 				distortionFolder.add( params, 'jitterIntensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
+				distortionFolder.add( params, 'samples' ).min( 1 ).max( 20 ).step( 1 ).onChange( v => {
+
+					distortPass.material.defines.CHROMA_SAMPLES = v;
+					distortPass.material.needsUpdate = true;
+
+				} );
 				distortionFolder.add( params, 'distortionMode', [ 'none', 'rgb', 'rygcbv' ] ).onChange( v => {
 
 					switch ( v ) {

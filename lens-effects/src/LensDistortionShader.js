@@ -7,6 +7,8 @@ export const LensDistortionShader = {
 		// 0: NONE, 1: RGB, 2: RYGCBV
 		BAND_MODE: 2,
 
+		CHROMA_SAMPLES: 1,
+
 	},
 
 	uniforms: {
@@ -73,12 +75,11 @@ export const LensDistortionShader = {
 			vec4 y_sample, c_sample, v_sample;
 			#endif
 
-			#pragma unroll_loop_start
-			for ( int i = 0; i < 10; i ++ ) {
+			for ( int i = 0; i < CHROMA_SAMPLES; i ++ ) {
 
-				index = float( UNROLLED_LOOP_INDEX );
-				randValue = rand( sin( index ) * gl_FragCoord.xy + vec2( jitterOffset, - jitterOffset ) ) - 0.5;
-				offsetValue = index / 9.0 + randValue * jitterIntensity;
+				index = float( i );
+				randValue = rand( sin( index + 1. ) * gl_FragCoord.xy + vec2( jitterOffset, - jitterOffset ) ) - 0.5;
+				offsetValue = index / float( CHROMA_SAMPLES ) + randValue * jitterIntensity;
 				#if BAND_MODE == 1
 				randValue *= 2.0;
 				#endif
@@ -86,18 +87,18 @@ export const LensDistortionShader = {
 				// Paper describing functions for creating yellow, cyan, and violet bands and reforming
 				// them into RGB:
 				// https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf
-				r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 0.0 + intensity * bandOffset * offsetValue );
-				g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 2.0 + intensity * bandOffset * offsetValue );
-				b_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 4.0 + intensity * bandOffset * offsetValue );
+				r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 0.0 + offsetValue ) );
+				g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 2.0 + offsetValue ) );
+				b_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 4.0 + offsetValue ) );
 
 				r_sample = texture2D( tDiffuse, vUv + ( normal.xy - r_refracted.xy ) );
 				g_sample = texture2D( tDiffuse, vUv + ( normal.xy - g_refracted.xy ) );
 				b_sample = texture2D( tDiffuse, vUv + ( normal.xy - b_refracted.xy ) );
 
 				#if BAND_MODE == 2
-				y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 1.0 + intensity * bandOffset * offsetValue );
-				c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 3.0 + intensity * bandOffset * offsetValue );
-				v_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 5.0 + intensity * bandOffset * offsetValue );
+				y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 1.0 + offsetValue ) );
+				c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 3.0 + offsetValue ) );
+				v_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * ( 5.0 + offsetValue ) );
 
 				y_sample = texture2D( tDiffuse, vUv + ( normal.xy - y_refracted.xy ) );
 				c_sample = texture2D( tDiffuse, vUv + ( normal.xy - c_refracted.xy ) );
@@ -120,9 +121,8 @@ export const LensDistortionShader = {
 				#endif
 
 			}
-			#pragma unroll_loop_end
 
-			color /= 10.0;
+			color /= float( CHROMA_SAMPLES );
 
 			#endif
 

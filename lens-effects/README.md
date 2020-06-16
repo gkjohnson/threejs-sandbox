@@ -12,14 +12,17 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 # Improvements
 
-- Base the image distortion based on camera FoV and correct view normal.
+** Grain **
 - Allow noise to darken pixels.
+- Add colored noise
+
+** Distortion **
+- Base the image distortion based on camera FoV and correct view normal.
 - Look into Brown Conrady distortion
 - Assume a normal hemispherical lens when computing normals based on the widest resolution edge. At the moment it uses something closer to an oval model because of aspect ratio of the canvas.
-- Add more sample iterations to the chromatic distortion so it smooths out.
 - Make parameters physically based.
 - Add option to adjust camera's FoV.
-- Add colored noise
+- Update shader so chroma samples define quantity is replaced in the shader and we can unroll the loop
 
 # References
 
