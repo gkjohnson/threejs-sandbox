@@ -57,13 +57,17 @@
 				noiseIntensity: 0.025,
 
 				enableDistortion: true,
-				distortionIntensity: 0.1,
+				distortionIntensity: 0.075,
 				bandOffset: 0.03,
+
+				image: 'car'
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var mesh;
 			var renderPass, distortPass, grainPass, gammaPass, fxaaPass;
+
+			const textureMap = {};
 
 			init();
 			animate();
@@ -85,17 +89,17 @@
 				// geometry
 				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( './images/grid.png', function ( map ) {
-				// textureLoader.load( '../3d-lut/images/photo.jpg', function ( map ) {
+
+				textureMap.car = textureLoader.load( '../3d-lut/images/photo.jpg', map => {
 
 					map.encoding = THREE.sRGBEncoding;
 
-					const aspect = map.image.width / map.image.height;
-					mesh.scale.set( 7 * aspect, 7, 1 );
-					material.map = map;
-					material.needsUpdate = true;
-
 				} );
+				textureMap.grid = textureLoader.load( './images/grid.png', map => {
+
+					map.encoding = THREE.sRGBEncoding;
+
+				}  );
 
 				const planeGeometry = new THREE.PlaneBufferGeometry();
 				mesh = new THREE.Mesh( planeGeometry, material );
@@ -134,7 +138,9 @@
 
 				gui.add( params, 'enableDistortion' );
 				gui.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
-				gui.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.01 );
+				gui.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
+
+				gui.add( params, 'image', Object.keys( textureMap ) );
 
 				gui.open();
 
@@ -177,6 +183,19 @@
 				distortPass.enabled = params.enableDistortion;
 				distortPass.material.uniforms.intensity.value = params.distortionIntensity;
 				distortPass.material.uniforms.bandOffset.value = params.bandOffset;
+
+				const tex = textureMap[ params.image ];
+				mesh.material.map = tex;
+
+				if ( tex.image ) {
+
+					const aspect = tex.image.width / tex.image.height;
+					mesh.scale.set( 7 * aspect, 7, 1 );
+
+				}
+
+
+
 				composer.render();
 
 			}
