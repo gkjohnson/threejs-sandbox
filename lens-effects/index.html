@@ -1,1 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - 3d lut effect</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
 
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - 3D LUT Effect by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			// globals
+			var stats;
+			var params = {
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var mesh;
+			var renderPass, lensPass, gammaPass, fxaaPass;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 0, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0 );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				var textureLoader = new THREE.TextureLoader();
+				textureLoader.load( './images/grid.png', function ( map ) {
+				// textureLoader.load( '../3d-lut/images/photo.jpg', function ( map ) {
+
+					map.encoding = THREE.sRGBEncoding;
+
+					const aspect = map.image.width / map.image.height;
+					mesh.scale.set( 7 * aspect, 7, 1 );
+					material.map = map;
+					material.needsUpdate = true;
+
+				} );
+
+				const planeGeometry = new THREE.PlaneBufferGeometry();
+				mesh = new THREE.Mesh( planeGeometry, material );
+				scene.add( mesh );
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+				fxaaPass = new ShaderPass( FXAAShader );
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( gammaPass );
+				composer.addPass( fxaaPass );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.open();
+
+				onWindowResize();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( window.devicePixelRatio );
+
+				fxaaPass.material.uniforms.resolution.value.set( 1 / width, 1 / height ).multiplyScalar( 1 / window.devicePixelRatio );
+				window.fxaaPass = fxaaPass;
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
