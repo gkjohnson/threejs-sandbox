@@ -17,6 +17,8 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Look into Brown Conrady distortion
 - Assume a normal hemispherical lens when computing normals based on the widest resolution edge. At the moment it uses something closer to an oval model because of aspect ratio of the canvas.
 - Add more sample iterations to the chromatic distortion so it smooths out.
+- Make parameters physically based.
+- Add option to adjust camera's FoV.
 
 # References
 
