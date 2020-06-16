@@ -4,6 +4,10 @@ Postprocessing effect to add lens distortion and chromatic aberation as well as 
 
 Grain technique based on [this ShaderToy project](https://www.shadertoy.com/view/4t2fRz) and image distortion based on [this article](https://www.taylorpetrick.com/blog/post/dispersion-opengl) and [this paper](https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf).
 
+![](./images/banner.png)
+
+_Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.com/tatra-tatra-603-czechoslovakia-socialist-car-v8-aerodynamic-wallpaper-pqflw)._
+
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/lens-effects/).
 
 # Improvements
