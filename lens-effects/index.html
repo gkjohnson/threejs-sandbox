@@ -135,15 +135,20 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'enableNoise' );
-				gui.add( params, 'noiseSpeed' ).min( 0 ).max( 0.1 ).step( 0.00001 );
-				gui.add( params, 'noiseIntensity' ).min( 0 ).max( 1 ).step( 0.001 );
+				gui.add( params, 'image', Object.keys( textureMap ) );
 
-				gui.add( params, 'enableDistortion' );
-				gui.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
-				gui.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
-				gui.add( params, 'jitterIntensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
-				gui.add( params, 'distortionMode', [ 'none', 'rgb', 'rygcbv' ] ).onChange( v => {
+				const noiseFolder = gui.addFolder( 'noise' );
+				noiseFolder.add( params, 'enableNoise' );
+				noiseFolder.add( params, 'noiseSpeed' ).min( 0 ).max( 0.1 ).step( 0.00001 );
+				noiseFolder.add( params, 'noiseIntensity' ).min( 0 ).max( 1 ).step( 0.001 );
+				noiseFolder.open();
+
+				const distortionFolder = gui.addFolder( 'distortion' );
+				distortionFolder.add( params, 'enableDistortion' );
+				distortionFolder.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
+				distortionFolder.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
+				distortionFolder.add( params, 'jitterIntensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
+				distortionFolder.add( params, 'distortionMode', [ 'none', 'rgb', 'rygcbv' ] ).onChange( v => {
 
 					switch ( v ) {
 						case 'none':
@@ -159,8 +164,7 @@
 					distortPass.material.needsUpdate = true;
 
 				} );
-
-				gui.add( params, 'image', Object.keys( textureMap ) );
+				distortionFolder.open();
 
 				gui.open();
 
