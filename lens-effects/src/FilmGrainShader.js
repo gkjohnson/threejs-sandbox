@@ -1,5 +1,4 @@
 // https://www.shadertoy.com/view/4t2fRz
-import { Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export const FilmGrainShader = {
 
@@ -7,7 +6,6 @@ export const FilmGrainShader = {
 
 		tDiffuse: { value: null },
 		intensity: { value: 0.075 },
-		resolution: { value: new Vector2() },
 		noiseOffset: { value: 0.0 },
 
 	},
@@ -25,7 +23,7 @@ export const FilmGrainShader = {
 
 	`,
 
-	fragmenShader: /* glsl */`
+	fragmentShader: /* glsl */`
 
 		#define SHOW_NOISE 0
 
@@ -39,9 +37,9 @@ export const FilmGrainShader = {
 		#define VARIANCE 0.5
 
 		varying vec2 vUv;
-		uniform vec2 resolution;
 		uniform float intensity;
 		uniform float noiseOffset;
+		uniform sampler2D tDiffuse;
 
 		vec3 channel_mix( vec3 a, vec3 b, vec3 w ) {
 
@@ -109,16 +107,12 @@ export const FilmGrainShader = {
 			vec4 color;
 
 			vec2 uv = vUv;
-			color = texture2D( iChannel0, uv );
+			color = texture2D( tDiffuse, uv );
 
 			float t = noiseOffset;
 			float seed = dot( uv, vec2( 12.9898, 78.233 ) );
 			float noise = fract( sin( seed ) * 43758.5453 + t );
 			noise = gaussian( noise, float( MEAN ), float( VARIANCE ) * float( VARIANCE ) );
-
-			#if SHOW_NOISE
-			color = vec4(noise);
-			#else
 
 			// Ignore these mouse stuff if you're porting this
 			// and just use an arbitrary intensity value.
@@ -144,11 +138,6 @@ export const FilmGrainShader = {
 			// lighten only
 			#elif BLEND_MODE == 4
 			color.rgb = max(color.rgb, grain * w);
-			#endif
-
-			#if SRGB
-			color = pow(color, vec4(1.0 / 2.2));
-			#endif
 			#endif
 
 			gl_FragColor = color;

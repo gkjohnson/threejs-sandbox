@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - postprocessing - 3d lut effect</title>
+		<title>threejs webgl - postprocessing - lens distortion effects</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -30,7 +30,7 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - 3D LUT Effect by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Lens Distortion Effects by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 		</div>
 
 		<script type="module">
@@ -43,6 +43,7 @@
 			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
 			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
 			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+			import { FilmGrainShader } from './src/FilmGrainShader.js';
 
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
@@ -50,11 +51,14 @@
 			// globals
 			var stats;
 			var params = {
+				enableNoise: true,
+				noiseSpeed: 0.02,
+				noiseIntensity: 0.025,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var mesh;
-			var renderPass, lensPass, gammaPass, fxaaPass;
+			var renderPass, grainPass, gammaPass, fxaaPass;
 
 			init();
 			animate();
@@ -94,6 +98,7 @@
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
+				grainPass = new ShaderPass( FilmGrainShader );
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 
@@ -103,6 +108,7 @@
 				composer.addPass( renderPass );
 				composer.addPass( gammaPass );
 				composer.addPass( fxaaPass );
+				composer.addPass( grainPass );
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -114,6 +120,10 @@
 				// dat gui
 				var gui = new dat.GUI();
 				gui.width = 300;
+
+				gui.add( params, 'enableNoise' );
+				gui.add( params, 'noiseSpeed' ).min( 0 ).max( 0.1 ).step( 0.00001 );
+				gui.add( params, 'noiseIntensity' ).min( 0 ).max( 1 ).step( 0.001 );
 
 				gui.open();
 
@@ -149,6 +159,9 @@
 
 			function render() {
 
+				grainPass.enabled = params.enableNoise;
+				grainPass.material.uniforms.noiseOffset.value += params.noiseSpeed;
+				grainPass.material.uniforms.intensity.value = params.noiseIntensity;
 				composer.render();
 
 			}
