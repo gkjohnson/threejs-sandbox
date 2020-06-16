@@ -108,7 +108,6 @@ export const FilmGrainShader = {
 
 			vec4 color;
 
-			vec2 ps = vec2( 1.0 ) / resolution.xy;
 			vec2 uv = vUv;
 			color = texture2D( iChannel0, uv );
 
