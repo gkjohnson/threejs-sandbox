@@ -10,6 +10,7 @@ Grain technique based on [this ShaderToy project](https://www.shadertoy.com/view
 
 - Base the image distortion based on camera FoV and correct view normal.
 - Allow noise to darken pixels.
+- Look into Brown Conrady distortion
 
 # References
 
