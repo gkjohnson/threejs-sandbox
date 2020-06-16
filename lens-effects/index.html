@@ -59,6 +59,7 @@
 				enableDistortion: true,
 				distortionIntensity: 0.075,
 				bandOffset: 0.03,
+				distortionMode: 'rygcbv',
 
 				image: 'car'
 			};
@@ -95,6 +96,7 @@
 					map.encoding = THREE.sRGBEncoding;
 
 				} );
+
 				textureMap.grid = textureLoader.load( './images/grid.png', map => {
 
 					map.encoding = THREE.sRGBEncoding;
@@ -139,6 +141,22 @@
 				gui.add( params, 'enableDistortion' );
 				gui.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
 				gui.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
+				gui.add( params, 'distortionMode', [ 'none', 'rgb', 'rygcbv' ] ).onChange( v => {
+
+					switch ( v ) {
+						case 'none':
+							distortPass.material.defines.BAND_MODE = 0;
+							break;
+						case 'rgb':
+							distortPass.material.defines.BAND_MODE = 1;
+							break;
+						case 'rygcbv':
+							distortPass.material.defines.BAND_MODE = 2;
+							break;
+					}
+					distortPass.material.needsUpdate = true;
+
+				} );
 
 				gui.add( params, 'image', Object.keys( textureMap ) );
 
