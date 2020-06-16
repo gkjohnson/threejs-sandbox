@@ -12,13 +12,13 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 # Improvements
 
-** Grain **
+**Grain**
 - Allow noise to darken pixels.
 - Add colored noise
 
-** Distortion **
-- Base the image distortion based on camera FoV and correct view normal.
-- Look into Brown Conrady distortion
+**Distortion**
+- Base the image distortion based on camera FoV and correct view normal. (add inverse projection matrix)
+- Look into Brown Conrady distortion (mentioned on [wikipedia](https://en.wikipedia.org/wiki/Distortion_(optics)), this [shadertoy](https://www.shadertoy.com/view/MlSXR3)).
 - Assume a normal hemispherical lens when computing normals based on the widest resolution edge. At the moment it uses something closer to an oval model because of aspect ratio of the canvas.
 - Make parameters physically based.
 - Add option to adjust camera's FoV.
