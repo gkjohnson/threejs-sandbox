@@ -14,6 +14,8 @@ export const LensDistortionShader = {
 		tDiffuse: { value: null },
 		intensity: { value: 0.075 },
 		bandOffset: { value: 0.0 },
+		jitterIntensity: { value: 1.0 },
+		jitterOffset: { value: 0.0 },
 
 	},
 
@@ -38,8 +40,11 @@ export const LensDistortionShader = {
 		varying vec3 viewDir;
 		uniform float intensity;
 		uniform float bandOffset;
+		uniform float jitterIntensity;
+		uniform float jitterOffset;
 		uniform sampler2D tDiffuse;
 
+		#include <common>
 		void main() {
 
 			vec3 normal = viewDir.xyz;
@@ -57,25 +62,30 @@ export const LensDistortionShader = {
 			// if RGB or RYGCBV BANDS
 			#else
 
+			float randValue = rand( gl_FragCoord.xy + vec2( jitterOffset, - jitterOffset ) ) * jitterIntensity;
+			#if BAND_MODE == 1
+			randValue *= 2.0;
+			#endif
+
 			// Paper describing functions for creating yellow, cyan, and violet bands and reforming
 			// them into RGB:
 			// https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf
-			vec3 r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 0.0 );
-			vec3 g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 2.0 );
-			vec3 b_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 4.0 );
+			vec3 r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 0.0 + intensity * bandOffset * randValue );
+			vec3 g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 2.0 + intensity * bandOffset * randValue );
+			vec3 b_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 4.0 + intensity * bandOffset * randValue );
 
-			vec4 r_sample = texture2D( tDiffuse, vUv + normal.xy - r_refracted.xy );
-			vec4 g_sample = texture2D( tDiffuse, vUv + normal.xy - g_refracted.xy );
-			vec4 b_sample = texture2D( tDiffuse, vUv + normal.xy - b_refracted.xy );
+			vec4 r_sample = texture2D( tDiffuse, vUv + ( normal.xy - r_refracted.xy ) );
+			vec4 g_sample = texture2D( tDiffuse, vUv + ( normal.xy - g_refracted.xy ) );
+			vec4 b_sample = texture2D( tDiffuse, vUv + ( normal.xy - b_refracted.xy ) );
 
 			#if BAND_MODE == 2
-			vec3 y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 1.0 );
-			vec3 c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 3.0 );
-			vec3 v_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 5.0 );
+			vec3 y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 1.0 + intensity * bandOffset * randValue );
+			vec3 c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 3.0 + intensity * bandOffset * randValue );
+			vec3 v_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity + intensity * bandOffset * 5.0 + intensity * bandOffset * randValue );
 
-			vec4 y_sample = texture2D( tDiffuse, vUv + normal.xy - y_refracted.xy );
-			vec4 c_sample = texture2D( tDiffuse, vUv + normal.xy - c_refracted.xy );
-			vec4 v_sample = texture2D( tDiffuse, vUv + normal.xy - v_refracted.xy );
+			vec4 y_sample = texture2D( tDiffuse, vUv + ( normal.xy - y_refracted.xy ) );
+			vec4 c_sample = texture2D( tDiffuse, vUv + ( normal.xy - c_refracted.xy ) );
+			vec4 v_sample = texture2D( tDiffuse, vUv + ( normal.xy - v_refracted.xy ) );
 
 			float r = r_sample.r / 2.0;
 			float y = ( 2.0 * y_sample.r + 2.0 * y_sample.g - y_sample.b ) / 6.0;

@@ -59,6 +59,7 @@
 				enableDistortion: true,
 				distortionIntensity: 0.075,
 				bandOffset: 0.03,
+				jitterIntensity: 1.0,
 				distortionMode: 'rygcbv',
 
 				image: 'car'
@@ -141,6 +142,7 @@
 				gui.add( params, 'enableDistortion' );
 				gui.add( params, 'distortionIntensity' ).min( - 0.5 ).max( 0.5 ).step( 0.001 );
 				gui.add( params, 'bandOffset' ).min( 0 ).max( 0.1 ).step( 0.001 );
+				gui.add( params, 'jitterIntensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
 				gui.add( params, 'distortionMode', [ 'none', 'rgb', 'rygcbv' ] ).onChange( v => {
 
 					switch ( v ) {
@@ -181,7 +183,6 @@
 				composer.setPixelRatio( window.devicePixelRatio );
 
 				fxaaPass.material.uniforms.resolution.value.set( 1 / width, 1 / height ).multiplyScalar( 1 / window.devicePixelRatio );
-				window.fxaaPass = fxaaPass;
 
 			}
 
@@ -201,6 +202,8 @@
 				distortPass.enabled = params.enableDistortion;
 				distortPass.material.uniforms.intensity.value = params.distortionIntensity;
 				distortPass.material.uniforms.bandOffset.value = params.bandOffset;
+				distortPass.material.uniforms.jitterOffset.value += 0.01;
+				distortPass.material.uniforms.jitterIntensity.value = params.jitterIntensity;
 
 				const tex = textureMap[ params.image ];
 				mesh.material.map = tex;
