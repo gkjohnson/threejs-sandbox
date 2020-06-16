@@ -19,6 +19,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Add more sample iterations to the chromatic distortion so it smooths out.
 - Make parameters physically based.
 - Add option to adjust camera's FoV.
+- Add colored noise
 
 # References
 
