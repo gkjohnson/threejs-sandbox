@@ -11,6 +11,7 @@ Grain technique based on [this ShaderToy project](https://www.shadertoy.com/view
 - Base the image distortion based on camera FoV and correct view normal.
 - Allow noise to darken pixels.
 - Look into Brown Conrady distortion
+- Assume a normal hemispherical lens when computing normals based on the widest resolution edge. At the moment it uses something closer to an oval model because of aspect ratio of the canvas.
 
 # References
 
