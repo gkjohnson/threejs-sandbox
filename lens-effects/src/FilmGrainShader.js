@@ -1,10 +1,14 @@
 // https://www.shadertoy.com/view/4t2fRz
+import { Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export const FilmGrainShader = {
 
 	uniforms: {
 
-		intensity: { value: 0.075 }
+		tDiffuse: { value: null },
+		intensity: { value: 0.075 },
+		resolution: { value: new Vector2() },
+		noiseOffset: { value: 0.0 },
 
 	},
 
@@ -24,12 +28,9 @@ export const FilmGrainShader = {
 	fragmenShader: /* glsl */`
 
 		#define SHOW_NOISE 0
-		#define SRGB 0
 
 		// 0: Addition, 1: Screen, 2: Overlay, 3: Soft Light, 4: Lighten-Only
 		#define BLEND_MODE 0
-		#define SPEED 2.0
-		#define INTENSITY 0.075
 
 		// What gray level noise should tend to.
 		#define MEAN 0.0
@@ -38,6 +39,9 @@ export const FilmGrainShader = {
 		#define VARIANCE 0.5
 
 		varying vec2 vUv;
+		uniform vec2 resolution;
+		uniform float intensity;
+		uniform float noiseOffset;
 
 		vec3 channel_mix( vec3 a, vec3 b, vec3 w ) {
 
@@ -103,17 +107,12 @@ export const FilmGrainShader = {
 		void main() {
 
 			vec4 color;
-			vec2 coord = vUv;
 
-			vec2 ps = vec2( 1.0 ) / iResolution.xy;
-			vec2 uv = coord * ps;
-			color = texture( iChannel0, uv );
+			vec2 ps = vec2( 1.0 ) / resolution.xy;
+			vec2 uv = vUv;
+			color = texture2D( iChannel0, uv );
 
-			#if SRGB
-			color = pow( color, vec4( 2.2 ) );
-			#endif
-
-			float t = iTime * float( SPEED );
+			float t = noiseOffset;
 			float seed = dot( uv, vec2( 12.9898, 78.233 ) );
 			float noise = fract( sin( seed ) * 43758.5453 + t );
 			noise = gaussian( noise, float( MEAN ), float( VARIANCE ) * float( VARIANCE ) );
@@ -124,7 +123,7 @@ export const FilmGrainShader = {
 
 			// Ignore these mouse stuff if you're porting this
 			// and just use an arbitrary intensity value.
-			float w = float( INTENSITY );
+			float w = intensity;
 			vec3 grain = vec3( noise ) * ( 1.0 - color.rgb );
 
 			// addition
