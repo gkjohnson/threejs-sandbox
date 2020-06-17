@@ -58,7 +58,7 @@ export const LensDistortionShader = {
 			// if NO BANDS
 			#if BAND_MODE == 0
 
-			vec3 refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, 1.0 + intensity );
+			vec3 refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, baseIor );
 			color = texture2D( tDiffuse, vUv + refracted.xy ).rgb;
 
 			// if RGB or RYGCBV BANDS
