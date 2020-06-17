@@ -49,7 +49,7 @@ export const LensDistortionShader = {
 		#include <common>
 		void main() {
 
-			vec3 normal = viewDir.xyz;
+			vec3 normal = vec3( 2.0 * vUv - vec2( 1.0 ), 1.0 );
 			normal.z = 1.0;
 			normal = normalize( normal );
 
@@ -58,8 +58,8 @@ export const LensDistortionShader = {
 			// if NO BANDS
 			#if BAND_MODE == 0
 
-			vec3 refracted = refract( vec3( 0.0, 0.0, - 1.0 ), - normal, intensity );
-			color = texture2D( tDiffuse, vUv + normal.xy - refracted.xy ).rgb;
+			vec3 refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, 1.0 + intensity );
+			color = texture2D( tDiffuse, vUv + refracted.xy ).rgb;
 
 			// if RGB or RYGCBV BANDS
 			#else
