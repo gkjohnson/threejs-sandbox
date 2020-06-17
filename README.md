@@ -18,4 +18,4 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 
 **NEXT**
 - SSRR
-- Lens distortion, film noise, lens chromatic aberration
+
