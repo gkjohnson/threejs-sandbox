@@ -19,11 +19,11 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 **Distortion**
 - Base the image distortion based on camera FoV and correct view normal. (add inverse projection matrix)
 - Look into Brown Conrady distortion (mentioned on [wikipedia](https://en.wikipedia.org/wiki/Distortion_(optics)), this [shadertoy](https://www.shadertoy.com/view/MlSXR3)).
-- Assume a normal hemispherical lens when computing normals based on the widest resolution edge. At the moment it uses something closer to an oval model because of aspect ratio of the canvas.
 - Make parameters physically based.
 - Add option to adjust camera's FoV.
 - Update shader so chroma samples define quantity is replaced in the shader and we can unroll the loop
 - Perform distortion in linear color space
+- Does base ior need to be different for every band? It seems like no distortion should take place at ior 1.0
 
 # References
 
