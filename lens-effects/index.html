@@ -57,7 +57,7 @@
 				noiseIntensity: 0.025,
 
 				enableDistortion: true,
-				baseIor: 0.9,
+				baseIor: 0.8,
 				bandOffset: 0.003,
 				jitterIntensity: 1.0,
 				samples: 7,
@@ -78,7 +78,7 @@
 			function init() {
 
 				// initialize renderer, scene, camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 2000 );
 				camera.position.set( 0.0, 0, 5 * 3.5 );
 
 				scene = new THREE.Scene();
