@@ -76,8 +76,8 @@ export class NormalPass extends ShaderReplacement {
 		// TODO: Handle object space normal map
 		// TODO: Handle displacement map
 
-		target.setDefine( 'TANGENTSPACE_NORMALMAP', target.uniforms.map.value ? '' : undefined );
-		target.setDefine( 'USE_NORMALMAP', target.uniforms.map.value ? '' : undefined );
+		target.setDefine( 'TANGENTSPACE_NORMALMAP', target.uniforms.normalMap.value ? '' : undefined );
+		target.setDefine( 'USE_NORMALMAP', target.uniforms.normalMap.value ? '' : undefined );
 
 		target.setDefine( 'ALPHATEST', target.uniforms.alphaTest.value ? target.uniforms.alphaTest.value : undefined );
 
