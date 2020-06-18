@@ -24,6 +24,8 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Update shader so chroma samples define quantity is replaced in the shader and we can unroll the loop
 - Perform distortion in linear color space
 - Does base ior need to be different for every band? It seems like no distortion should take place at ior 1.0
+   - Technically I would think yes. The original base ior should differ per band, as well, and the base ior change should represent a shift in the base value per wavelength. This would result in a ratio of 1. when the base ior is one. However this would also mean that you couldn't get dispersion without bowing of some sort of the image, which might not be wanted.
+	 - "Inversion" of the color band order would require an inversion of the normals that the incident light is coming in on.
 
 # References
 
