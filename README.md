@@ -5,8 +5,6 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 ## Potential Projects
 
 - Deferred Renderer
-- Translucent material with refraction, diffusion, depth peeling
-  - gem refraction ([link 1](https://www.shadertoy.com/view/ltfXDM), [link 2](https://github.com/amsXYZ/three-multifaceted-refraction))
 - TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
 
 - use GLSL syntax parser for debugger
@@ -15,7 +13,12 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 - Subsurface Scattering
 - SSDO
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
+- Capsule Geometry / Math Class
 
-**NEXT**
+**On Hold**
 - SSRR
+
+**Next**
+- Translucent material with refraction, diffusion, depth peeling
+  - gem refraction ([link 1](https://www.shadertoy.com/view/ltfXDM), [link 2](https://github.com/amsXYZ/three-multifaceted-refraction))
 
