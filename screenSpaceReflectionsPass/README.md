@@ -113,6 +113,8 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### References
 
+- https://blog.demofox.org/2020/05/10/ray-marching-fog-with-blue-noise/
+
 - https://github.com/haolange/Unity_ScreenSpaceTechStack
 
 - https://github.com/Domenicobrz/WebGL2-Screen-space-reflections
