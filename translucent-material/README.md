@@ -9,6 +9,7 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Perform light diffaction based on normals?
 - Render 100% transparent object after composite to get surface reflection / sheen / surface shadows
 - Use directional light to perform subsurface scattering?
+- Manually discard against scene depth
 
 ## References
 - https://github.com/mrdoob/three.js/issues/15941
