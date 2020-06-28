@@ -78,7 +78,6 @@ All of the options above can be overriden by adding a `motionBlur` overrides obj
 ```
 
 ### TODO Improvements
-- Use jitter to vary samples and potentially need less.
 - Use depth buffer to alleviate foreground bleeding into background blur
 - Add dithering / jitter to the smear samples to improve the low sample look
 - Use depth to more intelligently sample and keep background crisper
