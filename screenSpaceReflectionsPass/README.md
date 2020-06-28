@@ -124,3 +124,11 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - http://www.cse.chalmers.se/edu/year/2017/course/TDA361/Advanced%20Computer%20Graphics/Screen-space%20reflections.pdf
 
 - https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs
+
+#### Godot Implementation
+
+- https://github.com/godotengine/godot/tree/481151be09108a30002ae0a9df118eeddd3987be/servers/rendering/rasterizer_rd/shaders
+
+- https://github.com/godotengine/godot/blob/481151be09108a30002ae0a9df118eeddd3987be/servers/rendering/rasterizer_rd/shaders/screen_space_reflection.glsl
+
+- https://github.com/godotengine/godot/blob/a4e200a47a151ed5ce1627a17ce694048987eadf/servers/rendering/rasterizer_rd/rasterizer_effects_rd.h
