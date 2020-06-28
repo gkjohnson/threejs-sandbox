@@ -21,4 +21,5 @@ Set of experiments and extensions to THREE.js intended to eventually be contribu
 **Next**
 - Translucent material with refraction, diffusion, depth peeling
   - gem refraction ([link 1](https://www.shadertoy.com/view/ltfXDM), [link 2](https://github.com/amsXYZ/three-multifaceted-refraction))
+	
 - Half Edge data structure
