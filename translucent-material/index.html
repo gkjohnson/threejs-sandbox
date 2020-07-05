@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - shader replacement</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Translucent Replacement by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/RGBELoader.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+
+			// globals
+			var stats;
+			var params = {
+				diffusion: 0,
+				indexOfRefraction: 1.0,
+				transmission: 0,
+			};
+			var camera, scene, renderer, controls, mesh;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.set( -2.5, 1, 2 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x0 );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.setClearColor( 0x0d1113 );
+
+				document.body.appendChild( renderer.domElement );
+
+				const floor = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					new THREE.ShadowMaterial( { side: 2, transparent: true, opacity: 0.25 } )
+				);
+				floor.scale.set( 10, 10, 10 );
+				floor.position.set( 0, - 1, 0 );
+				floor.rotation.x = - Math.PI / 2;
+				floor.receiveShadow = true;
+				scene.add( floor );
+
+				// Lights
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 2.5, 4, 2 );
+				directionalLight.shadow.mapSize.set( 2048, 2048 );
+				directionalLight.castShadow = true;
+				scene.add( directionalLight );
+
+				var pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'https://rawgit.com/mrdoob/three.js/master/examples/textures/equirectangular/' )
+					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+
+						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+						scene.background = envMap;
+						scene.environment = envMap;
+
+						texture.dispose();
+						pmremGenerator.dispose();
+
+					} );
+
+				mesh = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshStandardMaterial(),
+				);
+				scene.add( mesh );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				// controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
