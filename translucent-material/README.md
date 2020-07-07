@@ -12,7 +12,16 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Manually discard against scene depth
 - Understand light absorbtion behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha?
 
+## Fields
+
+- `transmissionDispersionAbbe`
+- `transmissionIOR`
+- `transmissionFactor`
+- `trasmissionScatter`
+
 ## References
+- https://docs.arnoldrenderer.com/display/A5AFMUG/Transmission
+- http://wili.cc/research/translucency/hftrans.pdf
 - https://github.com/mrdoob/three.js/issues/15941
 - https://github.com/mrdoob/three.js/issues/15440
 - https://discourse.threejs.org/t/depth-peel-and-transparency/5365
