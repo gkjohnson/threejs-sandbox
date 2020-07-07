@@ -11,6 +11,8 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Use directional light to perform subsurface scattering?
 - Manually discard against scene depth
 - Understand light absorbtion behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha? Or store amount of light absorbed by accumulating and blending 1 - base color.
+- Possibly we don't need an alpha channel for the accumulation buffer.
+
 
 ## Limitations
 
