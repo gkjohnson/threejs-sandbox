@@ -12,6 +12,11 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Manually discard against scene depth
 - Understand light absorbtion behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha?
 
+## Limitations
+
+- Objects cannot penetrate.
+- Refracted normal does not accumulate (does not refract into transparent object behind)
+
 ## Fields
 
 - `transmissionDispersionAbbe`
