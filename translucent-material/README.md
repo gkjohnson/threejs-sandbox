@@ -27,9 +27,15 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - `trasmissionScatter`
 
 ## References
+
 - https://docs.arnoldrenderer.com/display/A5AFMUG/Transmission
 - http://wili.cc/research/translucency/hftrans.pdf
 - https://github.com/mrdoob/three.js/issues/15941
 - https://github.com/mrdoob/three.js/issues/15440
 - https://discourse.threejs.org/t/depth-peel-and-transparency/5365
 - https://github.com/mrdoob/three.js/issues/14049
+
+### Other
+
+- https://www.cs.umd.edu/gvil/papers/hao_tog04.pdf
+- https://research.nvidia.com/sites/default/files/pubs/2017-03_Phenomenological-Transparency/McGuire2017Transparency.pdf
