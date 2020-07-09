@@ -38,6 +38,7 @@
 			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
 			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
 			import { RGBELoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/RGBELoader.js';
+			import { OBJLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/OBJLoader.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 
@@ -86,7 +87,7 @@
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				directionalLight.position.set( 2.5, 4, 2 );
+				directionalLight.position.set( 2, 2, 2 );
 				directionalLight.shadow.mapSize.set( 2048, 2048 );
 				directionalLight.castShadow = true;
 				scene.add( directionalLight );
@@ -109,11 +110,25 @@
 
 					} );
 
+
+				var loader = new OBJLoader();
+				loader.load( 'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/happy.obj', function ( object ) {
+
+					const model = object.children[ 0 ];
+					model.scale.setScalar( 10 );
+					model.geometry.center();
+					model.material = new THREE.MeshStandardMaterial( { color: 0x880000, roughness: 0.25 } );
+					model.updateMatrixWorld();
+					translucentPass.objects = [ model ];
+
+				} );
+
 				mesh = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(),
-					new THREE.MeshStandardMaterial( { roughness: 0.25 } ),
+					new THREE.MeshStandardMaterial( { color: 0xbb0000, roughness: 0.25 } ),
 				);
 				// scene.add( mesh );
+				window.mesh = mesh;
 
 
 				// Render Pass Setup
@@ -131,6 +146,8 @@
 				composer.addPass( renderPass );
 				composer.addPass( translucentPass );
 				// composer.addPass( fxaaPass );
+
+				window.composer = composer;
 
 
 

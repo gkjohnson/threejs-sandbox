@@ -1,19 +1,24 @@
-import { Scene, WebGLRenderTarget, DepthTexture, FrontSide, BackSide, DepthFormat } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderMaterial, Scene, WebGLRenderTarget, DepthTexture, FrontSide, BackSide, DepthFormat, GreaterDepth } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 import { TranslucentShader } from './TranslucentShader.js';
+import { CompositeShader } from './CompositeShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { FinalTranslucentReplacement } from './FinalTranslucentReplacement.js';
 
 const rendererState = new RendererState();
 const tempScene = new Scene();
-export class TranslucentObjectPass {
+export class TranslucentObjectPass extends Pass {
 
 	constructor( scene, camera ) {
+
+		super();
 
 		this.objects = [];
 		this.scene = scene;
 		this.camera = camera;
 		this.layers = 1;
+		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );;
 		this.translucentReplacement = new ShaderReplacement( TranslucentShader );
 		this.finalTranslucentReplacement = new FinalTranslucentReplacement();
 
@@ -46,6 +51,7 @@ export class TranslucentObjectPass {
 
 	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
+		window.renderer = renderer;
 		// NOTE: 3d objects should not penetrate
 
 		const {
@@ -57,11 +63,10 @@ export class TranslucentObjectPass {
 			colorBuffer,
 			emptyBuffer,
 			scene,
+			compositeQuad,
 		} = this;
 		translucentReplacement.replace( objects, true, true );
 		rendererState.copy( renderer );
-
-		renderer.autoClear = false;
 
 		tempScene.children = [ ...objects ];
 		tempScene.autoUpdate = false;
@@ -77,7 +82,14 @@ export class TranslucentObjectPass {
 
 		} );
 
-		// renderer.setRenderTarget( writeBuffer );
+		// TODO: Reference paper here for more info on depth peeling algorithm:
+		// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.18.9286&rep=rep1&type=pdf
+		// We may need a third buffer so we can render to depth twice for front and back faces
+		// We must cull pixels manually to get the appropriate layer. Front must read from back and
+		// vice versa.
+		// https://gamedev.stackexchange.com/questions/116066/depth-peeling-implementation-problem-how-to-render-the-next-layer-opengl
+
+		// renderer.state.buffers.depth.setClear( 0 );
 		for ( let i = 0; i < layers; i ++ ) {
 
 			// render front faces into depth buffer
@@ -94,13 +106,14 @@ export class TranslucentObjectPass {
 					material.uniforms.cameraNear.value = camera.near;
 					material.uniforms.cameraFar.value = camera.far;
 					material.colorWrite = false;
+					// material.depthFunc = GreaterDepth;
 					material.side = FrontSide;
 
 				}
 
 			} );
 
-			renderer.autoClear = true;
+			renderer.autoClear = i === 0;
 			renderer.setRenderTarget( emptyBuffer );
 			renderer.render( tempScene, camera );
 
@@ -120,13 +133,23 @@ export class TranslucentObjectPass {
 
 			} );
 
-			renderer.autoClear = true;
-			renderer.setRenderTarget( null );
+			renderer.autoClear = i === 0;
+			renderer.setRenderTarget( colorBuffer );
 			renderer.render( tempScene, camera );
 
 		}
+		// renderer.state.buffers.depth.setClear( 1 );
+
+
+		renderer.autoClear = true;
+		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+		compositeQuad.material.uniforms.absorbedTexture.value = colorBuffer.texture;
+		compositeQuad.material.uniforms.readTexture.value = readBuffer.texture;
+		compositeQuad.depthWrite = false;
+		compositeQuad.render( renderer );
 
 		renderer.autoClear = false;
+		renderer.clearDepth();
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );
 
