@@ -6,11 +6,12 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 - Render front to back depth peeling
 - Only apply surface normal refraction based on the top surface normals
-- Perform light diffaction based on normals?
+- Perform light diffraction based on normals?
 - Render 100% transparent object after composite to get surface reflection / sheen / surface shadows
 - Use directional light to perform subsurface scattering?
 - Manually discard against scene depth
-- Understand light absorbtion behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha?
+- Understand light absorption behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha?
+	- Instead accumulate the light that should be absorbed clamped to [0, 1] and subtract that from the initial buffer.
 
 ## Fields
 

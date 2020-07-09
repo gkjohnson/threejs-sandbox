@@ -41,6 +41,15 @@
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 
+			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+
+			import { TranslucentObjectPass } from './src/TranslucentObjectPass.js';
+
 			// globals
 			var stats;
 			var params = {
@@ -49,6 +58,7 @@
 				transmission: 0,
 			};
 			var camera, scene, renderer, controls, mesh;
+			var renderPass, composer, fxaaPass, translucentPass;
 
 			init();
 			animate();
@@ -56,7 +66,7 @@
 			function init() {
 
 				// initialize renderer, scene, camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 50 );
 				camera.position.set( -2.5, 1, 2 );
 
 				scene = new THREE.Scene();
@@ -72,20 +82,10 @@
 
 				document.body.appendChild( renderer.domElement );
 
-				const floor = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry(),
-					new THREE.ShadowMaterial( { side: 2, transparent: true, opacity: 0.25 } )
-				);
-				floor.scale.set( 10, 10, 10 );
-				floor.position.set( 0, - 1, 0 );
-				floor.rotation.x = - Math.PI / 2;
-				floor.receiveShadow = true;
-				scene.add( floor );
-
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
-				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
 				directionalLight.position.set( 2.5, 4, 2 );
 				directionalLight.shadow.mapSize.set( 2048, 2048 );
 				directionalLight.castShadow = true;
@@ -111,9 +111,45 @@
 
 				mesh = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(),
-					new THREE.MeshStandardMaterial(),
+					new THREE.MeshStandardMaterial( { roughness: 0.25 } ),
 				);
-				scene.add( mesh );
+				// scene.add( mesh );
+
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				translucentPass = new TranslucentObjectPass( scene, camera );
+				translucentPass.objects = [ mesh ];
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( translucentPass );
+				// composer.addPass( fxaaPass );
+
+
+
+				// const backgroundObjects = new THREE.Group();
+				// const sphereGeom = new THREE.SphereBufferGeometry( 1, 20, 20 );
+				// const sphereMaterial = new THREE.MeshStandardMaterial();
+
+				// for ( let i = 0; i < 1000; i ++ ) {
+
+				// 	const m = new THREE.Mesh( sphereGeom, sphereMaterial );
+				// 	m.position.random();
+				// 	m.position.x -= 0.5;
+				// 	m.position.y -= 0.5;
+				// 	m.position.z -= 0.5;
+				// 	m.position.normalize().multiplyScalar( 50 );
+				// 	backgroundObjects.add( m );
+
+				// }
+				// scene.add( backgroundObjects );
 
 				// stats
 				stats = new Stats();
@@ -125,6 +161,7 @@
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
 
 				// dat gui
 				var gui = new dat.GUI();
@@ -144,6 +181,9 @@
 				renderer.setSize( width, height );
 				renderer.setPixelRatio( window.devicePixelRatio );
 
+				composer.setSize( width, height );
+				composer.setPixelRatio( window.devicePixelRatio );
+
 			}
 
 			function animate() {
@@ -158,7 +198,7 @@
 
 			function render() {
 
-				renderer.render( scene, camera );
+				composer.render( scene, camera );
 
 			}
 
