@@ -4,9 +4,9 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 ## TODO
 
-- normal pass + reffraction / diffraction
-- diffusal
-- transmission field
+- normal pass + refraction / diffraction
+- diffusion
+- ABBE
 
 ## Notes
 

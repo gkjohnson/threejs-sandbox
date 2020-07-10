@@ -183,6 +183,12 @@ export class TranslucentObjectPass extends Pass {
 					material.depthFunc = LessEqualDepth;
 					material.blending = AdditiveBlending;
 
+					if ( typeof material.uniforms.absorptionFactor.value !== 'number' ) {
+
+						material.uniforms.absorptionFactor.value = 1.0;
+
+					}
+
 				}
 
 			} );

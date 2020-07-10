@@ -58,14 +58,20 @@
 			var params = {
 				diffusion: 0,
 				indexOfRefraction: 1.0,
-				transmission: 0,
+				absorptionFactor: 1.0,
 
-				color: 0x880000,
+				color: 0xcc6600,
 				roughness: 0.1,
 				layers: 4,
+				background: 'white'
 			};
 			var camera, scene, renderer, controls, mesh;
 			var renderPass, composer, fxaaPass, translucentPass, gammaPass;
+
+			var backgrounds = {
+				white: new THREE.Color( 0xdddddd ),
+				environment: null,
+			};
 
 			init();
 			animate();
@@ -108,7 +114,6 @@
 
 						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
-						// scene.background = envMap;
 						scene.environment = envMap;
 
 						texture.dispose();
@@ -200,9 +205,11 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
 				gui.addColor( params, 'color' );
 				gui.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
-				gui.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
+				gui.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
+				gui.add( params, 'background', Object.keys( backgrounds ) );
 				gui.open();
 
 			}
@@ -239,8 +246,21 @@
 
 					mesh.material.roughness = params.roughness;
 					mesh.material.color.set( params.color );
+					mesh.material.absorptionFactor = params.absorptionFactor;
 
 				}
+
+				const bg = backgrounds[ params.background ];
+				if ( ! bg || bg.isColor ) {
+
+					scene.background = bg;
+
+				} else {
+
+					scene.background = bg;
+
+				}
+
 				translucentPass.layers = params.layers;
 
 				composer.render( scene, camera );

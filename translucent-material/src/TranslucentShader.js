@@ -20,6 +20,7 @@ export const TranslucentShader = {
 		uniform vec2 resolution;
 		uniform float cameraNear;
 		uniform float cameraFar;
+		uniform float absorptionFactor;
 		uniform vec3 color;
 
 		#define DITHERING 1
@@ -43,7 +44,7 @@ export const TranslucentShader = {
 			float thickness = convertDepth( frontDepth ) - convertDepth( backDepth );
 
 			vec3 absorbed = vec3( 1.0 ) - clamp( color, 0.0, 1.0 );
-			vec3 val = dithering( - absorbed * thickness * 1000.0 );
+			vec3 val = dithering( - absorbed * thickness * 1000.0 * absorptionFactor );
 			gl_FragColor.rgb = val;
 			gl_FragColor.a = 1.0;
 
@@ -56,6 +57,7 @@ export const TranslucentShader = {
 			frontLayerTexture: { value: null },
 			backLayerTexture: { value: null },
 
+			absorptionFactor: { value: 1.0 },
 			color: { value: new Color() },
 			cameraNear: { value: 0.0 },
 			cameraFar: { value: 0.0 },
