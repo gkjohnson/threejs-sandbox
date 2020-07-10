@@ -17,7 +17,8 @@ export const TranslucentShader = {
 		}
 	`,
 	fragmentShader: `
-		uniform sampler2D frontDepthTexture;
+		uniform sampler2D frontLayerTexture;
+		uniform sampler2D backLayerTexture;
 		uniform vec2 resolution;
 		uniform float cameraNear;
 		uniform float cameraFar;
@@ -38,12 +39,14 @@ export const TranslucentShader = {
 
 		void main() {
 
-			float frontDepth = texture2D( frontDepthTexture, gl_FragCoord.xy / resolution ).r;
-			float thickness = convertDepth( gl_FragCoord.z ) - convertDepth( frontDepth );
+			float frontDepth = texture2D( frontLayerTexture, gl_FragCoord.xy / resolution ).r;
+			float backDepth = texture2D( backLayerTexture, gl_FragCoord.xy / resolution ).r;
+			float thickness = convertDepth( frontDepth ) - convertDepth( backDepth );
 
 			vec3 absorbed = vec3( 1.0 ) - clamp( color, 0.0, 1.0 );
-			vec3 val = dithering( absorbed * thickness * 10.0 );
-			gl_FragColor.rgb = dithering( absorbed * thickness * 100.0 );
+			vec3 val = dithering( - absorbed * thickness * 1000.0 );
+			gl_FragColor.rgb = val;
+			gl_FragColor.a = 1.0;
 
 		}
 
@@ -51,11 +54,13 @@ export const TranslucentShader = {
 	defines: {},
 	uniforms: UniformsUtils.merge([
 		{
+			frontLayerTexture: { value: null },
+			backLayerTexture: { value: null },
+
 			color: { value: new Color() },
 			cameraNear: { value: 0.0 },
 			cameraFar: { value: 0.0 },
 			resolution: { value: new Vector2() },
-			frontDepthTexture: { value: null },
 		},
 		UniformsUtils.clone( ShaderLib.physical.uniforms )
 	]),

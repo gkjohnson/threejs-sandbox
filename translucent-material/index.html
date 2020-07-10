@@ -48,6 +48,8 @@
 			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
 			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
 
 			import { TranslucentObjectPass } from './src/TranslucentObjectPass.js';
 
@@ -57,9 +59,13 @@
 				diffusion: 0,
 				indexOfRefraction: 1.0,
 				transmission: 0,
+
+				color: 0x880000,
+				roughness: 0.25,
+				layers: 4,
 			};
 			var camera, scene, renderer, controls, mesh;
-			var renderPass, composer, fxaaPass, translucentPass;
+			var renderPass, composer, fxaaPass, translucentPass, gammaPass;
 
 			init();
 			animate();
@@ -117,9 +123,16 @@
 					const model = object.children[ 0 ];
 					model.scale.setScalar( 10 );
 					model.geometry.center();
-					model.material = new THREE.MeshStandardMaterial( { color: 0x880000, roughness: 0.25 } );
+					model.material = new THREE.MeshStandardMaterial( { color: 0xcc0000, roughness: 0.25 } );
 					model.updateMatrixWorld();
 					translucentPass.objects = [ model ];
+
+					mesh = model;
+					window.mesh = mesh;
+
+					model.geometry.deleteAttribute( 'normal' );
+					model.geometry = BufferGeometryUtils.mergeVertices( model.geometry );
+					model.geometry.computeVertexNormals();
 
 				} );
 
@@ -137,6 +150,8 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
 				translucentPass = new TranslucentObjectPass( scene, camera );
 				translucentPass.objects = [ mesh ];
 
@@ -145,7 +160,8 @@
 				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
 				composer.addPass( translucentPass );
-				// composer.addPass( fxaaPass );
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
 
 				window.composer = composer;
 
@@ -183,6 +199,10 @@
 				// dat gui
 				var gui = new dat.GUI();
 				gui.width = 300;
+
+				gui.addColor( params, 'color' );
+				gui.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
+				gui.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
 				gui.open();
 
 			}
@@ -214,6 +234,14 @@
 			}
 
 			function render() {
+
+				if ( mesh ) {
+
+					mesh.material.roughness = params.roughness;
+					mesh.material.color.set( params.color );
+
+				}
+				translucentPass.layers = params.layers;
 
 				composer.render( scene, camera );
 
