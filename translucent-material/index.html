@@ -246,7 +246,7 @@
 				if ( mesh ) {
 
 					mesh.material.roughness = params.roughness;
-					mesh.material.color.set( params.color );
+					mesh.material.color.set( params.color ).convertSRGBToLinear();
 					mesh.material.absorptionFactor = params.absorptionFactor;
 
 				}
