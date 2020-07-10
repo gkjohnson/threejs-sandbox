@@ -17,6 +17,7 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Subsurface scattering
 - Jitter sampling for blur
 - Blur depth accumulation
+- Shadows
 
 ## Notes
 
