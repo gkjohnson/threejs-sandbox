@@ -2,6 +2,13 @@
 
 A posteffect that renders translucently with modeled light diffusion, refraction, and absorbtion.
 
+## TODO
+
+- normal pass + reffraction / diffraction
+- diffusal
+- depth prepass before surface
+- transmission field
+
 ## Notes
 
 - Render front to back depth peeling
