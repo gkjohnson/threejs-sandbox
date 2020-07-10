@@ -7,12 +7,10 @@ export const TranslucentShader = {
 		fragDepth: true,
 	},
 	vertexShader: `
-		varying vec2 vUv;
 		void main() {
 
 			#include <begin_vertex>
 			#include <project_vertex>
-			vUv = uv;
 
 		}
 	`,
@@ -23,7 +21,6 @@ export const TranslucentShader = {
 		uniform float cameraNear;
 		uniform float cameraFar;
 		uniform vec3 color;
-		varying vec2 vUv;
 
 		#define DITHERING 1
 		#include <packing>
@@ -39,8 +36,10 @@ export const TranslucentShader = {
 
 		void main() {
 
-			float frontDepth = texture2D( frontLayerTexture, gl_FragCoord.xy / resolution ).r;
-			float backDepth = texture2D( backLayerTexture, gl_FragCoord.xy / resolution ).r;
+			vec2 uv = ( gl_FragCoord.xy + vec2( 0.5 ) ) / resolution;
+
+			float frontDepth = texture2D( frontLayerTexture, uv ).r;
+			float backDepth = texture2D( backLayerTexture, uv ).r;
 			float thickness = convertDepth( frontDepth ) - convertDepth( backDepth );
 
 			vec3 absorbed = vec3( 1.0 ) - clamp( color, 0.0, 1.0 );
