@@ -6,7 +6,6 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 - normal pass + reffraction / diffraction
 - diffusal
-- depth prepass before surface
 - transmission field
 
 ## Notes

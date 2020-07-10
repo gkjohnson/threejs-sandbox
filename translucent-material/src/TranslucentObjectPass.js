@@ -124,7 +124,7 @@ export class TranslucentObjectPass extends Pass {
 
 					material.uniforms.doCompare.value = i === 0.0 ? 0.0 : 1.0;
 					material.uniforms.compareDepthTexture.value = emptyBufferBack.depthTexture;
-					material.colorWrite = true;
+					material.colorWrite = false;
 					material.side = FrontSide;
 					material.uniforms.resolution.value.set(
 						colorBuffer.width, colorBuffer.height,
@@ -202,10 +202,26 @@ export class TranslucentObjectPass extends Pass {
 		compositeQuad.render( renderer );
 
 		// TODO: render the depth prepass so sheen does not overlap
+		layerReplacement.replace( objects, true, false );
+		tempScene.traverse( c => {
 
-		// render the surface sheen
+			const material = c.material;
+			if ( material ) {
+
+				material.uniforms.doCompare.value = 0;
+				material.uniforms.compareDepthTexture.value = null;
+				material.colorWrite = false;
+				material.side = FrontSide;
+
+			}
+
+		} );
+
 		renderer.autoClear = false;
 		renderer.clearDepth();
+		renderer.render( tempScene, camera );
+
+		// render the surface sheen
 		tempScene.environment = scene.environment;
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );

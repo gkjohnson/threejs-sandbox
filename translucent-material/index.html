@@ -61,7 +61,7 @@
 				transmission: 0,
 
 				color: 0x880000,
-				roughness: 0.25,
+				roughness: 0.1,
 				layers: 4,
 			};
 			var camera, scene, renderer, controls, mesh;
@@ -77,7 +77,7 @@
 				camera.position.set( -2.5, 1, 2 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x0 );
+				scene.background = new THREE.Color( 0xdddddd );
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -108,7 +108,7 @@
 
 						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
-						scene.background = envMap;
+						// scene.background = envMap;
 						scene.environment = envMap;
 
 						texture.dispose();
