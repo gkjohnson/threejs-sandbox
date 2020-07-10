@@ -2,6 +2,8 @@
 
 A posteffect that renders translucently with modeled light diffusion, refraction, and absorbtion.
 
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html)
+
 ## TODO
 
 - normal pass + refraction / Abbe dispersion
