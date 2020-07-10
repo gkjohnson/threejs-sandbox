@@ -114,6 +114,7 @@
 
 						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
+						backgrounds.environment = envMap;
 						scene.environment = envMap;
 
 						texture.dispose();
@@ -250,16 +251,8 @@
 
 				}
 
-				const bg = backgrounds[ params.background ];
-				if ( ! bg || bg.isColor ) {
-
-					scene.background = bg;
-
-				} else {
-
-					scene.background = bg;
-
-				}
+				const bg = backgrounds[ params.background ] || backgrounds.white;
+				scene.background = bg;
 
 				translucentPass.layers = params.layers;
 

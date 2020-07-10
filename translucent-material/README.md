@@ -4,9 +4,15 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 ## TODO
 
-- normal pass + refraction / diffraction
+- normal pass + refraction / Abbe dispersion
 - diffusion
-- ABBE
+
+## Possible Improvements
+
+- Make it physically based
+- Test with multiple meshes
+- Subsurface scattering
+- Jitter sampling for blur
 
 ## Notes
 

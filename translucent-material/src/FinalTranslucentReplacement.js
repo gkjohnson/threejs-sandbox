@@ -18,6 +18,7 @@ export class FinalTranslucentReplacement extends ShaderReplacement {
 		target.roughness = material.roughness;
 		target.metalness = material.metalness;
 		target.depthFunc = LessEqualDepth;
+		target.dithering = true;
 
 	}
 
