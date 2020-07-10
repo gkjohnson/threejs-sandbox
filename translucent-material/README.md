@@ -8,6 +8,7 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 - normal pass + refraction / Abbe dispersion
 - diffusion
+- fade to solid surface
 
 ## Possible Improvements
 
@@ -15,6 +16,7 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 - Test with multiple meshes
 - Subsurface scattering
 - Jitter sampling for blur
+- Blur depth accumulation
 
 ## Notes
 
