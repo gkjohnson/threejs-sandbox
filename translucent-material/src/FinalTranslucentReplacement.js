@@ -11,9 +11,10 @@ export class FinalTranslucentReplacement extends ShaderReplacement {
 
 	updateUniforms( object, material, target ) {
 
+		target.color.copy( material.color );
 		target.depthWrite = false;
 		target.transparent = true;
-		target.transparency = 1.0;
+		target.transparency = 1.0 - ( material.diffusion || 0.0 );
 		target.premultipliedAlpha = true;
 		target.roughness = material.roughness;
 		target.metalness = material.metalness;
