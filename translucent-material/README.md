@@ -6,7 +6,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 
 ![](./images/banner.png)
 
-[Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html)
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html).
 
 ## Possible Improvements
 
