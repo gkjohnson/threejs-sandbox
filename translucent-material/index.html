@@ -59,6 +59,7 @@
 				diffusion: 0,
 				indexOfRefraction: 1.1,
 				absorptionFactor: 1.0,
+				lightBandOffset: 0.01,
 
 				color: 0xcc6600,
 				roughness: 0.1,
@@ -142,14 +143,6 @@
 
 				} );
 
-				mesh = new THREE.Mesh(
-					new THREE.BoxBufferGeometry(),
-					new THREE.MeshStandardMaterial( { color: 0xbb0000, roughness: 0.25 } ),
-				);
-				// scene.add( mesh );
-				window.mesh = mesh;
-
-
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
 
@@ -159,7 +152,7 @@
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 
 				translucentPass = new TranslucentObjectPass( scene, camera );
-				translucentPass.objects = [ mesh ];
+				translucentPass.objects = [];
 
 				composer = new EffectComposer( renderer );
 				composer.setSize( window.innerWidth, window.innerHeight );
@@ -191,6 +184,7 @@
 				gui.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
 				gui.add( params, 'indexOfRefraction' ).min( 0.7 ).max( 1.3 ).step( 0.01 );
 				gui.add( params, 'diffusion' ).min( 0 ).max( 1 ).step( 0.01 );
+				gui.add( params, 'lightBandOffset' ).min( -0.05 ).max( 0.05 ).step( 0.001 );
 				gui.add( params, 'background', Object.keys( backgrounds ) );
 				gui.open();
 
@@ -231,6 +225,7 @@
 					mesh.material.color.set( params.color ).convertSRGBToLinear();
 					mesh.material.absorptionFactor = params.absorptionFactor;
 					mesh.material.iorRatio = params.indexOfRefraction;
+					mesh.material.bandOffset = params.lightBandOffset;
 
 				}
 

@@ -1,13 +1,8 @@
 # Translucent Material
 
-A posteffect that renders translucently with modeled light diffusion, refraction, and absorbtion.
+A posteffect that renders translucently with modeled light diffusion, refraction, and absorption.
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html)
-
-## TODO
-
-- Abbe dispersion
-- fade to solid surface / diffusion
 
 ## Possible Improvements
 
