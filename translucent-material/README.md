@@ -1,6 +1,6 @@
 # Translucent Material
 
-A posteffect that renders translucently with modeled light diffusion, refraction, and absorption.
+A posteffect that renders translucently with modeled light dispersion, refraction, and absorption using depth peeling.
 
 Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www.github.com/alecjacobson/common-3d-test-models).
 
