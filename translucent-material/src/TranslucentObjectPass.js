@@ -16,6 +16,7 @@ import { LayerShader } from './LayerShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
+import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { FinalTranslucentReplacement } from './FinalTranslucentReplacement.js';
 import { DepthDebugShader } from './DepthDebugShader.js';
 
@@ -36,6 +37,7 @@ export class TranslucentObjectPass extends Pass {
 		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 		this.translucentReplacement = new ShaderReplacement( TranslucentShader );
 		this.layerReplacement = new ShaderReplacement( LayerShader );
+		this.normalReplacement = new NormalPass();
 		this.finalTranslucentReplacement = new FinalTranslucentReplacement();
 
 		const colorBuffer = new WebGLRenderTarget( 1, 1 );
@@ -73,11 +75,13 @@ export class TranslucentObjectPass extends Pass {
 		window.renderer = renderer;
 		// NOTE: 3d objects should not penetrate
 
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const {
 			layers,
 			objects,
 			layerReplacement,
 			translucentReplacement,
+			normalReplacement,
 			finalTranslucentReplacement,
 			camera,
 			colorBuffer,
@@ -199,15 +203,21 @@ export class TranslucentObjectPass extends Pass {
 
 		}
 
-		// render the thickness
+		// render normal buffer
 		renderer.autoClear = true;
-		renderer.setRenderTarget( this.renderToScreen ? null : writeBuffer );
+		normalReplacement.replace( tempScene, true, false );
+		renderer.setRenderTarget( emptyBufferFront );
+		renderer.render( tempScene, camera );
+
+		// render the thickness to the final buffer
+		renderer.autoClear = true;
+		renderer.setRenderTarget( finalBuffer );
 		compositeQuad.material.uniforms.absorbedTexture.value = colorBuffer.texture;
 		compositeQuad.material.uniforms.readTexture.value = readBuffer.texture;
 		compositeQuad.depthWrite = false;
 		compositeQuad.render( renderer );
 
-		// TODO: render the depth prepass so sheen does not overlap
+		// render the depth prepass so sheen does not overlap
 		layerReplacement.replace( objects, true, false );
 		tempScene.traverse( c => {
 
@@ -224,14 +234,20 @@ export class TranslucentObjectPass extends Pass {
 		} );
 
 		renderer.autoClear = false;
+		renderer.setRenderTarget( finalBuffer );
 		renderer.clearDepth();
 		renderer.render( tempScene, camera );
+
+		// TODO: render the thickness value to emptyBufferFront
+		// TODO: Create a transmission replacement that blurs, disperse, and refracts based on lower layer
+		// TODO: Render it to the final buffer including
 
 		// render the surface sheen
 		tempScene.environment = scene.environment;
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );
 
+		// reset
 		layerReplacement.reset( objects, true );
 		rendererState.restore( renderer );
 
