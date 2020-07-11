@@ -37,7 +37,7 @@ export const TranslucentShader = {
 
 		void main() {
 
-			vec2 uv = ( gl_FragCoord.xy + vec2( 0.5 ) ) / resolution;
+			vec2 uv = gl_FragCoord.xy / resolution;
 
 			float frontDepth = texture2D( frontLayerTexture, uv ).r;
 			float backDepth = texture2D( backLayerTexture, uv ).r;

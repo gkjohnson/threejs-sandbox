@@ -8,7 +8,7 @@ import {
 	BackSide,
 	DepthFormat,
 	AdditiveBlending,
-	FloatType,
+	NearestFilter,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
@@ -44,12 +44,16 @@ export class TranslucentObjectPass extends Pass {
 		this.normalReplacement = new NormalPass();
 		this.finalTranslucentReplacement = new FinalTranslucentReplacement();
 
-		const colorBuffer = new WebGLRenderTarget( 1, 1 );
+		const options = {
+			minFilter: NearestFilter,
+			magFilter: NearestFilter,
+		};
+		const colorBuffer = new WebGLRenderTarget( 1, 1, options );
 
-		const emptyBufferFront = new WebGLRenderTarget( 1, 1 );
+		const emptyBufferFront = new WebGLRenderTarget( 1, 1, options );
 		emptyBufferFront.depthTexture = new DepthTexture( DepthFormat );
 
-		const emptyBufferBack = new WebGLRenderTarget( 1, 1 );
+		const emptyBufferBack = new WebGLRenderTarget( 1, 1, options );
 		emptyBufferBack.depthTexture = new DepthTexture( DepthFormat );
 
 		this.colorBuffer = colorBuffer;

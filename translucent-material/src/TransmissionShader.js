@@ -35,7 +35,7 @@ export const TransmissionShader = {
 
 		void main() {
 
-			vec2 uv = ( gl_FragCoord.xy + vec2( 0.5 ) ) / resolution;
+			vec2 uv = gl_FragCoord.xy / resolution;
 			vec3 normal = normalize( UnpackNormal( texture2D( normalTexture, uv ) ) );
 
 			vec3 absorbedColor = texture2D( absorbedTexture, uv ).rgb;
@@ -106,7 +106,7 @@ export const TransmissionShader = {
 
 
 
-			gl_FragColor = vec4( colo * transmitted, 1.0 );
+			gl_FragColor = vec4( color * transmitted, 1.0 );
 
 		}
 

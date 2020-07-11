@@ -204,6 +204,8 @@
 				composer.setSize( width, height );
 				composer.setPixelRatio( window.devicePixelRatio );
 
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( width * window.devicePixelRatio ), 1 / ( height * window.devicePixelRatio ) );
+
 			}
 
 			function animate() {

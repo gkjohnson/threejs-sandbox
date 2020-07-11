@@ -4,6 +4,8 @@ A posteffect that renders translucently with modeled light diffusion, refraction
 
 Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www.github.com/alecjacobson/common-3d-test-models).
 
+![](./images/banner.png)
+
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html)
 
 ## Possible Improvements

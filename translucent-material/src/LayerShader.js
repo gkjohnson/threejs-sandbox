@@ -21,7 +21,7 @@ export const LayerShader = {
 
 		void main() {
 
-			vec2 uv = ( gl_FragCoord.xy + vec2( 0.5 ) ) / resolution;
+			vec2 uv = gl_FragCoord.xy / resolution;
 
 			float compareDepth = texture2D( compareDepthTexture, uv ).r;
 
