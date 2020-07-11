@@ -11,9 +11,11 @@ import {
 	FloatType,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 import { TranslucentShader } from './TranslucentShader.js';
 import { LayerShader } from './LayerShader.js';
 import { CompositeShader } from './CompositeShader.js';
+import { TransmissionShader } from './TransmissionShader.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
@@ -34,9 +36,11 @@ export class TranslucentObjectPass extends Pass {
 		this.scene = scene;
 		this.camera = camera;
 		this.layers = 1;
+		this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
 		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 		this.translucentReplacement = new ShaderReplacement( TranslucentShader );
 		this.layerReplacement = new ShaderReplacement( LayerShader );
+		this.transmissionReplacement = new ShaderReplacement( TransmissionShader );
 		this.normalReplacement = new NormalPass();
 		this.finalTranslucentReplacement = new FinalTranslucentReplacement();
 
@@ -82,6 +86,7 @@ export class TranslucentObjectPass extends Pass {
 			layerReplacement,
 			translucentReplacement,
 			normalReplacement,
+			transmissionReplacement,
 			finalTranslucentReplacement,
 			camera,
 			colorBuffer,
@@ -89,6 +94,7 @@ export class TranslucentObjectPass extends Pass {
 			emptyBufferBack,
 			scene,
 			compositeQuad,
+			copyQuad,
 		} = this;
 		layerReplacement.replace( objects, true, true );
 		rendererState.copy( renderer );
@@ -149,7 +155,6 @@ export class TranslucentObjectPass extends Pass {
 
 			}
 
-
 			// Render back face buffer
 			tempScene.traverse( c => {
 
@@ -209,13 +214,11 @@ export class TranslucentObjectPass extends Pass {
 		renderer.setRenderTarget( emptyBufferFront );
 		renderer.render( tempScene, camera );
 
-		// render the thickness to the final buffer
+		// copy color to final buffer
 		renderer.autoClear = true;
 		renderer.setRenderTarget( finalBuffer );
-		compositeQuad.material.uniforms.absorbedTexture.value = colorBuffer.texture;
-		compositeQuad.material.uniforms.readTexture.value = readBuffer.texture;
-		compositeQuad.depthWrite = false;
-		compositeQuad.render( renderer );
+		copyQuad.material.uniforms.tDiffuse.value = readBuffer.texture;
+		copyQuad.render( renderer );
 
 		// render the depth prepass so sheen does not overlap
 		layerReplacement.replace( objects, true, false );
@@ -238,11 +241,51 @@ export class TranslucentObjectPass extends Pass {
 		renderer.clearDepth();
 		renderer.render( tempScene, camera );
 
-		// TODO: render the thickness value to emptyBufferFront
-		// TODO: Create a transmission replacement that blurs, disperse, and refracts based on lower layer
-		// TODO: Render it to the final buffer including
+		emptyBufferFront.texture.generateMipMaps = true;
+		transmissionReplacement.replace( tempScene, true, false );
+		tempScene.traverse( c => {
+
+			const material = c.material;
+			if ( material ) {
+
+				material.colorWrite = true;
+				material.side = FrontSide;
+
+				material.uniforms.resolution.value.set(
+					colorBuffer.width, colorBuffer.height,
+				);
+				material.uniforms.backgroundTexture.value = readBuffer.texture;
+				material.uniforms.normalTexture.value = emptyBufferFront.texture;
+				material.uniforms.absorbedTexture.value = colorBuffer.texture;
+				if ( typeof material.uniforms.diffusionFactor.value !== 'number' ) {
+
+					material.uniforms.diffusionFactor.value = 0;
+
+				}
+
+				if ( typeof material.uniforms.dispersionFactor.value !== 'number' ) {
+
+					material.uniforms.diffusionFactor.value = 0;
+
+				}
+
+				if ( typeof material.uniforms.iorRatio.value !== 'number' ) {
+
+					material.uniforms.iorRatio.value = 1;
+
+				}
+
+			}
+
+		} );
+
+		// TODO: dispersion
+		renderer.autoClear = false;
+		renderer.setRenderTarget( finalBuffer );
+		renderer.render( tempScene, camera );
 
 		// render the surface sheen
+		// TODO: as diffusion goes up, decrease transparency
 		tempScene.environment = scene.environment;
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );

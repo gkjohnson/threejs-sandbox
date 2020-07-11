@@ -30,7 +30,6 @@ export const CompositeShader = {
 			vec3 absorbedColor = texture2D( absorbedTexture, vUv ).rgb;
 
 			vec3 transmitted = vec3( 1.0 ) - absorbedColor;
-			gl_FragColor = vec4( transmitted, 1.0 );
 			gl_FragColor = vec4( readColor * transmitted, 1.0 );
 
 		}
