@@ -16,6 +16,8 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - Jitter sampling for blur / diffusion
 - Blur depth accumulation
 - Shadows
+- light should be absorbed at an exponential rate rather than linear?
+- performance
 
 ## Notes
 
