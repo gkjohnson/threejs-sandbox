@@ -18,6 +18,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - Shadows
 - light should be absorbed at an exponential rate rather than linear?
 - performance
+- Provide option to just use front faces and back faces.
 
 ## Notes
 
