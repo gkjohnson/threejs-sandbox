@@ -53,7 +53,7 @@
 				display: 'THRESHOLD_EDGES',
 				conditionalEdges: true,
 			};
-			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel;
+			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor;
 
 			init();
 			animate();
@@ -94,32 +94,67 @@
 
 			}
 
-			function updateLighting() {
+			function initBackgroundModel() {
 
+				if ( backgroundModel ) {
+
+					backgroundModel.parent.remove( backgroundModel );
+					shadowModel.parent.remove( shadowModel );
+
+					backgroundModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+					shadowModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+				}
+
+				backgroundModel = originalModel.clone();
 				backgroundModel.traverse( c => {
 
 					if ( c.isMesh ) {
 
-						if ( params.lit ) {
-
-							c.material = new THREE.MeshStandardMaterial( { color: 0xeeeeee, flatShading: true } );
-
-						} else {
-
-							c.material = new THREE.MeshBasicMaterial( { color: 0xeeeeee } );
-
-						}
+						c.material = new THREE.MeshBasicMaterial( { color: 0xeeeeee } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
 
 					}
 
-				} )
+				} );
+				scene.add( backgroundModel );
+
+				shadowModel = originalModel.clone();
+				shadowModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						c.material = new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.5, transparent: true } );
+						c.receiveShadow = true;
+
+					}
+
+				} );
+				scene.add( shadowModel );
+
 
 			}
 
-			function updateMaterial() {
+			function initModel() {
 
 				if ( model ) {
 
@@ -197,9 +232,24 @@
 
 			}
 
-			function initConditionalModel( model ) {
+			function initConditionalModel() {
 
-				conditionalModel = model.clone();
+				if ( conditionalModel ) {
+
+					conditionalModel.parent.remove( conditionalModel );
+					conditionalModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+				}
+
+				conditionalModel = originalModel.clone();
 				scene.add( conditionalModel );
 				conditionalModel.visible = false;
 
@@ -261,13 +311,34 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.setClearColor( 0x0d1113 );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 				document.body.appendChild( renderer.domElement );
 
+				// Floor
+				floor = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.5, transparent: true, opacity: 0.5, transparent: true } )
+				);
+				floor.rotation.x = - Math.PI / 2;
+				floor.scale.setScalar( 20 );
+				floor.receiveShadow = true;
+				scene.add( floor );
+
 				// Lights
 				const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
-				camera.add( dirLight );
+				dirLight.position.set( 5, 10, 5 );
+				dirLight.castShadow = true;
+				dirLight.shadow.bias = -1e-10;
+				dirLight.shadow.mapSize.width = 1024;
+				dirLight.shadow.mapSize.height = 1024;
+
+				const shadowCam = dirLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -1;
+				shadowCam.right = shadowCam.top = 1;
+
+				scene.add( dirLight );
 
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.25 ) );
 
@@ -276,14 +347,16 @@
 					gltf => {
 
 						originalModel = mergeObject( gltf.scene );
+						originalModel.children[ 0 ].geometry.computeBoundingBox();
+						originalModel.children[ 0 ].castShadow = true;
 
-						updateMaterial();
+						floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
 
-						backgroundModel = originalModel.clone();
-						scene.add( backgroundModel );
-						updateLighting();
+						initModel();
 
-						initConditionalModel( originalModel );
+						initBackgroundModel();
+
+						initConditionalModel();
 
 					}
 				);
@@ -299,19 +372,21 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'lit' )
-					.onChange( updateLighting );
 				gui.add( params, 'solid' );
+
+				gui.add( params, 'lit' );
 
 				gui.add( params, 'threshold' )
 					.min( 5 )
 					.max( 100 )
-					.onChange( updateMaterial );
+					.onChange( initModel );
+
 				gui.add( params, 'display', [
 					'THRESHOLD_EDGES',
 					'NORMAL_EDGES',
 					'NONE',
-				] ).onChange( updateMaterial );
+				] ).onChange( initModel );
+
 				gui.add( params, 'conditionalEdges' );
 
 				gui.open();
@@ -346,6 +421,13 @@
 					conditionalModel.visible = params.conditionalEdges;
 
 				}
+
+				if ( shadowModel ) {
+
+					shadowModel.visible = params.lit;
+
+				}
+				floor.visible = params.lit;
 
 				render();
 
