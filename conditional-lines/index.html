@@ -43,6 +43,7 @@
 
 			import { NormalEdgesGeometry } from './src/NormalEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
+			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
 
 			// globals
 			var params = {
@@ -175,7 +176,10 @@
 					const parent = mesh.parent;
 
 					let lineGeom = new ConditionalEdgesGeometry( mesh.geometry );
-					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
+					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
+					material.uniforms.diffuse.value.set( 0x455A64 );
+
+					const line = new THREE.LineSegments( lineGeom, material );
 
 					line.position.copy( mesh.position );
 					line.scale.copy( mesh.scale );

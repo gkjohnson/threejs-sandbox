@@ -83,14 +83,8 @@ export class ConditionalEdgesGeometry extends BufferGeometry {
 			vec2.subVectors( vec0, vec1 );
 
 			// control positions
-			vec3
-				.fromBufferAttribute( position, controlIndex0 )
-				.sub( vec0 )
-				.normalize();
-			vec4
-				.fromBufferAttribute( position, controlIndex1 )
-				.sub( vec1 )
-				.normalize();
+			vec3.fromBufferAttribute( position, controlIndex0 );
+			vec4.fromBufferAttribute( position, controlIndex1 );
 
 			// create arrays
 			edgePositions.push( vec0.x, vec0.y, vec0.z );
@@ -105,7 +99,6 @@ export class ConditionalEdgesGeometry extends BufferGeometry {
 
 		}
 
-		console.log( edgePositions );
 		this.setAttribute( 'position', new BufferAttribute( new Float32Array( edgePositions ), 3, false ) );
 		this.setAttribute( 'direction', new BufferAttribute( new Float32Array( edgeDirections ), 3, false ) );
 		this.setAttribute( 'control0', new BufferAttribute( new Float32Array( edgeControl0 ), 3, false ) );
