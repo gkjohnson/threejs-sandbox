@@ -1,10 +1,15 @@
-import { BufferGeometry, Vector3, BufferAttribute } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { BufferGeometry, Vector3, BufferAttribute, Triangle } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 const vec0 = new Vector3();
 const vec1 = new Vector3();
 const vec2 = new Vector3();
 const vec3 = new Vector3();
 const vec4 = new Vector3();
+
+const triangle0 = new Triangle();
+const triangle1 = new Triangle();
+const normal0 = new Vector3();
+const normal1 = new Vector3();
 export class ConditionalEdgesGeometry extends BufferGeometry {
 
 	constructor( geometry ) {
@@ -44,14 +49,19 @@ export class ConditionalEdgesGeometry extends BufferGeometry {
 				if ( reverseHash in edgeInfo ) {
 
 					edgeInfo[ reverseHash ].controlIndex1 = indices[ ( j + 2 ) % 3 ];
+					edgeInfo[ reverseHash ].tri1 = i / 3;
 
 				} else {
 
 					edgeInfo[ hash ] = {
 						index0,
 						index1,
+
 						controlIndex0: indices[ ( j + 2 ) % 3 ],
 						controlIndex1: null,
+
+						tri0: i / 3,
+						tri1: null,
 
 					};
 
@@ -67,9 +77,34 @@ export class ConditionalEdgesGeometry extends BufferGeometry {
 		const edgeControl1 = [];
 		for ( const key in edgeInfo ) {
 
-			const { index0, index1, controlIndex0, controlIndex1 } = edgeInfo[ key ];
+			const {
+				index0,
+				index1,
+				controlIndex0,
+				controlIndex1,
+				tri0,
+				tri1,
+			} = edgeInfo[ key ];
 
 			if ( controlIndex1 === null ) {
+
+				continue;
+
+			}
+
+			triangle0.a.fromBufferAttribute( position, index.getX( tri0 * 3 + 0 ) );
+			triangle0.b.fromBufferAttribute( position, index.getX( tri0 * 3 + 1 ) );
+			triangle0.c.fromBufferAttribute( position, index.getX( tri0 * 3 + 2 ) );
+
+			triangle1.a.fromBufferAttribute( position, index.getX( tri1 * 3 + 0 ) );
+			triangle1.b.fromBufferAttribute( position, index.getX( tri1 * 3 + 1 ) );
+			triangle1.c.fromBufferAttribute( position, index.getX( tri1 * 3 + 2 ) );
+
+			triangle0.getNormal( normal0 ).normalize();
+			triangle1.getNormal( normal1 ).normalize();
+
+
+			if ( normal0.dot( normal1 ) < 0.01 ) {
 
 				continue;
 

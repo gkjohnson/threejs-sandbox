@@ -49,14 +49,50 @@
 			var params = {
 				lit: false,
 				solid: true,
-				threshold: 60,
-				display: 'NORMAL_EDGES',
-				conditionalEdges: false,
+				threshold: 40,
+				display: 'THRESHOLD_EDGES',
+				conditionalEdges: true,
 			};
 			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel;
 
 			init();
 			animate();
+
+			function mergeObject( object ) {
+
+				object.updateMatrixWorld( true );
+
+				const geometry = [];
+				object.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						const g = c.geometry;
+						g.applyMatrix4( c.matrixWorld );
+						for ( const key in g.attributes ) {
+
+							if ( key !== 'position' && key !== 'normal' ) {
+
+								g.deleteAttribute( key );
+
+							}
+
+						}
+						geometry.push( g.toNonIndexed() );
+
+					}
+
+				} );
+
+				const mergedGeometries = BufferGeometryUtils.mergeBufferGeometries( geometry, false );
+				const mergedGeometry = BufferGeometryUtils.mergeVertices( mergedGeometries ).center();
+
+				const group = new THREE.Group();
+				const mesh = new THREE.Mesh( mergedGeometry );
+				group.add( mesh );
+				return group;
+
+			}
 
 			function updateLighting() {
 
@@ -111,6 +147,13 @@
 				model = originalModel.clone();
 				scene.add( model );
 
+				if ( params.display === 'NONE' ) {
+
+					model.visible = false;
+					return;
+
+				}
+
 				const meshes = [];
 				model.traverse( c => {
 
@@ -158,6 +201,7 @@
 
 				conditionalModel = model.clone();
 				scene.add( conditionalModel );
+				conditionalModel.visible = false;
 
 				const meshes = [];
 				conditionalModel.traverse( c => {
@@ -175,7 +219,19 @@
 					const mesh = meshes[ key ];
 					const parent = mesh.parent;
 
-					let lineGeom = new ConditionalEdgesGeometry( mesh.geometry );
+
+					const mergedGeom = mesh.geometry.clone();
+					for ( const key in mergedGeom.attributes ) {
+
+						if ( key !== 'position' ) {
+
+							mergedGeom.deleteAttribute( key );
+
+						}
+
+					}
+
+					let lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
 					material.uniforms.diffuse.value.set( 0x455A64 );
 
@@ -216,10 +272,11 @@
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.25 ) );
 
 				new GLTFLoader().load(
-					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
 					gltf => {
 
-						originalModel = gltf.scene;
+						originalModel = mergeObject( gltf.scene );
+
 						updateMaterial();
 
 						backgroundModel = originalModel.clone();
@@ -253,6 +310,7 @@
 				gui.add( params, 'display', [
 					'THRESHOLD_EDGES',
 					'NORMAL_EDGES',
+					'NONE',
 				] ).onChange( updateMaterial );
 				gui.add( params, 'conditionalEdges' );
 
