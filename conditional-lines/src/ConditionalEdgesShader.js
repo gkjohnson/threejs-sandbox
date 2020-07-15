@@ -54,13 +54,12 @@ export const ConditionalEdgesShader = {
 			// from the line segment then the line should not be drawn.
 			float d0 = dot( normalize( norm ), normalize( c0dir ) );
 			float d1 = dot( normalize( norm ), normalize( c1dir ) );
-			float discardFlag = float( sign( d0 ) == sign( d1 ) );
-			gl_Position.xyz *= discardFlag;
+			float discardFlag = float( sign( d0 ) != sign( d1 ) );
+			gl_Position = discardFlag > 0.5 ? vec4( 0.0 ) : gl_Position;
 
 			#include <logdepthbuf_vertex>
 			#include <clipping_planes_vertex>
 			#include <fog_vertex>
-
 
 		}
 	`,

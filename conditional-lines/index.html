@@ -41,7 +41,7 @@
 			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { NormalEdgesGeometry } from './src/NormalEdgesGeometry.js';
+			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
 			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
 
@@ -232,7 +232,7 @@
 						const mergeGeom = mesh.geometry.clone();
 						mergeGeom.deleteAttribute( 'uv' );
 						mergeGeom.deleteAttribute( 'uv2' );
-						lineGeom = new NormalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergeGeom, 1e-3 ) );
+						lineGeom = new OutsideEdgesGeometry( BufferGeometryUtils.mergeVertices( mergeGeom, 1e-3 ) );
 
 					}
 

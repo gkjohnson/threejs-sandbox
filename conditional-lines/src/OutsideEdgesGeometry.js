@@ -1,7 +1,7 @@
 import { BufferGeometry, Vector3, BufferAttribute } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 const vec = new Vector3();
-export class NormalEdgesGeometry extends BufferGeometry {
+export class OutsideEdgesGeometry extends BufferGeometry {
 
 	constructor( geometry ) {
 
