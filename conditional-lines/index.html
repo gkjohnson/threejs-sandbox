@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - general conditional lines</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #333;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - General Conditional Lines by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/GLTFLoader.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			// globals
+			var params = {
+				lit: false,
+				threshold: 60,
+				display: 'EDGES',
+				displaySolid: true,
+			};
+			var camera, scene, renderer, controls, model, originalModel, backgroundModel;
+
+			init();
+			animate();
+
+			function updateLighting() {
+
+				backgroundModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						if ( params.lit ) {
+
+							c.material = new THREE.MeshStandardMaterial( { color: 0xe3e3e3, flatShading: true } );
+
+						} else {
+
+							c.material = new THREE.MeshBasicMaterial( { color: 0xe3e3e3 } );
+
+						}
+
+					}
+
+				} )
+
+			}
+
+			function updateMaterial() {
+
+				if ( model ) {
+
+					model.parent.remove( model );
+					model.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							if ( Array.isArray( c.material ) ) {
+
+								c.material.forEach( m => m.dispose() );
+
+							} else {
+
+								c.material.dispose();
+
+							}
+
+						}
+
+					} );
+
+				}
+
+				model = originalModel.clone();
+				scene.add( model );
+
+				const meshes = [];
+				model.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						meshes.push( c );
+
+					}
+
+				} );
+
+				if ( params.display === 'EDGES' ) {
+
+					for ( const key in meshes ) {
+
+						const mesh = meshes[ key ];
+						const parent = mesh.parent;
+
+						const lineGeom = new THREE.EdgesGeometry( mesh.geometry, params.threshold );
+						const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
+
+						line.position.copy( mesh.position );
+						line.scale.copy( mesh.scale );
+						line.rotation.copy( mesh.rotation );
+
+						parent.remove( mesh );
+						parent.add( line );
+
+					}
+
+				} else {
+
+
+
+				}
+
+			}
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xeeeeee );
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.set( -2.5, 1, 2 );
+				scene.add( camera );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x0d1113 );
+
+				document.body.appendChild( renderer.domElement );
+
+				// Lights
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
+				camera.add( dirLight );
+
+				new GLTFLoader().load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+					gltf => {
+
+						originalModel = gltf.scene;
+						updateMaterial();
+
+						backgroundModel = originalModel.clone();
+						scene.add( backgroundModel );
+						updateLighting();
+
+					}
+				);
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				// controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'threshold' )
+					.min( 5 )
+					.max( 100 )
+					.onChange( updateMaterial );
+				gui.add( params, 'lit' )
+					.onChange( updateLighting );
+				gui.add( params, 'displaySolid' );
+				gui.add( params, 'display', [
+					'EDGES',
+					'CUSTOM_EDGES',
+					'CONDITIONAL_LINES',
+				] );
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				if ( backgroundModel ) {
+
+					backgroundModel.visible = params.displaySolid;
+
+				}
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
