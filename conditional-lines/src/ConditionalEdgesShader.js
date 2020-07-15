@@ -37,10 +37,10 @@ export const ConditionalEdgesShader = {
 			vec4 p0 = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 			vec4 p1 = projectionMatrix * modelViewMatrix * vec4( position + direction, 1.0 );
 
-			c0.xy /= c0.w;
-			c1.xy /= c1.w;
-			p0.xy /= p0.w;
-			p1.xy /= p1.w;
+			c0 /= c0.w;
+			c1 /= c1.w;
+			p0 /= p0.w;
+			p1 /= p1.w;
 
 			// Get the direction of the segment and an orthogonal vector
 			vec2 dir = p1.xy - p0.xy;
@@ -55,7 +55,7 @@ export const ConditionalEdgesShader = {
 			float d0 = dot( normalize( norm ), normalize( c0dir ) );
 			float d1 = dot( normalize( norm ), normalize( c1dir ) );
 			float discardFlag = float( sign( d0 ) != sign( d1 ) );
-			gl_Position = discardFlag > 0.5 ? vec4( 0.0 ) : gl_Position;
+			gl_Position = discardFlag > 0.5 ? c0 : gl_Position;
 
 			#include <logdepthbuf_vertex>
 			#include <clipping_planes_vertex>
