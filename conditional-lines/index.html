@@ -52,11 +52,25 @@
 				threshold: 40,
 				display: 'THRESHOLD_EDGES',
 				conditionalEdges: true,
+				model: 'HELMET',
 			};
 			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor;
+			var models = {};
 
 			init();
 			animate();
+
+			function updateModel() {
+
+				originalModel = models[ params.model ];
+
+				initModel();
+
+				initBackgroundModel();
+
+				initConditionalModel();
+
+			}
 
 			function mergeObject( object ) {
 
@@ -123,6 +137,8 @@
 
 				}
 
+				if ( ! originalModel ) return;
+
 				backgroundModel = originalModel.clone();
 				backgroundModel.traverse( c => {
 
@@ -151,7 +167,6 @@
 				} );
 				scene.add( shadowModel );
 
-
 			}
 
 			function initModel() {
@@ -178,6 +193,8 @@
 					} );
 
 				}
+
+				if ( ! originalModel ) return;
 
 				model = originalModel.clone();
 				scene.add( model );
@@ -249,6 +266,8 @@
 
 				}
 
+				if ( ! originalModel ) return;
+
 				conditionalModel = originalModel.clone();
 				scene.add( conditionalModel );
 				conditionalModel.visible = false;
@@ -305,7 +324,7 @@
 				scene.background = new THREE.Color( 0xeeeeee );
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
-				camera.position.set( -2.5, 1, 2 ).multiplyScalar( 2 );
+				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
 				scene.add( camera );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -342,28 +361,29 @@
 
 				scene.add( new THREE.AmbientLight( 0xffffff, 0.25 ) );
 
+				const cylinder = new THREE.Group();
+				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 40 ) ) );
+				cylinder.children[ 0 ].geometry.computeBoundingBox();
+				cylinder.children[ 0 ].castShadow = true;
+				models.CYLINDER = cylinder;
+
+				models.HELMET = null;
 				new GLTFLoader().load(
 					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
 					gltf => {
 
-						originalModel = mergeObject( gltf.scene );
-						originalModel.children[ 0 ].geometry.computeBoundingBox();
-						originalModel.children[ 0 ].castShadow = true;
+						const model = mergeObject( gltf.scene );
+						model.children[ 0 ].geometry.computeBoundingBox();
+						model.children[ 0 ].castShadow = true;
 
-						floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
-
-						initModel();
-
-						initBackgroundModel();
-
-						initConditionalModel();
+						models.HELMET = model;
+						updateModel();
 
 					}
 				);
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
-				// controls.minDistance = 5;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -372,13 +392,15 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				gui.add( params, 'model', Object.keys( models ) ).onChange( updateModel );
+
 				gui.add( params, 'solid' );
 
 				gui.add( params, 'lit' );
 
 				gui.add( params, 'threshold' )
-					.min( 5 )
-					.max( 100 )
+					.min( 0 )
+					.max( 120 )
 					.onChange( initModel );
 
 				gui.add( params, 'display', [
@@ -427,6 +449,13 @@
 					shadowModel.visible = params.lit;
 
 				}
+
+				if ( originalModel ) {
+
+					floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
+
+				}
+
 				floor.visible = params.lit;
 
 				render();
