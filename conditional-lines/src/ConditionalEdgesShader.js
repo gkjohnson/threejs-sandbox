@@ -18,7 +18,6 @@ export const ConditionalEdgesShader = {
 		attribute vec3 control0;
 		attribute vec3 control1;
 		attribute vec3 direction;
-		varying float discardFlag;
 
 		#include <common>
 		#include <color_pars_vertex>
@@ -55,11 +54,13 @@ export const ConditionalEdgesShader = {
 			// from the line segment then the line should not be drawn.
 			float d0 = dot( normalize( norm ), normalize( c0dir ) );
 			float d1 = dot( normalize( norm ), normalize( c1dir ) );
-			discardFlag = float( sign( d0 ) != sign( d1 ) );
+			float discardFlag = float( sign( d0 ) == sign( d1 ) );
+			gl_Position.xyz *= discardFlag;
 
 			#include <logdepthbuf_vertex>
 			#include <clipping_planes_vertex>
 			#include <fog_vertex>
+
 
 		}
 	`,
@@ -67,7 +68,6 @@ export const ConditionalEdgesShader = {
 	fragmentShader: /* glsl */`
 		uniform vec3 diffuse;
 		uniform float opacity;
-		varying float discardFlag;
 
 		#include <common>
 		#include <color_pars_fragment>
@@ -75,8 +75,6 @@ export const ConditionalEdgesShader = {
 		#include <logdepthbuf_pars_fragment>
 		#include <clipping_planes_pars_fragment>
 		void main() {
-
-			if ( discardFlag > 0.5 ) discard;
 
 			#include <clipping_planes_fragment>
 
