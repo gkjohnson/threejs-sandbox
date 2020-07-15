@@ -14,3 +14,8 @@ Provides a `OutsideEdgesGeometry` for generating edges based on non-merged edges
 
 - Add support for Line2 objects to display fat lines.
 - Generate the conditional lines and "hard" lines in a single pass.
+
+## TODO
+
+- Use a standard material to render the "lit" geometry case.
+- Perform a depth prepass after rendering lines, then render the "solid" geometry transparently to displaying the 
