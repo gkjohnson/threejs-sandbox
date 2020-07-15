@@ -35,7 +35,7 @@
 			<br/>
 			<br/>
 
-			Inspired by <a href="https://discourse.threejs.org/t/ldraw-like-edges/17100/">this thread</a> from Prison849
+			Inspired by <a href="https://discourse.threejs.org/t/ldraw-like-edges/17100/">this thread</a> from Prisoner849
 		</div>
 
 		<script type="module">
@@ -53,13 +53,13 @@
 			// globals
 			var params = {
 				lit: false,
-				solid: true,
+				opacity: 0.85,
 				threshold: 40,
 				display: 'THRESHOLD_EDGES',
 				conditionalEdges: true,
 				model: 'HELMET',
 			};
-			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor;
+			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
 			var models = {};
 
 			init();
@@ -119,6 +119,7 @@
 
 					backgroundModel.parent.remove( backgroundModel );
 					shadowModel.parent.remove( shadowModel );
+					depthModel.parent.remove( depthModel );
 
 					backgroundModel.traverse( c => {
 
@@ -140,6 +141,16 @@
 
 					} );
 
+					depthModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
 				}
 
 				if ( ! originalModel ) return;
@@ -149,10 +160,11 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshBasicMaterial( { color: 0xeeeeee } );
+						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
+						c.renderOrder = 2;
 
 					}
 
@@ -164,13 +176,34 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.5, transparent: true } );
+						c.material = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 1.0 } );
+						c.material.polygonOffset = true;
+						c.material.polygonOffsetFactor = 1;
+						c.material.polygonOffsetUnits = 1;
 						c.receiveShadow = true;
+						c.renderOrder = 2;
 
 					}
 
 				} );
 				scene.add( shadowModel );
+
+				depthModel = originalModel.clone();
+				depthModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material.polygonOffset = true;
+						c.material.polygonOffsetFactor = 1;
+						c.material.polygonOffsetUnits = 1;
+						c.material.colorWrite = false;
+						c.renderOrder = 1;
+
+					}
+
+				} );
+				scene.add( depthModel );
 
 			}
 
@@ -343,7 +376,7 @@
 				// Floor
 				floor = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry(),
-					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.5, transparent: true, opacity: 0.5, transparent: true } )
+					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.25, transparent: true } )
 				);
 				floor.rotation.x = - Math.PI / 2;
 				floor.scale.setScalar( 20 );
@@ -364,7 +397,7 @@
 
 				scene.add( dirLight );
 
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.25 ) );
+				scene.add( new THREE.AmbientLight( 0xc4c9cb, 1.0 ) );
 
 				const cylinder = new THREE.Group();
 				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 40 ) ) );
@@ -399,7 +432,7 @@
 
 				gui.add( params, 'model', Object.keys( models ) ).onChange( updateModel );
 
-				gui.add( params, 'solid' );
+				gui.add( params, 'opacity' ).min( 0 ).max( 1.0 ).step( 0.01 );
 
 				gui.add( params, 'lit' );
 
@@ -437,21 +470,41 @@
 
 				requestAnimationFrame( animate );
 
-				if ( backgroundModel ) {
-
-					backgroundModel.visible = params.solid;
-
-				}
-
 				if ( conditionalModel ) {
 
 					conditionalModel.visible = params.conditionalEdges;
 
 				}
 
+				if ( backgroundModel ) {
+
+					backgroundModel.visible = ! params.lit;
+					backgroundModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.transparent = params.opacity !== 1.0;
+							c.material.opacity = params.opacity;
+
+						}
+
+					} );
+
+				}
+
 				if ( shadowModel ) {
 
 					shadowModel.visible = params.lit;
+					shadowModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.transparent = params.opacity !== 1.0;
+							c.material.opacity = params.opacity;
+
+						}
+
+					} );
 
 				}
 
