@@ -19,17 +19,8 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - light should be absorbed at an exponential rate rather than linear?
 - performance
 - Provide option to just use front faces and back faces.
-
-## Notes
-
-- Render front to back depth peeling
-- Only apply surface normal refraction based on the top surface normals
-- Perform light diffraction based on normals?
-- Render 100% transparent object after composite to get surface reflection / sheen / surface shadows
-- Use directional light to perform subsurface scattering?
+- Use directional light to perform subsurface scattering
 - Manually discard against scene depth
-- Understand light absorption behavior -- the object gets deeper more light gets absorbed and it gets darker. Thin objects will transmit all color. Perhaps store total depth in alpha? Or store amount of light absorbed by accumulating and blending 1 - base color.
-	- Instead accumulate the light that should be absorbed clamped to [0, 1] and subtract that from the initial buffer.
 - Possibly we don't need an alpha channel for the accumulation buffer.
 
 ## Limitations
