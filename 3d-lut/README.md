@@ -21,6 +21,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Add a better interpolation approach (tetrahedral is what the adobe .3DL docs suggest).
 - Verify no-op lut looks correct.
 - Use a grid layout rather than a linear layout to avoid unusably long textures when using dense LUT table.
+- Use a 3d texture for a faster sampling.
 
 ## References
 
