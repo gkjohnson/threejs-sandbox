@@ -69,7 +69,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
-- Fix back depth rendering and non-thickness use case
+- Blur distance fragment hits w/ cone.
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
 - Look into a different jitter technique
