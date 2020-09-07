@@ -1,6 +1,8 @@
 # Blue Noise Generation
 
-![](./images/banner.png)
+<p align="center">
+<img src="./images/banner.png"/>
+</p>
 
 _<p align="center">1, 2, and 3 channel blue noise</p>_
 
