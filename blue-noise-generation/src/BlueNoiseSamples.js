@@ -104,6 +104,7 @@ export class BlueNoiseSamples {
 				const y = ~ ~ ( i / size );
 				const x = i - y * size;
 				this.updateScore( x, y, 1 );
+				binaryPattern[ i ] = 1;
 
 			} else {
 
@@ -123,8 +124,8 @@ export class BlueNoiseSamples {
 		// and minority points because we'll want to use them soon and it _may_ be faster than
 		// iterating over the full array.
 		const { size, score, sigma, lookupTable } = this;
-		const sigma2 = sigma * sigma;
 
+		// const sigma2 = sigma * sigma;
 		// const radius = Math.floor( size / 2 );
 		const radius = this.radius;
 		const index = y * size + x;

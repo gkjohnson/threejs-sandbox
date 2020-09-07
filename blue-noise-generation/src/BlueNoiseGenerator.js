@@ -86,7 +86,7 @@ export class BlueNoiseGenerator {
 		console.time('3')
 		let rank;
 		rank = samples.count - 1;
-		while ( rank > 0 ) {
+		while ( rank >= 0 ) {
 
 			const minIndex = samples.findIndex( 1, Math.max );
 			samples.removePointIndex( minIndex );

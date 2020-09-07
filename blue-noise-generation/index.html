@@ -139,7 +139,7 @@
 				gui.width = 300;
 
 				var noiseFolder = gui.addFolder( 'noise' );
-				noiseFolder.add( generator, 'size' ).min( 16 ).max( 128 ).step( 1 );
+				noiseFolder.add( generator, 'size' ).min( 16 ).max( 512 ).step( 1 );
 				noiseFolder.add( generator, 'sigma' ).min( 0.1 ).max( 5 ).step( 0.1 );
 				noiseFolder.add( generator, 'majorityPointsRatio' ).min( 0.01 ).max( 0.49 ).step( 0.01 );
 				noiseFolder.add( params, 'channels' ).min( 1 ).max( 4 ).step( 1 );
