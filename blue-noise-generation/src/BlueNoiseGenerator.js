@@ -1,3 +1,53 @@
+class BlueNoiseSamples {
+
+	constructor( size ) {
+		
+		this.size = 1
+		this.score = null;
+		this.binaryPattern = null;
+		this.resize( size );
+
+	}
+	
+	resize( size ) {
+		
+		if ( this.size !== size ) {
+			
+			this.size = size;
+			this.score = new Float32Array( size * size );
+			this.binaryPattern = new Uint8Array( size * size );
+
+		}
+		
+		
+	}
+	
+	addPoint( x, y ) {
+		
+		const index = y * this.size + x;
+		
+		// add point into the binary pattern, adjust score for surrounding points.
+
+	}
+	
+	removePoint( x, y ) {
+	
+		const index = y * this.size + x;
+
+		// remove point from binary pattern, adjust score for surrounding points.
+
+	}
+	
+	copy( source ) {
+
+		this.resize( source.size );
+		this.score.set( source.score );
+		this.binaryPattern.set( source.binaryPattern );
+
+	}
+
+}
+
 export class BlueNoiseGenerator {
 
 	constructor() {
@@ -6,6 +56,9 @@ export class BlueNoiseGenerator {
 		this.sigma = 1.5;
 		this.size = 256;
 		this.majorityPointsRatio = 0.1;
+		
+		this.samples = null;
+		this.savedSamples = null;
 
 	}
 	
@@ -29,6 +82,8 @@ export class BlueNoiseGenerator {
 		// 5. PHASE III: Interpret majority points as minority points. Find the most intensely clustered
 		// minority point and insert 1. Increment rank for each point inserted and set the dither array
 		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
+		
+		if ( this
 		
 	}
 
