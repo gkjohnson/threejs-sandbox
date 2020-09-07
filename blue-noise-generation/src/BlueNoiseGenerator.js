@@ -48,9 +48,6 @@ export class BlueNoiseGenerator {
 
 		}
 
-
-		console.log(1);
-
 		// 2. Remove minority point that is in densest cluster and place it in a void.
 		while ( true ) {
 
@@ -67,9 +64,6 @@ export class BlueNoiseGenerator {
 			samples.addPointIndex( majPoint );
 
 		}
-
-		console.log(2);
-		return;
 
 		const ditherArray = new Uint32Array( size * size );
 
@@ -99,7 +93,7 @@ export class BlueNoiseGenerator {
 		while ( rank < totalSize / 2 ) {
 
 			const majIndex = savedSamples.findIndex( 0, Math.min );
-			savedSamples.addSamplePoint( majIndex );
+			savedSamples.addPointIndex( majIndex );
 			ditherArray[ majIndex ] = rank;
 			rank ++;
 
@@ -114,7 +108,7 @@ export class BlueNoiseGenerator {
 		while ( rank < totalSize ) {
 
 			const majIndex = savedSamples.findIndex( 1, Math.max );
-			savedSamples.removeSamplePoint( majIndex );
+			savedSamples.removePointIndex( majIndex );
 			ditherArray[ majIndex ] = rank;
 			rank ++;
 

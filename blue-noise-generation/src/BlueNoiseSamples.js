@@ -135,7 +135,6 @@ export class BlueNoiseSamples {
 				const lookupIndex = ( radius + py ) * lookupWidth + px + radius;
 				const value = lookupTable[ lookupIndex ];
 
-				console.log(value);
 				let sx = ( x + px );
 				sx = sx < 0 ? size + sx : sx % size;
 
