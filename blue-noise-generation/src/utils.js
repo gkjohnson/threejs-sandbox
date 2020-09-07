@@ -13,9 +13,11 @@ export function shuffleArray( array, random = Math.random ) {
 
 export function fillWithOnes( array, count ) {
 
-	for ( let i = 0, l = array.length; i < l; i ++ ) {
+	array.fill( 0 );
+
+	for ( let i = 0; i < count; i ++ ) {
 	
-		array[ i ] = i < count ? 1 : 0;
+		array[ i ] = 1;
 		
 	}
 	
