@@ -9,6 +9,8 @@ Class for generating blue noise textures and example for generating monochrome o
 - Optimizations
 	- track min and max scores for min and maj points so you don't have to search every time.
 - Validate algorithm
+- Check radius approach -- see if it creates overly repetitious patterns
+- Allow for displaying the initial binary pattern.
 
 ## References
 
