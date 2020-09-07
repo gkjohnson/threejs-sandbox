@@ -1,3 +1,5 @@
+import { shuffleArray, fillWithOnes } from './utils.js';
+
 class BlueNoiseSamples {
 
 	constructor( size ) {
@@ -22,21 +24,29 @@ class BlueNoiseSamples {
 		
 	}
 	
-	addPoint( x, y ) {
-		
-		const index = y * this.size + x;
+	addPointIndex( index ) {
+
 		this.binaryPattern[ index ] = 1;
-		
 		// add point into the binary pattern, adjust score for surrounding points.
 
 	}
-	
+
+	addPoint( x, y ) {
+		
+		this.addPointIndex( y * this.size + x );
+
+	}
+
+	removePointIndex( index ) {
+		
+		this.binaryPattern[ index ] = 1;
+		// remove point from binary pattern, adjust score for surrounding points.
+
+	}
+
 	removePoint( x, y ) {
 	
-		const index = y * this.size + x;
-		this.binaryPattern[ index ] = 0;
-
-		// remove point from binary pattern, adjust score for surrounding points.
+		this.removePointIndex( y * this.size + x );
 
 	}
 	
@@ -96,6 +106,21 @@ export class BlueNoiseGenerator {
 		samples.resize( size );
 		savedSamples.resize( size );
 		
+		const pointCount = Math.floor( size * size * majorityPointsRatio );
+		const initialSamples = samples.binaryPattern;
+		fillWithOnes( binaryPattern, pointCount );
+		shuffleArray( pointCount, this.random );
+		
+		for ( let i = 0, l = initialSamples.length; i ++ ) {
+			
+			if ( intialSamples[ i ] === 1 ) {
+				
+				samples.addPointIndex( i );
+				
+			}
+
+		}
+
 	}
 
 }
