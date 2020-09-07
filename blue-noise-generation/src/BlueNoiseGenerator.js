@@ -9,7 +9,9 @@ class BlueNoiseSamples {
 		this.radius = 0;
 		this.score = null;
 		this.binaryPattern = null;
+		
 		this.resize( size );
+		this.setSigma( 1.5 );
 
 	}
 	
