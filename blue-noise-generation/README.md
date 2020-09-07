@@ -1,5 +1,9 @@
 # Blue Noise Generation
 
+_In Progress_
+
+Class for generating blue noise textures and example for generating monochrome or RGB variations.
+
 ## References
 
 - http://cv.ulichney.com/papers/1993-void-cluster.pdf
