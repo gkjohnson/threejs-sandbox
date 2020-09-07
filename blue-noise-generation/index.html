@@ -14,6 +14,7 @@
 				font-size: 13px;
 				text-align: center;
 				color: #fff;
+				user-select: none;
 			}
 
 			a {
@@ -64,6 +65,7 @@
 
 				}
 
+				console.log( '' );
 				console.time( 'Blue Noise Generation' );
 				const channels = params.channels;
 				const data = new Uint8Array( ( generator.size ** 2 ) * 4 );
@@ -73,12 +75,25 @@
 					const bin = result.data;
 					const maxValue = result.maxValue;
 
-					for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+					if ( channels === 1 ) {
 
-						const value = 255 * ( bin[ j ] / maxValue );
-						for ( let c = i; c < 4; c ++ ) {
+						for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
 
-							data[ j * 4 + c ] = value;
+							const value = 255 * ( bin[ j ] / maxValue );
+							for ( let c = i; c < 4; c ++ ) {
+
+								data[ j * 4 + c ] = value;
+
+							}
+
+						}
+
+					} else {
+
+						for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+							const value = 255 * ( bin[ j ] / maxValue );
+							data[ j * 4 + i ] = value;
 
 						}
 
