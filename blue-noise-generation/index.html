@@ -44,16 +44,57 @@
 
 			// globals
 			var stats;
-			var params = {};
+			var params = {
+				tile: 1,
+				channels: 1,
+
+				regenerate: regenerateNoise,
+			};
 			var camera, scene, renderer, controls;
-			var generator = new BlueNoiseGenerator();
+			var generator, dataTexture, material;
 
 			init();
 			animate();
 
 			function regenerateNoise() {
 
-				generator.generate();
+				if ( material.map ) {
+
+					material.map.dispose();
+
+				}
+
+				const channels = params.channels;
+				const data = new Uint8Array( ( generator.size ** 2 ) * 4 );
+				// data.fill( 255 );
+				for ( let i = 0, l = channels; i < l; i ++ ) {
+
+					const result = generator.generate();
+					const bin = result.data;
+					const maxValue = result.maxValue;
+
+					for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+						const value = 255 * ( bin[ j ] / maxValue );
+						for ( let c = i; c < 4; c ++ ) {
+
+							data[ j * 4 + c ] = value;
+
+						}
+
+					}
+
+				}
+
+				const dataTexture = new THREE.DataTexture( data, generator.size, generator.size, THREE.RGBAFormat );
+				dataTexture.wrapS = THREE.RepeatWrapping;
+				dataTexture.wrapT = THREE.RepeatWrapping;
+				dataTexture.minFilter = THREE.LinearFilter;
+				material.map = dataTexture;
+				dataTexture.needsUpdate = true;
+				material.needsUpdate = true;
+				material.map.repeat.setScalar( params.tile );
+
 
 			}
 
@@ -74,13 +115,15 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				material = new THREE.MeshBasicMaterial( { side: THREE.DoubleSide } );
 				var mesh = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry(),
 					material
 				);
-				mesh.scale.set(5 * 1.5, 5, 5);
-				scene.add(mesh);
+				mesh.scale.setScalar( 5 );
+				scene.add( mesh );
+
+				window.mesh = mesh;
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -90,10 +133,30 @@
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				// dat gui
+				generator = new BlueNoiseGenerator();
 				var gui = new dat.GUI();
 				gui.width = 300;
 
+				var noiseFolder = gui.addFolder( 'noise' );
+				noiseFolder.add( generator, 'size' ).min( 16 ).max( 128 ).step( 1 );
+				noiseFolder.add( generator, 'sigma' ).min( 0.1 ).max( 5 ).step( 0.1 );
+				noiseFolder.add( generator, 'majorityPointsRatio' ).min( 0.01 ).max( 0.49 ).step( 0.01 );
+				noiseFolder.add( params, 'channels' ).min( 1 ).max( 4 ).step( 1 );
+				noiseFolder.open();
+
+				var texFolder = gui.addFolder( 'display' );
+				texFolder.add( params, 'tile' ).min( 1 ).max( 10 ).step( 0.1 ).onChange( v => {
+
+					material.map.repeat.setScalar( v );
+
+				} );
+				texFolder.open();
+
+				gui.add( params, 'regenerate' );
+
 				gui.open();
+
+				regenerateNoise();
 
 			}
 
