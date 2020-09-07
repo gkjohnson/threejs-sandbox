@@ -32,7 +32,7 @@ export class BlueNoiseGenerator {
 		savedSamples.resize( size );
 		savedSamples.setSigma( sigma );
 
-		// 1. Random place the minority points.
+		// 1. Randomly place the minority points.
 		const pointCount = Math.floor( size * size * majorityPointsRatio );
 		const initialSamples = samples.binaryPattern;
 
@@ -53,7 +53,7 @@ export class BlueNoiseGenerator {
 		}
 		console.timeEnd( 'Score Initialization' );
 
-		// 2. Remove minority point that is in densest cluster and place it in a void.
+		// 2. Remove minority point that is in densest cluster and place it in the largest void.
 		console.time( 'Point Rearrangement' );
 		while ( true ) {
 
@@ -74,9 +74,8 @@ export class BlueNoiseGenerator {
 		console.timeEnd( 'Point Rearrangement' );
 
 
-		// 3. PHASE I: Incrementally set the value of the dither array for each progressively
-		// less intensely clustered minority point to the number of remaining points down to 0.
-		// Remove the minority point after each iteration.
+		// 3. PHASE I: Assign a rank to each progressively less dense cluster point and put it
+		// in the dither array.
 		const ditherArray = new Uint32Array( size * size );
 		savedSamples.copy( samples );
 
@@ -94,10 +93,8 @@ export class BlueNoiseGenerator {
 		}
 		console.timeEnd( 'Dither Array Phase 1' );
 
-		// 4. PHASE II: Do the same thing for the largest voids up to half of the total pixels with
-		// the dither array value being set to the number of void points iterated over. Set the pixel
-		// to a minority point after each iteration. Track "rank" as remaining points. Use the initial
-		// binary pattern.
+		// 4. PHASE II: Do the same thing for the largest voids up to half of the total pixels using
+		// the initial binary pattern.
 		console.time( 'Dither Array Phase 2' );
 		const totalSize = size * size;
 		rank = savedSamples.count;
@@ -111,12 +108,8 @@ export class BlueNoiseGenerator {
 		}
 		console.timeEnd( 'Dither Array Phase 2' );
 
-		// 5. PHASE III: Interpret majority points as minority points. Find the most intensely clustered
-		// minority point and insert 1. Increment rank for each point inserted and set the dither array
-		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
-		// TODO: we have to compute the score for each majority point as though it were a minority point.
-		// Do we have to? Is there a faster way to do it?
-		console.time( 'Samples Invert' );
+		// 5. PHASE III: Invert the pattern and finish out by assigning a rank to the remaining
+		// and iteratively removing them.
 		savedSamples.invert();
 		console.timeEnd( 'Samples Invert' );
 

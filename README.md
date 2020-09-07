@@ -20,6 +20,3 @@ Set of experiments and extensions to THREE.js.
 
 **Next**
 - Half Edge data structure
-
-**In Progress**
-- Blue Noise Dithering
