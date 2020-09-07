@@ -40,8 +40,12 @@ class BlueNoiseSamples {
 	
 	updateScore( x, y, multiplier ) {
 		
+		// TODO: dist can only be a few values so we should be able to make a lookup table
+		// and optimize out the sqrt and exponent operations.
+		// TODO: As we do this keep track of the highest and lowest scores for the majority
+		// and minority points because we'll want to use them soon and it _may_ be faster than
+		// iterating over the full array.
 		const { radius, size, score, sigma } = this;
-		const radius2 = radius * radius;
 		const sigma2 = sigma * sigma;
 		const index = y * size + x;
 		for ( let px = - radius; px <= radius; px ++ ) {
@@ -50,7 +54,8 @@ class BlueNoiseSamples {
 			
 				const pindex = py * size + px;
 				const dist = Math.sqrt( x * x + y * y );
-				const value = Math.E ** ( - radius2 / ( 2 * sigma2 ) );
+				const dist2 = dist * dist;
+				const value = Math.E ** ( - dist2 / ( 2 * sigma2 ) );
 				score[ pindex ] += multiplier * value;
 				
 			}
