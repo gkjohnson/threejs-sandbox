@@ -87,8 +87,9 @@ export class BlueNoiseGenerator {
 		// the dither array value being set to the number of void points iterated over. Set the pixel
 		// to a minority point after each iteration. Track "rank" as remaining points. Use the initial
 		// binary pattern.
+		const totalSize = size * size;
 		let rank = savedSamples.count;
-		while ( rank < size * size / 2 ) {
+		while ( rank < totalSize / 2 ) {
 			
 			const majIndex = savedSamples.findIndex( 0, Math.min );
 			savedSamples.addSamplePoint( majIndex );
@@ -103,7 +104,7 @@ export class BlueNoiseGenerator {
 		// TODO: we have to compute the score for each majority point as though it were a minority point.
 		// Do we have to? Is there a faster way to do it?
 		savedSamples.invert();
-		while ( rank < size * size ) {
+		while ( rank < totalSize ) {
 			
 			const majIndex = savedSamples.findIndex( 1, Math.max );
 			savedSamples.removeSamplePoint( majIndex );
@@ -112,7 +113,7 @@ export class BlueNoiseGenerator {
 			
 		}
 		
-		return ditherArray;
+		return { data: ditherArray, maxValue: totalSize };
 
 	}
 
