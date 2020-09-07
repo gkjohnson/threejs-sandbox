@@ -72,14 +72,45 @@ export class BlueNoiseGenerator {
 		// Remove the minority point after each iteration.
 		savedSamples.copy( samples );
 		
+		let rank = samples.count - 1;
+		while ( rank > 0 ) {
+		
+			const minIndex = samples.findIndex( 1, Math.max );
+			samples.removePointIndex( minIndex );
+			
+			ditherArray[ minIndex ] = rank;
+			rank --;
+			
+		}
+		
 		// 4. PHASE II: Do the same thing for the largest voids up to half of the total pixels with
 		// the dither array value being set to the number of void points iterated over. Set the pixel
 		// to a minority point after each iteration. Track "rank" as remaining points. Use the initial
 		// binary pattern.
+		let rank = savedSamples.count;
+		while ( rank < size * size / 2 ) {
+			
+			const majIndex = savedSamples.findIndex( 0, Math.min );
+			savedSamples.addSamplePoint( majIndex );
+			ditherArray[ majIndex ] = rank;
+			rank ++;
+			
+		}
 		
 		// 5. PHASE III: Interpret majority points as minority points. Find the most intensely clustered
 		// minority point and insert 1. Increment rank for each point inserted and set the dither array
 		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
+		// TODO: we have to compute the score for each majority point as though it were a minority point.
+		// Do we have to? Is there a faster way to do it?
+		savedSamples.invert();
+		while ( rank < size * size ) {
+			
+			const majIndex = savedSamples.findIndex( 1, Math.max );
+			savedSamples.removeSamplePoint( majIndex );
+			ditherArray[ majIndex ] = rank;
+			rank ++;
+			
+		}
 
 	}
 
