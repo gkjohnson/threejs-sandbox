@@ -17,6 +17,8 @@ export class BlueNoiseSamples {
 	
 	findIndex( value, func ) {
 		
+		// TODO: note that finding the largest void may depend on the score radius not
+		// being arbitrarily cut off.
 		const { score, binaryPattern } = this;
 		let currValue = func( 0, 1 ) === 0 ? Infinity : - Infinity;
 		let currIndex = - 1;
