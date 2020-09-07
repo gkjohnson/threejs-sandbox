@@ -90,8 +90,9 @@
 				dataTexture.wrapS = THREE.RepeatWrapping;
 				dataTexture.wrapT = THREE.RepeatWrapping;
 				dataTexture.minFilter = THREE.LinearFilter;
-				material.map = dataTexture;
 				dataTexture.needsUpdate = true;
+
+				material.map = dataTexture;
 				material.needsUpdate = true;
 				material.map.repeat.setScalar( params.tile );
 

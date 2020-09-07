@@ -4,6 +4,12 @@ _In Progress_
 
 Class for generating blue noise textures and example for generating monochrome or RGB variations.
 
+## TODO
+
+- Optimizations
+	- track min and max scores for min and maj points so you don't have to search every time.
+- Validate algorithm
+
 ## References
 
 - http://cv.ulichney.com/papers/1993-void-cluster.pdf

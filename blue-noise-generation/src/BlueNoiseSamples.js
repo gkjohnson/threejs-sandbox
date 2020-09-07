@@ -165,14 +165,6 @@ export class BlueNoiseSamples {
 
 	}
 
-	addPoint( x, y ) {
-
-		this.binaryPattern[ y * this.size + x ] = 1;
-		this.updateScore( x, y, 1 );
-		this.count ++;
-
-	}
-
 	removePointIndex( index ) {
 
 		this.binaryPattern[ index ] = 0;
@@ -180,14 +172,6 @@ export class BlueNoiseSamples {
 		const size = this.size;
 		const y = ~ ~ ( index / size );
 		const x = index - y * size;
-		this.updateScore( x, y, - 1 );
-		this.count --;
-
-	}
-
-	removePoint( x, y ) {
-
-		this.binaryPattern[ y * this.size + x ] = 0;
 		this.updateScore( x, y, - 1 );
 		this.count --;
 
