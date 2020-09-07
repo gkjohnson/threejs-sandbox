@@ -38,29 +38,60 @@ class BlueNoiseSamples {
 		
 	}
 	
+	updateScore( x, y, multiplier ) {
+		
+		const { radius, size, score, sigma } = this;
+		const radius2 = radius * radius;
+		const sigma2 = sigma * sigma;
+		const index = y * size + x;
+		for ( let px = - radius; px <= radius; px ++ ) {
+			
+			for ( let py = - radius; py <= radius; py ++ ) {
+			
+				const pindex = py * size + px;
+				const dist = Math.sqrt( x * x + y * y );
+				const value = Math.E ** ( - radius2 / ( 2 * sigma2 ) );
+				score[ pindex ] += multiplier * value;
+				
+			}
+		
+		}
+		
+	}
+	
+	// TODO:
+	// - Use `setPointIndex` here?
+	// - Verify we're not inadvertantly removing a point that doesn't exist and vice versa.
 	addPointIndex( index ) {
 
 		this.binaryPattern[ index ] = 1;
-		// add point into the binary pattern, adjust score for surrounding points.
+		const size = this.size;
+		const y = ~ ~ ( index / size );
+		const x = index - y * size;
+		this.updateScore( x, y, 1 );
 
 	}
 
 	addPoint( x, y ) {
 		
-		this.addPointIndex( y * this.size + x );
+		this.binaryPattern[ y * this.size + x ] = 1;
+		this.updateScore( x, y, 1 );
 
 	}
 
 	removePointIndex( index ) {
 		
 		this.binaryPattern[ index ] = 1;
-		// remove point from binary pattern, adjust score for surrounding points.
-
+		const y = ~ ~ ( index / size );
+		const x = index - y * size;
+		this.updateScore( x, y, 1 );
+		
 	}
 
 	removePoint( x, y ) {
 	
-		this.removePointIndex( y * this.size + x );
+		this.binaryPattern[ y * this.size + x ] = 0;
+		this.updateScore( x, y, - 1 );
 
 	}
 	
@@ -91,8 +122,33 @@ export class BlueNoiseGenerator {
 	generate() {
 
 		// http://cv.ulichney.com/papers/1993-void-cluster.pdf	
+				
+		const {
+			samples,
+			savedSamples,
+			sigma,
+			majorityPointsRatio,
+			size,
+		} = this;
+		
+		samples.resize( size );
+		savedSamples.resize( size );
 		
 		// 1. Random place the minority points.
+		const pointCount = Math.floor( size * size * majorityPointsRatio );
+		const initialSamples = samples.binaryPattern;
+		fillWithOnes( binaryPattern, pointCount );
+		shuffleArray( pointCount, this.random );
+		
+		for ( let i = 0, l = initialSamples.length; i ++ ) {
+			
+			if ( intialSamples[ i ] === 1 ) {
+				
+				samples.addPointIndex( i );
+				
+			}
+
+		}
 		
 		// 2. Remove minority point that is in densest cluster and place it in a void.
 		
@@ -108,32 +164,6 @@ export class BlueNoiseGenerator {
 		// 5. PHASE III: Interpret majority points as minority points. Find the most intensely clustered
 		// minority point and insert 1. Increment rank for each point inserted and set the dither array
 		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
-		
-		const {
-			samples,
-			savedSamples,
-			sigma,
-			majorityPointsRatio,
-			size,
-		} = this;
-		
-		samples.resize( size );
-		savedSamples.resize( size );
-		
-		const pointCount = Math.floor( size * size * majorityPointsRatio );
-		const initialSamples = samples.binaryPattern;
-		fillWithOnes( binaryPattern, pointCount );
-		shuffleArray( pointCount, this.random );
-		
-		for ( let i = 0, l = initialSamples.length; i ++ ) {
-			
-			if ( intialSamples[ i ] === 1 ) {
-				
-				samples.addPointIndex( i );
-				
-			}
-
-		}
 
 	}
 
