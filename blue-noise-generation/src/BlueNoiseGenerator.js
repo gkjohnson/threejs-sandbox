@@ -7,6 +7,7 @@ class BlueNoiseSamples {
 		this.size = 1
 		this.sigma = 0;
 		this.radius = 0;
+		this.lookupTable = null;
 		this.score = null;
 		this.binaryPattern = null;
 		
@@ -17,12 +18,36 @@ class BlueNoiseSamples {
 	
 	setSigma( sigma ) {
 	
+		if ( sigma === this.sigma ) {
+			
+			return;
+			
+		}
+
 		// generate a radius in which the score will be updated under the
 		// assumption that e^-10 is insignificant enough to be the border at
 		// which we drop off.
+		const radius = radius = ~ ~ ( Math.sqrt( 10 * 2 * ( sigma ** 2 ) ) + 1 );
+		const lookupWidth = 2 * this.radius + 1;
+		const lookupTable = new Float32Array( lookupWidth * lookupWidth );
+		const sigma2 = sigma * sigma;
+		for ( let x = - radius; x <= radius; x ++ ) {
+
+			for ( let y = - radius; y <= radius; y ++ ) {
+			
+				const index = y * lookupWidth + x;
+				const dist = Math.sqrt( x * x + y * y );
+				const dist2 = dist * dist;
+				lookUpTable[ index ] = Math.E ** ( - dist2 / ( 2 * sigma2 ) )
+				
+			}
+
+		}
+			
+		this.lookupTable = lookupTable;
 		this.sigma = sigma;
-		this.radius = ~ ~ ( Math.sqrt( 10 * 2 * ( sigma ** 2 ) ) + 1 );
-		
+		this.radius = radius;
+
 	}
 	
 	resize( size ) {
@@ -45,18 +70,29 @@ class BlueNoiseSamples {
 		// TODO: As we do this keep track of the highest and lowest scores for the majority
 		// and minority points because we'll want to use them soon and it _may_ be faster than
 		// iterating over the full array.
-		const { radius, size, score, sigma } = this;
+		const { radius, size, score, sigma, lookupTable } = this;
 		const sigma2 = sigma * sigma;
 		const index = y * size + x;
+		const lookupWidth = 2 * radius + 1;
 		for ( let px = - radius; px <= radius; px ++ ) {
 			
 			for ( let py = - radius; py <= radius; py ++ ) {
 			
-				const pindex = py * size + px;
-				const dist = Math.sqrt( x * x + y * y );
-				const dist2 = dist * dist;
-				const value = Math.E ** ( - dist2 / ( 2 * sigma2 ) );
-				score[ pindex ] += multiplier * value;
+				// const dist = Math.sqrt( x * x + y * y );
+				// const dist2 = dist * dist;
+				// const value = Math.E ** ( - dist2 / ( 2 * sigma2 ) );
+			
+				const lookupIndex = py * lookupWidth + px;
+				const value = lookupTable[ lookupIndex ];
+				
+				let sx = ( x + px );
+				sx = sx < 0 ? size + sx : sx % size;
+				
+				let sy = ( y + py ) % size;
+				sy = sy < 0 ? size + sy : sy % size;
+				
+				const sindex = sy * size + sx;
+				score[ sindex ] += multiplier * value;
 				
 			}
 		
