@@ -2,6 +2,7 @@ export class BlueNoiseSamples {
 
 	constructor( size ) {
 		
+		this.count = 0;
 		this.size = 1
 		this.sigma = 0;
 		this.radius = 0;
@@ -132,6 +133,7 @@ export class BlueNoiseSamples {
 		const y = ~ ~ ( index / size );
 		const x = index - y * size;
 		this.updateScore( x, y, 1 );
+		this.count ++;
 
 	}
 
@@ -139,6 +141,7 @@ export class BlueNoiseSamples {
 		
 		this.binaryPattern[ y * this.size + x ] = 1;
 		this.updateScore( x, y, 1 );
+		this.count ++;
 
 	}
 
@@ -148,6 +151,7 @@ export class BlueNoiseSamples {
 		const y = ~ ~ ( index / size );
 		const x = index - y * size;
 		this.updateScore( x, y, 1 );
+		this.count --;
 		
 	}
 
@@ -155,6 +159,7 @@ export class BlueNoiseSamples {
 	
 		this.binaryPattern[ y * this.size + x ] = 0;
 		this.updateScore( x, y, - 1 );
+		this.count --;
 
 	}
 	
@@ -164,6 +169,7 @@ export class BlueNoiseSamples {
 		this.score.set( source.score );
 		this.binaryPattern.set( source.binaryPattern );
 		this.setSigma( source.sigma );
+		this.count = source.count;
 
 	}
 
