@@ -57,8 +57,8 @@ export class BlueNoiseGenerator {
 		this.size = 256;
 		this.majorityPointsRatio = 0.1;
 		
-		this.samples = null;
-		this.savedSamples = null;
+		this.samples = new BlueNoiseSamples( 1 );
+		this.savedSamples = BlueNoiseSamples( 1 );
 
 	}
 	
@@ -83,7 +83,16 @@ export class BlueNoiseGenerator {
 		// minority point and insert 1. Increment rank for each point inserted and set the dither array
 		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
 		
-		if ( this
+		const {
+			samples,
+			savedSamples,
+			sigma,
+			majorityPointsRatio,
+			size,
+		} = this;
+		
+		samples.resize( size );
+		savedSamples.resize( size );
 		
 	}
 
