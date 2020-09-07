@@ -3,9 +3,9 @@ export class BlueNoiseSamples {
 	constructor( size ) {
 
 		this.count = 0;
-		this.size = 1
-		this.sigma = 0;
-		this.radius = 0;
+		this.size = - 1;
+		this.sigma = - 1;
+		this.radius = - 1;
 		this.lookupTable = null;
 		this.score = null;
 		this.binaryPattern = null;
@@ -151,7 +151,6 @@ export class BlueNoiseSamples {
 		// const sigma2 = sigma * sigma;
 		// const radius = Math.floor( size / 2 );
 		const radius = this.radius;
-		const index = y * size + x;
 		const lookupWidth = 2 * radius + 1;
 		for ( let px = - radius; px <= radius; px ++ ) {
 
@@ -166,7 +165,7 @@ export class BlueNoiseSamples {
 				let sx = ( x + px );
 				sx = sx < 0 ? size + sx : sx % size;
 
-				let sy = ( y + py ) % size;
+				let sy = ( y + py );
 				sy = sy < 0 ? size + sy : sy % size;
 
 				const sindex = sy * size + sx;
@@ -178,9 +177,6 @@ export class BlueNoiseSamples {
 
 	}
 
-	// TODO:
-	// - Use `setPointIndex` here?
-	// - Verify we're not inadvertantly removing a point that doesn't exist and vice versa.
 	addPointIndex( index ) {
 
 		this.binaryPattern[ index ] = 1;

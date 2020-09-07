@@ -29,8 +29,6 @@ export class BlueNoiseGenerator {
 
 		samples.resize( size );
 		samples.setSigma( sigma );
-		savedSamples.resize( size );
-		savedSamples.setSigma( sigma );
 
 		// 1. Randomly place the minority points.
 		const pointCount = Math.floor( size * size * majorityPointsRatio );
@@ -110,6 +108,7 @@ export class BlueNoiseGenerator {
 
 		// 5. PHASE III: Invert the pattern and finish out by assigning a rank to the remaining
 		// and iteratively removing them.
+		console.time( 'Samples Invert' );
 		savedSamples.invert();
 		console.timeEnd( 'Samples Invert' );
 
