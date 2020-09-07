@@ -39,15 +39,25 @@
 
 			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
 			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
-      import { BlueNoiseGenerator } from './src/BlueNoiseGenerator.js';
-      
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import { BlueNoiseGenerator } from './src/BlueNoiseGenerator.js';
+
 			// globals
 			var stats;
 			var params = {};
 			var camera, scene, renderer, controls;
+			var generator = new BlueNoiseGenerator();
 
 			init();
 			animate();
+
+			function regenerateNoise() {
+
+				generator.generate();
+
+			}
+
+			window.generator = generator;
 
 			function init() {
 
