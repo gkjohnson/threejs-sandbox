@@ -16,6 +16,30 @@ class BlueNoiseSamples {
 
 	}
 	
+	findIndex( value, func ) {
+		
+		const { score, binaryPattern } = this;
+		let currValue = func( 0, 1 ) === 0 ? Infinity : - Infinity;
+		let currIndex = - 1;
+		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
+		
+			if ( binaryPattern[ i ] !== value ) continue;
+			
+			const pScore = score[ i ];
+			const winScore = func( pScore, currValue );
+			if ( winScore === pScore ) {
+				
+				currValue = pScore;
+				currIndex = i;
+				
+			}
+			
+		}
+		
+		return currIndex;
+		
+	}
+	
 	setSigma( sigma ) {
 	
 		if ( sigma === this.sigma ) {
@@ -141,6 +165,7 @@ class BlueNoiseSamples {
 		this.resize( source.size );
 		this.score.set( source.score );
 		this.binaryPattern.set( source.binaryPattern );
+		this.setSigma( source.sigma );
 
 	}
 
@@ -173,7 +198,9 @@ export class BlueNoiseGenerator {
 		} = this;
 		
 		samples.resize( size );
+		samples.setSigma( sigma );
 		savedSamples.resize( size );
+		savedSamples.setSigma( sigma );
 		
 		// 1. Random place the minority points.
 		const pointCount = Math.floor( size * size * majorityPointsRatio );
@@ -192,6 +219,22 @@ export class BlueNoiseGenerator {
 		}
 		
 		// 2. Remove minority point that is in densest cluster and place it in a void.
+		while ( true ) {
+			
+			const minPoint = samples.find( 1, Math.max );
+			const majPoint = samples.find( 0, Math.min );
+			
+			if ( minPoint === majPoint ) {
+				
+				break;
+				
+			}
+			
+			samples.removePointIndex( minPoint );
+			samples.addPointIndex( majPoint );
+			
+		}
+		
 		
 		// 3. PHASE I: Incrementally set the value of the dither array for each progressively
 		// less intensely clustered minority point to the number of remaining points down to 0.
