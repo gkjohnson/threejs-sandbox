@@ -62,7 +62,7 @@
 			var params = {
 				enabled: true,
 				stride: 15,
-				steps: 10,
+				steps: 40,
 				binarySearchSteps: 4,
 				intensity: 0.5,
 				jitter: 1,
@@ -114,6 +114,15 @@
 				);
 				sphere.castShadow = true;
 				sponzaGroup.add( sphere );
+
+				var spotLight = new THREE.SpotLight( 0xffffff, 4 );
+				spotLight.angle = 0.5;
+				spotLight.penumbra = 1;
+
+				spotLight.position.set( - 1, 2, - 8 );
+				spotLight.target.position.set( - 0.75, 	1.5, - 9 );
+				sponzaGroup.add( spotLight );
+				sponzaGroup.add( spotLight.target );
 
 				return sponzaGroup;
 
@@ -236,7 +245,8 @@
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 30, 200, 130 );
+				directionalLight.position.set( 45, 200, 130 );
+				// directionalLight.position.set( 30, 200, 130 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
