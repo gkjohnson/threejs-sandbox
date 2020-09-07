@@ -1,4 +1,4 @@
-function shuffleArray( array, random = Math.random ) {
+export function shuffleArray( array, random = Math.random ) {
 
 	for ( let i = array.length - 1, l = 0; i > 0; i -- ) {
 		
@@ -9,4 +9,14 @@ function shuffleArray( array, random = Math.random ) {
 		
 	}
 
+}
+
+export function fillWithOnes( array, count ) {
+
+	for ( let i = 0, l = array.length; i < l; i ++ ) {
+	
+		array[ i ] = i < count ? 1 : 0;
+		
+	}
+	
 }
