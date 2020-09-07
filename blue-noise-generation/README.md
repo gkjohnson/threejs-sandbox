@@ -1,16 +1,12 @@
 # Blue Noise Generation
 
-_In Progress_
+![](./images/banner.png)
+
+_<p align="center">1, 2, and 3 channel blue noise</p>_
 
 Class for generating blue noise textures and example for generating monochrome or RGB variations.
 
-## TODO
-
-- Optimizations
-	- track min and max scores for min and maj points so you don't have to search every time.
-- Validate algorithm
-- Check radius approach -- see if it creates overly repetitious patterns
-- Allow for displaying the initial binary pattern.
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/blue-noise-generation/).
 
 ## References
 
