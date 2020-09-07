@@ -38,7 +38,7 @@ export class BlueNoiseGenerator {
 
 		console.time('0.5');
 		fillWithOnes( initialSamples, pointCount );
-		shuffleArray( pointCount, this.random );
+		shuffleArray( initialSamples, this.random );
 		console.timeEnd('0.5');
 		console.time('1');
 		for ( let i = 0, l = initialSamples.length; i < l; i ++ ) {
@@ -58,17 +58,18 @@ export class BlueNoiseGenerator {
 		while ( true ) {
 
 			iter ++;
-			const minPoint = samples.findIndex( 1, Math.max );
-			samples.removePointIndex( minPoint );
+			const clusterPoint = samples.findIndex( 1, Math.max );
+			samples.removePointIndex( clusterPoint );
 
-			const majPoint = samples.findIndex( 0, Math.min );
-			if ( minPoint === majPoint ) {
+			const voidPoint = samples.findIndex( 0, Math.min );
+			if ( clusterPoint === voidPoint ) {
 
+				samples.addPointIndex( clusterPoint );
 				break;
 
 			}
 
-			samples.addPointIndex( majPoint );
+			samples.addPointIndex( voidPoint );
 
 		}
 		console.timeEnd('2')

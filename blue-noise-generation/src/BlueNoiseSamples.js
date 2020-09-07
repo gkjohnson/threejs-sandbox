@@ -24,7 +24,11 @@ export class BlueNoiseSamples {
 		let currIndex = - 1;
 		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
 
-			if ( binaryPattern[ i ] !== value ) continue;
+			if ( binaryPattern[ i ] !== value ) {
+
+				continue;
+
+			}
 
 			const pScore = score[ i ];
 			const winScore = func( pScore, currValue );
