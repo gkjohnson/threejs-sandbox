@@ -8,7 +8,6 @@ Set of experiments and extensions to THREE.js.
 - TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
 
 - use GLSL syntax parser for debugger
-- Blue Noise Dithering
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
 - Subsurface Scattering
 - SSDO
@@ -21,3 +20,6 @@ Set of experiments and extensions to THREE.js.
 
 **Next**
 - Half Edge data structure
+
+**In Progress**
+- Blue Noise Dithering
