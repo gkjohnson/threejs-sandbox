@@ -5,10 +5,22 @@ class BlueNoiseSamples {
 	constructor( size ) {
 		
 		this.size = 1
+		this.sigma = 0;
+		this.radius = 0;
 		this.score = null;
 		this.binaryPattern = null;
 		this.resize( size );
 
+	}
+	
+	setSigma( sigma ) {
+	
+		// generate a radius in which the score will be updated under the
+		// assumption that e^-10 is insignificant enough to be the border at
+		// which we drop off.
+		this.sigma = sigma;
+		this.radius = ~ ~ ( Math.sqrt( 10 * 2 * ( sigma ** 2 ) ) + 1 );
+		
 	}
 	
 	resize( size ) {
