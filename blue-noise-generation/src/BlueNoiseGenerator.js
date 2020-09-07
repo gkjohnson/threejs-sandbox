@@ -111,6 +111,8 @@ export class BlueNoiseGenerator {
 			rank ++;
 			
 		}
+		
+		return ditherArray;
 
 	}
 
