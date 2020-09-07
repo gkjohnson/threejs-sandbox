@@ -88,6 +88,30 @@ export class BlueNoiseSamples {
 		
 	}
 	
+	invert() {
+	
+		const { binaryPattern, score, size } = this;
+		
+		score.fill( 0 );
+		
+		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
+		
+			if ( binaryPattern[ i ] === 0 ) {
+
+				const y = ~ ~ ( i / size );
+				const x = i - y * size;
+				this.updateScore( x, y, 1 );
+			
+			} else {
+				
+				binaryPattern[ i ] = 0;
+				
+			}
+			
+		}
+		
+	}
+	
 	updateScore( x, y, multiplier ) {
 		
 		// TODO: dist can only be a few values so we should be able to make a lookup table
