@@ -69,6 +69,7 @@ export class BlueNoiseGenerator {
 		// 3. PHASE I: Incrementally set the value of the dither array for each progressively
 		// less intensely clustered minority point to the number of remaining points down to 0.
 		// Remove the minority point after each iteration.
+		savedSamples.copy( samples );
 		
 		// 4. PHASE II: Do the same thing for the largest voids up to half of the total pixels with
 		// the dither array value being set to the number of void points iterated over. Set the pixel
