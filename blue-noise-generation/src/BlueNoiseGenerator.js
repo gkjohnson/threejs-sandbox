@@ -1,6 +1,9 @@
 import { shuffleArray, fillWithOnes } from './utils.js';
 import { BlueNoiseSamples } from './BlueNoiseSamples.js';
 
+const min = ( a, b ) => a < b ? a : b;
+const max = ( a, b ) => a > b ? a : b;
+
 export class BlueNoiseGenerator {
 
 	constructor() {
@@ -58,10 +61,10 @@ export class BlueNoiseGenerator {
 		while ( true ) {
 
 			iter ++;
-			const clusterPoint = samples.findIndex( 1, Math.max );
+			const clusterPoint = samples.findIndex( 1, max );
 			samples.removePointIndex( clusterPoint );
 
-			const voidPoint = samples.findIndex( 0, Math.min );
+			const voidPoint = samples.findIndex( 0, min );
 			if ( clusterPoint === voidPoint ) {
 
 				samples.addPointIndex( clusterPoint );
@@ -86,7 +89,7 @@ export class BlueNoiseGenerator {
 		rank = samples.count - 1;
 		while ( rank >= 0 ) {
 
-			const minIndex = samples.findIndex( 1, Math.max );
+			const minIndex = samples.findIndex( 1, max );
 			samples.removePointIndex( minIndex );
 
 			ditherArray[ minIndex ] = rank;
@@ -104,7 +107,7 @@ export class BlueNoiseGenerator {
 		rank = savedSamples.count;
 		while ( rank < totalSize / 2 ) {
 
-			const majIndex = savedSamples.findIndex( 0, Math.min );
+			const majIndex = savedSamples.findIndex( 0, min );
 			savedSamples.addPointIndex( majIndex );
 			ditherArray[ majIndex ] = rank;
 			rank ++;
@@ -124,7 +127,7 @@ export class BlueNoiseGenerator {
 		console.time('5');
 		while ( rank < totalSize ) {
 
-			const majIndex = savedSamples.findIndex( 1, Math.max );
+			const majIndex = savedSamples.findIndex( 1, max );
 			savedSamples.removePointIndex( majIndex );
 			ditherArray[ majIndex ] = rank;
 			rank ++;

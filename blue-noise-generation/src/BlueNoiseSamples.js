@@ -17,9 +17,9 @@ export class BlueNoiseSamples {
 
 	findIndex( value, func ) {
 
-		// TODO: note that finding the largest void may depend on the score radius not
-		// being arbitrarily cut off.
+		// TODO: this could be faster if a function was not passed in.
 		const { score, binaryPattern } = this;
+
 		let currValue = func( 0, 1 ) === 0 ? Infinity : - Infinity;
 		let currIndex = - 1;
 		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
@@ -118,11 +118,8 @@ export class BlueNoiseSamples {
 
 	updateScore( x, y, multiplier ) {
 
-		// TODO: dist can only be a few values so we should be able to make a lookup table
-		// and optimize out the sqrt and exponent operations.
-		// TODO: As we do this keep track of the highest and lowest scores for the majority
-		// and minority points because we'll want to use them soon and it _may_ be faster than
-		// iterating over the full array.
+		// TODO: Is there a way to keep track of the highest and lowest scores here to avoid have to search over
+		// everything in the buffer?
 		const { size, score, sigma, lookupTable } = this;
 
 		// const sigma2 = sigma * sigma;
