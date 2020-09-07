@@ -69,6 +69,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
+- Add ability to multiply instead add reflections.
 - Add ability to disable use of normal maps.
 - Check further depth map based on distance.
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
