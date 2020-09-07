@@ -15,24 +15,50 @@ export class BlueNoiseSamples {
 
 	}
 
-	findIndex( value, func ) {
+	findVoid() {
 
-		// TODO: this could be faster if a function was not passed in.
 		const { score, binaryPattern } = this;
 
-		let currValue = func( 0, 1 ) === 0 ? Infinity : - Infinity;
+		let currValue = Infinity;
 		let currIndex = - 1;
 		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
 
-			if ( binaryPattern[ i ] !== value ) {
+			if ( binaryPattern[ i ] !== 0 ) {
 
 				continue;
 
 			}
 
 			const pScore = score[ i ];
-			const winScore = func( pScore, currValue );
-			if ( winScore === pScore ) {
+			if ( pScore < currValue ) {
+
+				currValue = pScore;
+				currIndex = i;
+
+			}
+
+		}
+
+		return currIndex;
+
+	}
+
+	findCluster() {
+
+		const { score, binaryPattern } = this;
+
+		let currValue = - Infinity;
+		let currIndex = - 1;
+		for ( let i = 0, l = binaryPattern.length; i < l; i ++ ) {
+
+			if ( binaryPattern[ i ] !== 1 ) {
+
+				continue;
+
+			}
+
+			const pScore = score[ i ];
+			if ( pScore > currValue ) {
 
 				currValue = pScore;
 				currIndex = i;

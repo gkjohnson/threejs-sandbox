@@ -1,9 +1,6 @@
 import { shuffleArray, fillWithOnes } from './utils.js';
 import { BlueNoiseSamples } from './BlueNoiseSamples.js';
 
-const min = ( a, b ) => a < b ? a : b;
-const max = ( a, b ) => a > b ? a : b;
-
 export class BlueNoiseGenerator {
 
 	constructor() {
@@ -39,11 +36,12 @@ export class BlueNoiseGenerator {
 		const pointCount = Math.floor( size * size * majorityPointsRatio );
 		const initialSamples = samples.binaryPattern;
 
-		console.time('0.5');
+		console.time( 'Array Initialization' );
 		fillWithOnes( initialSamples, pointCount );
 		shuffleArray( initialSamples, this.random );
-		console.timeEnd('0.5');
-		console.time('1');
+		console.timeEnd('Array Initialization');
+
+		console.time( 'Score Initialization' );
 		for ( let i = 0, l = initialSamples.length; i < l; i ++ ) {
 
 			if ( initialSamples[ i ] === 1 ) {
@@ -53,87 +51,85 @@ export class BlueNoiseGenerator {
 			}
 
 		}
-		console.timeEnd('1')
+		console.timeEnd( 'Score Initialization' );
 
 		// 2. Remove minority point that is in densest cluster and place it in a void.
-		console.time('2')
-		let iter = 0;
+		console.time( 'Point Rearrangement' );
 		while ( true ) {
 
-			iter ++;
-			const clusterPoint = samples.findIndex( 1, max );
-			samples.removePointIndex( clusterPoint );
+			const clusterIndex = samples.findCluster();
+			samples.removePointIndex( clusterIndex );
 
-			const voidPoint = samples.findIndex( 0, min );
-			if ( clusterPoint === voidPoint ) {
+			const voidIndex = samples.findVoid();
+			if ( clusterIndex === voidIndex ) {
 
-				samples.addPointIndex( clusterPoint );
+				samples.addPointIndex( clusterIndex );
 				break;
 
 			}
 
-			samples.addPointIndex( voidPoint );
+			samples.addPointIndex( voidIndex );
 
 		}
-		console.timeEnd('2')
+		console.timeEnd( 'Point Rearrangement' );
 
-		const ditherArray = new Uint32Array( size * size );
 
 		// 3. PHASE I: Incrementally set the value of the dither array for each progressively
 		// less intensely clustered minority point to the number of remaining points down to 0.
 		// Remove the minority point after each iteration.
+		const ditherArray = new Uint32Array( size * size );
 		savedSamples.copy( samples );
 
-		console.time('3')
+		console.time( 'Dither Array Phase 1' );
 		let rank;
 		rank = samples.count - 1;
 		while ( rank >= 0 ) {
 
-			const minIndex = samples.findIndex( 1, max );
-			samples.removePointIndex( minIndex );
+			const clusterIndex = samples.findCluster();
+			samples.removePointIndex( clusterIndex );
 
-			ditherArray[ minIndex ] = rank;
+			ditherArray[ clusterIndex ] = rank;
 			rank --;
 
 		}
-		console.timeEnd('3')
+		console.timeEnd( 'Dither Array Phase 1' );
 
 		// 4. PHASE II: Do the same thing for the largest voids up to half of the total pixels with
 		// the dither array value being set to the number of void points iterated over. Set the pixel
 		// to a minority point after each iteration. Track "rank" as remaining points. Use the initial
 		// binary pattern.
-		console.time('4')
+		console.time( 'Dither Array Phase 2' );
 		const totalSize = size * size;
 		rank = savedSamples.count;
 		while ( rank < totalSize / 2 ) {
 
-			const majIndex = savedSamples.findIndex( 0, min );
-			savedSamples.addPointIndex( majIndex );
-			ditherArray[ majIndex ] = rank;
+			const voidIndex = savedSamples.findVoid();
+			savedSamples.addPointIndex( voidIndex );
+			ditherArray[ voidIndex ] = rank;
 			rank ++;
 
 		}
-		console.timeEnd('4')
+		console.timeEnd( 'Dither Array Phase 2' );
 
 		// 5. PHASE III: Interpret majority points as minority points. Find the most intensely clustered
 		// minority point and insert 1. Increment rank for each point inserted and set the dither array
 		// value to "rank". Do this until rank reaches the max number of pixels in the grid.
 		// TODO: we have to compute the score for each majority point as though it were a minority point.
 		// Do we have to? Is there a faster way to do it?
-		console.time('4.5')
+		console.time( 'Samples Invert' );
 		savedSamples.invert();
-		console.timeEnd('4.5');
+		console.timeEnd( 'Samples Invert' );
 
-		console.time('5');
+		console.time( 'Dither Array Phase 3' );
 		while ( rank < totalSize ) {
 
-			const majIndex = savedSamples.findIndex( 1, max );
-			savedSamples.removePointIndex( majIndex );
-			ditherArray[ majIndex ] = rank;
+			const clusterIndex = savedSamples.findCluster();
+			savedSamples.removePointIndex( clusterIndex );
+			ditherArray[ clusterIndex ] = rank;
 			rank ++;
 
 		}
-		console.timeEnd('5');
+		console.timeEnd( 'Dither Array Phase 3' );
 
 		return { data: ditherArray, maxValue: totalSize };
 
