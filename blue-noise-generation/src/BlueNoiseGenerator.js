@@ -65,6 +65,7 @@ export class BlueNoiseGenerator {
 			
 		}
 		
+		const ditherArray = new Uint32Array( size * size );
 		
 		// 3. PHASE I: Incrementally set the value of the dither array for each progressively
 		// less intensely clustered minority point to the number of remaining points down to 0.
