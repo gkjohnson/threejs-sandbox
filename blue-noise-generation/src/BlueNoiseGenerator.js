@@ -74,8 +74,6 @@ export class BlueNoiseGenerator {
 		}
 		console.timeEnd('2')
 
-		console.log('iterations', iter);
-
 		const ditherArray = new Uint32Array( size * size );
 
 		// 3. PHASE I: Incrementally set the value of the dither array for each progressively

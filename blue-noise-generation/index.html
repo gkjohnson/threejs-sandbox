@@ -64,9 +64,9 @@
 
 				}
 
+				console.time( 'Blue Noise Generation' );
 				const channels = params.channels;
 				const data = new Uint8Array( ( generator.size ** 2 ) * 4 );
-				// data.fill( 255 );
 				for ( let i = 0, l = channels; i < l; i ++ ) {
 
 					const result = generator.generate();
@@ -85,6 +85,7 @@
 					}
 
 				}
+				console.timeEnd( 'Blue Noise Generation' );
 
 				const dataTexture = new THREE.DataTexture( data, generator.size, generator.size, THREE.RGBAFormat );
 				dataTexture.wrapS = THREE.RepeatWrapping;
@@ -96,16 +97,13 @@
 				material.needsUpdate = true;
 				material.map.repeat.setScalar( params.tile );
 
-
 			}
-
-			window.generator = generator;
 
 			function init() {
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0.0, 5, 5 * 3.5 );
+				camera.position.set( 0.0, 0.0, 5 * 3.5 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
