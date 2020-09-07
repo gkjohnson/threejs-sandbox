@@ -25,6 +25,7 @@ class BlueNoiseSamples {
 	addPoint( x, y ) {
 		
 		const index = y * this.size + x;
+		this.binaryPattern[ index ] = 1;
 		
 		// add point into the binary pattern, adjust score for surrounding points.
 
@@ -33,6 +34,7 @@ class BlueNoiseSamples {
 	removePoint( x, y ) {
 	
 		const index = y * this.size + x;
+		this.binaryPattern[ index ] = 0;
 
 		// remove point from binary pattern, adjust score for surrounding points.
 
