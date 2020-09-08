@@ -15,7 +15,7 @@ Set of experiments and extensions to THREE.js.
 - Capsule Geometry / Math Class
 - Hatched shadows using derivative normals
 
-**On Hold**
+**In Progress**
 - SSRR
 
 **Next**
