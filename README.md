@@ -14,6 +14,7 @@ Set of experiments and extensions to THREE.js.
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 - Capsule Geometry / Math Class
 - Hatched shadows using derivative normals
+- Stochastic transparency
 
 **In Progress**
 - SSRR
