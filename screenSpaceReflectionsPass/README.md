@@ -73,7 +73,6 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 #### High Priority
 - Verify depth map sample point
-- Fix back face depth rendering
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
