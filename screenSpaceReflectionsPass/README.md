@@ -5,6 +5,8 @@ A rough screen space reflections implementation based on [Morgan McGuire's scree
 
 [![](./docs/example.png)](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
+_scene with no normal maps, 1px stride, and 1000 steps_
+
 _sponza scene from GLTF 2.0 example models_
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
