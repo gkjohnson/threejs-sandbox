@@ -84,7 +84,8 @@ export const MarchResultsShader = {
 		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv ) {
 
 			float sceneZMin = texture2D( depthBuffer, uv ).r;
-			return sceneZMin != 0.0 && rayzmin >= sceneZMin - thickness && rayzmax <= sceneZMin;
+
+			return sceneZMin != 0.0 &&  rayzmin > sceneZMin - thickness && rayzmax < sceneZMin;
 
 		}
 
@@ -142,6 +143,15 @@ export const MarchResultsShader = {
 			// Samples
 			vec4 dataSample = texture2D( packedBuffer, vUv );
 			float depthSample = texture2D( depthBuffer, vUv ).r;
+
+			// TODO: this is added because with the ortho camera we get some stray samples that
+			// hit outside the model so make sure we ignore any non retrievals.
+			if ( depthSample == 0.0 ) {
+
+				gl_FragColor = vec4( 0.0 );
+				return;
+
+			}
 
 			// View space information
 			vec3 vnorm = UnpackNormal( dataSample );
@@ -220,13 +230,18 @@ export const MarchResultsShader = {
 				rayZMax = ( dPQK.z * 0.5 + PQK.z ) / ( dPQK.w * 0.5 + PQK.w );
 				prevZMaxEstimate = rayZMax;
 
-				// "furter" is "more negative", so max should be further away,
+				// "further" is "more negative", so max should be further away,
 				// or the smaller number
 				swapIfBigger( rayZMax, rayZMin );
 
 				stepped = stepCount;
 				hitUV = ( permute ? PQK.yx : PQK.xy ) / resolution;
 				if ( isOutsideUvBounds( hitUV ) ) break;
+
+				// TODO: this is here because there are cases where we rayZMin is somehow hitting
+				// a positive value after marching for awhile which is odd because "into the screen"
+				// should be negative.
+				if ( rayZMin > 0.0 ) break;
 
 				intersected = doesIntersect( rayZMax, rayZMin, hitUV );
 

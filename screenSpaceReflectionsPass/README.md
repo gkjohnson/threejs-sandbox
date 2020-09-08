@@ -73,7 +73,6 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 #### High Priority
 - Verify depth map sample point
-- Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
@@ -87,6 +86,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
 - Simplify step calculations.
+- Understand TODO items in raymarch code -- how are we getting positive values for rayZMin?
 - Add blue noise.
 
 ### Bugs
