@@ -65,7 +65,7 @@
 				useThickLines: false,
 				model: 'HELMET',
 			};
-			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
+			var camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
 			var models = {};
 
 			init();
@@ -159,7 +159,11 @@
 
 				}
 
-				if ( ! originalModel ) return;
+				if ( ! originalModel ) {
+
+					return;
+
+				}
 
 				backgroundModel = originalModel.clone();
 				backgroundModel.traverse( c => {
@@ -216,10 +220,10 @@
 			function initEdgesModel() {
 
 				// remove any previous model
-				if ( model ) {
+				if ( edgesModel ) {
 
-					model.parent.remove( model );
-					model.traverse( c => {
+					edgesModel.parent.remove( edgesModel );
+					edgesModel.traverse( c => {
 
 						if ( c.isMesh ) {
 
@@ -248,19 +252,19 @@
 
 				// store the model and add it to the scene to display
 				// behind the lines
-				model = originalModel.clone();
-				scene.add( model );
+				edgesModel = originalModel.clone();
+				scene.add( edgesModel );
 
 				// early out if we're not displaying any type of edge
 				if ( params.display === 'NONE' ) {
 
-					model.visible = false;
+					edgesModel.visible = false;
 					return;
 
 				}
 
 				const meshes = [];
-				model.traverse( c => {
+				edgesModel.traverse( c => {
 
 					if ( c.isMesh ) {
 
@@ -556,9 +560,9 @@
 
 				}
 
-				if ( model ) {
+				if ( edgesModel ) {
 
-					model.traverse( c => {
+					edgesModel.traverse( c => {
 
 						if ( c.material && c.material.resolution ) {
 
