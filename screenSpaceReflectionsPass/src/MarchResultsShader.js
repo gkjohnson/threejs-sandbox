@@ -137,19 +137,26 @@ export const MarchResultsShader = {
 
 			// Screen position information
 			vec2 screenCoord = vUv * 2.0 - vec2( 1, 1 );
-			float nearClip = Deproject( vec3( 0, 0, -1 ) ).z;
-			vec3 ray = Deproject( vec3( screenCoord, -1 ) );
-			ray /= ray.z;
+			float nearClip = Deproject( vec3( 0, 0, - 1 ) ).z;
 
 			// Samples
 			vec4 dataSample = texture2D( packedBuffer, vUv );
 			float depthSample = texture2D( depthBuffer, vUv ).r;
 
 			// View space information
-			vec3 vpos =  depthSample * ray;
 			vec3 vnorm = UnpackNormal( dataSample );
 			float roughness = dataSample.a;
+
+			#ifdef ORTHOGRAPHIC_CAMERA
+			vec3 ray = vec3( 0.0, 0.0, 1.0 );
+			vec3 vpos = ( depthSample - nearClip ) * ray + Deproject( vec3( screenCoord, -1 ) );
+			vec3 dir = normalize( reflect( normalize( vec3(0.0, 0.0, - 1.0) ), normalize( vnorm ) ) );
+			#else
+			vec3 ray = Deproject( vec3( screenCoord, -1 ) );
+			ray /= ray.z;
+			vec3 vpos =  depthSample * ray;
 			vec3 dir = normalize( reflect( normalize( vpos ), normalize( vnorm ) ) );
+			#endif
 
 			// Define view space values
 			float maxDist = maxDistance;

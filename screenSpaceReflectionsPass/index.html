@@ -14,6 +14,7 @@
 				font-size: 13px;
 				text-align: center;
 				color: #fff;
+				user-select: none;
 			}
 
 			a {
@@ -320,7 +321,7 @@
 				gui.width = 325;
 
 				gui.add( params, 'enabled' );
-				// gui.add( params, 'orthographic' );
+				gui.add( params, 'orthographic' );
 
 				const raymarchingFolder = gui.addFolder( 'raymarching' );
 				raymarchingFolder.add( params, 'stride', 1, 60 );

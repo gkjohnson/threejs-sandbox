@@ -270,6 +270,22 @@ export class SSRRPass extends Pass {
 		marchUniforms.depthBuffer.value = depthBuffer.texture;
 		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
 
+		const ORTHOGRAPHIC_CAMERA_VALUE = camera.isOrthographicCamera ? '' : undefined;
+		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA !== ORTHOGRAPHIC_CAMERA_VALUE ) {
+
+			if ( ORTHOGRAPHIC_CAMERA_VALUE === undefined ) {
+
+				delete marchMaterial.defines.ORTHOGRAPHIC_CAMERA;
+
+			} else {
+
+				marchMaterial.defines.ORTHOGRAPHIC_CAMERA = ORTHOGRAPHIC_CAMERA_VALUE;
+
+			}
+			marchMaterial.needsUpdate = true;
+
+		}
+
 		marchUniforms.colorBuffer.value = readBuffer.texture;
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
 		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );

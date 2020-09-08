@@ -72,13 +72,13 @@ constructor( scene : Scene, camera : Camera, options : Object )
 #### High Priority
 - Verify depth map sample point
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
-- Fix orthographic camera
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
-- Fix blur
+- Fix blur disappearing at circle angles
 - Remove for loop
+- Fix ray hits in unrendered regions with ortho camera (zoom out on sponza)
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
