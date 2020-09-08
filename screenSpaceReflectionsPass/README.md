@@ -69,18 +69,22 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 ### Upcoming
 
-- Add ability to multiply instead add reflections.
-- Add ability to disable use of normal maps.
-- Check further depth map based on distance.
+#### High Priority
+- Verify depth map sample point
 - Fix reflections of non retrieved hits. At glancing angles the unrendered background is hit and a color sample is taken (see helmet scene).
-- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
-- Add blue noise.
-- Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
+- Fix orthographic camera
+
+#### Medium Priority
+- Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
-- Test orthographic camera
+
+#### Low Priority
+- Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
+- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
 - Remove for loop?
 - Simplify step calculations.
+- Add blue noise.
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.

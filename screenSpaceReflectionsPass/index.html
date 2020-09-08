@@ -61,6 +61,8 @@
 			var stats;
 			var params = {
 				enabled: true,
+				orthographic: false,
+
 				stride: 15,
 				steps: 40,
 				binarySearchSteps: 4,
@@ -81,7 +83,7 @@
 
 				useNormalMaps: true,
 			};
-			var camera, scene, renderer, controls;
+			var camera, orthoCamera, scene, renderer, controls;
 			var composer;
 			var sphere;
 			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
@@ -225,6 +227,8 @@
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
 				camera.position.set( 0.0, 50, 50 * 3.5 ).multiplyScalar( 1 / 30 );
 
+				orthoCamera = new THREE.OrthographicCamera();
+
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0 );
 
@@ -316,6 +320,7 @@
 				gui.width = 325;
 
 				gui.add( params, 'enabled' );
+				// gui.add( params, 'orthographic' );
 
 				const raymarchingFolder = gui.addFolder( 'raymarching' );
 				raymarchingFolder.add( params, 'stride', 1, 60 );
@@ -367,7 +372,7 @@
 					}).onChange(value => {
 						ssrrPass.debug.display = parseFloat(value);
 					});
-				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres', 'mirror box' ] );
+				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres' ] );
 				gui.open();
 
 			}
@@ -379,6 +384,13 @@
 
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
+
+				const aspect = width / height;
+				orthoCamera.left = aspect * - 10;
+				orthoCamera.bottom = - 10;
+				orthoCamera.right = aspect * 10;
+				orthoCamera.top = 10;
+				orthoCamera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
@@ -398,9 +410,26 @@
 
 			function render() {
 
+				// ortho camera
+				orthoCamera.position.copy( camera.position );
+				orthoCamera.rotation.copy( camera.rotation );
+
+				const zoom = camera.position.distanceTo( controls.target );
+				if ( params.orthographic && orthoCamera.zoom !== zoom ) {
+
+					orthoCamera.zoom = 20 * 1 / zoom;
+					orthoCamera.updateProjectionMatrix();
+
+				}
+
+				renderPass.camera = params.orthographic ? orthoCamera : camera;
+				ssrrPass.camera = params.orthographic ? orthoCamera : camera;
+
+				// animation
 				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 0.3;
 				if ( scenes.helmet.children.length > 1 ) scenes.helmet.children[ 1 ].rotation.z = window.performance.now() / 5000;
 
+				// ssrr settings
 				ssrrPass.intensity = params.intensity;
 				ssrrPass.steps = params.steps;
 				ssrrPass.stride = params.stride;
