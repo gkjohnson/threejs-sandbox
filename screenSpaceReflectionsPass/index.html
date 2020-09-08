@@ -324,7 +324,7 @@
 
 				const raymarchingFolder = gui.addFolder( 'raymarching' );
 				raymarchingFolder.add( params, 'stride', 1, 60 );
-				raymarchingFolder.add( params, 'steps', 2, 200 );
+				raymarchingFolder.add( params, 'steps', 2, 1000 );
 				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 );
 				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
 				raymarchingFolder.add( params, 'useThickness' );
