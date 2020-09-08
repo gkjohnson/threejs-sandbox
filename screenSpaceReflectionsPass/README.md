@@ -73,6 +73,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 
 #### High Priority
 - Verify depth map sample point
+- Fix back face depth rendering
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
@@ -80,11 +81,12 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Fix blur disappearing at circle angles
 - Remove for loop
 - Fix ray hits in unrendered regions with ortho camera (zoom out on sponza)
+- Further avoid surfaces intersecting with themselves.
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
-- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
+- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example) (this happens with high stride because we step first after applying jitter meaning we get no steps near the base of the mirror)
 - Simplify step calculations.
 - Understand TODO items in raymarch code -- how are we getting positive values for rayZMin?
 - Add blue noise.
