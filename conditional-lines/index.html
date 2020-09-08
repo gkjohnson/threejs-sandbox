@@ -46,6 +46,10 @@
 			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
+			import { LineSegmentsGeometry } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegmentsGeometry.js';
+			import { LineSegments2 } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegments2.js';
+			import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
+
 			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
 			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
@@ -56,7 +60,9 @@
 				opacity: 0.85,
 				threshold: 40,
 				display: 'THRESHOLD_EDGES',
-				conditionalEdges: true,
+				displayConditionalEdges: true,
+				thickness: 1,
+				useThickLines: false,
 				model: 'HELMET',
 			};
 			var camera, scene, renderer, controls, model, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
@@ -69,7 +75,7 @@
 
 				originalModel = models[ params.model ];
 
-				initModel();
+				initEdgesModel();
 
 				initBackgroundModel();
 
@@ -207,8 +213,9 @@
 
 			}
 
-			function initModel() {
+			function initEdgesModel() {
 
+				// remove any previous model
 				if ( model ) {
 
 					model.parent.remove( model );
@@ -232,11 +239,19 @@
 
 				}
 
-				if ( ! originalModel ) return;
+				// early out if there's no model loaded
+				if ( ! originalModel ) {
 
+					return;
+
+				}
+
+				// store the model and add it to the scene to display
+				// behind the lines
 				model = originalModel.clone();
 				scene.add( model );
 
+				// early out if we're not displaying any type of edge
 				if ( params.display === 'NONE' ) {
 
 					model.visible = false;
@@ -275,13 +290,20 @@
 					}
 
 					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
-
 					line.position.copy( mesh.position );
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
+					const fatLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( fatLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
+					thickLines.position.copy( mesh.position );
+					thickLines.scale.copy( mesh.scale );
+					thickLines.rotation.copy( mesh.rotation );
+
 					parent.remove( mesh );
 					parent.add( line );
+					parent.add( thickLines );
+
 
 				}
 
@@ -289,6 +311,7 @@
 
 			function initConditionalModel() {
 
+				// remove the original model
 				if ( conditionalModel ) {
 
 					conditionalModel.parent.remove( conditionalModel );
@@ -304,12 +327,18 @@
 
 				}
 
-				if ( ! originalModel ) return;
+				// if we have no loaded model then exit
+				if ( ! originalModel ) {
+
+					return;
+
+				}
 
 				conditionalModel = originalModel.clone();
 				scene.add( conditionalModel );
 				conditionalModel.visible = false;
 
+				// get all meshes
 				const meshes = [];
 				conditionalModel.traverse( c => {
 
@@ -326,7 +355,7 @@
 					const mesh = meshes[ key ];
 					const parent = mesh.parent;
 
-
+					// Remove everything but the position attribute
 					const mergedGeom = mesh.geometry.clone();
 					for ( const key in mergedGeom.attributes ) {
 
@@ -338,12 +367,13 @@
 
 					}
 
+					// Create the conditional edges geometry and associated material
 					let lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
 					material.uniforms.diffuse.value.set( 0x455A64 );
 
+					// Create the line segments objects and replace the mesh
 					const line = new THREE.LineSegments( lineGeom, material );
-
 					line.position.copy( mesh.position );
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
@@ -400,7 +430,7 @@
 				scene.add( new THREE.AmbientLight( 0xc4c9cb, 1.0 ) );
 
 				const cylinder = new THREE.Group();
-				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 40 ) ) );
+				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 100 ) ) );
 				cylinder.children[ 0 ].geometry.computeBoundingBox();
 				cylinder.children[ 0 ].castShadow = true;
 				models.CYLINDER = cylinder;
@@ -430,24 +460,36 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'model', Object.keys( models ) ).onChange( updateModel );
+				const modelFolder = gui.addFolder( 'model' );
 
-				gui.add( params, 'opacity' ).min( 0 ).max( 1.0 ).step( 0.01 );
+				modelFolder.add( params, 'model', Object.keys( models ) ).onChange( updateModel );
 
-				gui.add( params, 'lit' );
+				modelFolder.add( params, 'opacity' ).min( 0 ).max( 1.0 ).step( 0.01 );
 
-				gui.add( params, 'threshold' )
+				modelFolder.add( params, 'lit' );
+
+				modelFolder.open();
+
+				const linesFolder = gui.addFolder( 'conditional lines' );
+
+				linesFolder.add( params, 'threshold' )
 					.min( 0 )
 					.max( 120 )
-					.onChange( initModel );
+					.onChange( initEdgesModel );
 
-				gui.add( params, 'display', [
+				linesFolder.add( params, 'display', [
 					'THRESHOLD_EDGES',
 					'NORMAL_EDGES',
 					'NONE',
-				] ).onChange( initModel );
+				] ).onChange( initEdgesModel );
 
-				gui.add( params, 'conditionalEdges' );
+				linesFolder.add( params, 'displayConditionalEdges' );
+
+				linesFolder.add( params, 'useThickLines' );
+
+				linesFolder.add( params, 'thickness', 1, 5 );
+
+				linesFolder.open();
 
 				gui.open();
 
@@ -472,7 +514,7 @@
 
 				if ( conditionalModel ) {
 
-					conditionalModel.visible = params.conditionalEdges;
+					conditionalModel.visible = params.displayConditionalEdges;
 
 				}
 
@@ -511,6 +553,31 @@
 				if ( originalModel ) {
 
 					floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
+
+				}
+
+				if ( model ) {
+
+					model.traverse( c => {
+
+						if ( c.material && c.material.resolution ) {
+
+							renderer.getSize( c.material.resolution );
+							c.material.resolution.multiplyScalar( window.devicePixelRatio );
+							c.material.linewidth = params.thickness;
+							c.material.polygonOffset = true;
+							c.material.polygonOffsetFactor = -1;
+							c.material.polygonOffsetUnits = 1;
+
+						}
+
+						if ( c.material ) {
+
+							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+
+						}
+
+					} );
 
 				}
 
