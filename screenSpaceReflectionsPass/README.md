@@ -77,12 +77,13 @@ constructor( scene : Scene, camera : Camera, options : Object )
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
+- Fix blur
+- Remove for loop
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example)
-- Remove for loop?
 - Simplify step calculations.
 - Add blue noise.
 
