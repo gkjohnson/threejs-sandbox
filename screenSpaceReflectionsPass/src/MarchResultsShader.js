@@ -190,6 +190,10 @@ export const MarchResultsShader = {
 			float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
 			vec4 PQK = vec4( P0, Q0.z, k0 );
 			vec4 dPQK = vec4( dP, dQ.z, dk );
+
+			// TODO: this was added
+			PQK += dPQK;
+
 			dPQK *= pixelStride;
 			PQK += dPQK * mod( jitterMod, 1.0 ) * jitter;
 

@@ -78,6 +78,8 @@
 
 				display: SSRRPass.DEFAULT,
 				scene: 'sponza',
+
+				useNormalMaps: true,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -322,6 +324,7 @@
 				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
 				raymarchingFolder.add( params, 'useThickness' );
 				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
+				raymarchingFolder.add( params, 'useNormalMaps' );
 				raymarchingFolder.open();
 
 				const scaleFolder = gui.addFolder( 'effect scale' );
@@ -406,6 +409,7 @@
 				ssrrPass.jitter = params.jitter;
 				ssrrPass.useThickness = params.useThickness;
 				ssrrPass.thickness = params.thickness;
+				ssrrPass.useNormalMaps = params.useNormalMaps;
 
 				ssrrPass.enableBlur = params.enableBlur;
 				ssrrPass.blurIterations = params.blurIterations;

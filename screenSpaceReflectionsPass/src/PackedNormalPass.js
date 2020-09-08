@@ -5,7 +5,8 @@ export class PackedNormalPass extends ShaderReplacement {
 
 	constructor() {
 
-		super( PackedShader )
+		super( PackedShader );
+		this.useNormalMaps = false;
 
 	}
 
@@ -15,8 +16,8 @@ export class PackedNormalPass extends ShaderReplacement {
 
 		target.setDefine( 'USE_ROUGHNESSMAP', target.uniforms.roughnessMap.value ? '' : undefined );
 
-		target.setDefine( 'USE_NORMALMAP', target.uniforms.normalMap.value ? '' : undefined );
-		target.setDefine( 'TANGENTSPACE_NORMALMAP', target.uniforms.normalMap.value ? '' : undefined );
+		target.setDefine( 'USE_NORMALMAP', this.useNormalMaps && target.uniforms.normalMap.value ? '' : undefined );
+		target.setDefine( 'TANGENTSPACE_NORMALMAP', this.useNormalMaps && target.uniforms.normalMap.value ? '' : undefined );
 
 		target.setDefine( 'ALPHATEST', target.uniforms.alphaTest.value === 0 ? undefined : target.uniforms.alphaTest.value );
 

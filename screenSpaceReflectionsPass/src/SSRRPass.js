@@ -60,6 +60,7 @@ export class SSRRPass extends Pass {
 		this.jitter = 1;
 		this.thickness = 1;
 		this.useThickness = false;
+		this.useNormalMaps = true;
 
 		this.useBlur = true;
 		this.blurStride = 1;
@@ -173,6 +174,7 @@ export class SSRRPass extends Pass {
 
 		// Roughness / Normal pass
 		packedReplacement.replace( scene, true, true );
+		packedReplacement.useNormalMaps = this.useNormalMaps;
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
