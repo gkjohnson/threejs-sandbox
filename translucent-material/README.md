@@ -23,6 +23,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - Manually discard against scene depth
 - Possibly we don't need an alpha channel for the accumulation buffer.
 - Blur the transmission values using multiple jittered samples per frame or mip map samples.
+- Fix refraction "bare" spots where there seems to not return data.
 
 ## Limitations
 
