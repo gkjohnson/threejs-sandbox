@@ -15,9 +15,9 @@ Set of experiments and extensions to THREE.js.
 - Capsule Geometry / Math Class
 - Hatched shadows using derivative normals
 
-**In Progress**
-- SSRR
-
-**Next**
+**On Hold**
 - Half Edge data structure
 - Stochastic transparency
+
+**In Progress**
+- SSRR
