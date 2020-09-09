@@ -333,7 +333,7 @@ export const MarchResultsShader = {
 				float maxndc = max( abs( ndc.x ), abs( ndc.y ) ); // [ -1.0, 1.0 ]
 				float ndcFade = 1.0 - ( max( 0.0, maxndc - EDGE_FADE ) / ( 1.0 - EDGE_FADE )  );
 				float stepFade = 1.0 - ( stepped / float( MAX_STEPS ) );
-				float roughnessFade = 1.0;
+				float roughnessFade = 1.0 - roughness;
 
 				#if GLOSSY_MODE == 1
 
@@ -342,7 +342,7 @@ export const MarchResultsShader = {
 				#endif
 
 				vec4 color = texture2D( colorBuffer, hitUV );
-				gl_FragColor = vec4( color.rgb * ndcFade * stepFade, 0.0 );
+				gl_FragColor = vec4( color.rgb * ndcFade * stepFade * roughnessFade, 0.0 );
 
 			} else {
 
