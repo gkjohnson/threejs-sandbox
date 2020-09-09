@@ -9,6 +9,8 @@ export const MarchResultsShader = {
 		PYRAMID_DEPTH: 1,
 		USE_THICKNESS: 0,
 		EDGE_FADE: 0.3,
+		ORTHOGRAPHIC_CAMERA: 0,
+		GLOSSY_MODE: 0,
 
 		ENABLE_DEBUG: 0,
 
@@ -157,7 +159,7 @@ export const MarchResultsShader = {
 			vec3 vnorm = UnpackNormal( dataSample );
 			float roughness = dataSample.a;
 
-			#ifdef ORTHOGRAPHIC_CAMERA
+			#if ORTHOGRAPHIC_CAMERA
 			vec3 ray = vec3( 0.0, 0.0, 1.0 );
 			vec3 vpos = ( depthSample - nearClip ) * ray + Deproject( vec3( screenCoord, - 1 ) );
 			vec3 dir = normalize( reflect( normalize( vec3(0.0, 0.0, - 1.0) ), normalize( vnorm ) ) );
@@ -220,11 +222,26 @@ export const MarchResultsShader = {
 			float rayZMin = prevZMaxEstimate, rayZMax = prevZMaxEstimate;
 			float stepped = 0.0;
 
+			#if GLOSSY_MODE == 1
+			float searchRadius = 0.0;
+			vec3 searchVector = normalize(
+				vec3(
+					rand( gl_FragCoord.xy - sin( vUv * 400.0 ) * 100.0 ) - 0.5,
+					rand( gl_FragCoord.xy - cos( vUv * 100.0 ) * 200.0 ) - 0.5,
+					rand( gl_FragCoord.xy - tan( vUv * 800.0 ) * 50.0 ) - 0.5
+				)
+			) * ( rand( gl_FragCoord.xy ) - 0.5 ) * 2.0;
+			#endif
+
 			vec2 hitUV;
 			bool intersected = false;
 			for ( float stepCount = 1.0; stepCount <= float( MAX_STEPS ); stepCount ++ ) {
 
+				#if GLOSSY_MODE == 1
+				PQK += dPQK * ( 1.0 + max( searchRadius - stride, 0.0 ) );
+				#else
 				PQK += dPQK;
+				#endif
 
 				rayZMin = prevZMaxEstimate;
 				rayZMax = ( dPQK.z * 0.5 + PQK.z ) / ( dPQK.w * 0.5 + PQK.w );
@@ -243,14 +260,31 @@ export const MarchResultsShader = {
 				// should be negative.
 				if ( rayZMin > 0.0 ) break;
 
-				intersected = doesIntersect( rayZMax, rayZMin, hitUV );
+				#if GLOSSY_MODE == 1
+				float rayDist = abs( ( ( rayZMax - csOrig.z ) / ( csEndPoint.z - csOrig.z ) ) * rayLength );
+				searchRadius = rayDist * 0.1;
 
-				if ( intersected || ( P0.x * stepDir ) > end ) break;
+				vec3 radius = searchVector * searchRadius;
+				radius.xy /= resolution.x / resolution.y;
+				radius.xy *= PQK.w;
+				intersected = doesIntersect( rayZMax + radius.z, rayZMin + radius.z, hitUV + radius.xy );
+
+				if (intersected) hitUV = hitUV + radius.xy;
+				#else
+				intersected = doesIntersect( rayZMax, rayZMin, hitUV );
+				#endif
+				if ( intersected || ( PQK.x * stepDir ) > end ) break;
 
 			}
 
+			#if BINARY_SEARCH_ITERATIONS
+
 			// Binary search
+			#if GLOSSY_MODE == 1
+			if ( intersected && pixelStride > 1.0 && searchRadius < pixelStride ) {
+			#else
 			if ( intersected && pixelStride > 1.0 ) {
+			#endif
 
 				PQK -= dPQK;
 				dPQK /= stride;
@@ -283,7 +317,9 @@ export const MarchResultsShader = {
 					}
 
 				}
+
 			}
+			#endif
 
 			#if ENABLE_DEBUG
 

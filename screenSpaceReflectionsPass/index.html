@@ -79,6 +79,8 @@
 				blurStride: 1,
 				blurIterations: 5,
 
+				glossinessMode: 0,
+
 				display: SSRRPass.DEFAULT,
 				scene: 'sponza',
 
@@ -146,6 +148,8 @@
 							c.receiveShadow = true;
 						});
 						group.add(o);
+
+						window.helmet = o;
 					}
 				);
 
@@ -353,6 +357,18 @@
 					} );
 				scaleFolder.open();
 
+				const glossFolder = gui.addFolder( 'glossiness' );
+				glossFolder.add( params, 'glossinessMode', {
+					NO_GLOSSY: SSRRPass.NO_GLOSSY,
+					SIMPLE_GLOSSY: SSRRPass.SIMPLE_GLOSSY,
+					MULTI_GLOSSY: SSRRPass.MULTI_GLOSSY,
+				} ).onChange( value => {
+
+					ssrrPass.glossinessMode = parseFloat( value );
+
+				} );
+				glossFolder.open();
+
 				const blurFolder = gui.addFolder( 'blur' );
 				blurFolder.add( params, 'enableBlur' );
 				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 10 ).step( 1 );
@@ -372,9 +388,11 @@
 						INTERSECTION_RESULTS: SSRRPass.INTERSECTION_RESULTS,
 						INTERSECTION_DISTANCE: SSRRPass.INTERSECTION_DISTANCE,
 						INTERSECTION_COLOR: SSRRPass.INTERSECTION_COLOR,
-					}).onChange(value => {
-						ssrrPass.debug.display = parseFloat(value);
-					});
+					} ).onChange( value => {
+
+						ssrrPass.debug.display = parseFloat( value );
+
+					} );
 				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres' ] );
 				gui.open();
 

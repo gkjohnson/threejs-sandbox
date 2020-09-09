@@ -61,6 +61,7 @@ export class SSRRPass extends Pass {
 		this.thickness = 1;
 		this.useThickness = false;
 		this.useNormalMaps = true;
+		this.glossinessMode = SSRRPass.NO_GLOSSY;
 
 		this.useBlur = true;
 		this.blurStride = 1;
@@ -269,23 +270,6 @@ export class SSRRPass extends Pass {
 		const marchUniforms = marchMaterial.uniforms;
 		marchUniforms.depthBuffer.value = depthBuffer.texture;
 		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
-
-		const ORTHOGRAPHIC_CAMERA_VALUE = camera.isOrthographicCamera ? '' : undefined;
-		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA !== ORTHOGRAPHIC_CAMERA_VALUE ) {
-
-			if ( ORTHOGRAPHIC_CAMERA_VALUE === undefined ) {
-
-				delete marchMaterial.defines.ORTHOGRAPHIC_CAMERA;
-
-			} else {
-
-				marchMaterial.defines.ORTHOGRAPHIC_CAMERA = ORTHOGRAPHIC_CAMERA_VALUE;
-
-			}
-			marchMaterial.needsUpdate = true;
-
-		}
-
 		marchUniforms.colorBuffer.value = readBuffer.texture;
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
 		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
@@ -294,6 +278,20 @@ export class SSRRPass extends Pass {
 		marchUniforms.jitter.value = this.jitter;
 		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
+
+		if ( marchMaterial.defines.GLOSSY_MODE !== this.glossinessMode ) {
+
+			marchMaterial.defines.GLOSSY_MODE = this.glossinessMode;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA_VALUE !== Number( camera.isOrthographicCamera ) ) {
+
+			marchMaterial.defines.ORTHOGRAPHIC_CAMERA_VALUE = Number( camera.isOrthographicCamera );
+			marchMaterial.needsUpdate = true;
+
+		}
 
 		if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
 
@@ -408,3 +406,7 @@ SSRRPass.ROUGHNESS = 5;
 SSRRPass.INTERSECTION_RESULTS = 6;
 SSRRPass.INTERSECTION_DISTANCE = 7;
 SSRRPass.INTERSECTION_COLOR = 8;
+
+SSRRPass.NO_GLOSSY = 0;
+SSRRPass.SIMPLE_GLOSSY = 1;
+SSRRPass.MULISAMPLE_GLOSSY = 2;
