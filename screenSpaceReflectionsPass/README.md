@@ -72,7 +72,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 ### Upcoming
 
 #### High Priority
-- Perform jitter based on distance and randomness to simulate blurred reflections
+- Perform multiple samples on glossy reflection hit based on distance -- MULTI_GLOSSY mode.
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
