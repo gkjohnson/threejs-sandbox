@@ -72,14 +72,13 @@ constructor( scene : Scene, camera : Camera, options : Object )
 ### Upcoming
 
 #### High Priority
-- Verify depth map sample point
+- Perform jitter based on distance and randomness to simulate blurred reflections
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
-- Fix blur disappearing at circle angles
+- Fix blur disappearing at certain angles (check upscale logic)
 - Remove for loop
-- Fix ray hits in unrendered regions with ortho camera (zoom out on sponza)
 - Further avoid surfaces intersecting with themselves.
 
 #### Low Priority
@@ -87,7 +86,7 @@ constructor( scene : Scene, camera : Camera, options : Object )
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example) (this happens with high stride because we step first after applying jitter meaning we get no steps near the base of the mirror)
 - Simplify step calculations.
-- Understand TODO items in raymarch code -- how are we getting positive values for rayZMin?
+- Understand TODO items in raymarch code -- how are we getting positive values for rayZMin? Why are we getting ray hits where there is no depth with ortho cam?
 - Add blue noise.
 
 ### Bugs

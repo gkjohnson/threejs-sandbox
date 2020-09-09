@@ -159,10 +159,10 @@ export const MarchResultsShader = {
 
 			#ifdef ORTHOGRAPHIC_CAMERA
 			vec3 ray = vec3( 0.0, 0.0, 1.0 );
-			vec3 vpos = ( depthSample - nearClip ) * ray + Deproject( vec3( screenCoord, -1 ) );
+			vec3 vpos = ( depthSample - nearClip ) * ray + Deproject( vec3( screenCoord, - 1 ) );
 			vec3 dir = normalize( reflect( normalize( vec3(0.0, 0.0, - 1.0) ), normalize( vnorm ) ) );
 			#else
-			vec3 ray = Deproject( vec3( screenCoord, -1 ) );
+			vec3 ray = Deproject( vec3( screenCoord, - 1 ) );
 			ray /= ray.z;
 			vec3 vpos =  depthSample * ray;
 			vec3 dir = normalize( reflect( normalize( vpos ), normalize( vnorm ) ) );
@@ -299,27 +299,7 @@ export const MarchResultsShader = {
 				float stepFade = 1.0 - ( stepped / float( MAX_STEPS ) );
 
 				vec4 color = texture2D( colorBuffer, hitUV );
-
-				// get blur radius
-				// https://github.com/godotengine/godot/blob/481151be09108a30002ae0a9df118eeddd3987be/servers/rendering/rasterizer_rd/shaders/screen_space_reflection.glsl#L211-L229
-				float blurRadius = 0.0;
-				if ( roughness > 0.001 ) {
-
-					float hitDepth = texture2D( depthBuffer, hitUV ).r;
-					vec3 endPoint = Project( vec3( hitUV, hitDepth ) );
-					vec3 startPoint = Project( vec3( vUv, depthSample ) );
-
-					float cone_angle = min( roughness, 0.999 ) * PI * 0.5;
-					float cone_len = length( endPoint - startPoint );
-					float op_len = 2.0 * tan( cone_angle ) * cone_len; // opposite side of iso triangle
-					float a = op_len;
-					float h = cone_len;
-					float a2 = a * a;
-					float fh2 = 4.0 * h * h;
-					blurRadius = ( a * ( sqrt( a2 + fh2 ) - a ) ) / ( 4.0 * h );
-
-				}
-				gl_FragColor = vec4( color.rgb * ndcFade * stepFade, blurRadius );
+				gl_FragColor = vec4( color.rgb * ndcFade * stepFade, 0.0 );
 
 			} else {
 
