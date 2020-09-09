@@ -231,14 +231,32 @@ export const MarchResultsShader = {
 					rand( gl_FragCoord.xy - tan( vUv * 800.0 ) * 50.0 ) - 0.5
 				)
 			) * ( rand( gl_FragCoord.xy ) - 0.5 ) * 2.0;
+			#elif GLOSSY_MODE == 2
+			#define GLOSSY_RAY_COUNT 6
+			vec3 searchVectors[ GLOSSY_RAY_COUNT ];
+
+			float searchRadius = 0.0;
+			vec3 accumulatedColor = vec3( 0.0 );
+			float angle = rand( gl_FragCoord.xy ) * 2.0 * PI;
+			float angleStep = 13.123412 * PI / float( GLOSSY_RAY_COUNT );
+			float ratio;
+			#pragma unroll_loop_start
+			for ( int i = 0; i < 6; i ++ ) {
+
+				ratio = float ( UNROLLED_LOOP_INDEX ) / float ( GLOSSY_RAY_COUNT );
+				searchVectors[ i ] = normalize( vec3( sin( angle ), cos( angle ), 2.0 * ratio - 1.0 ) ) * ratio;
+				angle += angleStep;
+
+			}
+			#pragma unroll_loop_end
 			#endif
 
 			vec2 hitUV;
 			bool intersected = false;
 			for ( float stepCount = 1.0; stepCount <= float( MAX_STEPS ); stepCount ++ ) {
 
-				#if GLOSSY_MODE == 1
-				PQK += dPQK * ( 1.0 + max( searchRadius - stride, 0.0 ) );
+				#if GLOSSY_MODE != 0
+				PQK += ( dPQK / pixelStride ) * ( 1.0 + max( searchRadius, pixelStride ) );
 				#else
 				PQK += dPQK;
 				#endif
@@ -270,6 +288,39 @@ export const MarchResultsShader = {
 				intersected = doesIntersect( rayZMax + radius.z, rayZMin + radius.z, hitUV + radius.xy );
 
 				if (intersected) hitUV = hitUV + radius.xy;
+				#elif GLOSSY_MODE == 2
+
+				float rayDist = abs( ( ( rayZMax - csOrig.z ) / ( csEndPoint.z - csOrig.z ) ) * rayLength );
+				searchRadius = rayDist * roughness;
+
+				bool didIntersect = false;
+				float total = 0.0;
+				vec3 radius;
+				#pragma unroll_loop_start
+				for ( int i = 0; i < 6; i ++ ) {
+
+					radius = searchVectors[ i ] * searchRadius;
+					radius.xy /= resolution.x / resolution.y;
+					radius.xy *= PQK.w;
+
+					didIntersect = doesIntersect( rayZMax + radius.z, rayZMin + radius.z, hitUV + radius.xy );
+					if ( didIntersect ) {
+
+						accumulatedColor += texture2D( colorBuffer, hitUV + radius.xy ).rgb;
+						intersected = true;
+						total += 1.0;
+
+					}
+
+				}
+				#pragma unroll_loop_end
+
+				if (intersected) {
+
+					hitUV = hitUV;
+					accumulatedColor /= total;
+
+				}
 				#else
 				intersected = doesIntersect( rayZMax, rayZMin, hitUV );
 				#endif
@@ -335,14 +386,22 @@ export const MarchResultsShader = {
 				float stepFade = 1.0 - ( stepped / float( MAX_STEPS ) );
 				float roughnessFade = 1.0 - roughness;
 
-				#if GLOSSY_MODE == 1
+				#if GLOSSY_MODE != 0
 
 				roughnessFade = 1.0 / ( searchRadius + 1.0 );
 
 				#endif
 
-				vec4 color = texture2D( colorBuffer, hitUV );
-				gl_FragColor = vec4( color.rgb * ndcFade * stepFade * roughnessFade, 0.0 );
+				#if GLOSSY_MODE == 2
+
+				vec3 color = accumulatedColor;
+
+				#else
+
+				vec3 color = texture2D( colorBuffer, hitUV ).rgb;
+
+				#endif
+				gl_FragColor = vec4( color * ndcFade * stepFade * roughnessFade, 0.0 );
 
 			} else {
 

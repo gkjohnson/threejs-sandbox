@@ -11,74 +11,17 @@ _sponza scene from GLTF 2.0 example models_
 
 [Demo here!](https://gkjohnson.github.io/threejs-sandbox/screenSpaceReflectionsPass/)
 
-# API
-
-## SSRRPass
-
-_extends Pass_
-
-### .stride
-
-```js
-stride : Number
-```
-
-The number of screen space pixels to step over per iteration in the down sampled depth texture.
-
-### .steps
-
-```js
-steps : Number
-```
-
-The number of steps to take along the cast ray.
-
-### .binarySearchSteps
-
-```js
-binarySearchSteps : Number
-```
-
-The number of extra iterations to take to search for the intersected surface.
-
-### .intensity
-
-```js
-intensity : Number
-```
-
-The intensity of the reflection.
-
-### .renderTargetScale
-
-```js
-renderTargetScale : Number
-```
-
-### .jitter
-
-```js
-jitter : Number
-```
-
-### .constructor
-
-```js
-constructor( scene : Scene, camera : Camera, options : Object )
-```
-
 ## TODO
 
 ### Upcoming
 
 #### High Priority
-- Perform multiple samples on glossy reflection hit based on distance -- MULTI_GLOSSY mode.
+- Fix blur disappearing at certain angles (check upscale logic)
 
 #### Medium Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
-- Fix blur disappearing at certain angles (check upscale logic)
-- Remove for loop
+- Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
 
 #### Low Priority

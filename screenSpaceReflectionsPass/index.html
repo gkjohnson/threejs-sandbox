@@ -364,6 +364,7 @@
 				glossFolder.add( params, 'glossinessMode', {
 					NO_GLOSSY: SSRRPass.NO_GLOSSY,
 					SIMPLE_GLOSSY: SSRRPass.SIMPLE_GLOSSY,
+					MULTI_GLOSSY: SSRRPass.MULTI_GLOSSY,
 				} ).onChange( value => {
 
 					ssrrPass.glossinessMode = parseFloat( value );
