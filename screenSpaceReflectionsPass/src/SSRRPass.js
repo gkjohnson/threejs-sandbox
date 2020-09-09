@@ -61,6 +61,8 @@ export class SSRRPass extends Pass {
 		this.thickness = 1;
 		this.useThickness = false;
 		this.useNormalMaps = true;
+		this.useRoughnessMaps = true;
+		this.roughnessOverride = null;
 		this.glossinessMode = SSRRPass.NO_GLOSSY;
 
 		this.useBlur = true;
@@ -176,6 +178,8 @@ export class SSRRPass extends Pass {
 		// Roughness / Normal pass
 		packedReplacement.replace( scene, true, true );
 		packedReplacement.useNormalMaps = this.useNormalMaps;
+		packedReplacement.useRoughnessMaps = this.useRoughnessMaps;
+		packedReplacement.roughnessOverride = this.roughnessOverride;
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
@@ -409,4 +413,3 @@ SSRRPass.INTERSECTION_COLOR = 8;
 
 SSRRPass.NO_GLOSSY = 0;
 SSRRPass.SIMPLE_GLOSSY = 1;
-SSRRPass.MULISAMPLE_GLOSSY = 2;

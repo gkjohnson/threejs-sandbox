@@ -6,7 +6,9 @@ export class PackedNormalPass extends ShaderReplacement {
 	constructor() {
 
 		super( PackedShader );
-		this.useNormalMaps = false;
+		this.useNormalMaps = true;
+		this.useRoughnessMaps = true;
+		this.roughnessOverride = null;
 
 	}
 
@@ -14,7 +16,13 @@ export class PackedNormalPass extends ShaderReplacement {
 
 		super.updateUniforms( object, material, target );
 
-		target.setDefine( 'USE_ROUGHNESSMAP', target.uniforms.roughnessMap.value ? '' : undefined );
+		if ( this.roughnessOverride !== null ) {
+
+			target.uniforms.roughness.value = this.roughnessOverride;
+
+		}
+
+		target.setDefine( 'USE_ROUGHNESSMAP', this.useRoughnessMaps && target.uniforms.roughnessMap.value ? '' : undefined );
 
 		target.setDefine( 'USE_NORMALMAP', this.useNormalMaps && target.uniforms.normalMap.value ? '' : undefined );
 		target.setDefine( 'TANGENTSPACE_NORMALMAP', this.useNormalMaps && target.uniforms.normalMap.value ? '' : undefined );

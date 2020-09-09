@@ -80,6 +80,9 @@
 				blurIterations: 5,
 
 				glossinessMode: 0,
+				useRoughnessMaps: true,
+				useRoughnessOverride: false,
+				roughnessOverride: 0,
 
 				display: SSRRPass.DEFAULT,
 				scene: 'sponza',
@@ -361,12 +364,14 @@
 				glossFolder.add( params, 'glossinessMode', {
 					NO_GLOSSY: SSRRPass.NO_GLOSSY,
 					SIMPLE_GLOSSY: SSRRPass.SIMPLE_GLOSSY,
-					MULTI_GLOSSY: SSRRPass.MULTI_GLOSSY,
 				} ).onChange( value => {
 
 					ssrrPass.glossinessMode = parseFloat( value );
 
 				} );
+				glossFolder.add( params, 'useRoughnessMaps' );
+				glossFolder.add( params, 'useRoughnessOverride' );
+				glossFolder.add( params, 'roughnessOverride' ).min( 0 ).max( 1 ).step( 0.01 );
 				glossFolder.open();
 
 				const blurFolder = gui.addFolder( 'blur' );
@@ -460,6 +465,8 @@
 				ssrrPass.useThickness = params.useThickness;
 				ssrrPass.thickness = params.thickness;
 				ssrrPass.useNormalMaps = params.useNormalMaps;
+				ssrrPass.useRoughnessMaps = params.useRoughnessMaps;
+				ssrrPass.roughnessOverride = params.useRoughnessOverride ? params.roughnessOverride : null;
 
 				ssrrPass.enableBlur = params.enableBlur;
 				ssrrPass.blurIterations = params.blurIterations;

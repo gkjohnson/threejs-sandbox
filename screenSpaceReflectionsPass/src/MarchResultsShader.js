@@ -262,7 +262,7 @@ export const MarchResultsShader = {
 
 				#if GLOSSY_MODE == 1
 				float rayDist = abs( ( ( rayZMax - csOrig.z ) / ( csEndPoint.z - csOrig.z ) ) * rayLength );
-				searchRadius = rayDist * 0.1;
+				searchRadius = rayDist * roughness;
 
 				vec3 radius = searchVector * searchRadius;
 				radius.xy /= resolution.x / resolution.y;
@@ -281,7 +281,7 @@ export const MarchResultsShader = {
 
 			// Binary search
 			#if GLOSSY_MODE == 1
-			if ( intersected && pixelStride > 1.0 && searchRadius < pixelStride ) {
+			if ( intersected && pixelStride > 1.0 && searchRadius < 0.1 ) {
 			#else
 			if ( intersected && pixelStride > 1.0 ) {
 			#endif
@@ -333,6 +333,13 @@ export const MarchResultsShader = {
 				float maxndc = max( abs( ndc.x ), abs( ndc.y ) ); // [ -1.0, 1.0 ]
 				float ndcFade = 1.0 - ( max( 0.0, maxndc - EDGE_FADE ) / ( 1.0 - EDGE_FADE )  );
 				float stepFade = 1.0 - ( stepped / float( MAX_STEPS ) );
+				float roughnessFade = 1.0;
+
+				#if GLOSSY_MODE == 1
+
+				roughnessFade = 1.0 / ( searchRadius + 1.0 );
+
+				#endif
 
 				vec4 color = texture2D( colorBuffer, hitUV );
 				gl_FragColor = vec4( color.rgb * ndcFade * stepFade, 0.0 );
