@@ -53,6 +53,8 @@
 			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
 			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
+			import { ConditionalLineSegmentsGeometry } from './src/Lines2/ConditionalLineSegmentsGeometry.js';
+			import { ConditionalLineMaterial } from './src/Lines2/ConditionalLineMaterial.js';
 
 			// globals
 			var params = {
@@ -298,8 +300,8 @@
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
-					const fatLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( fatLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
+					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -372,7 +374,7 @@
 					}
 
 					// Create the conditional edges geometry and associated material
-					let lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
+					const lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
 					material.uniforms.diffuse.value.set( 0x455A64 );
 
@@ -382,8 +384,15 @@
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
+					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: 0x455A64, linewidth: 2 } ) );
+					thickLines.position.copy( mesh.position );
+					thickLines.scale.copy( mesh.scale );
+					thickLines.rotation.copy( mesh.rotation );
+
 					parent.remove( mesh );
 					parent.add( line );
+					parent.add( thickLines );
 
 				}
 
@@ -519,6 +528,46 @@
 				if ( conditionalModel ) {
 
 					conditionalModel.visible = params.displayConditionalEdges;
+					conditionalModel.traverse( c => {
+
+						if ( c.material && c.material.resolution ) {
+
+							renderer.getSize( c.material.resolution );
+							c.material.resolution.multiplyScalar( window.devicePixelRatio );
+							c.material.linewidth = params.thickness;
+
+						}
+
+						if ( c.material ) {
+
+							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+
+						}
+
+					} );
+
+				}
+
+
+				if ( edgesModel ) {
+
+					edgesModel.traverse( c => {
+
+						if ( c.material && c.material.resolution ) {
+
+							renderer.getSize( c.material.resolution );
+							c.material.resolution.multiplyScalar( window.devicePixelRatio );
+							c.material.linewidth = params.thickness;
+
+						}
+
+						if ( c.material ) {
+
+							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+
+						}
+
+					} );
 
 				}
 
@@ -557,31 +606,6 @@
 				if ( originalModel ) {
 
 					floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
-
-				}
-
-				if ( edgesModel ) {
-
-					edgesModel.traverse( c => {
-
-						if ( c.material && c.material.resolution ) {
-
-							renderer.getSize( c.material.resolution );
-							c.material.resolution.multiplyScalar( window.devicePixelRatio );
-							c.material.linewidth = params.thickness;
-							c.material.polygonOffset = true;
-							c.material.polygonOffsetFactor = -1;
-							c.material.polygonOffsetUnits = 1;
-
-						}
-
-						if ( c.material ) {
-
-							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
-
-						}
-
-					} );
 
 				}
 
