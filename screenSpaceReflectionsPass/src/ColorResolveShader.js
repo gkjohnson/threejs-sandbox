@@ -3,8 +3,8 @@ export const ColorResolveShader = {
 
 	defines: {
 		ENABLE_BLUR: 1,
-		BLUR_ITERATIONS: 5,
-		DEPTH_THRESHOLD: '2e-1',
+		BLUR_RADIUS: 5,
+		DEPTH_THRESHOLD: '2e-3',
 		COLOR_HIT_ONLY: 0,
 	},
 
@@ -79,45 +79,38 @@ export const ColorResolveShader = {
 			vec2 currMarchTexel = vUv * marchSize;
 			vec2 texelRatio = marchSize / renderSize;
 
-			vec3 currNormal = UnpackNormal( texture2D( packedBuffer, currMarchTexel ) );
-			float currDepth = texture2D( depthBuffer, currMarchTexel ).r;
+			vec3 currNormal = UnpackNormal( texture2D( packedBuffer, vUv  ) );
+			float currDepth = texture2D( depthBuffer, vUv ).r;
 
 			float totalWeight = 1e-10;
-			float pixelOffset = - float( BLUR_ITERATIONS ) / 2.0;
-			pixelOffset += mod( float( BLUR_ITERATIONS ), 2.0 ) == 0.0 ? 0.0 : 0.5;
-			pixelOffset *= float( blurStride );
+			int blurWidth = BLUR_RADIUS * 2 + 1;
 
-			for ( int x = 0; x < BLUR_ITERATIONS; x ++ ) {
+			for ( int x = - BLUR_RADIUS; x <= BLUR_RADIUS; x ++ ) {
 
-				for ( int y = 0; y < BLUR_ITERATIONS; y ++ ) {
+				for ( int y = - BLUR_RADIUS; y <= BLUR_RADIUS; y ++ ) {
+
+					// if ( x != 0 || y != 0 ) continue;
 
 					vec2 step = vec2( float( x ), float( y ) ) * float( blurStride );
 
 					// iterate over full res pixels
-					vec2 offsetUv = currTexel + ( pixelOffset + step ) / texelRatio;
-					offsetUv /= renderSize;
+					vec2 renderUv = currTexel + step / texelRatio;
+					renderUv /= renderSize;
 
 					// get the associated pixel in the AO buffer
-					vec2 marchUv = currMarchTexel + pixelOffset + step;
+					vec2 marchUv = currMarchTexel + step;
 					marchUv /= marchSize;
 
-
-					// TODO: we need to be able to compare the depth normal used for raymarching to the current
-					// fragment. Above the sample is pulled from vUv, which is the current render fragment instead.
-
 					// if the pixels are close enough in space then blur them together
-					float offsetDepth = texture2D( depthBuffer, offsetUv ).r;
-					if ( abs( offsetDepth - currDepth ) <= DEPTH_THRESHOLD ) {
+					float offsetDepth = texture2D( depthBuffer, renderUv ).r;
+					if ( abs( offsetDepth - currDepth ) <= 1e-1 ) {
 
 						// Weigh the sample based on normal similarity
-						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, offsetUv ) );
-						float weight = max( 0.0, dot( offsetNormal, currNormal ) );
-
-						// square the weight to give pixels with a closer normal even higher priority
-						weight *= weight;
+						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, renderUv ) );
+						float weight = max( 0.0, dot( offsetNormal, currNormal ) - 0.9 ) * 10.0;
 
 						// gaussian distribution
-						weight *= gaussian( x, BLUR_ITERATIONS ) * gaussian( y, BLUR_ITERATIONS );
+						weight *= gaussian( x, blurWidth ) * gaussian( y, blurWidth );
 
 						totalWeight += weight;
 
@@ -139,9 +132,6 @@ export const ColorResolveShader = {
 			sample = texture2D( intersectBuffer, vUv ).rgb;
 
 			#endif
-
-			// enable roughness
-			// sample *= 1.0 - texture2D( packedBuffer, vUv ).a;
 
 			#if COLOR_HIT_ONLY
 

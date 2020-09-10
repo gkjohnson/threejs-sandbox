@@ -67,7 +67,7 @@ export class SSRRPass extends Pass {
 
 		this.useBlur = true;
 		this.blurStride = 1;
-		this.blurIterations = 5;
+		this.blurRadius = 5;
 
 		this.scene = scene;
 		this.camera = camera;
@@ -129,14 +129,14 @@ export class SSRRPass extends Pass {
 	setSize( width, height ) {
 
 		const raymarchTargetScale = this.raymarchTargetScale;
-		const raymarchWidth = width * raymarchTargetScale;
-		const raymarchHeight = height * raymarchTargetScale;
+		const raymarchWidth = Math.floor( width * raymarchTargetScale );
+		const raymarchHeight = Math.floor( height * raymarchTargetScale );
 
 		this._marchResultsBuffer.setSize( raymarchWidth, raymarchHeight );
 
 		const renderTargetScale = this.renderTargetScale;
-		const renderWidth = width * renderTargetScale;
-		const renderHeight = height * renderTargetScale;
+		const renderWidth = Math.floor( width * renderTargetScale );
+		const renderHeight = Math.floor( height * renderTargetScale );
 
 		this._depthBuffer.setSize( renderWidth, renderHeight );
 		this._backfaceDepthBuffer.setSize( renderWidth, renderHeight );
@@ -362,6 +362,7 @@ export class SSRRPass extends Pass {
 		const resolveMaterial = resolveQuad.material;
 		const resolveUniforms = resolveMaterial.uniforms;
 		const resolveDefines = resolveMaterial.defines;
+		resolveUniforms.depthBuffer.value = depthBuffer.texture;
 		resolveUniforms.sourceBuffer.value = readBuffer.texture;
 		resolveUniforms.packedBuffer.value = packedBuffer.texture;
 		resolveUniforms.intersectBuffer.value = marchResultsBuffer.texture;
@@ -377,9 +378,9 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( this.blurIterations !== resolveDefines.BLUR_ITERATIONS ) {
+		if ( this.blurRadius !== resolveDefines.BLUR_RADIUS ) {
 
-			resolveDefines.BLUR_ITERATIONS = this.blurIterations;
+			resolveDefines.BLUR_RADIUS = this.blurRadius;
 			resolveMaterial.needsUpdate = true;
 
 		}
