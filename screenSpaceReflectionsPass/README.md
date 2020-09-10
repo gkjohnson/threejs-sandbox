@@ -16,13 +16,13 @@ _sponza scene from GLTF 2.0 example models_
 ### Upcoming
 
 #### High Priority
-- Fix blur disappearing at certain angles (check upscale logic)
-
-#### Medium Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
+
+#### Medium Priority
 - Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
+- Add blue noise.
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
@@ -30,7 +30,6 @@ _sponza scene from GLTF 2.0 example models_
 - Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example) (this happens with high stride because we step first after applying jitter meaning we get no steps near the base of the mirror)
 - Simplify step calculations.
 - Understand TODO items in raymarch code -- how are we getting positive values for rayZMin? Why are we getting ray hits where there is no depth with ortho cam?
-- Add blue noise.
 
 ### Bugs
 - Improve the connected-ness of the reflections to the ground.

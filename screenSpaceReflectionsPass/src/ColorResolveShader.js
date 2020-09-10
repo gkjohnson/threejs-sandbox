@@ -94,11 +94,11 @@ export const ColorResolveShader = {
 					vec2 step = vec2( float( x ), float( y ) ) * float( blurStride );
 
 					// iterate over full res pixels
-					vec2 renderUv = currTexel + step / texelRatio;
+					vec2 renderUv = currTexel + step;
 					renderUv /= renderSize;
 
 					// get the associated pixel in the AO buffer
-					vec2 marchUv = currMarchTexel + step;
+					vec2 marchUv = currMarchTexel + step * texelRatio;
 					marchUv /= marchSize;
 
 					// if the pixels are close enough in space then blur them together
