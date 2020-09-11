@@ -55,6 +55,7 @@ _sponza scene from GLTF 2.0 example models_
 - Simplify code.
 - Remove type conversion in shaders.
 - MRT
+- Stop traversal if a ray goes behind a surface but does not hit.
 
 ### References
 
