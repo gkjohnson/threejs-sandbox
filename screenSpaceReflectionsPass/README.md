@@ -18,8 +18,6 @@ _sponza scene from GLTF 2.0 example models_
 #### High Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
-- Roughness fade should be based on area of circle over spread.
-- ortho camera doesn't work on mac
 
 #### Medium Priority
 - Remove for loop ( unroll )
