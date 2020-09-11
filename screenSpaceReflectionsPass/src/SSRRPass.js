@@ -290,9 +290,9 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA !== Number( camera.isOrthographicCamera ) ) {
+		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA !== Number( camera.isOrthographicCamera || false ) ) {
 
-			marchMaterial.defines.ORTHOGRAPHIC_CAMERA = Number( camera.isOrthographicCamera );
+			marchMaterial.defines.ORTHOGRAPHIC_CAMERA = Number( camera.isOrthographicCamera || false );
 			marchMaterial.needsUpdate = true;
 
 		}
