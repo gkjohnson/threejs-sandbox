@@ -388,7 +388,7 @@ export const MarchResultsShader = {
 
 				#if GLOSSY_MODE != 0
 
-				roughnessFade = 1.0 / ( searchRadius + 1.0 );
+				roughnessFade = 1.0 / ( 2.0 * PI * pow( searchRadius, 2.0 ) + 1.0 );
 
 				#endif
 
