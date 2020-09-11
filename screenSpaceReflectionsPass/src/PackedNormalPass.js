@@ -33,7 +33,7 @@ export class PackedNormalPass extends ShaderReplacement {
 
 		target.setDefine( 'USE_MAP', ( ! target.uniforms.map.value ) ? undefined : '' );
 
-		target.setDefine( 'USE_UV', ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines ) ? '' : undefined );
+		target.setDefine( 'USE_UV', ( 'USE_ALPHAMAP' in target.defines || 'USE_MAP' in target.defines || 'USE_NORMALMAP' in target.defines || 'USE_ROUGHNESSMAP' in target.defines ) ? '' : undefined );
 
 	}
 

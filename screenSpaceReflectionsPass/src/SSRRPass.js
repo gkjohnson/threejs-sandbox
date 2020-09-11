@@ -8,7 +8,6 @@ import {
 	FrontSide,
 	BackSide,
 	DataTexture,
-	RGBFormat,
 	RepeatWrapping,
 	LinearFilter,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
@@ -52,8 +51,8 @@ const _blackColor = new Color( 0 );
 const generator = new BlueNoiseGenerator();
 generator.size = 32;
 
-const data = new Uint8Array( 32 ** 2 * 3 );
-for ( let i = 0, l = 3; i < l; i ++ ) {
+const data = new Uint8Array( 32 ** 2 * 4 );
+for ( let i = 0, l = 4; i < l; i ++ ) {
 
 	const result = generator.generate();
 	const bin = result.data;
@@ -62,12 +61,12 @@ for ( let i = 0, l = 3; i < l; i ++ ) {
 	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
 
 		const value = 255 * ( bin[ j ] / maxValue );
-		data[ j * 3 + i ] = value;
+		data[ j * 4 + i ] = value;
 
 	}
 
 }
-const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBFormat );
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBAFormat );
 blueNoiseTex.wrapS = RepeatWrapping;
 blueNoiseTex.wrapT = RepeatWrapping;
 blueNoiseTex.minFilter = LinearFilter;
@@ -91,9 +90,11 @@ export class SSRRPass extends Pass {
 		this.useThickness = false;
 		this.useNormalMaps = true;
 		this.useRoughnessMaps = true;
+		this.roughnessCutoff = 1.0;
 		this.roughnessOverride = null;
 		this.glossinessMode = SSRRPass.NO_GLOSSY;
 		this.jitterStrategy = SSRRPass.REGULAR_JITTER;
+		this.glossyJitterStrategy = SSRRPass.RANDOM_JITTER;
 
 		this.useBlur = true;
 		this.blurStride = 1;
@@ -313,6 +314,7 @@ export class SSRRPass extends Pass {
 		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
 		marchUniforms.blueNoiseTex.value = blueNoiseTex;
+		marchUniforms.roughnessCutoff.value = this.roughnessCutoff;
 
 		if ( marchMaterial.defines.GLOSSY_MODE !== this.glossinessMode ) {
 
@@ -324,6 +326,13 @@ export class SSRRPass extends Pass {
 		if ( marchMaterial.defines.JITTER_STRATEGY !== this.jitterStrategy ) {
 
 			marchMaterial.defines.JITTER_STRATEGY = this.jitterStrategy;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.GLOSSY_JITTER_STRATEGY !== this.glossyJitterStrategy ) {
+
+			marchMaterial.defines.GLOSSY_JITTER_STRATEGY = this.glossyJitterStrategy;
 			marchMaterial.needsUpdate = true;
 
 		}
@@ -456,3 +465,4 @@ SSRRPass.MULTI_GLOSSY = 2;
 
 SSRRPass.REGULAR_JITTER = 0;
 SSRRPass.BLUENOISE_JITTER = 1;
+SSRRPass.RANDOM_JITTER = 2;

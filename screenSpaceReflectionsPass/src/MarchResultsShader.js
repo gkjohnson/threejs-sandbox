@@ -14,6 +14,7 @@ export const MarchResultsShader = {
 		ENABLE_DEBUG: 0,
 
 		JITTER_STRATEGY: 0,
+		GLOSSY_JITTER_STRATEGY: 1,
 		BLUENOISE_SIZE: '32.0',
 
 	},
@@ -33,6 +34,7 @@ export const MarchResultsShader = {
 		resolution: { value: new Vector2() },
 		thickness: { value: 1 },
 		jitter: { value: 1 },
+		roughnessCutoff: { value: 1 },
 		maxDistance: { value: 100 }
 
 	},
@@ -60,12 +62,13 @@ export const MarchResultsShader = {
 		uniform mat4 projMatrix;
 		uniform vec2 resolution;
 
+		uniform float roughnessCutoff;
 		uniform float thickness;
 		uniform float stride;
 		uniform float jitter;
 		uniform float maxDistance;
 
-		#if JITTER_STRATEGY == 1
+		#if JITTER_STRATEGY == 1 || ( GLOSSY_JITTER_STRATEGY == 1 && GLOSSY_MODE != 0 )
 		uniform sampler2D blueNoiseTex;
 		#endif
 
@@ -167,6 +170,13 @@ export const MarchResultsShader = {
 			vec3 vnorm = UnpackNormal( dataSample );
 			float roughness = dataSample.a;
 
+			if ( roughness >= roughnessCutoff ) {
+
+				gl_FragColor = vec4( 0.0 );
+				return;
+
+			}
+
 			#if ORTHOGRAPHIC_CAMERA
 			vec3 ray = vec3( 0.0, 0.0, 1.0 );
 			vec3 vpos = ( depthSample - nearClip ) * ray + Deproject( vec3( screenCoord, - 1 ) );
@@ -237,6 +247,10 @@ export const MarchResultsShader = {
 
 			#if GLOSSY_MODE == 1
 			float searchRadius = 0.0;
+
+			#if GLOSSY_JITTER_STRATEGY == 1
+			vec3 searchVector = ( texture2D( blueNoiseTex, gl_FragCoord.xy / BLUENOISE_SIZE ).gra - vec3( 0.5 ) );
+			#else
 			vec3 searchVector = normalize(
 				vec3(
 					rand( gl_FragCoord.xy - sin( vUv * 400.0 ) * 100.0 ) - 0.5,
@@ -244,13 +258,19 @@ export const MarchResultsShader = {
 					rand( gl_FragCoord.xy - tan( vUv * 800.0 ) * 50.0 ) - 0.5
 				)
 			) * ( rand( gl_FragCoord.xy ) - 0.5 ) * 2.0;
+			#endif
+
 			#elif GLOSSY_MODE == 2
 			#define GLOSSY_RAY_COUNT 6
 			vec3 searchVectors[ GLOSSY_RAY_COUNT ];
 
 			float searchRadius = 0.0;
 			vec3 accumulatedColor = vec3( 0.0 );
+			#if GLOSSY_JITTER_STRATEGY == 1
+			float angle = texture2D( blueNoiseTex, gl_FragCoord.xy / BLUENOISE_SIZE ).g * 2.0 * PI;
+			#else
 			float angle = rand( gl_FragCoord.xy ) * 2.0 * PI;
+			#endif
 			float angleStep = 13.123412 * PI / float( GLOSSY_RAY_COUNT );
 			float ratio;
 			#pragma unroll_loop_start
@@ -401,9 +421,13 @@ export const MarchResultsShader = {
 
 				#if GLOSSY_MODE != 0
 
-				roughnessFade = 1.0 / ( searchRadius + 1.0 );
+				roughnessFade = 1.0 / ( pow( searchRadius, 1.0 ) + 1.0 );
+				// roughnessFade = 1.0 / ( PI * pow( searchRadius, 2.0 ) + 1.0 );
+				// roughnessFade = smoothstep(5.0, 0.0, searchRadius);
 
 				#endif
+
+				roughnessFade *= smoothstep( roughnessCutoff, roughnessCutoff * 0.9, roughness );
 
 				#if GLOSSY_MODE == 2
 
