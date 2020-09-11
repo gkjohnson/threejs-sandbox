@@ -69,6 +69,7 @@
 				binarySearchSteps: 4,
 				intensity: 0.5,
 				jitter: 1,
+				jitterStrategy: 0,
 
 				renderTargetScale: 1.0,
 				raymarchTargetScale: 1.0,
@@ -337,6 +338,10 @@
 				raymarchingFolder.add( params, 'steps', 2, 1000 );
 				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 ).step( 1 );
 				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
+				raymarchingFolder.add( params, 'jitterStrategy', {
+					REGULAR_JITTER: SSRRPass.REGULAR_JITTER,
+					BLUENOISE_JITTER: SSRRPass.BLUENOISE_JITTER,
+				} );
 				raymarchingFolder.add( params, 'useThickness' );
 				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
 				raymarchingFolder.add( params, 'useNormalMaps' );
@@ -463,6 +468,7 @@
 				ssrrPass.binarySearchSteps = params.binarySearchSteps;
 				ssrrPass.enabled = params.enabled;
 				ssrrPass.jitter = params.jitter;
+				ssrrPass.jitterStrategy = params.jitterStrategy;
 				ssrrPass.useThickness = params.useThickness;
 				ssrrPass.thickness = params.thickness;
 				ssrrPass.useNormalMaps = params.useNormalMaps;

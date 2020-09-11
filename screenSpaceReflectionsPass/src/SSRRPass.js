@@ -7,6 +7,10 @@ import {
 	ShaderMaterial,
 	FrontSide,
 	BackSide,
+	DataTexture,
+	RGBFormat,
+	RepeatWrapping,
+	LinearFilter,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
@@ -21,6 +25,7 @@ import {
 import { PackedNormalPass } from './PackedNormalPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
+import { BlueNoiseGenerator } from '../../../blue-noise-generation/src/BlueNoiseGenerator.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
@@ -43,6 +48,30 @@ const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
 
 const _rendererState = new RendererState();
 const _blackColor = new Color( 0 );
+
+const generator = new BlueNoiseGenerator();
+generator.size = 32;
+
+const data = new Uint8Array( 32 ** 2 * 3 );
+for ( let i = 0, l = 3; i < l; i ++ ) {
+
+	const result = generator.generate();
+	const bin = result.data;
+	const maxValue = result.maxValue;
+
+	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+		const value = 255 * ( bin[ j ] / maxValue );
+		data[ j * 3 + i ] = value;
+
+	}
+
+}
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBFormat );
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.minFilter = LinearFilter;
+
 export class SSRRPass extends Pass {
 	constructor( scene, camera, options = {} ) {
 
@@ -64,6 +93,7 @@ export class SSRRPass extends Pass {
 		this.useRoughnessMaps = true;
 		this.roughnessOverride = null;
 		this.glossinessMode = SSRRPass.NO_GLOSSY;
+		this.jitterStrategy = SSRRPass.REGULAR_JITTER;
 
 		this.useBlur = true;
 		this.blurStride = 1;
@@ -282,10 +312,18 @@ export class SSRRPass extends Pass {
 		marchUniforms.jitter.value = this.jitter;
 		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
+		marchUniforms.blueNoiseTex.value = blueNoiseTex;
 
 		if ( marchMaterial.defines.GLOSSY_MODE !== this.glossinessMode ) {
 
 			marchMaterial.defines.GLOSSY_MODE = this.glossinessMode;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.JITTER_STRATEGY !== this.jitterStrategy ) {
+
+			marchMaterial.defines.JITTER_STRATEGY = this.jitterStrategy;
 			marchMaterial.needsUpdate = true;
 
 		}
@@ -415,3 +453,6 @@ SSRRPass.INTERSECTION_COLOR = 8;
 SSRRPass.NO_GLOSSY = 0;
 SSRRPass.SIMPLE_GLOSSY = 1;
 SSRRPass.MULTI_GLOSSY = 2;
+
+SSRRPass.REGULAR_JITTER = 0;
+SSRRPass.BLUENOISE_JITTER = 1;

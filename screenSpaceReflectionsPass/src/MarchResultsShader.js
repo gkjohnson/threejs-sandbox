@@ -11,8 +11,10 @@ export const MarchResultsShader = {
 		EDGE_FADE: 0.3,
 		ORTHOGRAPHIC_CAMERA: 0,
 		GLOSSY_MODE: 0,
-
 		ENABLE_DEBUG: 0,
+
+		JITTER_STRATEGY: 0,
+		BLUENOISE_SIZE: '32.0',
 
 	},
 
@@ -24,6 +26,8 @@ export const MarchResultsShader = {
 		backfaceDepthBuffer: { value: null },
 		invProjectionMatrix: { value: new Matrix4() },
 		projMatrix: { value: new Matrix4() },
+
+		blueNoiseTex: { value: null },
 
 		stride: { value: 20 },
 		resolution: { value: new Vector2() },
@@ -60,6 +64,10 @@ export const MarchResultsShader = {
 		uniform float stride;
 		uniform float jitter;
 		uniform float maxDistance;
+
+		#if JITTER_STRATEGY == 1
+		uniform sampler2D blueNoiseTex;
+		#endif
 
 		vec3 Deproject( vec3 p ) {
 
@@ -206,7 +214,12 @@ export const MarchResultsShader = {
 
 			// Track all values in a vector
 			float pixelStride = stride;
-			float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
+
+			#if JITTER_STRATEGY == 0
+			float jitterMod = mod( ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25, 1.0 );
+			#else
+			float jitterMod = texture2D( blueNoiseTex, gl_FragCoord.xy / BLUENOISE_SIZE ).r;
+			#endif
 			vec4 PQK = vec4( P0, Q0.z, k0 );
 			vec4 dPQK = vec4( dP, dQ.z, dk );
 
@@ -214,7 +227,7 @@ export const MarchResultsShader = {
 			PQK += dPQK;
 
 			dPQK *= pixelStride;
-			PQK += dPQK * mod( jitterMod, 1.0 ) * jitter;
+			PQK += dPQK * jitterMod * jitter;
 
 			// Variables for completion condition
 			float end = P1.x * stepDir;
@@ -388,7 +401,7 @@ export const MarchResultsShader = {
 
 				#if GLOSSY_MODE != 0
 
-				roughnessFade = 1.0 / ( 2.0 * PI * pow( searchRadius, 2.0 ) + 1.0 );
+				roughnessFade = 1.0 / ( searchRadius + 1.0 );
 
 				#endif
 
