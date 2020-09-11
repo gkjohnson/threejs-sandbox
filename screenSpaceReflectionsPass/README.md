@@ -18,6 +18,8 @@ _sponza scene from GLTF 2.0 example models_
 #### High Priority
 - Check coarser depth map lod based on ray distance.
 - Use depth pyramid to raymarch to improve performance, diffuse rough results
+- Does it make sense to quadratically fade the glossy rays in multi glossy and simple glossy?
+- Map the ray cone angle from [PI / 2, 0] to [1.0, 0.0] roughness.
 
 #### Medium Priority
 - Remove for loop ( unroll )
