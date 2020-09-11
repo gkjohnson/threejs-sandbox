@@ -30,7 +30,6 @@ _sponza scene from GLTF 2.0 example models_
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Provide a minimum thickness for potentially thin objects?
-- Perform a reuseable depth prepass to improve performance on all subsequent passes.
 - Investigate how incidence angle should play a role
 - Optionally fall back to environment map
 
@@ -56,6 +55,7 @@ _sponza scene from GLTF 2.0 example models_
 - Remove type conversion in shaders.
 - MRT
 - Stop traversal if a ray goes behind a surface but does not hit.
+- Perform a reuseable depth prepass to improve performance on all subsequent passes.
 
 ### References
 
