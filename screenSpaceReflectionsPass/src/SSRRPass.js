@@ -24,7 +24,7 @@ import {
 import { PackedNormalPass } from './PackedNormalPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
-import { BlueNoiseGenerator } from '../../../blue-noise-generation/src/BlueNoiseGenerator.js';
+import { BlueNoiseGenerator } from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
