@@ -105,7 +105,7 @@ export const MarchResultsShader = {
 
 		#if GLOSSY_MODE == 3
 
-		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv, float lod, float thickness ) {
+		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv, int lod, float thickness ) {
 
 			float sceneZMin = packedTexture2DLOD( depthBufferLod, uv, lod ).r;
 
@@ -387,7 +387,7 @@ export const MarchResultsShader = {
 				float radius = searchRadius * PQK.w;
 				float lod = radius * 10.0;
 
-				intersected = doesIntersect( rayZMax, rayZMin, hitUV, lod, thickness );
+				intersected = doesIntersect( rayZMax, rayZMin, hitUV, int( ceil( lod ) ), thickness );
 
 				if ( intersected ) {
 
