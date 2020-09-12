@@ -387,7 +387,7 @@ export const MarchResultsShader = {
 				float radius = searchRadius * PQK.w;
 				float lod = radius * 10.0;
 
-				intersected = doesIntersect( rayZMax, rayZMin, hitUV, int( ceil( lod ) ), thickness );
+				intersected = doesIntersect( rayZMax, rayZMin, hitUV, int( ceil( lod ) ), thickness + searchRadius );
 
 				if ( intersected ) {
 
