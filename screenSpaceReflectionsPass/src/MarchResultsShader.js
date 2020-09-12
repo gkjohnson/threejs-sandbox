@@ -1,4 +1,5 @@
 import { Matrix4, Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFunctions.js';
 
 export const MarchResultsShader = {
 
@@ -24,6 +25,7 @@ export const MarchResultsShader = {
 		colorBuffer: { value: null },
 		packedBuffer: { value: null },
 		depthBuffer: { value: null },
+		depthBufferLod: { value: null },
 		backfaceDepthBuffer: { value: null },
 		invProjectionMatrix: { value: new Matrix4() },
 		projMatrix: { value: new Matrix4() },
@@ -53,6 +55,9 @@ export const MarchResultsShader = {
 		/* glsl */`
 		#include <common>
 		#include <packing>
+
+		${ sampleFunctions }
+
 		varying vec2 vUv;
 		uniform sampler2D colorBuffer;
 		uniform sampler2D packedBuffer;
@@ -70,6 +75,10 @@ export const MarchResultsShader = {
 
 		#if JITTER_STRATEGY == 1 || ( GLOSSY_JITTER_STRATEGY == 1 && GLOSSY_MODE != 0 )
 		uniform sampler2D blueNoiseTex;
+		#endif
+
+		#if GLOSSY_MODE == 3
+		uniform sampler2D depthBufferLod;
 		#endif
 
 		vec3 Deproject( vec3 p ) {
@@ -94,6 +103,18 @@ export const MarchResultsShader = {
 
 		#if USE_THICKNESS
 
+		#if GLOSSY_MODE == 3
+
+		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv, float lod, float thickness ) {
+
+			float sceneZMin = packedTexture2DLOD( depthBufferLod, uv, lod ).r;
+
+			return sceneZMin != 0.0 &&  rayzmin > sceneZMin - thickness && rayzmax < sceneZMin;
+
+		}
+
+		#else
+
 		bool doesIntersect( float rayzmax, float rayzmin, vec2 uv ) {
 
 			float sceneZMin = texture2D( depthBuffer, uv ).r;
@@ -101,6 +122,8 @@ export const MarchResultsShader = {
 			return sceneZMin != 0.0 &&  rayzmin > sceneZMin - thickness && rayzmax < sceneZMin;
 
 		}
+
+		#endif
 
 		#else
 
@@ -282,6 +305,9 @@ export const MarchResultsShader = {
 
 			}
 			#pragma unroll_loop_end
+			#elif GLOSSY_MODE == 3
+			float searchRadius = 0.0;
+			vec3 finalColor = vec3( 0.0 );
 			#endif
 
 			vec2 hitUV;
@@ -348,10 +374,30 @@ export const MarchResultsShader = {
 				}
 				#pragma unroll_loop_end
 
-				if (intersected) {
+				if ( intersected ) {
 
 					hitUV = hitUV;
 					accumulatedColor /= total;
+
+				}
+				#elif GLOSSY_MODE == 3
+				float rayDist = abs( ( ( rayZMax - csOrig.z ) / ( csEndPoint.z - csOrig.z ) ) * rayLength );
+				searchRadius = rayDist * roughness;
+
+				float radius = searchRadius * PQK.w;
+				float lod = radius * 10.0;
+
+				intersected = doesIntersect( rayZMax, rayZMin, hitUV, lod, thickness );
+
+				if ( intersected ) {
+
+					hitUV = hitUV;
+					finalColor = texture2D( colorBuffer, hitUV, lod * 2.0 ).rgb;
+
+					#if ENABLE_DEBUG
+					gl_FragColor = vec4( lod );
+					return;
+					#endif
 
 				}
 				#else
@@ -361,7 +407,7 @@ export const MarchResultsShader = {
 
 			}
 
-			#if BINARY_SEARCH_ITERATIONS
+			#if BINARY_SEARCH_ITERATIONS && GLOSSY_MODE != 2 && GLOSSY_MODE != 3
 
 			// Binary search
 			#if GLOSSY_MODE == 1
@@ -432,6 +478,13 @@ export const MarchResultsShader = {
 				#if GLOSSY_MODE == 2
 
 				vec3 color = accumulatedColor;
+
+				#elif GLOSSY_MODE == 3
+
+				vec3 color = finalColor;
+				float factor = smoothstep( 3.0, 6.0, searchRadius );
+				roughnessFade = 1.0 / ( searchRadius * factor + 1.0 );
+				// roughnessFade = 1.0;
 
 				#else
 

@@ -3,6 +3,7 @@ import {
 	FloatType,
 	WebGLRenderTarget,
 	RGBAFormat,
+	RGBFormat,
 	Color,
 	ShaderMaterial,
 	FrontSide,
@@ -10,8 +11,11 @@ import {
 	DataTexture,
 	RepeatWrapping,
 	LinearFilter,
+	LinearMipMapLinearFilter,
+	MathUtils,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
 import {
@@ -25,6 +29,8 @@ import { PackedNormalPass } from './PackedNormalPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
 import { BlueNoiseGenerator } from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
+import { PackedMipMapGenerator } from '../../custom-mipmap-generation/src/PackedMipMapGenerator.js';
+import { FullScreenQuad } from '../../custom-mipmap-generation/src/FullScreenQuad.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
@@ -123,6 +129,32 @@ export class SSRRPass extends Pass {
 		this._backfaceDepthReplacement = new LinearDepthPass();
 		this._backfaceDepthReplacement.side = BackSide;
 
+		this._depthBufferLod =
+		new WebGLRenderTarget( 256, 256, {
+			minFilter: LinearMipMapLinearFilter,
+			magFilter: LinearFilter,
+			format: RGBAFormat,
+			type: FloatType
+		} );
+		this._depthBufferLodGenerator = new PackedMipMapGenerator(
+			/* glsl */`
+				float maxVal = samples[ 0 ].r;
+				for ( int i = 1; i < SAMPLES; i ++ ) {
+
+					maxVal = min( maxVal, samples[ i ].r );
+
+				}
+				gl_FragColor = vec4( maxVal );
+			`
+		);
+
+		this._colorLod = new WebGLRenderTarget( 1, 1, {
+			format: RGBFormat,
+			minFilter: LinearMipMapLinearFilter,
+			magFilter: NearestFilter,
+			generateMipmaps: true,
+		} );
+
 		this._packedReplacement = new PackedNormalPass();
 
 		this._packedBuffer =
@@ -146,6 +178,8 @@ export class SSRRPass extends Pass {
 
 		const colorResolveMaterial = new ShaderMaterial( ColorResolveShader );
 		this._colorResolveQuad = new Pass.FullScreenQuad( colorResolveMaterial );
+
+		this._copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
 	}
 
@@ -186,7 +220,7 @@ export class SSRRPass extends Pass {
 		const depthBuffer = this._depthBuffer;
 		const packedBuffer = this._packedBuffer;
 		const backfaceDepthBuffer = this._backfaceDepthBuffer;
-		const useThickness = this.useThickness;
+		const useThickness = this.glossinessMode === SSRRPass.MIP_PYRAMID_GLOSSY || this.useThickness;
 
 		const depthReplacement = this._depthReplacement;
 		const backfaceDepthReplacement = this._backfaceDepthReplacement;
@@ -262,6 +296,19 @@ export class SSRRPass extends Pass {
 
 		}
 
+		if ( this.glossinessMode === SSRRPass.MIP_PYRAMID_GLOSSY ) {
+
+			this._depthBufferLodGenerator.update( depthBuffer, this._depthBufferLod, renderer, false );
+
+			const pow2ColorSize = MathUtils.floorPowerOfTwo( readBuffer.texture.image.width, readBuffer.texture.image.height );
+			this._copyQuad.material.uniforms.tDiffuse.value = readBuffer.texture;
+			this._colorLod.texture.generateMipmaps = true;
+			this._colorLod.setSize( pow2ColorSize, pow2ColorSize );
+			renderer.setRenderTarget( this._colorLod );
+			this._copyQuad.render( renderer );
+
+		}
+
 		if ( useThickness === false ) {
 
 			// Render Backface Depth
@@ -315,6 +362,13 @@ export class SSRRPass extends Pass {
 		marchUniforms.stride.value = this.stride;
 		marchUniforms.blueNoiseTex.value = blueNoiseTex;
 		marchUniforms.roughnessCutoff.value = this.roughnessCutoff;
+
+		if ( this.glossinessMode === SSRRPass.MIP_PYRAMID_GLOSSY ) {
+
+			marchUniforms.colorBuffer.value = this._colorLod.texture;
+			marchUniforms.depthBufferLod.value = this._depthBufferLod.texture;
+
+		}
 
 		if ( marchMaterial.defines.GLOSSY_MODE !== this.glossinessMode ) {
 
@@ -462,6 +516,7 @@ SSRRPass.INTERSECTION_COLOR = 8;
 SSRRPass.NO_GLOSSY = 0;
 SSRRPass.SIMPLE_GLOSSY = 1;
 SSRRPass.MULTI_GLOSSY = 2;
+SSRRPass.MIP_PYRAMID_GLOSSY = 3;
 
 SSRRPass.REGULAR_JITTER = 0;
 SSRRPass.BLUENOISE_JITTER = 1;

@@ -261,7 +261,7 @@
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 45, 200, 130 );
+				directionalLight.position.set( 60, 200, 130 );
 				// directionalLight.position.set( 30, 200, 130 );
 				directionalLight.castShadow = true;
 
@@ -369,6 +369,7 @@
 					NO_GLOSSY: SSRRPass.NO_GLOSSY,
 					SIMPLE_GLOSSY: SSRRPass.SIMPLE_GLOSSY,
 					MULTI_GLOSSY: SSRRPass.MULTI_GLOSSY,
+					MIP_PYRAMID_GLOSSY: SSRRPass.MIP_PYRAMID_GLOSSY,
 				} ).onChange( value => {
 
 					ssrrPass.glossinessMode = parseFloat( value );
