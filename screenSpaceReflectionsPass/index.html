@@ -319,7 +319,7 @@
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 5;
+				controls.minDistance = 1;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -348,14 +348,14 @@
 
 				const scaleFolder = gui.addFolder( 'effect scale' );
 				scaleFolder.add( params, 'intensity', 0, 1 );
-				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 )
+				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
 						ssrrPass.renderTargetScale = v;
 						onWindowResize();
 
 					} );
-				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 )
+				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
 						ssrrPass.raymarchTargetScale = v;
@@ -467,7 +467,6 @@
 
 				// animation
 				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 0.3;
-				if ( scenes.helmet.children.length > 1 ) scenes.helmet.children[ 1 ].rotation.z = window.performance.now() / 5000;
 
 				// ssrr settings
 				ssrrPass.intensity = params.intensity;

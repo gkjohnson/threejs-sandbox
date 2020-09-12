@@ -112,8 +112,6 @@ export const ColorResolveShader = {
 						// gaussian distribution
 						weight *= gaussian( x, blurWidth ) * gaussian( y, blurWidth );
 
-						totalWeight += weight;
-
 						// accumulate
 						vec4 val = texture2D( intersectBuffer, marchUv );
 						sample += val.rgb * weight;

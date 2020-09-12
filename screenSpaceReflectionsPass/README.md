@@ -24,7 +24,6 @@ _sponza scene from GLTF 2.0 example models_
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
 - Use the normal / depth used for raymarching and compare that the to the current high def fragment in the upscale. The normal and depth in the blur loop body should be from the march uv but using that causes issues.
-- Improve the connected-ness of the reflections to the ground (see bottom of mirror in spheres example) (this happens with high stride because we step first after applying jitter meaning we get no steps near the base of the mirror)
 - Simplify step calculations.
 - Understand TODO items in raymarch code -- how are we getting positive values for rayZMin? Why are we getting ray hits where there is no depth with ortho cam?
 - Use a depth pyramid map to raymarch
@@ -36,7 +35,6 @@ _sponza scene from GLTF 2.0 example models_
 ## Fixes
 
 ### Bugs
-- Improve the connected-ness of the reflections to the ground.
 - Objects in the close foreground can create incorrect reflections on the floor / further objects (looks like an interpolated sampling issue?)
 - "Black" is considered close to the camera at the moment and is also the same as the clear color. So if there's no background elements then the unrendered space will look like it's "close" to the camera and cause intersections.
 	- This is complicated because the depths are negated and in the range `[ near, far ]`. Fix this when the depth is changed to use another format later.
