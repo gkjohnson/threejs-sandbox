@@ -315,7 +315,7 @@ export const MarchResultsShader = {
 			for ( float stepCount = 1.0; stepCount <= float( MAX_STEPS ); stepCount ++ ) {
 
 				#if GLOSSY_MODE != 0
-				PQK += ( dPQK / pixelStride ) * ( 1.0 + max( searchRadius, pixelStride ) );
+				PQK += ( dPQK / pixelStride ) * ( max( searchRadius, pixelStride ) );
 				#else
 				PQK += dPQK;
 				#endif
