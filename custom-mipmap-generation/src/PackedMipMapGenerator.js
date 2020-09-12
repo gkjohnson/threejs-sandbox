@@ -101,6 +101,9 @@ export class PackedMipMapGenerator {
 			swapTarget.dispose();
 			swapTarget.copy( target );
 
+			// mrdoob/three.js issue #20328
+			swapTarget.texture.image = { ...swapTarget.texture.image };
+
 		} else {
 
 			swapTarget.setSize( targetWidth, targetHeight );
