@@ -182,8 +182,8 @@
 				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.set( 2000, 2000, 0.1 );
-				plane.position.y = -4;
+				plane.scale.set( 100, 100, 1 );
+				plane.position.y = - 1 - 0.5;
 				group.add( plane );
 
 				var textureLoader = new THREE.TextureLoader();
@@ -191,44 +191,41 @@
 					map.wrapS = THREE.RepeatWrapping;
 					map.wrapT = THREE.RepeatWrapping;
 					map.anisotropy = 4;
-					map.repeat.set( 50, 50 );
-					plane.material.roughnessMap = map;
+					map.repeat.set( 10, 10 );
 					plane.material.map = map;
 					plane.material.needsUpdate = true;
 				} );
 
-				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
-				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
+				var geom = new THREE.SphereBufferGeometry( 1, 50, 50 );
+				var sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
-				sphere.position.x = -10;
+				sphere.position.x = -3;
 				group.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xff0000, metalness: 0.25, roughness: 0.25 } ) );
+				sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0xff0000, metalness: 0.25, roughness: 0.25 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
 				sphere.position.x = 0;
 				group.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
+				sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
-				sphere.position.x = 10;
+				sphere.position.x = 3;
 				group.add(sphere);
 
 				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0, side: THREE.DoubleSide, roughness: 0 }));
-				mirror.rotation.set( 0, 0, 0 );
-				mirror.scale.set(60, 20, 0.5);
-				mirror.position.y = -4;
-				mirror.position.z = -15;
+				mirror.scale.set( 15, 5, 1 );
+				mirror.position.z = - 4;
 				group.add(mirror);
 
 				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
-				box.position.x = -20;
-				box.scale.set( 2, 10, 2 );
-				group.add(box);
+				box.position.x = - 6;
+				box.scale.set( 0.5, 3.5, 0.5 );
+				group.add( box );
 
-				group.scale.setScalar( 0.1 );
+				group.scale.setScalar( 0.5 );
 
 				return group;
 
