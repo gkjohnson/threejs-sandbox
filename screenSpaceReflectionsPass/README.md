@@ -54,6 +54,10 @@ _sponza scene from GLTF 2.0 example models_
 - MRT
 - Stop traversal if a ray goes behind a surface but does not hit.
 - Perform a reuseable depth prepass to improve performance on all subsequent passes.
+- Use explicit mip level fetch.
+- Use explict pixel fetch from sample.
+- Use WebGL custom mip maps.
+- Generate non power of two mip maps
 
 ### References
 
