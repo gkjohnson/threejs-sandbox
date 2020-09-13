@@ -63,6 +63,7 @@ export class MotionBlurPass extends Pass {
 		this.blurTransparent = 'blurTransparent' in options ? options.blurTransparent : false;
 		this.renderCameraBlur = 'renderCameraBlur' in options ? options.renderCameraBlur : true;
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1;
+		this.jitter = 'jitter' in options ? options.jitter : 1;
 
 		this.debug = {
 
@@ -167,6 +168,7 @@ export class MotionBlurPass extends Pass {
 				const uniforms = compositeMaterial.uniforms;
 				uniforms.sourceBuffer.value = readBuffer.texture;
 				uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+				uniforms.jitter.value = this.jitter;
 
 				if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
 

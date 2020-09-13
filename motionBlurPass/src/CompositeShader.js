@@ -18,7 +18,13 @@ export const CompositeShader = {
 
 			value: null
 
-		}
+		},
+
+		jitter: {
+
+			value: 1
+
+		},
 
 	},
 
@@ -36,13 +42,14 @@ export const CompositeShader = {
 			varying vec2 vUv;
 			uniform sampler2D sourceBuffer;
 			uniform sampler2D velocityBuffer;
+			uniform float jitter;
 
 			#include <common>
 			void main() {
 
 				vec2 vel = texture2D( velocityBuffer, vUv ).xy;
-				float jitter = rand( gl_FragCoord.xy * 0.01 );
-				vec2 jitterOffset = vel * vec2( jitter ) / float( SAMPLES );
+				float jitterValue = rand( gl_FragCoord.xy * 0.01 );
+				vec2 jitterOffset = jitter * vel * vec2( jitterValue ) / float( SAMPLES );
 				vec4 result;
 
 				vec2 startUv = clamp( vUv - vel * 0.5 + jitterOffset, 0.0, 1.0 );

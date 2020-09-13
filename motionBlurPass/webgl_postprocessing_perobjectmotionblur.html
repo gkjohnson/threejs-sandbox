@@ -64,7 +64,8 @@
 				interpolateGeometry: 1,
 				smearIntensity: 1,
 				speed: 20,
-				renderTargetScale: 1
+				renderTargetScale: 1,
+				jitter: 1,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -222,6 +223,7 @@
 				motionFolder.add( params, 'enabled' );
 				motionFolder.add( params, 'cameraBlur' );
 				motionFolder.add( params, 'samples', 0, 50 ).step( 1 );
+				motionFolder.add( params, 'jitter', 0, 5 ).step( 0.01 );
 				motionFolder.add( params, 'smearIntensity', 0, 4 );
 				motionFolder.add( params, 'expandGeometry', 0, 1 );
 				motionFolder.add( params, 'interpolateGeometry', 0, 1 );
@@ -288,6 +290,7 @@
 				motionPass.interpolateGeometry = params.interpolateGeometry;
 				motionPass.renderCameraBlur = params.cameraBlur;
 				motionPass.smearIntensity = params.smearIntensity;
+				motionPass.jitter = params.jitter;
 
 				camera.lookAt( scene.position );
 
