@@ -376,6 +376,7 @@ export const MarchResultsShader = {
 				// should be negative.
 				if ( rayZMin > 0.0 ) break;
 
+				// TODO: the glossiness paths should convert glossiness search radius from world space in to screen space
 				#if GLOSSY_MODE == 0 // NO_GLOSSY
 
 				intersected = doesIntersect( rayZMax, rayZMin, hitUV );
