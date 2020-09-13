@@ -13,10 +13,6 @@ _sponza scene from GLTF 2.0 example models_
 
 ## Features
 
-#### High Priority
-- Check coarser depth map lod based on ray distance.
-- Use depth pyramid to raymarch to improve performance, diffuse rough results
-
 #### Medium Priority
 - Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
@@ -31,6 +27,7 @@ _sponza scene from GLTF 2.0 example models_
 - Provide a minimum thickness for potentially thin objects?
 - Investigate how incidence angle should play a role
 - Optionally fall back to environment map
+- Convert the sample radius for glossy sampling from world space to clip coordinates
 
 ## Fixes
 
