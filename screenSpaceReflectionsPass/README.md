@@ -16,6 +16,7 @@ _sponza scene from GLTF 2.0 example models_
 #### Medium Priority
 - Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
+- Fix depth pyramid glossiness when passing behind objects.
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
