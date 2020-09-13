@@ -2,7 +2,9 @@ export const CompositeShader = {
 
 	defines: {
 
-		SAMPLES: 30
+		SAMPLES: 30,
+		JITTER_STRATEGY: 1,
+		BLUENOISE_SIZE: '32.0'
 
 	},
 
@@ -26,10 +28,16 @@ export const CompositeShader = {
 
 		},
 
+		blueNoiseTex: {
+
+			value: null
+
+		}
+
 	},
 
 	vertexShader:
-		`
+		/* glsl */`
 			varying vec2 vUv;
 			void main() {
 				vUv = uv;
@@ -38,17 +46,29 @@ export const CompositeShader = {
 		`,
 
 	fragmentShader:
-		`
+		/* glsl */`
 			varying vec2 vUv;
 			uniform sampler2D sourceBuffer;
 			uniform sampler2D velocityBuffer;
 			uniform float jitter;
 
+			#if JITTER_STRATEGY == 2 // blue noise
+			uniform sampler2D blueNoiseTex;
+			#endif
+
 			#include <common>
 			void main() {
 
 				vec2 vel = texture2D( velocityBuffer, vUv ).xy;
+
+				#if JITTER_STRATEGY == 0 // Regular Jitter
+				float jitterValue = mod( ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25, 1.0 );
+				#elif JITTER_STRATEGY == 1 // Random Jitter
 				float jitterValue = rand( gl_FragCoord.xy * 0.01 );
+				#elif JITTER_STRATEGY == 2 // Blue Noise Jitter
+				float jitterValue = texture2D( blueNoiseTex, gl_FragCoord.xy / BLUENOISE_SIZE ).r;
+				#endif
+
 				vec2 jitterOffset = jitter * vel * vec2( jitterValue ) / float( SAMPLES );
 				vec4 result;
 

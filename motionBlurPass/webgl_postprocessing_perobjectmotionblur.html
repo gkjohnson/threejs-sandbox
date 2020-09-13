@@ -66,6 +66,7 @@
 				speed: 20,
 				renderTargetScale: 1,
 				jitter: 1,
+				jitterStrategy: 1,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -224,6 +225,11 @@
 				motionFolder.add( params, 'cameraBlur' );
 				motionFolder.add( params, 'samples', 0, 50 ).step( 1 );
 				motionFolder.add( params, 'jitter', 0, 5 ).step( 0.01 );
+				motionFolder.add( params, 'jitterStrategy', {
+					REGULAR_JITTER: MotionBlurPass.REGULAR_JITTER,
+					RANDOM_JITTER: MotionBlurPass.RANDOM_JITTER,
+					BLUENOISE_JITTER: MotionBlurPass.BLUENOISE_JITTER,
+				} );
 				motionFolder.add( params, 'smearIntensity', 0, 4 );
 				motionFolder.add( params, 'expandGeometry', 0, 1 );
 				motionFolder.add( params, 'interpolateGeometry', 0, 1 );
@@ -291,6 +297,7 @@
 				motionPass.renderCameraBlur = params.cameraBlur;
 				motionPass.smearIntensity = params.smearIntensity;
 				motionPass.jitter = params.jitter;
+				motionPass.jitterStrategy = params.jitterStrategy;
 
 				camera.lookAt( scene.position );
 
