@@ -1,6 +1,6 @@
 # threejs-sandbox
 
-Set of experiments and extensions to THREE.js.
+Set of experiments and extensions to THREE.js. These pages are a sandbox of examples and not necessarily ready to include in projects and may require some work to properly and performantly integrate.
 
 ## Potential Projects
 
@@ -14,11 +14,10 @@ Set of experiments and extensions to THREE.js.
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 - Capsule Geometry / Math Class
 - Hatched shadows using derivative normals
-- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
-- Stochastic transparency
 
 **On Hold**
 - Half Edge data structure
 
-**In Progress**
-- SSRR
+**Next**
+- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
+- Stochastic transparency
