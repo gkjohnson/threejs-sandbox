@@ -56,7 +56,7 @@
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { SSRRPass } from './src/SSRRPass.js';
+			import { SSRPass } from './src/SSRPass.js';
 
 			// globals
 			var stats;
@@ -84,10 +84,10 @@
 				glossyJitterStrategy: 1,
 				useRoughnessMaps: true,
 				useRoughnessOverride: true,
-				roughnessOverride: 0.1,
+				roughnessOverride: 0.15,
 				roughnessCutoff: 1,
 
-				display: SSRRPass.DEFAULT,
+				display: SSRPass.DEFAULT,
 				scene: 'sponza',
 
 				useNormalMaps: true,
@@ -95,7 +95,7 @@
 			var camera, orthoCamera, scene, renderer, controls;
 			var composer;
 			var sphere;
-			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
+			var fxaaPass, ssrPass, gammaPass, motionPass, renderPass;
 			var scenes;
 
 			init();
@@ -164,6 +164,25 @@
 					new THREE.MeshStandardMaterial( { roughness: 0, color: 0x010101 } )
 				);
 				floor.material.color.setRGB( 0.0005, 0.0005, 0.0005 );
+
+				new THREE.TextureLoader().load(
+					'./assets/checkerboard.o.jpg',
+					texture => {
+
+						floor.material.roughnessMap = texture;
+						floor.material.needsUpdate = true;
+
+					}
+				);
+
+				const box = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshBasicMaterial( { roughness: 0, side: THREE.BackSide } ),
+				);
+				box.scale.setScalar( 10 );
+				box.position.y = 3
+				group.add( box );
+				window.box = box;
 
 				floor.scale.set( 10, 1, 10 );
 				floor.position.y = -1.75;
@@ -295,10 +314,10 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				ssrrPass = new SSRRPass( scene, camera );
-				ssrrPass.raymarchTargetScale = params.raymarchTargetScale;
-				ssrrPass.renderTargetScale = params.renderTargetScale;
-				window.ssrrPass = ssrrPass;
+				ssrPass = new SSRPass( scene, camera );
+				ssrPass.raymarchTargetScale = params.raymarchTargetScale;
+				ssrPass.renderTargetScale = params.renderTargetScale;
+				window.ssrPass = ssrPass;
 
 				const floatRT = new THREE.WebGLRenderTarget( 1, 1, {
 					minFilter: THREE.LinearFilter,
@@ -309,7 +328,7 @@
 				composer = new EffectComposer( renderer, floatRT );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
-				composer.addPass( ssrrPass );
+				composer.addPass( ssrPass );
 				composer.addPass( fxaaPass );
 				composer.addPass( gammaPass );
 
@@ -338,11 +357,11 @@
 				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 ).step( 1 );
 				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
 				raymarchingFolder.add( params, 'jitterStrategy', {
-					REGULAR_JITTER: SSRRPass.REGULAR_JITTER,
-					BLUENOISE_JITTER: SSRRPass.BLUENOISE_JITTER,
+					REGULAR_JITTER: SSRPass.REGULAR_JITTER,
+					BLUENOISE_JITTER: SSRPass.BLUENOISE_JITTER,
 				} );
 				raymarchingFolder.add( params, 'useThickness' );
-				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
+				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.5 ).step( 0.001 );
 				raymarchingFolder.add( params, 'useNormalMaps' );
 				raymarchingFolder.open();
 
@@ -351,14 +370,14 @@
 				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
-						ssrrPass.renderTargetScale = v;
+						ssrPass.renderTargetScale = v;
 						onWindowResize();
 
 					} );
 				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
-						ssrrPass.raymarchTargetScale = v;
+						ssrPass.raymarchTargetScale = v;
 						onWindowResize();
 
 					} );
@@ -366,21 +385,21 @@
 
 				const glossFolder = gui.addFolder( 'glossiness' );
 				glossFolder.add( params, 'glossinessMode', {
-					NO_GLOSSY: SSRRPass.NO_GLOSSY,
-					SIMPLE_GLOSSY: SSRRPass.SIMPLE_GLOSSY,
-					MULTI_GLOSSY: SSRRPass.MULTI_GLOSSY,
-					MIP_PYRAMID_GLOSSY: SSRRPass.MIP_PYRAMID_GLOSSY,
+					NO_GLOSSY: SSRPass.NO_GLOSSY,
+					SIMPLE_GLOSSY: SSRPass.SIMPLE_GLOSSY,
+					MULTI_GLOSSY: SSRPass.MULTI_GLOSSY,
+					MIP_PYRAMID_GLOSSY: SSRPass.MIP_PYRAMID_GLOSSY,
 				} ).onChange( value => {
 
-					ssrrPass.glossinessMode = parseFloat( value );
+					ssrPass.glossinessMode = parseFloat( value );
 
 				} );
 				glossFolder.add( params, 'glossyJitterStrategy', {
-					RANDOM_JITTER: SSRRPass.RANDOM_JITTER,
-					BLUENOISE_JITTER: SSRRPass.BLUENOISE_JITTER,
+					RANDOM_JITTER: SSRPass.RANDOM_JITTER,
+					BLUENOISE_JITTER: SSRPass.BLUENOISE_JITTER,
 				} ).onChange( value => {
 
-					ssrrPass.glossyJitterStrategy = parseFloat( value );
+					ssrPass.glossyJitterStrategy = parseFloat( value );
 
 				} );
 				glossFolder.add( params, 'useRoughnessMaps' );
@@ -399,18 +418,18 @@
 					params,
 					'display',
 					{
-						DEFAULT: SSRRPass.DEFAULT,
-						NORMAL: SSRRPass.NORMAL,
-						ROUGHNESS: SSRRPass.ROUGHNESS,
-						FRONT_DEPTH: SSRRPass.FRONT_DEPTH,
-						BACK_DEPTH: SSRRPass.BACK_DEPTH,
-						DEPTH_DELTA: SSRRPass.DEPTH_DELTA,
-						INTERSECTION_RESULTS: SSRRPass.INTERSECTION_RESULTS,
-						INTERSECTION_DISTANCE: SSRRPass.INTERSECTION_DISTANCE,
-						INTERSECTION_COLOR: SSRRPass.INTERSECTION_COLOR,
+						DEFAULT: SSRPass.DEFAULT,
+						NORMAL: SSRPass.NORMAL,
+						ROUGHNESS: SSRPass.ROUGHNESS,
+						FRONT_DEPTH: SSRPass.FRONT_DEPTH,
+						BACK_DEPTH: SSRPass.BACK_DEPTH,
+						DEPTH_DELTA: SSRPass.DEPTH_DELTA,
+						INTERSECTION_RESULTS: SSRPass.INTERSECTION_RESULTS,
+						INTERSECTION_DISTANCE: SSRPass.INTERSECTION_DISTANCE,
+						INTERSECTION_COLOR: SSRPass.INTERSECTION_COLOR,
 					} ).onChange( value => {
 
-						ssrrPass.debug.display = parseFloat( value );
+						ssrPass.debug.display = parseFloat( value );
 
 					} );
 				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres' ] );
@@ -464,30 +483,30 @@
 				}
 
 				renderPass.camera = params.orthographic ? orthoCamera : camera;
-				ssrrPass.camera = params.orthographic ? orthoCamera : camera;
+				ssrPass.camera = params.orthographic ? orthoCamera : camera;
 
 				// animation
 				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 0.3;
 
-				// ssrr settings
-				ssrrPass.intensity = params.intensity;
-				ssrrPass.steps = params.steps;
-				ssrrPass.stride = params.stride;
-				ssrrPass.binarySearchSteps = params.binarySearchSteps;
-				ssrrPass.enabled = params.enabled;
-				ssrrPass.jitter = params.jitter;
-				ssrrPass.jitterStrategy = params.jitterStrategy;
-				ssrrPass.useThickness = params.useThickness;
-				ssrrPass.thickness = params.thickness;
-				ssrrPass.useNormalMaps = params.useNormalMaps;
-				ssrrPass.useRoughnessMaps = params.useRoughnessMaps;
-				ssrrPass.roughnessOverride = params.useRoughnessOverride ? params.roughnessOverride : null;
-				ssrrPass.glossyJitterStrategy = params.glossyJitterStrategy;
-				ssrrPass.roughnessCutoff = params.roughnessCutoff;
+				// ssr settings
+				ssrPass.intensity = params.intensity;
+				ssrPass.steps = params.steps;
+				ssrPass.stride = params.stride;
+				ssrPass.binarySearchSteps = params.binarySearchSteps;
+				ssrPass.enabled = params.enabled;
+				ssrPass.jitter = params.jitter;
+				ssrPass.jitterStrategy = params.jitterStrategy;
+				ssrPass.useThickness = params.useThickness;
+				ssrPass.thickness = params.thickness;
+				ssrPass.useNormalMaps = params.useNormalMaps;
+				ssrPass.useRoughnessMaps = params.useRoughnessMaps;
+				ssrPass.roughnessOverride = params.useRoughnessOverride ? params.roughnessOverride : null;
+				ssrPass.glossyJitterStrategy = params.glossyJitterStrategy;
+				ssrPass.roughnessCutoff = params.roughnessCutoff;
 
-				ssrrPass.enableBlur = params.enableBlur;
-				ssrrPass.blurRadius = params.blurRadius;
-				ssrrPass.blurStride = params.blurStride;
+				ssrPass.enableBlur = params.enableBlur;
+				ssrPass.blurRadius = params.blurRadius;
+				ssrPass.blurStride = params.blurStride;
 
 				for ( const key in scenes ) {
 
@@ -495,7 +514,7 @@
 
 				}
 
-				gammaPass.enabled = ssrrPass.debug.display === SSRRPass.DEFAULT;
+				gammaPass.enabled = ssrPass.debug.display === SSRPass.DEFAULT;
 				composer.render();
 
 			}

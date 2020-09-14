@@ -434,7 +434,7 @@ export const MarchResultsShader = {
 				#elif GLOSSY_MODE == 3 // MIP_PYRAMID_GLOSSY
 
 				float rayDist = abs( ( ( rayZMax - csOrig.z ) / ( csEndPoint.z - csOrig.z ) ) * rayLength );
-				searchRadius = rayDist * roughness;
+				searchRadius = rayDist * roughness * 3.0;
 
 				float radius = searchRadius * PQK.w;
 				float lod = radius * 10.0;

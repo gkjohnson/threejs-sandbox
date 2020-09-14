@@ -1,4 +1,4 @@
-import { ShaderLib, FrontSide } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderLib, FrontSide, BackSide } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 export class LinearDepthPass extends ShaderReplacement {
@@ -67,7 +67,7 @@ export class LinearDepthPass extends ShaderReplacement {
 			`
 		} );
 
-		this.side = FrontSide;
+		this.invertSide = false;
 
 	}
 
@@ -76,7 +76,11 @@ export class LinearDepthPass extends ShaderReplacement {
 		super.updateUniforms( object, material, target );
 
 		let originalDefine;
-		target.side = this.side;
+		if ( this.invertSide ) {
+
+			target.side = target.side === FrontSide ? BackSide : FrontSide;
+
+		}
 
 		// alphatest
 		originalDefine = target.defines.ALPHATEST;
