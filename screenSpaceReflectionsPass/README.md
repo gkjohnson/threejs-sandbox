@@ -17,6 +17,9 @@ _sponza scene from GLTF 2.0 example models_
 - Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
 - Fix depth pyramid glossiness when passing behind objects.
+- Blur intensity based on roughness (blur rougher surfaces more).
+- Weight blur based on roughness similarity.
+- Use bicubic filtering for mip map glossiness sampling
 
 #### Low Priority
 - Use metalness and roughness values to fade result hit (pack normal xy, metalness, roughness into single buffer)
