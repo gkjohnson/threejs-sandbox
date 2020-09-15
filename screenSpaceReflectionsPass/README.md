@@ -62,6 +62,8 @@ _sponza scene from GLTF 2.0 example models_
 
 ### References
 
+- http://bitsquid.blogspot.com/2017/08/notes-on-screen-space-hiz-tracing.html
+
 - https://blog.demofox.org/2020/05/10/ray-marching-fog-with-blue-noise/
 
 - https://github.com/haolange/Unity_ScreenSpaceTechStack
