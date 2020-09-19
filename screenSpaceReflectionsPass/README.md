@@ -14,6 +14,7 @@ _sponza scene from GLTF 2.0 example models_
 ## Features
 
 #### Medium Priority
+- Add option to disable fade based on distance. With glossy reflections we can progressively take larger and larger steps which let us sample further distances the glossier a surface is. However with fade based on distance glossy sufaces will have to fade at the same rate a sharp surfaces.
 - Remove for loop ( unroll )
 - Further avoid surfaces intersecting with themselves.
 - Fix depth pyramid glossiness when passing behind objects.
