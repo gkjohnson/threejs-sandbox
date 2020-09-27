@@ -77,6 +77,8 @@ _sponza scene from GLTF 2.0 example models_
 
 - https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs
 
+- http://advances.realtimerendering.com/s2015/index.html
+
 #### Godot Implementation
 
 - https://github.com/godotengine/godot/tree/481151be09108a30002ae0a9df118eeddd3987be/servers/rendering/rasterizer_rd/shaders
