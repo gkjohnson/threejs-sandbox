@@ -10,7 +10,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/lens-effects/).
 
-# Improvements
+# Possible Improvements
 
 **Grain**
 - Allow noise to darken pixels.
