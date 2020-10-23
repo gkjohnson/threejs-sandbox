@@ -37,7 +37,7 @@ export class LUTCubeLoader extends Loader {
 
 				}
 
-				scope.manager.itemError( url );
+				this.manager.itemError( url );
 
 			}
 

@@ -166,7 +166,7 @@ export class MotionBlurPass extends Pass {
 		renderer.compile( scene, camera );
 		this._ensurePrevCameraTransform();
 
-		switch( debug.display ) {
+		switch ( debug.display ) {
 
 			case MotionBlurPass.GEOMETRY: {
 

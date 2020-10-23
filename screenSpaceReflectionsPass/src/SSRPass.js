@@ -79,6 +79,7 @@ blueNoiseTex.wrapT = RepeatWrapping;
 blueNoiseTex.minFilter = LinearFilter;
 
 export class SSRPass extends Pass {
+
 	constructor( scene, camera, options = {} ) {
 
 		super();

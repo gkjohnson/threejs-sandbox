@@ -37,7 +37,7 @@ export class LUT3dlLoader extends Loader {
 
 				}
 
-				scope.manager.itemError( url );
+				this.manager.itemError( url );
 
 			}
 

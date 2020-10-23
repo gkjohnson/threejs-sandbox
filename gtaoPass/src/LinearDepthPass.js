@@ -10,7 +10,7 @@ export class LinearDepthPass extends ShaderReplacement {
 				derivatives: true
 			},
 			defines: {
-				USE_UV : ''
+				USE_UV: ''
 			},
 			uniforms: {
 				...ShaderLib.normal.uniforms,
@@ -115,6 +115,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_ALPHAMAP ) {
 
 			target.needsUpdate = true;
+
 		}
 
 		// map
@@ -132,6 +133,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_MAP ) {
 
 			target.needsUpdate = true;
+
 		}
 
 		// uv
@@ -149,6 +151,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_UV ) {
 
 			target.needsUpdate = true;
+
 		}
 
 	}

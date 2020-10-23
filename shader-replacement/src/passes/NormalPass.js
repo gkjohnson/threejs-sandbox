@@ -12,7 +12,7 @@ export class NormalPass extends ShaderReplacement {
 			defines: {
 				// USE_NORMALMAP : '',
 				// TANGENTSPACE_NORMALMAP : '',
-				USE_UV : ''
+				USE_UV: ''
 			},
 			uniforms: {
 				...ShaderLib.normal.uniforms,
