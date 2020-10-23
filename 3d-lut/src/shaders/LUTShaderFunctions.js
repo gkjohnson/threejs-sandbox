@@ -2,28 +2,22 @@ export const lutShaderFunctions = /* glsl */`
 
 	vec3 lutLookup( sampler2D tex, float size, vec3 rgb ) {
 
-		rgb = clamp( rgb, 0.0, 1.0 );
+		// clamp the sample in by half a pixel to avoid interpolation
+		// artifacts between slices laid out next to each other.
+		float halfPixelWidth = 0.5 / size;
+		rgb.rg = clamp( rgb.rg, halfPixelWidth, 1.0 - halfPixelWidth );
 
-		float pixelWidth = size;
-		float pixelHeight = size * size;
-		float alignedSize = ( size - 1.0 ) / size ;
-		vec2 halfPixelSize = vec2( 0.5 / pixelWidth, 0.5 / pixelHeight );
-
-		// prep the red and green values
+		// green offset into a LUT layer
 		float gOffset = rgb.g / size;
 		vec2 uv1 = vec2( rgb.r, gOffset );
-		uv1 *= alignedSize;
-		uv1 += vec2( halfPixelSize );
-
 		vec2 uv2 = vec2( rgb.r, gOffset );
-		uv2 *= alignedSize;
-		uv2 += vec2( halfPixelSize );
 
 		// adjust b slice offset
 		float bNormalized = size * rgb.b;
 		float bSlice = min( floor( size * rgb.b ), size - 1.0 );
 		float bMix = ( bNormalized - bSlice ) / size;
 
+		// get the first lut slice and then the one to interpolate to
 		float b1 = bSlice / size;
 		float b2 = ( bSlice + 1.0 ) / size;
 

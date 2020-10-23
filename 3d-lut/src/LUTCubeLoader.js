@@ -117,6 +117,8 @@ export class LUTCubeLoader extends Loader {
 		texture.format = RGBFormat;
 		texture.type = UnsignedByteType;
 		texture.magFilter = LinearFilter;
+		texture.wrapS = ClampToEdgeWrapping;
+		texture.wrapT = ClampToEdgeWrapping;
 		texture.generateMipmaps = false;
 
 		const texture3D = new DataTexture3D();
@@ -127,6 +129,9 @@ export class LUTCubeLoader extends Loader {
 		texture3D.format = RGBFormat;
 		texture3D.type = UnsignedByteType;
 		texture3D.magFilter = LinearFilter;
+		texture3D.wrapS = ClampToEdgeWrapping;
+		texture3D.wrapT = ClampToEdgeWrapping;
+		texture3D.wrapR = ClampToEdgeWrapping;
 		texture3D.generateMipmaps = false;
 
 		return {

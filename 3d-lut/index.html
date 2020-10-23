@@ -98,7 +98,7 @@
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
-				use3dTexture: false,
+				use3dTexture: true,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -137,9 +137,24 @@
 				texture.format = THREE.RGBFormat;
 				texture.type = THREE.UnsignedByteType;
 				texture.magFilter = THREE.LinearFilter;
+				texture.wrapS = THREE.ClampToEdgeWrapping;
+				texture.wrapT = THREE.ClampToEdgeWrapping;
 				texture.generateMipmaps = false;
 
-				return texture;
+				const texture3D = new THREE.DataTexture3D();
+				texture3D.image.data = data;
+				texture3D.image.width = size;
+				texture3D.image.height = size;
+				texture3D.image.depth = size;
+				texture3D.format = THREE.RGBFormat;
+				texture3D.type = THREE.UnsignedByteType;
+				texture3D.magFilter = THREE.LinearFilter;
+				texture3D.wrapS = THREE.ClampToEdgeWrapping;
+				texture3D.wrapT = THREE.ClampToEdgeWrapping;
+				texture3D.wrapR = THREE.ClampToEdgeWrapping;
+				texture3D.generateMipmaps = false;
+
+				return { texture, texture3D, size };
 
 			}
 
@@ -182,12 +197,7 @@
 
 					if ( l === 'no op' ) {
 
-						lutMap[ l ] = {
-
-							texture: generateNoOpLUT( 32 ),
-							size: 32,
-
-						};
+						lutMap[ l ] = generateNoOpLUT( 32 );
 
 					} else if ( /3dl$/.test( l ) ) {
 
