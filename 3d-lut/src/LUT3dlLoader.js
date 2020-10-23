@@ -25,7 +25,7 @@ export class LUT3dlLoader extends Loader {
 
 				onLoad( this.parse( text ) );
 
-			} catch( e ) {
+			} catch ( e ) {
 
 				if ( onError ) {
 
@@ -51,7 +51,7 @@ export class LUT3dlLoader extends Loader {
 
 		str = str
 			.replace( /^#.*?(\n|\r)/gm, '' )
-			.replace( /^\s*?(\n|\r)/gm, '')
+			.replace( /^\s*?(\n|\r)/gm, '' )
 			.trim();
 
 		const lines = str.split( /[\n\r]+/g );

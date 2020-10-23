@@ -1,6 +1,6 @@
 import { Matrix3, Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
-export const PackedShader =  {
+export const PackedShader = {
 
 	extensions: {
 

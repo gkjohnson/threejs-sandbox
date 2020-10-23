@@ -44,7 +44,7 @@ export const WorldUnitsPointsShader = {
 	}
 	`,
 	fragmentShader: ShaderChunk.points_frag,
-	uniforms: UniformsUtils.merge([{ resolution: { value: new Vector2() } }, UniformsUtils.clone(ShaderLib.points.uniforms)]),
+	uniforms: UniformsUtils.merge( [ { resolution: { value: new Vector2() } }, UniformsUtils.clone( ShaderLib.points.uniforms ) ] ),
 	defines: { USE_SIZEATTENUATION: 1 }
 };
 

@@ -25,7 +25,7 @@ export class LUTCubeLoader extends Loader {
 
 				onLoad( this.parse( text ) );
 
-			} catch( e ) {
+			} catch ( e ) {
 
 				if ( onError ) {
 
@@ -49,7 +49,7 @@ export class LUTCubeLoader extends Loader {
 
 		str = str
 			.replace( /^#.*?(\n|\r)/gm, '' )
-			.replace( /^\s*?(\n|\r)/gm, '')
+			.replace( /^\s*?(\n|\r)/gm, '' )
 			.trim();
 
 		let title = null;

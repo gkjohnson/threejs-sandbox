@@ -17,18 +17,18 @@ export const CompositeShader = {
 		aoSize: { value: new Vector2() },
 		normalBuffer: { value: null },
 		depthBuffer: { value: null },
-		colorBuffer: { value : null },
-		gtaoBuffer: { value : null },
-		intensity: { value : 1.0 },
-		blurStride: { value : 1.0 },
+		colorBuffer: { value: null },
+		gtaoBuffer: { value: null },
+		intensity: { value: 1.0 },
+		blurStride: { value: 1.0 },
 
-		ambientColor: { value : new Color() },
-		ambientIntensity: { value : 0 },
+		ambientColor: { value: new Color() },
+		ambientIntensity: { value: 0 },
 
 	},
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 		varying vec2 vUv;
 		void main() {
 
@@ -39,7 +39,7 @@ export const CompositeShader = {
 	`,
 
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 		varying vec2 vUv;
 
 		uniform vec3 ambientColor;

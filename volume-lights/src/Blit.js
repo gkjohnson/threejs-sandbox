@@ -6,28 +6,28 @@ import {
 	ShaderMaterial,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
-export const blit = ( function() {
+export const blit = ( function () {
 
-    const scene = new Scene();
-    const camera = new OrthographicCamera( -0.5, 0.5, 0.5, -0.5, -0.5, 0.5 );
-    const quad = new Mesh( new PlaneBufferGeometry(), null );
+	const scene = new Scene();
+	const camera = new OrthographicCamera( - 0.5, 0.5, 0.5, - 0.5, - 0.5, 0.5 );
+	const quad = new Mesh( new PlaneBufferGeometry(), null );
 
-    scene.add( quad );
+	scene.add( quad );
 
-    return function( renderer, material, renderTarget = null ) {
+	return function ( renderer, material, renderTarget = null ) {
 
 		quad.material = material;
 		renderer.setRenderTarget( renderTarget );
-        renderer.render( scene, camera );
+		renderer.render( scene, camera );
 		renderer.setRenderTarget( null );
 
-    };
+	};
 
 } )();
 
-export const getBlendMaterial = function() {
+export const getBlendMaterial = function () {
 
-    return new ShaderMaterial({
+	return new ShaderMaterial( {
 
 		defines: {
 
@@ -35,13 +35,13 @@ export const getBlendMaterial = function() {
 
 		},
 
-        uniforms: {
-            texture1: { value: null },
-            texture2: { value: null },
-            weight: { value: 1 }
-        },
+		uniforms: {
+			texture1: { value: null },
+			texture2: { value: null },
+			weight: { value: 1 }
+		},
 
-        vertexShader: `
+		vertexShader: `
             varying vec2 vUv;
             void main()	{
                 vUv = uv;
@@ -49,7 +49,7 @@ export const getBlendMaterial = function() {
             }
         `,
 
-        fragmentShader: `
+		fragmentShader: `
             highp float;
             highp int;
             varying vec2 vUv;
@@ -71,6 +71,6 @@ export const getBlendMaterial = function() {
 			}
         `
 
-    });
+	} );
 
-}
+};

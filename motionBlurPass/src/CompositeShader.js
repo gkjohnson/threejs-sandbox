@@ -37,7 +37,7 @@ export const CompositeShader = {
 	},
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 			varying vec2 vUv;
 			void main() {
 				vUv = uv;
@@ -46,7 +46,7 @@ export const CompositeShader = {
 		`,
 
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 			varying vec2 vUv;
 			uniform sampler2D sourceBuffer;
 			uniform sampler2D velocityBuffer;

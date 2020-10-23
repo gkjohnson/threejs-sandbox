@@ -42,7 +42,7 @@ export const MarchResultsShader = {
 	},
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 		varying vec2 vUv;
 		void main() {
 
@@ -52,7 +52,7 @@ export const MarchResultsShader = {
 		}
 		`,
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 		#include <common>
 		#include <packing>
 
@@ -557,4 +557,4 @@ export const MarchResultsShader = {
 		}
 		`
 
-}
+};

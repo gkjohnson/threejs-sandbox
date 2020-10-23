@@ -52,7 +52,7 @@ export const TranslucentShader = {
 
 	`,
 	defines: {},
-	uniforms: UniformsUtils.merge([
+	uniforms: UniformsUtils.merge( [
 		{
 			frontLayerTexture: { value: null },
 			backLayerTexture: { value: null },
@@ -64,6 +64,6 @@ export const TranslucentShader = {
 			resolution: { value: new Vector2() },
 		},
 		UniformsUtils.clone( ShaderLib.physical.uniforms )
-	]),
+	] ),
 };
 

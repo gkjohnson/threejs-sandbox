@@ -30,7 +30,7 @@ export class FullScreenQuad {
 
 	}
 
-	dispose () {
+	dispose() {
 
 		this._mesh.geometry.dispose();
 

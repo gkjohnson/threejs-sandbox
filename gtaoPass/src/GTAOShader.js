@@ -26,7 +26,7 @@ export const GTAOShader = {
 		depthBuffer: { value: null },
 		renderSize: { value: new Vector2() },
 
-		clipInfo: { value: new Vector4 },
+		clipInfo: { value: new Vector4() },
 		projInfo: { value: new Vector4() },
 		params: { value: new Vector2() },
 
@@ -35,7 +35,7 @@ export const GTAOShader = {
 	},
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 		varying vec2 vUv;
 		void main() {
 
@@ -46,7 +46,7 @@ export const GTAOShader = {
 	`,
 
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 		#define TWO_PI			6.2831853071795864
 		#define HALF_PI			1.5707963267948966
 		#define ONE_OVER_PI		0.3183098861837906
@@ -288,4 +288,4 @@ export const GTAOShader = {
 
 	`
 
-}
+};

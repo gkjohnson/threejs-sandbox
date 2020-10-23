@@ -101,4 +101,4 @@ vec4 textureBicubicLOD( sampler2D sampler, vec2 texCoords, vec2 texSize, float l
 		sy
 	);
 }
-`
+`;

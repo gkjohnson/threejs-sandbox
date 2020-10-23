@@ -1,7 +1,7 @@
 {
  "scripts": {
   "start": "static-server",
-  "lint": "eslint \"./**/*.{js,html}\""
+  "lint": "eslint \"./**/*.js\""
  },
  "devDependencies": {
   "eslint": "^7.11.0",

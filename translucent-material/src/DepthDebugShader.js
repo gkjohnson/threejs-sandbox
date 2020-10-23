@@ -26,10 +26,10 @@ export const DepthDebugShader = {
 
 	`,
 	defines: {},
-	uniforms: UniformsUtils.merge([
+	uniforms: UniformsUtils.merge( [
 		{
 			depthTexture: { value: null },
 		},
-	]),
+	] ),
 };
 

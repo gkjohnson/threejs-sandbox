@@ -41,13 +41,13 @@ export const LayerShader = {
 
 	`,
 	defines: {},
-	uniforms: UniformsUtils.merge([
+	uniforms: UniformsUtils.merge( [
 		{
 			doCompare: { value: 1.0 },
 			compareDepthTexture: { value: null },
 			resolution: { value: new Vector2() },
 		},
 		UniformsUtils.clone( ShaderLib.physical.uniforms )
-	]),
+	] ),
 };
 

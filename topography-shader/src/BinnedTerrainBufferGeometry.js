@@ -38,11 +38,11 @@ export class BinnedTerrainBufferGeometry extends BufferGeometry {
 				const cy = y * h + h / 2 - height / 2;
 				let posIndex = index * 8;
 
-				for ( let bz = -1; bz <= 1; bz += 2 ) {
+				for ( let bz = - 1; bz <= 1; bz += 2 ) {
 
-					for ( let by = -1; by <= 1; by += 2 ) {
+					for ( let by = - 1; by <= 1; by += 2 ) {
 
-						for ( let bx = -1; bx <= 1; bx += 2 ) {
+						for ( let bx = - 1; bx <= 1; bx += 2 ) {
 
 							posAttr.setXYZ(
 								posIndex,
@@ -144,7 +144,7 @@ export class BinnedTerrainBufferGeometry extends BufferGeometry {
 		this.setAttribute( 'position', posAttr );
 		this.deleteAttribute( 'normal' );
 
-		this.setZ = function( x, y, z ) {
+		this.setZ = function ( x, y, z ) {
 
 			const index = y * widthSegments + x;
 			let posIndex = index * 8 + 4;
@@ -155,7 +155,7 @@ export class BinnedTerrainBufferGeometry extends BufferGeometry {
 
 			posAttr.needsUpdate = true;
 
-		}
+		};
 
 
 	}

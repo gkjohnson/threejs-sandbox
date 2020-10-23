@@ -1,6 +1,7 @@
 import { ShaderChunk } from '//unpkg.com/three@0.106.0/build/three.module.js';
 
 export function initShadowColor() {
+
 	ShaderChunk.shadowmap_pars_fragment = /* glsl */`
 
 		${ ShaderChunk.shadowmap_pars_fragment }

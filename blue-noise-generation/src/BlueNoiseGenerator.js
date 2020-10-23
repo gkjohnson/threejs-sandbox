@@ -37,7 +37,7 @@ export class BlueNoiseGenerator {
 		console.time( 'Array Initialization' );
 		fillWithOnes( initialSamples, pointCount );
 		shuffleArray( initialSamples, this.random );
-		console.timeEnd('Array Initialization');
+		console.timeEnd( 'Array Initialization' );
 
 		console.time( 'Score Initialization' );
 		for ( let i = 0, l = initialSamples.length; i < l; i ++ ) {

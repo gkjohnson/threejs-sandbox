@@ -24,7 +24,7 @@ export const ColorResolveShader = {
 	},
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 		varying vec2 vUv;
 		void main() {
 
@@ -35,7 +35,7 @@ export const ColorResolveShader = {
 	`,
 
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 		#include <common>
 		#include <packing>
 		#define E 2.7182818
@@ -146,4 +146,4 @@ export const ColorResolveShader = {
 		}
 	`
 
-}
+};
