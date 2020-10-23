@@ -98,6 +98,7 @@
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
+				use3dTexture: true,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -236,6 +237,12 @@
 				gui.add( params, 'lut', luts );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
+				gui.add( params, 'use3dTexture' ).onChange( value => {
+
+					lutPass.material.defines.USE_3DTEXTURE = Number( value );
+					lutPass.material.needsUpdate = true;
+
+				} );
 
 				gui.open();
 
@@ -293,8 +300,16 @@
 					lutMesh.scale.x = 10 * aspect;
 					lutMesh.scale.y = 10;
 
-					lutPass.material.uniforms.lutSize.value = lut.size;
-					lutPass.material.uniforms.lut.value = lut.texture3D;
+					if ( params.use3dTexture ) {
+
+						lutPass.material.uniforms.lut.value = lut.texture3D;
+
+					} else {
+
+						lutPass.material.uniforms.lutSize.value = lut.size;
+						lutPass.material.uniforms.lut.value = lut.texture;
+
+					}
 
 				}
 
