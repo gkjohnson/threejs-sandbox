@@ -45,7 +45,7 @@
 			import { FXAAShader } from '//unpkg.com/three@0.120.1/examples/jsm/shaders/FXAAShader.js';
 			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
 			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
-			import { LUTShader } from './src/shaders/LUTShader.js';
+			import { LUTPass } from './src/LUTPass.js';
 
 			import Stats from '//unpkg.com/three@0.120.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
@@ -98,7 +98,7 @@
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
-				use3dTexture: true,
+				use3dTexture: false,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -211,7 +211,7 @@
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
-				lutPass = new ShaderPass( LUTShader );
+				lutPass = new LUTPass();
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 
@@ -237,12 +237,7 @@
 				gui.add( params, 'lut', luts );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
-				gui.add( params, 'use3dTexture' ).onChange( value => {
-
-					lutPass.material.defines.USE_3DTEXTURE = Number( value );
-					lutPass.material.needsUpdate = true;
-
-				} );
+				gui.add( params, 'use3dTexture' );
 
 				gui.open();
 
@@ -283,7 +278,7 @@
 
 				const prevMap = lutMesh.material.map;
 				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
-				lutPass.material.uniforms.intensity.value = params.intensity;
+				lutPass.intensity = params.intensity;
 
 				if ( lutMesh.material.map ) {
 
@@ -302,16 +297,17 @@
 
 					if ( params.use3dTexture ) {
 
-						lutPass.material.uniforms.lut.value = lut.texture3D;
+						lutPass.lut = lut.texture3D;
 
 					} else {
 
-						lutPass.material.uniforms.lutSize.value = lut.size;
-						lutPass.material.uniforms.lut.value = lut.texture;
+						lutPass.lut = lut.texture;
 
 					}
 
 				}
+
+				window.lutPass = lutPass;
 
 				lutPass.enabled = ! params.displayLut;
 				gammaPass.enabled = ! params.displayLut;

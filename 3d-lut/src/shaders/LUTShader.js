@@ -7,6 +7,8 @@ export const LUTShader = {
 	},
 
 	uniforms: {
+		lut3d: { value: null },
+
 		lut: { value: null },
 		lutSize: { value: 0 },
 
@@ -34,7 +36,7 @@ export const LUTShader = {
 		${ lutShaderFunctions }
 
 		#if USE_3DTEXTURE
-		uniform sampler3D lut;
+		uniform sampler3D lut3d;
 		#else
 		uniform sampler2D lut;
 		uniform float lutSize;
@@ -48,7 +50,7 @@ export const LUTShader = {
 			vec4 val = texture2D( tDiffuse, vUv );
 			vec4 lutVal;
 			#if USE_3DTEXTURE
-			lutVal = vec4( texture( lut, val.rgb ).rgb, val.a );
+			lutVal = vec4( texture( lut3d, val.rgb ).rgb, val.a );
 			#else
 			lutVal = vec4( lutLookup( lut, lutSize, val.rgb ), val.a );
 			#endif
