@@ -5,6 +5,7 @@ import {
 	FileLoader,
 	Vector3,
 	DataTexture,
+	DataTexture3D,
 	RGBFormat,
 	UnsignedByteType,
 	ClampToEdgeWrapping,
@@ -115,11 +116,22 @@ export class LUT3dlLoader extends Loader {
 		texture.magFilter = LinearFilter;
 		texture.generateMipmaps = false;
 
+		const texture3D = new DataTexture3D();
+		texture3D.image.data = data;
+		texture3D.image.width = size;
+		texture3D.image.height = size;
+		texture3D.image.depth = size;
+		texture3D.format = RGBFormat;
+		texture3D.type = UnsignedByteType;
+		texture3D.magFilter = LinearFilter;
+		texture3D.generateMipmaps = false;
+
 		return {
 			size,
 			domainMin,
 			domainMax,
 			texture,
+			texture3D,
 		};
 
 	}
