@@ -147,7 +147,7 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const debug = this.debug;
 		const scene = this.scene;

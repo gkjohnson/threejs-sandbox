@@ -223,7 +223,7 @@ export class PixelOutlinePass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const colorMap = this.colorMap;
 		const objects = this.objects;

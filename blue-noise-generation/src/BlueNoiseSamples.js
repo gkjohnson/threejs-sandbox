@@ -146,7 +146,7 @@ export class BlueNoiseSamples {
 
 		// TODO: Is there a way to keep track of the highest and lowest scores here to avoid have to search over
 		// everything in the buffer?
-		const { size, score, sigma, lookupTable } = this;
+		const { size, score, lookupTable } = this;
 
 		// const sigma2 = sigma * sigma;
 		// const radius = Math.floor( size / 2 );

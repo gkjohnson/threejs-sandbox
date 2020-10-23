@@ -4,7 +4,6 @@ import {
 	WebGLRenderTarget,
 	NearestFilter,
 	RGBAFormat,
-	FloatType,
 	HalfFloatType,
 	RGBFormat,
 	Math as MathUtils,
@@ -27,7 +26,7 @@ const blackColor = new Color( 0 );
 
 export class GTAOPass extends Pass {
 
-	constructor( scene, camera, options = {} ) {
+	constructor( scene, camera ) {
 
 		super();
 
@@ -140,7 +139,7 @@ export class GTAOPass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const {
