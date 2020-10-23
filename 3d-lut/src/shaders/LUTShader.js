@@ -3,7 +3,7 @@ import { lutShaderFunctions } from './LUTShaderFunctions.js';
 export const LUTShader = {
 
 	defines: {
-		USE_3DTEXTURE: 0,
+		USE_3DTEXTURE: 1,
 	},
 
 	uniforms: {
@@ -29,6 +29,7 @@ export const LUTShader = {
 
 
 	fragmentShader: /* glsl */`
+		precision highp sampler3D;
 
 		${ lutShaderFunctions }
 
@@ -47,7 +48,7 @@ export const LUTShader = {
 			vec4 val = texture2D( tDiffuse, vUv );
 			vec4 lutVal;
 			#if USE_3DTEXTURE
-			lutVal = vec4( texture( tDiffuse, val.rgb ), val.a );
+			lutVal = vec4( texture( lut, val.rgb ).rgb, val.a );
 			#else
 			lutVal = vec4( lutLookup( lut, lutSize, val.rgb ), val.a );
 			#endif

@@ -5,6 +5,7 @@ import {
 	FileLoader,
 	Vector3,
 	DataTexture,
+	DataTexture3D,
 	RGBFormat,
 	UnsignedByteType,
 	ClampToEdgeWrapping,
