@@ -1,8 +1,10 @@
 {
  "scripts": {
-  "start": "static-server"
+  "start": "static-server",
+  "lint": "eslint \"./**/*.{js,html}\""
  },
  "devDependencies": {
+  "eslint": "^7.11.0",
   "eslint-config-mdcs": "^4.2.3",
   "static-server": "^2.2.1"
  }
