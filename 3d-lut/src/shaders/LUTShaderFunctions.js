@@ -1,6 +1,6 @@
 export const lutShaderFunctions = /* glsl */`
 
-	vec3 lutLookup( sampler2D texture, float size, vec3 rgb ) {
+	vec3 lutLookup( sampler2D tex, float size, vec3 rgb ) {
 
 		rgb = clamp( rgb, 0.0, 1.0 );
 
@@ -30,8 +30,8 @@ export const lutShaderFunctions = /* glsl */`
 		uv1.y += b1;
 		uv2.y += b2;
 
-		vec3 sample1 = texture2D( texture, uv1 ).rgb;
-		vec3 sample2 = texture2D( texture, uv2 ).rgb;
+		vec3 sample1 = texture2D( tex, uv1 ).rgb;
+		vec3 sample2 = texture2D( tex, uv2 ).rgb;
 
 		return mix( sample1, sample2, bMix );
 
