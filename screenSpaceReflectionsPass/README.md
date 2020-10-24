@@ -63,6 +63,10 @@ _sponza scene from GLTF 2.0 example models_
 
 ### References
 
+- \* https://github.com/GPUOpen-Effects/FidelityFX-SSSR/blob/master/docs/FFX_SSSR_Technology.pdf
+
+- \* https://lukas-hermanns.info/download/bachelorthesis_ssct_lhermanns.pdf
+
 - http://bitsquid.blogspot.com/2017/08/notes-on-screen-space-hiz-tracing.html
 
 - https://blog.demofox.org/2020/05/10/ray-marching-fog-with-blue-noise/
