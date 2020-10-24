@@ -55,8 +55,8 @@ export class LUTCubeLoader extends Loader {
 
 		let title = null;
 		let size = null;
-		let domainMin = new Vector3( 0, 0, 0 );
-		let domainMax = new Vector3( 1, 1, 1 );
+		const domainMin = new Vector3( 0, 0, 0 );
+		const domainMax = new Vector3( 1, 1, 1 );
 
 		const lines = str.split( /[\n\r]+/g );
 		let data = null;
