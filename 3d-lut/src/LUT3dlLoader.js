@@ -47,34 +47,32 @@ export class LUT3dlLoader extends Loader {
 
 	parse( str ) {
 
-		// TODO: b grows first, then g, then r
-
+		// remove empty lines and comment lints
 		str = str
 			.replace( /^#.*?(\n|\r)/gm, '' )
 			.replace( /^\s*?(\n|\r)/gm, '' )
 			.trim();
 
 		const lines = str.split( /[\n\r]+/g );
+
+		// first line is the positions on the grid that are provided by the LUT
 		const gridLines = lines[ 0 ].trim().split( /\s+/g ).map( e => parseFloat( e ) );
-		const gridWidth = gridLines[ 1 ] - gridLines[ 0 ];
+		const gridStep = gridLines[ 1 ] - gridLines[ 0 ];
+		const size = gridLines.length;
 
 		for ( let i = 1, l = gridLines.length; i < l; i ++ ) {
 
-			if ( gridWidth !== ( gridLines[ i ] - gridLines[ i - 1 ] ) ) {
+			if ( gridStep !== ( gridLines[ i ] - gridLines[ i - 1 ] ) ) {
 
-				throw new Error( 'LUT3dlLoader: Inconsistent grid size no supported.' );
+				throw new Error( 'LUT3dlLoader: Inconsistent grid size not supported.' );
 
 			}
 
 		}
 
-		let size = gridLines.length;
-		let maxOutputValue = 0.0;
-		const domainMin = new Vector3( 0, 0, 0 );
-		const domainMax = new Vector3( 1, 1, 1 );
-
 		const dataArray = new Array( size * size * size * 3 );
 		let index = 0;
+		let maxOutputValue = 0.0;
 		for ( let i = 1, l = lines.length; i < l; i ++ ) {
 
 			const line = lines[ i ].trim();
@@ -89,6 +87,7 @@ export class LUT3dlLoader extends Loader {
 			const gLayer = Math.floor( index / size ) % size;
 			const rLayer = Math.floor( index / ( size * size ) ) % size;
 
+			// b grows first, then g, then r
 			const pixelIndex = bLayer * size * size + gLayer * size + rLayer;
 			dataArray[ 3 * pixelIndex + 0 ] = r;
 			dataArray[ 3 * pixelIndex + 1 ] = g;
@@ -97,6 +96,8 @@ export class LUT3dlLoader extends Loader {
 
 		}
 
+		// Find the apparent bit depth of the stored RGB values and scale the
+		// values to [ 0, 255 ].
 		const bits = Math.ceil( Math.log2( maxOutputValue ) );
 		const maxBitValue = Math.pow( 2.0, bits );
 		for ( let i = 0, l = dataArray.length; i < l; i ++ ) {
@@ -133,8 +134,6 @@ export class LUT3dlLoader extends Loader {
 
 		return {
 			size,
-			domainMin,
-			domainMax,
 			texture,
 			texture3D,
 		};

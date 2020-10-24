@@ -1,5 +1,5 @@
 // https://wwwimages2.adobe.com/content/dam/acom/en/products/speedgrade/cc/pdfs/cube-lut-specification-1.0.pdf
-// NOTE: the expectation is that tetrahedral interplation will be used.
+
 import {
 	Loader,
 	FileLoader,
@@ -47,6 +47,7 @@ export class LUTCubeLoader extends Loader {
 
 	parse( str ) {
 
+		// Remove empty lines and comments
 		str = str
 			.replace( /^#.*?(\n|\r)/gm, '' )
 			.replace( /^\s*?(\n|\r)/gm, '' )
@@ -72,6 +73,8 @@ export class LUTCubeLoader extends Loader {
 					title = line.substring( 7, line.length - 1 );
 					break;
 				case 'LUT_3D_SIZE':
+					// TODO: A .CUBE LUT file specifies floating point values and could be represented with
+					// more precision than can be captured with Uint8Array.
 					const sizeToken = split[ 1 ];
 					size = parseFloat( sizeToken );
 					data = new Uint8Array( size * size * size * 3 );
