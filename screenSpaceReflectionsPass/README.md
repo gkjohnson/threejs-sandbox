@@ -30,7 +30,7 @@ _sponza scene from GLTF 2.0 example models_
 - Use a depth pyramid map to raymarch
 - Use cheap rays for roughness
 - Provide a minimum thickness for potentially thin objects?
-- Investigate how incidence angle should play a role
+- Investigate how incidence angle should play a role (Fresnel effect -- is it always relevant? What about for mirrors?)
 - Optionally fall back to environment map
 - Convert the sample radius for glossy sampling from world space to clip coordinates
 
