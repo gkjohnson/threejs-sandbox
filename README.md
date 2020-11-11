@@ -17,6 +17,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Capsule Geometry / Math Class
 - Hatched shadows using derivative normals
 - GPU particles
+- curl noise
 
 **On Hold**
 - Half Edge data structure
