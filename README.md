@@ -19,10 +19,8 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - GPU particles
 - Curl noise
 - Use blue noise, random noise in GTAO
+- Stochastic transparency
+- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
 
 **On Hold**
 - Half Edge data structure
-
-**Next**
-- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
-- Stochastic transparency
