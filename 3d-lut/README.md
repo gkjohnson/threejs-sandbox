@@ -19,8 +19,9 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Possibly image-based LUT loader?
 - More formats: https://community.acescentral.com/t/best-of-existing-lut-formats/1703/2
 
-## Possible Improvements=
+## Possible Improvements
 - Use a grid layout rather than a linear layout to avoid unusably long textures when using dense LUT table.
+- Use linear interpolation if u, v, or w are equal to improve TetrahedralUpscaler performance.
 
 ## References
 
