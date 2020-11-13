@@ -2,13 +2,9 @@ import {
 	Color,
 	ShaderMaterial,
 	WebGLRenderTarget,
-	NearestFilter,
 	RGBAFormat,
 	HalfFloatType,
 	RGBFormat,
-	Math as MathUtils,
-	DataTexture,
-	RepeatWrapping,
 	LinearFilter,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';

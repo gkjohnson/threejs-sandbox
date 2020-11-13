@@ -70,9 +70,8 @@
 			};
 			var camera, scene, renderer, controls;
 			var composer;
-			var sphere;
-			var fxaaPass, outlinePass, gammaPass, motionPass, renderPass;
-			var scenes, ambientLight;
+			var fxaaPass, outlinePass, gammaPass, renderPass;
+			var ambientLight;
 
 			init();
 			animate();
@@ -93,13 +92,6 @@
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 				document.body.appendChild( renderer.domElement );
-
-				// geometry
-				const standardMaterial = new THREE.MeshStandardMaterial( {
-					map: null,
-					color: 0xffffff,
-					metalness: 0.5,
-				} );
 
 				// Lights
 				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
@@ -206,12 +198,6 @@
 			}
 
 			function render() {
-
-				for ( const key in scenes ) {
-
-					scenes[ key ].visible = key === params.scene;
-
-				}
 
 				outlinePass.enabled = params.enabled;
 				outlinePass.outlinesOnly = params.outlinesOnly;
