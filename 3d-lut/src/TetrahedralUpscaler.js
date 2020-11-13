@@ -17,13 +17,15 @@ function tetrahedralSample( dataTexture, u, v, w ) {
     
     let points;
     if ( u > v && v > w ) {
-        // T1
+        
+		// T1
         points = [
             [ 0, 0, 0 ],
             [ 1, 0, 0 ],
             [ 1, 1, 0 ],
             [ 1, 1, 1 ],
         ];
+		
     } else if ( u > w && w > v ) {
     
         // T2
@@ -75,5 +77,7 @@ function tetrahedralSample( dataTexture, u, v, w ) {
         ];
         
     }
+	
+	// TODO calculate the volume of the three prisms formed by the given points and the point to interpolate.
 
 }
