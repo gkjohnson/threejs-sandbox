@@ -14,7 +14,6 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - SSDO
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 - Capsule Geometry / Math Class
-- Hatched shadows using derivative normals
 - GPU particles
 - Curl noise
 - Stochastic transparency
