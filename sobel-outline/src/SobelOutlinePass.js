@@ -15,6 +15,9 @@ import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass
 import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { LinearDepthPass } from './LinearDepthPass.js';
 
+const rendererState = new RendererState();
+const blackColor = new Color( 0 );
+
 class SobelOutlinePass extends Pass {
 
 	constructor( scene, camera ) {
@@ -33,19 +36,60 @@ class SobelOutlinePass extends Pass {
 		this.depthOutlinePosition = 0;
 		this.depthBias = 0;
 		
-		this._depthBuffer = null;
-		this._normalBuffer = null;
+		this._depthReplacement = new LinearDepthReplacement();
+		this._depthBuffer =
+			new WebGLRenderTarget( 1, 1, {
+				minFilter: NearestFilter,
+				magFilter: NearestFilter,
+				format: RGBFormat,
+				type: HalfFloatType,
+			} );
+		
+		this._normalReplacement = new NormalPass();
+		this._normalBuffer =
+			new WebGLRenderTarget( 1, 1, {
+				minFilter: NearestFilter,
+				magFilter: NearestFilter,
+				format: RGBAFormat
+			} );
+		
+		this._compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+
 		
 	}
 
 	render( renderer, writeBuffer, readBuffer ) {
 	
+		const finalBuffer = this.renderToScreen ? null : writeBuffer;
+		const {
+			scene,
+			camera,
+
+			_depthBuffer,
+			_depthReplacement,
+			
+			_normalBuffer,
+			_normalReplacement,
+			
+			_compositeQuad,
+		} = this;
+		
+		rendererState.copy( renderer, scene );
+		const restoreOriginalValues = () => {
+
+			rendererState.restore( renderer, scene );
+			_depthReplacement.reset( scene, true );
+
+		};
+		
 		// render depth
 		
 		// render normals
 		
 		// composite final render
-	
+		
+		restoreOriginalValues();
+		
 	}
 
 	setSize( width, height ) {
