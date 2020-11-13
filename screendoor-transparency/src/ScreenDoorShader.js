@@ -4,8 +4,43 @@ import {
 	FloatType,
 	NearestFilter,
 	RepeatWrapping,
-	UniformsUtils
+	UniformsUtils,
+	RGBAFormat,
+	LinearFilter,
 } from '//unpkg.com/three@0.106.0/build/three.module.js';
+import {
+	BlueNoiseGenerator
+} from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
+
+// Generate Blue Noise Textures
+const generator = new BlueNoiseGenerator();
+generator.size = 32;
+
+const data = new Float32Array( 32 ** 2 * 4 );
+for ( let i = 0, l = 4; i < l; i ++ ) {
+
+	const result = generator.generate();
+	const bin = result.data;
+	const maxValue = result.maxValue;
+
+	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+		const value = ( bin[ j ] / maxValue );
+		data[ j * 4 + i ] = value;
+
+	}
+
+}
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBAFormat, FloatType );
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.minFilter = LinearFilter;
+blueNoiseTex.minFilter = NearestFilter;
+blueNoiseTex.magFilter = NearestFilter;
+blueNoiseTex.anisotropy = 1;
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.needsUpdate = true;
 
 export function createDitherTexture() {
 
@@ -39,7 +74,7 @@ export function createDitherTexture() {
 
 	ditherTex.needsUpdate = true;
 
-	return ditherTex;
+	return blueNoiseTex;
 
 }
 
@@ -89,8 +124,9 @@ export function DitheredTransparencyShaderMixin( shader ) {
 		v => `
 			${v}
 			#if ${defineKeyword}
-			//if( texture2D( ditherTex, gl_FragCoord.xy / 4.0 ).r > opacity ) discard;
-			if( ( bayerDither4x4( floor( mod( gl_FragCoord.xy, 4.0 ) ) ) ) / 16.0 >= opacity ) discard;
+
+			if( texture2D( ditherTex, gl_FragCoord.xy / 32.0 ).r > opacity ) discard;
+			// if( ( bayerDither4x4( floor( mod( gl_FragCoord.xy, 4.0 ) ) ) ) / 16.0 >= opacity ) discard;
 
 			#endif
 		`
