@@ -30,19 +30,21 @@ export class SobelOutlinePass extends Pass {
 
 		this.scene = scene;
 		this.camera = camera;
+		this.outlinesOnly = false;
+		this.useNormalMaps = true;
 
 		this.normalOutlineThickness = 1;
-		this.normalBias = 0;
+		this.normalBias = 1;
 
 		this.depthOutlineThickness = 1;
-		this.depthOutlinePosition = 0;
-		this.depthBias = 0;
+		this.depthBias = 1;
+		this.color = new Color( 0 );
 
 		this._depthReplacement = new LinearDepthPass();
 		this._depthBuffer =
 			new WebGLRenderTarget( 1, 1, {
-				minFilter: NearestFilter,
-				magFilter: NearestFilter,
+				minFilter: LinearFilter,
+				magFilter: LinearFilter,
 				format: RGBFormat,
 				type: HalfFloatType,
 			} );
@@ -50,8 +52,8 @@ export class SobelOutlinePass extends Pass {
 		this._normalReplacement = new NormalPass();
 		this._normalBuffer =
 			new WebGLRenderTarget( 1, 1, {
-				minFilter: NearestFilter,
-				magFilter: NearestFilter,
+				minFilter: LinearFilter,
+				magFilter: LinearFilter,
 				format: RGBAFormat
 			} );
 
@@ -65,6 +67,7 @@ export class SobelOutlinePass extends Pass {
 		const {
 			scene,
 			camera,
+			outlinesOnly,
 
 			_depthBuffer,
 			_depthReplacement,
@@ -78,6 +81,8 @@ export class SobelOutlinePass extends Pass {
 			normalBias,
 			depthOutlineThickness,
 			depthBias,
+			color,
+			useNormalMaps,
 		} = this;
 
 		rendererState.copy( renderer, scene );
@@ -98,24 +103,34 @@ export class SobelOutlinePass extends Pass {
 
 		// render normals
 		_normalReplacement.replace( scene, true, false );
+		_normalReplacement.useNormalMaps = useNormalMaps;
 		renderer.setRenderTarget( _normalBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
 
 		// composite final render
-		// const compositeMaterial = _compositeQuad.material;
-		// compositeMaterial.uniforms.normalTex.value = _normalBuffer;
-		// compositeMaterial.uniforms.depthTex.value = _depthBuffer;
+		const compositeMaterial = _compositeQuad.material;
+		compositeMaterial.uniforms.normalTex.value = _normalBuffer;
+		compositeMaterial.uniforms.depthTex.value = _depthBuffer;
+		compositeMaterial.uniforms.mainTex.value = readBuffer;
 
-		// compositeMaterial.uniforms.depthOutlineThickness.value = depthOutlineThickness;
-		// compositeMaterial.uniforms.depthBias.value = depthBias;
-		// compositeMaterial.uniforms.normalOutlineThickness.value = normalOutlineThickness;
-		// compositeMaterial.uniforms.normalBias.value = normalBias;
-		// renderer.getSize( compositeMaterial.uniforms.resolution.value );
-		// compositeMaterial.uniforms.resolution.value.multiplyScalar( renderer.getPixelRatio() );
+		compositeMaterial.uniforms.depthOutlineThickness.value = depthOutlineThickness;
+		compositeMaterial.uniforms.depthBias.value = depthBias;
+		compositeMaterial.uniforms.normalOutlineThickness.value = normalOutlineThickness;
+		compositeMaterial.uniforms.normalBias.value = normalBias;
+		compositeMaterial.uniforms.outlineColor.value.copy( color );
+		renderer.getSize( compositeMaterial.uniforms.resolution.value );
+		compositeMaterial.uniforms.resolution.value.multiplyScalar( renderer.getPixelRatio() );
 
-		// renderer.setRenderTarget( finalBuffer );
-		// _compositeQuad.render( renderer );
+		if ( compositeMaterial.defines.OUTLINES_ONLY !== Number( outlinesOnly ) ) {
+
+			compositeMaterial.defines.OUTLINES_ONLY = Number( outlinesOnly );
+			compositeMaterial.needsUpdate = true;
+
+		}
+
+		renderer.setRenderTarget( finalBuffer );
+		_compositeQuad.render( renderer );
 
 		restoreOriginalValues();
 
@@ -136,10 +151,6 @@ export class SobelOutlinePass extends Pass {
 	}
 
 }
-
-SobelOutlinePass.CENTER = 0;
-SobelOutlinePass.OUTSIDE = 1;
-SobelOutlinePass.INSIDE = 2;
 
 SobelOutlinePass.DEFAULT = 0;
 SobelOutlinePass.OUTLINES_ONLY = 1;

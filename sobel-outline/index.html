@@ -13,7 +13,7 @@
 				font-family: Monospace;
 				font-size: 13px;
 				text-align: center;
-				color: #fff;
+				color: black;
 			}
 
 			a {
@@ -30,15 +30,11 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Ground Truth Ambient Occlusion by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Sobel Outline by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
 
 			<br/>
 
-			Based on implementation from Asylum_Tutorials <a href="https://github.com/asylum2010/Asylum_Tutorials/tree/master/ShaderTutors/54_GTAO">here</a>.
-
-			<br/>
-
-			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
+			Based on implementation from <a href="https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/">here</a>.
 		</div>
 
 		<script type="module">
@@ -61,6 +57,16 @@
 			var stats;
 			var params = {
 				enabled: true,
+				outlinesOnly: true,
+				useNormalMaps: true,
+
+				depthOutlineThickness: 1,
+				depthBias: 0.1,
+
+				normalOutlineThickness: 1,
+				normalBias: 0.1,
+
+				color: 0,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -75,7 +81,7 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 100 );
-				camera.position.set( 0.0, 1, 1 * 3.5 ).multiplyScalar( 10 );
+				camera.position.set( - 2.5, 1, 2.5 );
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x13191c ).convertSRGBToLinear();
@@ -95,12 +101,6 @@
 					metalness: 0.5,
 				} );
 
-				const torus = new THREE.Mesh(
-					new THREE.TorusKnotBufferGeometry( 3, 1, 100, 16 ),
-					new THREE.MeshStandardMaterial(),
-				);
-				scene.add( torus );
-
 				// Lights
 				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
 				directionalLight.position.set( 60, 200, 130 );
@@ -110,7 +110,15 @@
 				scene.add( ambientLight );
 
 				// scene
+				const loader = new GLTFLoader();
+				loader.load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+					g => {
 
+						scene.add( g.scene );
+
+					}
+				);
 
 
 				// Render Pass Setup
@@ -154,6 +162,13 @@
 				gui.width = 300;
 
 				gui.add( params, 'enabled' );
+				gui.add( params, 'outlinesOnly' );
+				gui.add( params, 'useNormalMaps' );
+				gui.add( params, 'depthOutlineThickness', 0, 5, 0.01 );
+				gui.add( params, 'depthBias', - 5, 5, 0.01 );
+				gui.add( params, 'normalOutlineThickness', 0, 5, 0.01 );
+				gui.add( params, 'normalBias', - 5, 5, 0.01 );
+				gui.addColor( params, 'color' );
 
 				gui.open();
 
@@ -199,6 +214,13 @@
 				}
 
 				outlinePass.enabled = params.enabled;
+				outlinePass.outlinesOnly = params.outlinesOnly;
+				outlinePass.useNormalMaps = params.useNormalMaps;
+				outlinePass.depthBias = params.depthBias;
+				outlinePass.depthOutlineThickness = params.depthOutlineThickness;
+				outlinePass.normalBias = params.normalBias;
+				outlinePass.normalOutlineThickness = params.normalOutlineThickness;
+				outlinePass.color.set( params.color );
 
 				composer.render();
 

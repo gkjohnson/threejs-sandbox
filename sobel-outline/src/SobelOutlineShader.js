@@ -1,25 +1,25 @@
-import { Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { Vector2, Color } from '//unpkg.com/three@0.116.1/build/three.module.js';
+
+// https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline
 export const SobelOutlineShader = {
 
 	defines: {
-		ENABLE_BLUR: 1,
-		BLUR_RADIUS: 5,
-		DEPTH_THRESHOLD: '2e-3',
-		COLOR_HIT_ONLY: 0,
+		OUTLINES_ONLY: 1,
 	},
 
 	uniforms: {
 
-		intersectBuffer: { value: null },
-		sourceBuffer: { value: null },
-		packedBuffer: { value: null },
-		depthBuffer: { value: null },
+		resolution: { value: new Vector2() },
+		outlineColor: { value: new Color() },
 
-		intensity: { value: 0.5 },
+		mainTex: { value: null },
+		normalTex: { value: null },
+		depthTex: { value: null },
 
-		renderSize: { value: new Vector2() },
-		marchSize: { value: new Vector2() },
-		blurStride: { value: 1 },
+		depthOutlineThickness: { value: 0 },
+		depthBias: { value: 0 },
+		normalOutlineThickness: { value: 0 },
+		normalBias: { value: 0 },
 
 	},
 
@@ -41,25 +41,17 @@ export const SobelOutlineShader = {
 		#define E 2.7182818
 
 		varying vec2 vUv;
-		uniform sampler2D intersectBuffer;
-		uniform sampler2D sourceBuffer;
-		uniform sampler2D packedBuffer;
-		uniform sampler2D depthBuffer;
+		uniform sampler2D mainTex;
+		uniform sampler2D normalTex;
+		uniform sampler2D depthTex;
 
-		uniform vec2 renderSize;
-		uniform vec2 marchSize;
-		uniform float blurStride;
+		uniform vec2 resolution;
+		uniform vec3 outlineColor;
 
-		uniform float intensity;
-
-		// https://danielilett.com/2019-05-08-tut1-3-smo-blur/
-		// One-dimensional Gaussian curve function.
-		float gaussian( int x, int spread) {
-
-			float sigmaSqu = float( spread * spread );
-			return ( 1.0 / sqrt( 2.0 * PI * sigmaSqu ) ) * pow( E, - float( x * x ) / ( 2.0 * sigmaSqu ) );
-
-		}
+		uniform float depthOutlineThickness;
+		uniform float depthBias;
+		uniform float normalOutlineThickness;
+		uniform float normalBias;
 
 		vec3 UnpackNormal( vec4 d ) {
 
@@ -69,79 +61,51 @@ export const SobelOutlineShader = {
 
 		void main() {
 
-			// Found, blending
-			vec4 source = texture2D( sourceBuffer, vUv );
-			vec3 sample = vec3( 0.0 );
+			vec3 offset;
 
-			#if ENABLE_BLUR
+			offset = vec3( depthOutlineThickness / resolution, 0.0 );
+			float depth = texture2D( depthTex, vUv ).r;
+			float depthUp = texture2D( depthTex, vUv + offset.zy ).r;
+			float depthDn = texture2D( depthTex, vUv - offset.zy ).r;
+			float depthRt = texture2D( depthTex, vUv + offset.xz ).r;
+			float depthLf = texture2D( depthTex, vUv - offset.xz ).r;
 
-			vec2 currTexel = vUv * renderSize;
-			vec2 currMarchTexel = vUv * marchSize;
-			vec2 texelRatio = marchSize / renderSize;
+			float depthResult =
+				abs( depth - depthUp ) +
+				abs( depth - depthDn ) +
+				abs( depth - depthLf ) +
+				abs( depth - depthRt ) - depthBias;
 
-			vec3 currNormal = UnpackNormal( texture2D( packedBuffer, vUv  ) );
-			float currDepth = texture2D( depthBuffer, vUv ).r;
+			offset = vec3( normalOutlineThickness / resolution, 0.0 );
+			vec3 normal = UnpackNormal( texture2D( normalTex, vUv ) );
+			vec3 normalUp = UnpackNormal( texture2D( normalTex, vUv + offset.zy ) );
+			vec3 normalDn = UnpackNormal( texture2D( normalTex, vUv - offset.zy ) );
+			vec3 normalRt = UnpackNormal( texture2D( normalTex, vUv + offset.xz ) );
+			vec3 normalLf = UnpackNormal( texture2D( normalTex, vUv - offset.xz ) );
 
-			float totalWeight = 1e-10;
-			int blurWidth = BLUR_RADIUS * 2 + 1;
+			vec3 normalResult =
+				abs( normal - normalUp ) +
+				abs( normal - normalDn ) +
+				abs( normal - normalRt ) +
+				abs( normal - normalLf );
+			float normalScalar =
+				normalResult.x +
+				normalResult.y +
+				normalResult.z -
+				normalBias;
 
-			for ( int x = - BLUR_RADIUS; x <= BLUR_RADIUS; x ++ ) {
+			float result = saturate( max( depthResult, normalScalar ) );
+			result = pow( result, 4.0 );
 
-				for ( int y = - BLUR_RADIUS; y <= BLUR_RADIUS; y ++ ) {
-
-					// if ( x != 0 || y != 0 ) continue;
-
-					vec2 step = vec2( float( x ), float( y ) ) * float( blurStride );
-
-					// iterate over full res pixels
-					vec2 renderUv = currTexel + step;
-					renderUv /= renderSize;
-
-					// get the associated pixel in the AO buffer
-					vec2 marchUv = currMarchTexel + step * texelRatio;
-					marchUv /= marchSize;
-
-					// if the pixels are close enough in space then blur them together
-					float offsetDepth = texture2D( depthBuffer, renderUv ).r;
-					if ( abs( offsetDepth - currDepth ) <= 1e-1 ) {
-
-						// Weigh the sample based on normal similarity
-						vec3 offsetNormal = UnpackNormal( texture2D( packedBuffer, renderUv ) );
-						float weight = max( 0.0, dot( offsetNormal, currNormal ) - 0.9 ) * 10.0;
-
-						// gaussian distribution
-						weight *= gaussian( x, blurWidth ) * gaussian( y, blurWidth );
-
-						// accumulate
-						vec4 val = texture2D( intersectBuffer, marchUv );
-						sample += val.rgb * weight;
-						totalWeight += weight;
-
-					}
-
-				}
-
-			}
-
-			sample /= totalWeight;
-
+			#if OUTLINES_ONLY
+			gl_FragColor = vec4( 1.0 - result );
 			#else
-
-			sample = texture2D( intersectBuffer, vUv ).rgb;
-
+			gl_FragColor = mix(
+				texture2D( mainTex, vUv ),
+				vec4( outlineColor, 1.0 ),
+				result
+			);
 			#endif
-
-			#if COLOR_HIT_ONLY
-
-			gl_FragColor = vec4( sample, 1.0 );
-
-			#else
-
-			source.rgb += sample * intensity;
-			gl_FragColor = source;
-
-			#endif
-
 
 		}
 	`
