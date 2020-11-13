@@ -120,9 +120,9 @@
 						for ( let b = 0; b < size; b ++ ) {
 
 							const index = r + g * size + b * size * size;
-							data[ index * 3 + 0 ] = 255 * r / size;
-							data[ index * 3 + 1 ] = 255 * g / size;
-							data[ index * 3 + 2 ] = 255 * b / size;
+							data[ index * 3 + 0 ] = 255 * r / ( size - 1 );
+							data[ index * 3 + 1 ] = 255 * g / ( size - 1 );
+							data[ index * 3 + 2 ] = 255 * b / ( size - 1 );
 
 						}
 
