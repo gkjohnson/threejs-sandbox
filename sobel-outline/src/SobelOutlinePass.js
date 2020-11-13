@@ -106,9 +106,9 @@ export class SobelOutlinePass extends Pass {
 
 		// composite final render
 		const compositeMaterial = _compositeQuad.material;
-		compositeMaterial.uniforms.normalTex.value = _normalBuffer;
-		compositeMaterial.uniforms.depthTex.value = _depthBuffer;
-		compositeMaterial.uniforms.mainTex.value = readBuffer;
+		compositeMaterial.uniforms.normalTex.value = _normalBuffer.texture;
+		compositeMaterial.uniforms.depthTex.value = _depthBuffer.texture;
+		compositeMaterial.uniforms.mainTex.value = readBuffer.texture;
 
 		compositeMaterial.uniforms.depthOutlineThickness.value = depthOutlineThickness;
 		compositeMaterial.uniforms.depthBias.value = depthBias;
