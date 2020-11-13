@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - ground truth ambient occlusion</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Ground Truth Ambient Occlusion by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Based on implementation from Asylum_Tutorials <a href="https://github.com/asylum2010/Asylum_Tutorials/tree/master/ShaderTutors/54_GTAO">here</a>.
+
+			<br/>
+
+			Sponza castle model from <a href="https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Sponza/glTF">GLTF 2.0 samples</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { SobelOutlinePass } from './src/SobelOutlinePass.js';
+
+			// globals
+			var stats;
+			var params = {
+				enabled: true,
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var sphere;
+			var fxaaPass, outlinePass, gammaPass, motionPass, renderPass;
+			var scenes, ambientLight;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 100 );
+				camera.position.set( 0.0, 1, 1 * 3.5 ).multiplyScalar( 10 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x13191c ).convertSRGBToLinear();
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				const standardMaterial = new THREE.MeshStandardMaterial( {
+					map: null,
+					color: 0xffffff,
+					metalness: 0.5,
+				} );
+
+				const torus = new THREE.Mesh(
+					new THREE.TorusKnotBufferGeometry( 3, 1, 100, 16 ),
+					new THREE.MeshStandardMaterial(),
+				);
+				scene.add( torus );
+
+				// Lights
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 60, 200, 130 );
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
+				scene.add( ambientLight );
+
+				// scene
+
+
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				outlinePass = new SobelOutlinePass( scene, camera );
+				window.outlinePass = outlinePass;
+
+				const floatRT = new THREE.WebGLRenderTarget( 1, 1, {
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					format: THREE.RGBAFormat,
+					type: THREE.HalfFloatType,
+				} );
+				composer = new EffectComposer( renderer, floatRT );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( outlinePass );
+				composer.addPass( gammaPass );
+				composer.addPass( fxaaPass );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = .1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'enabled' );
+
+				gui.open();
+
+				onWindowResize();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				const pixelRatio = window.devicePixelRatio;
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( pixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( pixelRatio );
+
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				for ( const key in scenes ) {
+
+					scenes[ key ].visible = key === params.scene;
+
+				}
+
+				outlinePass.enabled = params.enabled;
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
