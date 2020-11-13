@@ -14,11 +14,13 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - SSDO
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 - Capsule Geometry / Math Class
-- GPU particles
-- Curl noise
 - Stochastic transparency
-- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
 - Glossly refraction post effect
 
-**On Hold**
+**Next**
 - Half Edge data structure
+- GPU particles
+- Curl noise
+
+**In Progress**
+- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
