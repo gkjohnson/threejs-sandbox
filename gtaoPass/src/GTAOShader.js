@@ -17,6 +17,8 @@ export const GTAOShader = {
 		ENABLE_RADIUS_JITTER: 1,
 		ENABLE_COLOR_BOUNCE: 1,
 
+		JITTER_TYPE: 0,
+
 	},
 
 	uniforms: {
@@ -25,6 +27,9 @@ export const GTAOShader = {
 		normalBuffer: { value: null },
 		depthBuffer: { value: null },
 		renderSize: { value: new Vector2() },
+
+		blueNoiseTex: { value: null },
+		blueNoiseSize: { value: 1 },
 
 		clipInfo: { value: new Vector4() },
 		projInfo: { value: new Vector4() },
@@ -65,6 +70,11 @@ export const GTAOShader = {
 		uniform vec4 clipInfo;
 		uniform vec4 params;
 		uniform float lightBounceIntensity;
+
+		#if ENABLE_ROTATION_JITTER == 2 || ENABLE_RADIUS_JITTER == 2
+		uniform float blueNoiseSize;
+		uniform sampler2D blueNoiseTex;
+		#endif
 
 		float round( float f ) {
 
@@ -158,25 +168,46 @@ export const GTAOShader = {
 			vec3 color = vec3( 0.0 );
 			#endif
 
+			#if ENABLE_ROTATION_JITTER == 1
+
+			// Rotation jitter approach from
+			// https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion/blob/9cc30e0f31eb950a994c71866d79b2798d1c508e/Shaders/GTAO_Common.cginc#L152-L155
+			float rotJitterOffset = PI * fract( 52.9829189 * fract( dot( screenCoord, vec2( 0.06711056, 0.00583715 ) ) ) );
+
+			#elif ENABLE_ROTATION_JITTER == 2
+
+			float rotJitterOffset = PI * texture2D( blueNoiseTex, gl_FragCoord.xy / blueNoiseSize ).r;
+
+			#endif
+
+			#if ENABLE_RADIUS_JITTER == 1
+
+			float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
+			float radiusJitterOffset = mod( jitterMod, 1.0 ) * stepSize * 0.25;
+
+			#elif ENABLE_RADIUS_JITTER == 2
+
+			float radiusJitterOffset = PI * texture2D( blueNoiseTex, gl_FragCoord.xy / blueNoiseSize ).g;
+
+			#endif
+
 			#pragma unroll_loop_start
 			for ( int i = 0; i < NUM_DIRECTIONS; i ++ ) {
 
 				phi = float( i ) * ( PI / float( NUM_DIRECTIONS ) ) + params.x * PI;
 
-				#if ENABLE_ROTATION_JITTER
+				#if ENABLE_ROTATION_JITTER != 0
 
-				// Rotation jitter approach from
-				// https://github.com/MaxwellGengYF/Unity-Ground-Truth-Ambient-Occlusion/blob/9cc30e0f31eb950a994c71866d79b2798d1c508e/Shaders/GTAO_Common.cginc#L152-L155
-				phi += PI * fract( 52.9829189 * fract( dot( screenCoord, vec2( 0.06711056, 0.00583715 ) ) ) );
+				phi += rotJitterOffset;
 
 				#endif
 
 				currStep = 1.0 + 0.25 * stepSize * params.y;
 
-				#if ENABLE_RADIUS_JITTER
 
-				float jitterMod = ( gl_FragCoord.x + gl_FragCoord.y ) * 0.25;
-				currStep += mod( jitterMod, 1.0 ) * stepSize * 0.25;
+				#if ENABLE_RADIUS_JITTER != 0
+
+				currStep += radiusJitterOffset;
 
 				#endif
 
