@@ -21,6 +21,3 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Half Edge data structure
 - GPU particles
 - Curl noise
-
-**In Progress**
-- Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
