@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - ground truth ambient occlusion</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: black;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Sobel Outline by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+
+			Based on implementation from <a href="https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/">here</a>.
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import { FXAAShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/ShaderPass.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+
+			import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { SobelOutlinePass } from './src/SobelOutlinePass.js';
+
+			// globals
+			var stats;
+			var params = {
+				enabled: true,
+				outlinesOnly: true,
+				useNormalMaps: true,
+
+				depthOutlineThickness: 1,
+				depthBias: 0.1,
+
+				normalOutlineThickness: 1,
+				normalBias: 0.1,
+
+				color: 0,
+			};
+			var camera, scene, renderer, controls;
+			var composer;
+			var fxaaPass, outlinePass, gammaPass, renderPass;
+			var ambientLight;
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 100 );
+				camera.position.set( - 2.5, 1, 2.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x13191c ).convertSRGBToLinear();
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// Lights
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
+				directionalLight.position.set( 60, 200, 130 );
+				scene.add( directionalLight );
+
+				ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
+				scene.add( ambientLight );
+
+				// scene
+				const loader = new GLTFLoader();
+				loader.load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+					g => {
+
+						scene.add( g.scene );
+
+					}
+				);
+
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				outlinePass = new SobelOutlinePass( scene, camera );
+				window.outlinePass = outlinePass;
+
+				const floatRT = new THREE.WebGLRenderTarget( 1, 1, {
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					format: THREE.RGBAFormat,
+					type: THREE.HalfFloatType,
+				} );
+				composer = new EffectComposer( renderer, floatRT );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( outlinePass );
+				composer.addPass( gammaPass );
+				composer.addPass( fxaaPass );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = .1;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'enabled' );
+				gui.add( params, 'outlinesOnly' );
+				gui.add( params, 'useNormalMaps' );
+				gui.add( params, 'depthOutlineThickness', 0, 5, 0.01 );
+				gui.add( params, 'depthBias', - 5, 5, 0.01 );
+				gui.add( params, 'normalOutlineThickness', 0, 5, 0.01 );
+				gui.add( params, 'normalBias', - 5, 5, 0.01 );
+				gui.addColor( params, 'color' );
+
+				gui.open();
+
+				onWindowResize();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				const pixelRatio = window.devicePixelRatio;
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( pixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( pixelRatio );
+
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( pixelRatio * width ), 1 / ( pixelRatio * height ) );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				outlinePass.enabled = params.enabled;
+				outlinePass.outlinesOnly = params.outlinesOnly;
+				outlinePass.useNormalMaps = params.useNormalMaps;
+				outlinePass.depthBias = params.depthBias;
+				outlinePass.depthOutlineThickness = params.depthOutlineThickness;
+				outlinePass.normalBias = params.normalBias;
+				outlinePass.normalOutlineThickness = params.normalOutlineThickness;
+				outlinePass.color.set( params.color );
+
+				composer.render();
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
