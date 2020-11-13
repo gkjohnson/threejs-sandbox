@@ -16,6 +16,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Capsule Geometry / Math Class
 - Stochastic transparency
 - Glossly refraction post effect
+- Hilbert indices in shader (https://www.shadertoy.com/view/3tB3z3)
 
 **Next**
 - Half Edge data structure
