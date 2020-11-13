@@ -6,7 +6,6 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 
 ## Potential Projects
 
-- Tetrahedral upscale interpolation for 3D LUTs
 - Deferred Renderer
 - TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
 - use GLSL syntax parser for debugger
@@ -18,7 +17,6 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Hatched shadows using derivative normals
 - GPU particles
 - Curl noise
-- Use blue noise, random noise in GTAO
 - Stochastic transparency
 - Sobel outline effect (https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/#normal-based-outline)
 - Glossly refraction post effect
