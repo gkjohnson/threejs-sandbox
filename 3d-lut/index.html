@@ -46,6 +46,7 @@
 			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
 			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
 			import { LUTPass } from './src/LUTPass.js';
+			import { TetrahedralUpscaler } from './src/TetrahedralUpscaler.js';
 
 			import Stats from '//unpkg.com/three@0.120.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
@@ -99,12 +100,14 @@
 				intensity: 1.0,
 				displayLut: false,
 				use3dTexture: true,
+				tetrahedralResize: false,
+				resizeDimensions: 32,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var renderPass, lutPass, gammaPass, fxaaPass;
 			var lut3dl, lutCube;
-			var lutMesh, mesh;
+			var lutMesh, mesh, currLut;
 
 
 			init();
@@ -120,9 +123,9 @@
 						for ( let b = 0; b < size; b ++ ) {
 
 							const index = r + g * size + b * size * size;
-							data[ index * 3 + 0 ] = 255 * r / size;
-							data[ index * 3 + 1 ] = 255 * g / size;
-							data[ index * 3 + 2 ] = 255 * b / size;
+							data[ index * 3 + 0 ] = 255 * r / ( size - 1 );
+							data[ index * 3 + 1 ] = 255 * g / ( size - 1 );
+							data[ index * 3 + 2 ] = 255 * b / ( size - 1 );
 
 						}
 
@@ -153,6 +156,7 @@
 				texture3D.wrapT = THREE.ClampToEdgeWrapping;
 				texture3D.wrapR = THREE.ClampToEdgeWrapping;
 				texture3D.generateMipmaps = false;
+				texture3D.unpackAlignment = 1;
 
 				return { texture, texture3D, size };
 
@@ -205,6 +209,12 @@
 
 							lutMap[ l ] = res;
 
+							if ( l === params.lut ) {
+
+								regenerateLut();
+
+							}
+
 						} );
 
 					} else {
@@ -213,9 +223,16 @@
 
 							lutMap[ l ] = res;
 
+							if ( l === params.lut ) {
+
+								regenerateLut();
+
+							}
+
 						} );
 
 					}
+
 
 				} );
 
@@ -244,14 +261,62 @@
 				var gui = new dat.GUI();
 				gui.width = 450;
 
-				gui.add( params, 'lut', luts );
+				gui.add( params, 'lut', luts ).onChange( regenerateLut );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
-				gui.add( params, 'use3dTexture' );
+				gui.add( params, 'tetrahedralResize' ).onChange( regenerateLut );
+				gui.add( params, 'resizeDimensions', [ 4, 16, 32, 64, 128, 256 ] ).onChange( regenerateLut );
+
+				if ( renderer.capabilities.isWebGL2 ) {
+
+					gui.add( params, 'use3dTexture' );
+
+				} else {
+
+					params.use3dTexture = false;
+
+				}
 
 				gui.open();
 
 				onWindowResize();
+
+			}
+
+			function regenerateLut() {
+
+				if ( currLut ) {
+
+					currLut.texture.dispose();
+					currLut.texture3D.dispose();
+
+				}
+
+				let lut = lutMap[ params.lut ];
+				if ( params.tetrahedralResize ) {
+
+					const upscaler = new TetrahedralUpscaler();
+
+					console.time( 'LUT resize' );
+					const texture3D = upscaler.generate( lut.texture3D, params.resizeDimensions );
+					console.timeEnd( 'LUT resize' );
+					const texture = lut.texture.clone();
+					texture.image = { ...texture3D.image };
+					texture.image.height *= texture.image.height;
+
+					currLut = {
+
+						...lut,
+						texture3D,
+						texture,
+
+					};
+
+				} else {
+
+					currLut = lut;
+
+				}
 
 			}
 
@@ -287,7 +352,7 @@
 				lutMesh.visible = params.displayLut;
 
 				const prevMap = lutMesh.material.map;
-				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
+				lutMesh.material.map = currLut && currLut.texture;
 				lutPass.intensity = params.intensity;
 
 				if ( lutMesh.material.map ) {
@@ -298,7 +363,7 @@
 
 					}
 
-					const lut = lutMap[ params.lut ];
+					const lut = currLut;
 					const image = lutMesh.material.map.image;
 					const aspect = image.width / image.height;
 
