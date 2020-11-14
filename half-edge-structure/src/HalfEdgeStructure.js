@@ -41,11 +41,17 @@ export class HalfEdgeStructure {
 			// TODO: transform into the local frame of the triangle
 
 			const face = data[ nextIndex ];
-			nextIndex = face.intersectEdge( _line, target );
+			nextIndex = face.adjacent[ face.intersectEdge( _line, target ) ];
+
+			length = Math.max( 0.0, length - _line.start.distanceTo( target ) );
+
+			_line.start.copy( target );
+
+			// TODO: transform the direction into the local frame and set it to end
 
 		}
 
-		return face.adjacent[ nextIndex ].index;
+		return nextIndex;
 
 	}
 
