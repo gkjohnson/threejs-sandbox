@@ -21,7 +21,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 ## Possible Improvements
 - Use a grid layout rather than a linear layout to avoid unusably long textures when using dense LUT table.
-- Use linear interpolation if u, v, or w are equal to improve TetrahedralUpscaler performance.
+- Improve TetrahedralUpscaler performance by caching tetrahedron face areas and normals.
 
 ## References
 
