@@ -1,4 +1,7 @@
 {
 	"root": true,
+	"parserOptions": {
+		"ecmaVersion": 11
+	},
 	"extends": "./node_modules/eslint-config-mdcs/index.js"
 }

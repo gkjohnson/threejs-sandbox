@@ -1,15 +1,16 @@
 // https://wwwimages2.adobe.com/content/dam/acom/en/products/speedgrade/cc/pdfs/cube-lut-specification-1.0.pdf
-// NOTE: the expectation is that tetrahedral interplation will be used.
+
 import {
 	Loader,
 	FileLoader,
 	Vector3,
 	DataTexture,
+	DataTexture3D,
 	RGBFormat,
 	UnsignedByteType,
 	ClampToEdgeWrapping,
 	LinearFilter,
-} from '//unpkg.com/three@0.116.1/build/three.module.js';
+} from '//unpkg.com/three@0.120.1/build/three.module.js';
 
 export class LUTCubeLoader extends Loader {
 
@@ -24,7 +25,7 @@ export class LUTCubeLoader extends Loader {
 
 				onLoad( this.parse( text ) );
 
-			} catch( e ) {
+			} catch ( e ) {
 
 				if ( onError ) {
 
@@ -36,7 +37,7 @@ export class LUTCubeLoader extends Loader {
 
 				}
 
-				scope.manager.itemError( url );
+				this.manager.itemError( url );
 
 			}
 
@@ -46,15 +47,16 @@ export class LUTCubeLoader extends Loader {
 
 	parse( str ) {
 
+		// Remove empty lines and comments
 		str = str
 			.replace( /^#.*?(\n|\r)/gm, '' )
-			.replace( /^\s*?(\n|\r)/gm, '')
+			.replace( /^\s*?(\n|\r)/gm, '' )
 			.trim();
 
 		let title = null;
 		let size = null;
-		let domainMin = new Vector3( 0, 0, 0 );
-		let domainMax = new Vector3( 1, 1, 1 );
+		const domainMin = new Vector3( 0, 0, 0 );
+		const domainMax = new Vector3( 1, 1, 1 );
 
 		const lines = str.split( /[\n\r]+/g );
 		let data = null;
@@ -71,6 +73,8 @@ export class LUTCubeLoader extends Loader {
 					title = line.substring( 7, line.length - 1 );
 					break;
 				case 'LUT_3D_SIZE':
+					// TODO: A .CUBE LUT file specifies floating point values and could be represented with
+					// more precision than can be captured with Uint8Array.
 					const sizeToken = split[ 1 ];
 					size = parseFloat( sizeToken );
 					data = new Uint8Array( size * size * size * 3 );
@@ -116,7 +120,22 @@ export class LUTCubeLoader extends Loader {
 		texture.format = RGBFormat;
 		texture.type = UnsignedByteType;
 		texture.magFilter = LinearFilter;
+		texture.wrapS = ClampToEdgeWrapping;
+		texture.wrapT = ClampToEdgeWrapping;
 		texture.generateMipmaps = false;
+
+		const texture3D = new DataTexture3D();
+		texture3D.image.data = data;
+		texture3D.image.width = size;
+		texture3D.image.height = size;
+		texture3D.image.depth = size;
+		texture3D.format = RGBFormat;
+		texture3D.type = UnsignedByteType;
+		texture3D.magFilter = LinearFilter;
+		texture3D.wrapS = ClampToEdgeWrapping;
+		texture3D.wrapT = ClampToEdgeWrapping;
+		texture3D.wrapR = ClampToEdgeWrapping;
+		texture3D.generateMipmaps = false;
 
 		return {
 			title,
@@ -124,6 +143,7 @@ export class LUTCubeLoader extends Loader {
 			domainMin,
 			domainMax,
 			texture,
+			texture3D,
 		};
 
 	}

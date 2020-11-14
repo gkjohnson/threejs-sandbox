@@ -14,6 +14,7 @@
 				font-size: 13px;
 				text-align: center;
 				color: #fff;
+				user-select: none;
 			}
 
 			a {
@@ -55,34 +56,46 @@
 			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
-			import { SSRRPass } from './src/SSRRPass.js';
+			import { SSRPass } from './src/SSRPass.js';
 
 			// globals
 			var stats;
 			var params = {
 				enabled: true,
+				orthographic: false,
+
 				stride: 15,
-				steps: 10,
+				steps: 40,
 				binarySearchSteps: 4,
 				intensity: 0.5,
 				jitter: 1,
+				jitterStrategy: 1,
 
 				renderTargetScale: 1.0,
-				raymarchTargetScale: 0.5,
+				raymarchTargetScale: 1.0,
 				useThickness: true,
-				thickness: 0.025,
+				thickness: 0.1,
 
 				enableBlur: false,
 				blurStride: 1,
-				blurIterations: 5,
+				blurRadius: 2,
 
-				display: SSRRPass.DEFAULT,
+				glossinessMode: 0,
+				glossyJitterStrategy: 1,
+				useRoughnessMaps: true,
+				useRoughnessOverride: true,
+				roughnessOverride: 0.15,
+				roughnessCutoff: 1,
+
+				display: SSRPass.DEFAULT,
 				scene: 'sponza',
+
+				useNormalMaps: true,
 			};
-			var camera, scene, renderer, controls;
+			var camera, orthoCamera, scene, renderer, controls;
 			var composer;
 			var sphere;
-			var fxaaPass, ssrrPass, gammaPass, motionPass, renderPass;
+			var fxaaPass, ssrPass, gammaPass, motionPass, renderPass;
 			var scenes;
 
 			init();
@@ -115,6 +128,15 @@
 				sphere.castShadow = true;
 				sponzaGroup.add( sphere );
 
+				var spotLight = new THREE.SpotLight( 0xffffff, 4 );
+				spotLight.angle = 0.5;
+				spotLight.penumbra = 1;
+
+				spotLight.position.set( - 1, 2, - 8 );
+				spotLight.target.position.set( - 0.75, 	1.5, - 9 );
+				sponzaGroup.add( spotLight );
+				sponzaGroup.add( spotLight.target );
+
 				return sponzaGroup;
 
 			}
@@ -132,6 +154,8 @@
 							c.receiveShadow = true;
 						});
 						group.add(o);
+
+						window.helmet = o;
 					}
 				);
 
@@ -140,6 +164,25 @@
 					new THREE.MeshStandardMaterial( { roughness: 0, color: 0x010101 } )
 				);
 				floor.material.color.setRGB( 0.0005, 0.0005, 0.0005 );
+
+				new THREE.TextureLoader().load(
+					'./assets/checkerboard.o.jpg',
+					texture => {
+
+						floor.material.roughnessMap = texture;
+						floor.material.needsUpdate = true;
+
+					}
+				);
+
+				const box = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(),
+					new THREE.MeshBasicMaterial( { roughness: 0, side: THREE.BackSide } ),
+				);
+				box.scale.setScalar( 10 );
+				box.position.y = 3
+				group.add( box );
+				window.box = box;
 
 				floor.scale.set( 10, 1, 10 );
 				floor.position.y = -1.75;
@@ -158,8 +201,8 @@
 				var plane = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0 }));
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
-				plane.scale.set( 2000, 2000, 0.1 );
-				plane.position.y = -4;
+				plane.scale.set( 100, 100, 1 );
+				plane.position.y = - 1 - 0.5;
 				group.add( plane );
 
 				var textureLoader = new THREE.TextureLoader();
@@ -167,42 +210,41 @@
 					map.wrapS = THREE.RepeatWrapping;
 					map.wrapT = THREE.RepeatWrapping;
 					map.anisotropy = 4;
-					map.repeat.set( 50, 50 );
-					plane.material.roughnessMap = map;
+					map.repeat.set( 10, 10 );
 					plane.material.map = map;
 					plane.material.needsUpdate = true;
 				} );
 
-				var geom = new THREE.SphereBufferGeometry(4, 50, 50);
-				var sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
+				var geom = new THREE.SphereBufferGeometry( 1, 50, 50 );
+				var sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0x009688, metalness: 0.9, roughness: 0 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
-				sphere.position.x = -10;
+				sphere.position.x = -3;
 				group.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xff0000, metalness: 0.25, roughness: 0.25 } ) );
+				sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0xff0000, metalness: 0.25, roughness: 0.25 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
 				sphere.position.x = 0;
 				group.add(sphere);
 
-				sphere = new THREE.Mesh(geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
+				sphere = new THREE.Mesh( geom, new THREE.MeshStandardMaterial( { color: 0xFFC107, metalness: 0, roughness: 0.9 } ) );
 				sphere.castShadow = true;
 				sphere.receiveShadow = true;
-				sphere.position.x = 10;
+				sphere.position.x = 3;
 				group.add(sphere);
 
 				var mirror = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial({ color: 0, side: THREE.DoubleSide, roughness: 0 }));
-				mirror.rotation.set( 0, 0, 0 );
-				mirror.scale.set(60, 20, 0.5);
-				mirror.position.y = -4;
-				mirror.position.z = -15;
+				mirror.scale.set( 15, 5, 1 );
+				mirror.position.z = - 4;
 				group.add(mirror);
 
 				var box = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0x333333 } ) );
-				box.position.x = -20;
-				box.scale.set( 2, 10, 2 );
-				group.add(box);
+				box.position.x = - 6;
+				box.scale.set( 0.5, 3.5, 0.5 );
+				group.add( box );
+
+				group.scale.setScalar( 0.5 );
 
 				return group;
 
@@ -213,6 +255,8 @@
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
 				camera.position.set( 0.0, 50, 50 * 3.5 ).multiplyScalar( 1 / 30 );
+
+				orthoCamera = new THREE.OrthographicCamera();
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0 );
@@ -236,7 +280,8 @@
 				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
 
 				var directionalLight = new THREE.DirectionalLight( 0xffffff, 4 );
-				directionalLight.position.set( 30, 200, 130 );
+				directionalLight.position.set( 60, 200, 130 );
+				// directionalLight.position.set( 30, 200, 130 );
 				directionalLight.castShadow = true;
 
 				var shadowCam = directionalLight.shadow.camera;
@@ -269,10 +314,10 @@
 				fxaaPass = new ShaderPass( FXAAShader );
 				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
 
-				ssrrPass = new SSRRPass( scene, camera );
-				ssrrPass.raymarchTargetScale = params.raymarchTargetScale;
-				ssrrPass.renderTargetScale = params.renderTargetScale;
-				window.ssrrPass = ssrrPass;
+				ssrPass = new SSRPass( scene, camera );
+				ssrPass.raymarchTargetScale = params.raymarchTargetScale;
+				ssrPass.renderTargetScale = params.renderTargetScale;
+				window.ssrPass = ssrPass;
 
 				const floatRT = new THREE.WebGLRenderTarget( 1, 1, {
 					minFilter: THREE.LinearFilter,
@@ -283,7 +328,7 @@
 				composer = new EffectComposer( renderer, floatRT );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.addPass( renderPass );
-				composer.addPass( ssrrPass );
+				composer.addPass( ssrPass );
 				composer.addPass( fxaaPass );
 				composer.addPass( gammaPass );
 
@@ -293,7 +338,7 @@
 
 				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 5;
+				controls.minDistance = 1;
 				controls.maxDistance = 200;
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -304,37 +349,68 @@
 				gui.width = 325;
 
 				gui.add( params, 'enabled' );
+				gui.add( params, 'orthographic' );
 
 				const raymarchingFolder = gui.addFolder( 'raymarching' );
 				raymarchingFolder.add( params, 'stride', 1, 60 );
-				raymarchingFolder.add( params, 'steps', 2, 200 );
-				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 );
+				raymarchingFolder.add( params, 'steps', 2, 1000 );
+				raymarchingFolder.add( params, 'binarySearchSteps', 0, 20 ).step( 1 );
 				raymarchingFolder.add( params, 'jitter', 0, 5 ).step( 0.1 );
+				raymarchingFolder.add( params, 'jitterStrategy', {
+					REGULAR_JITTER: SSRPass.REGULAR_JITTER,
+					BLUENOISE_JITTER: SSRPass.BLUENOISE_JITTER,
+				} );
 				raymarchingFolder.add( params, 'useThickness' );
-				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.25 ).step( 0.001 );
+				raymarchingFolder.add( params, 'thickness' ).min( 0 ).max( 0.5 ).step( 0.001 );
+				raymarchingFolder.add( params, 'useNormalMaps' );
 				raymarchingFolder.open();
 
 				const scaleFolder = gui.addFolder( 'effect scale' );
 				scaleFolder.add( params, 'intensity', 0, 1 );
-				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 )
+				scaleFolder.add( params, 'renderTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
-						ssrrPass.renderTargetScale = v;
+						ssrPass.renderTargetScale = v;
 						onWindowResize();
 
 					} );
-				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 )
+				scaleFolder.add( params, 'raymarchTargetScale', 0.1, 1 ).step( 0.05 )
 					.onChange( v => {
 
-						ssrrPass.raymarchTargetScale = v;
+						ssrPass.raymarchTargetScale = v;
 						onWindowResize();
 
 					} );
 				scaleFolder.open();
 
+				const glossFolder = gui.addFolder( 'glossiness' );
+				glossFolder.add( params, 'glossinessMode', {
+					NO_GLOSSY: SSRPass.NO_GLOSSY,
+					SIMPLE_GLOSSY: SSRPass.SIMPLE_GLOSSY,
+					MULTI_GLOSSY: SSRPass.MULTI_GLOSSY,
+					MIP_PYRAMID_GLOSSY: SSRPass.MIP_PYRAMID_GLOSSY,
+				} ).onChange( value => {
+
+					ssrPass.glossinessMode = parseFloat( value );
+
+				} );
+				glossFolder.add( params, 'glossyJitterStrategy', {
+					RANDOM_JITTER: SSRPass.RANDOM_JITTER,
+					BLUENOISE_JITTER: SSRPass.BLUENOISE_JITTER,
+				} ).onChange( value => {
+
+					ssrPass.glossyJitterStrategy = parseFloat( value );
+
+				} );
+				glossFolder.add( params, 'useRoughnessMaps' );
+				glossFolder.add( params, 'useRoughnessOverride' );
+				glossFolder.add( params, 'roughnessOverride' ).min( 0 ).max( 1 ).step( 0.01 );
+				glossFolder.add( params, 'roughnessCutoff' ).min( 0 ).max( 1 ).step( 0.01 );
+				glossFolder.open();
+
 				const blurFolder = gui.addFolder( 'blur' );
 				blurFolder.add( params, 'enableBlur' );
-				blurFolder.add( params, 'blurIterations' ).min( 1 ).max( 10 ).step( 1 );
+				blurFolder.add( params, 'blurRadius' ).min( 1 ).max( 10 ).step( 1 );
 				blurFolder.add( params, 'blurStride' ).min( 1 ).max( 10 ).step( 1 );
 				blurFolder.open();
 
@@ -342,19 +418,21 @@
 					params,
 					'display',
 					{
-						DEFAULT: SSRRPass.DEFAULT,
-						NORMAL: SSRRPass.NORMAL,
-						ROUGHNESS: SSRRPass.ROUGHNESS,
-						FRONT_DEPTH: SSRRPass.FRONT_DEPTH,
-						BACK_DEPTH: SSRRPass.BACK_DEPTH,
-						DEPTH_DELTA: SSRRPass.DEPTH_DELTA,
-						INTERSECTION_RESULTS: SSRRPass.INTERSECTION_RESULTS,
-						INTERSECTION_DISTANCE: SSRRPass.INTERSECTION_DISTANCE,
-						INTERSECTION_COLOR: SSRRPass.INTERSECTION_COLOR,
-					}).onChange(value => {
-						ssrrPass.debug.display = parseFloat(value);
-					});
-				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres', 'mirror box' ] );
+						DEFAULT: SSRPass.DEFAULT,
+						NORMAL: SSRPass.NORMAL,
+						ROUGHNESS: SSRPass.ROUGHNESS,
+						FRONT_DEPTH: SSRPass.FRONT_DEPTH,
+						BACK_DEPTH: SSRPass.BACK_DEPTH,
+						DEPTH_DELTA: SSRPass.DEPTH_DELTA,
+						INTERSECTION_RESULTS: SSRPass.INTERSECTION_RESULTS,
+						INTERSECTION_DISTANCE: SSRPass.INTERSECTION_DISTANCE,
+						INTERSECTION_COLOR: SSRPass.INTERSECTION_COLOR,
+					} ).onChange( value => {
+
+						ssrPass.debug.display = parseFloat( value );
+
+					} );
+				gui.add( params, 'scene', [ 'sponza', 'helmet', 'spheres' ] );
 				gui.open();
 
 			}
@@ -366,6 +444,13 @@
 
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
+
+				const aspect = width / height;
+				orthoCamera.left = aspect * - 10;
+				orthoCamera.bottom = - 10;
+				orthoCamera.right = aspect * 10;
+				orthoCamera.top = 10;
+				orthoCamera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
 				composer.setSize( width, height );
@@ -385,21 +470,43 @@
 
 			function render() {
 
+				// ortho camera
+				orthoCamera.position.copy( camera.position );
+				orthoCamera.rotation.copy( camera.rotation );
+
+				const zoom = camera.position.distanceTo( controls.target );
+				if ( params.orthographic && orthoCamera.zoom !== zoom ) {
+
+					orthoCamera.zoom = 20 * 1 / zoom;
+					orthoCamera.updateProjectionMatrix();
+
+				}
+
+				renderPass.camera = params.orthographic ? orthoCamera : camera;
+				ssrPass.camera = params.orthographic ? orthoCamera : camera;
+
+				// animation
 				sphere.position.y = Math.sin( window.performance.now() / 500 ) * 0.3;
-				if ( scenes.helmet.children.length > 1 ) scenes.helmet.children[ 1 ].rotation.z = window.performance.now() / 5000;
 
-				ssrrPass.intensity = params.intensity;
-				ssrrPass.steps = params.steps;
-				ssrrPass.stride = params.stride;
-				ssrrPass.binarySearchSteps = params.binarySearchSteps;
-				ssrrPass.enabled = params.enabled;
-				ssrrPass.jitter = params.jitter;
-				ssrrPass.useThickness = params.useThickness;
-				ssrrPass.thickness = params.thickness;
+				// ssr settings
+				ssrPass.intensity = params.intensity;
+				ssrPass.steps = params.steps;
+				ssrPass.stride = params.stride;
+				ssrPass.binarySearchSteps = params.binarySearchSteps;
+				ssrPass.enabled = params.enabled;
+				ssrPass.jitter = params.jitter;
+				ssrPass.jitterStrategy = params.jitterStrategy;
+				ssrPass.useThickness = params.useThickness;
+				ssrPass.thickness = params.thickness;
+				ssrPass.useNormalMaps = params.useNormalMaps;
+				ssrPass.useRoughnessMaps = params.useRoughnessMaps;
+				ssrPass.roughnessOverride = params.useRoughnessOverride ? params.roughnessOverride : null;
+				ssrPass.glossyJitterStrategy = params.glossyJitterStrategy;
+				ssrPass.roughnessCutoff = params.roughnessCutoff;
 
-				ssrrPass.enableBlur = params.enableBlur;
-				ssrrPass.blurIterations = params.blurIterations;
-				ssrrPass.blurStride = params.blurStride;
+				ssrPass.enableBlur = params.enableBlur;
+				ssrPass.blurRadius = params.blurRadius;
+				ssrPass.blurStride = params.blurStride;
 
 				for ( const key in scenes ) {
 
@@ -407,7 +514,7 @@
 
 				}
 
-				gammaPass.enabled = ssrrPass.debug.display === SSRRPass.DEFAULT;
+				gammaPass.enabled = ssrPass.debug.display === SSRPass.DEFAULT;
 				composer.render();
 
 			}

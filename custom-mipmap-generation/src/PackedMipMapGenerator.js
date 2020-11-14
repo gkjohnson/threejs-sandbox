@@ -1,7 +1,7 @@
 
 import { FullScreenQuad } from './FullScreenQuad.js';
-import { Color, ShaderMaterial, MathUtils, WebGLRenderTarget, NearestFilter } from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { CopyShader } from '//unpkg.com/three@0.114.0/examples/jsm/shaders/CopyShader.js';
+import { Color, ShaderMaterial, MathUtils, WebGLRenderTarget, NearestFilter } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 import { clone, MipGenerationShader } from './MipGenerationShader.js';
 
 const _originalClearColor = new Color();
@@ -100,6 +100,9 @@ export class PackedMipMapGenerator {
 
 			swapTarget.dispose();
 			swapTarget.copy( target );
+
+			// mrdoob/three.js issue #20328
+			swapTarget.texture.image = { ...swapTarget.texture.image };
 
 		} else {
 

@@ -16,16 +16,16 @@ const _tri = new Triangle();
 
 export class VolumeLight extends Object3D {
 
-    constructor() {
+	constructor() {
 
-        super();
+		super();
 
 		this.lightCount = 1;
-        this.lights = [];
+		this.lights = [];
 		this.iteration = 0;
 		this.randomSample = true;
 
-    }
+	}
 
 	updateLights() {
 
@@ -49,31 +49,31 @@ export class VolumeLight extends Object3D {
 
 	}
 
-    setIteration( i ) {
+	setIteration( i ) {
 
-        this.iteration = i;
+		this.iteration = i;
 
-    }
+	}
 
 }
 
 export class MeshLight extends VolumeLight {
 
-    constructor( geometry ) {
+	constructor( geometry ) {
 
-        super();
-        const lightMesh = new Mesh( geometry, new MeshBasicMaterial() );
-        this.add( lightMesh );
+		super();
+		const lightMesh = new Mesh( geometry, new MeshBasicMaterial() );
+		this.add( lightMesh );
 
 		this.lightMesh = lightMesh;
-        this.geometry = geometry;
-        this.setIteration( 0 );
+		this.geometry = geometry;
+		this.setIteration( 0 );
 
-    }
+	}
 
-    setIteration( iteration ) {
+	setIteration( iteration ) {
 
-        super.setIteration( iteration );
+		super.setIteration( iteration );
 
 		const lights = this.lights;
 		if ( this.randomSample ) {
@@ -134,6 +134,6 @@ export class MeshLight extends VolumeLight {
 
 		}
 
-    }
+	}
 
 }

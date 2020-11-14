@@ -4,10 +4,12 @@ import {
 	WebGLRenderTarget,
 	NearestFilter,
 	RGBAFormat,
-	FloatType,
 	HalfFloatType,
 	RGBFormat,
 	Math as MathUtils,
+	DataTexture,
+	RepeatWrapping,
+	LinearFilter,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
@@ -17,6 +19,7 @@ import { PackedNormalDisplayShader } from '../../screenSpaceReflectionsPass/src/
 import { GTAOShader } from './GTAOShader.js';
 import { CompositeShader } from './CompositeShader.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
+import { BlueNoiseGenerator } from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
 
 const rendererState = new RendererState();
 const blackColor = new Color( 0 );
@@ -25,9 +28,34 @@ const blackColor = new Color( 0 );
 // const offsets = [ 0.0, 0.5, 0.25, 0.75 ];
 // const rotations = [ 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 ];
 
+// Generate Blue Noise Textures
+const generator = new BlueNoiseGenerator();
+generator.size = 32;
+
+const data = new Uint8Array( 32 ** 2 * 4 );
+for ( let i = 0, l = 4; i < l; i ++ ) {
+
+	const result = generator.generate();
+	const bin = result.data;
+	const maxValue = result.maxValue;
+
+	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+		const value = 255 * ( bin[ j ] / maxValue );
+		data[ j * 4 + i ] = value;
+
+	}
+
+}
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBAFormat );
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.minFilter = LinearFilter;
+blueNoiseTex.needsUpdate = true;
+
 export class GTAOPass extends Pass {
 
-	constructor( scene, camera, options = {} ) {
+	constructor( scene, camera ) {
 
 		super();
 
@@ -42,8 +70,8 @@ export class GTAOPass extends Pass {
 
 		this.renderTargetScale = 1.0;
 		this.enableJitter = true;
-		this.enableRadiusJitter = true;
-		this.enableRotationJitter = true;
+		this.radiusJitter = 0;
+		this.rotationJitter = 0;
 		this.numSteps = 8;
 		this.numDirections = 8;
 		this.intensity = 1.0;
@@ -140,7 +168,7 @@ export class GTAOPass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const {
@@ -242,16 +270,16 @@ export class GTAOPass extends Pass {
 
 		}
 
-		if ( this.enableRotationJitter !== Boolean( gtaoMaterial.defines.ENABLE_ROTATION_JITTER ) ) {
+		if ( this.rotationJitter !== gtaoMaterial.defines.ENABLE_ROTATION_JITTER ) {
 
-			gtaoMaterial.defines.ENABLE_ROTATION_JITTER = this.enableRotationJitter ? 1 : 0;
+			gtaoMaterial.defines.ENABLE_ROTATION_JITTER = this.rotationJitter;
 			gtaoMaterial.needsUpdate = true;
 
 		}
 
-		if ( this.enableRadiusJitter !== Boolean( gtaoMaterial.defines.ENABLE_RADIUS_JITTER ) ) {
+		if ( this.radiusJitter !== gtaoMaterial.defines.ENABLE_RADIUS_JITTER ) {
 
-			gtaoMaterial.defines.ENABLE_RADIUS_JITTER = this.enableRadiusJitter ? 1 : 0;
+			gtaoMaterial.defines.ENABLE_RADIUS_JITTER = this.radiusJitter;
 			gtaoMaterial.needsUpdate = true;
 
 		}
@@ -292,6 +320,9 @@ export class GTAOPass extends Pass {
 			Math.floor( gtaoBuffer.texture.image.width ),
 			Math.floor( gtaoBuffer.texture.image.height )
 		);
+
+		gtaoMaterial.uniforms.blueNoiseTex.value = blueNoiseTex;
+		gtaoMaterial.uniforms.blueNoiseSize.value = blueNoiseTex.image.width;
 
 		renderer.setRenderTarget( gtaoBuffer );
 		renderer.clear();
@@ -373,6 +404,10 @@ export class GTAOPass extends Pass {
 	}
 
 }
+
+GTAOPass.NO_JITTER = 0;
+GTAOPass.RANDOM_JITTER = 1;
+GTAOPass.BLUENOISE_JITTER = 2;
 
 GTAOPass.DEFAULT = 0;
 GTAOPass.DEPTH = 1;

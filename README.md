@@ -1,24 +1,24 @@
 # threejs-sandbox
 
-Set of experiments and extensions to THREE.js intended to eventually be contributed to the core library, examples folder, or moved into their own repo.
+[![travis build](https://img.shields.io/travis/com/gkjohnson/threejs-sandbox/master.svg?style=flat-square)](https://travis-ci.com/gkjohnson/threejs-sandbox)
+
+Set of experiments and extensions to THREE.js. These pages are a sandbox of examples and not necessarily ready to include in projects and may require some work to properly and performantly integrate.
 
 ## Potential Projects
 
 - Deferred Renderer
 - TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
-
 - use GLSL syntax parser for debugger
-- Blue Noise Dithering
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
 - Subsurface Scattering
 - SSDO
 - Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
 - Capsule Geometry / Math Class
-
-**On Hold**
-- SSRR
+- Stochastic transparency
+- Glossly refraction post effect
+- Hilbert indices in shader (https://www.shadertoy.com/view/3tB3z3)
 
 **Next**
-- Translucent material with refraction, diffusion, depth peeling
-  - gem refraction ([link 1](https://www.shadertoy.com/view/ltfXDM), [link 2](https://github.com/amsXYZ/three-multifaceted-refraction))
 - Half Edge data structure
+- GPU particles
+- Curl noise

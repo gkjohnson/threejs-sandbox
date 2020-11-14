@@ -61,8 +61,8 @@
 			var stats;
 			var params = {
 				enabled: true,
-				enableRotationJitter: true,
-				enableRadiusJitter: false,
+				rotationJitter: 1,
+				radiusJitter: 0,
 
 				directionOffset: 0.0,
 				stepOffset: 0.0,
@@ -340,8 +340,16 @@
 				const settingsFolder = gui.addFolder( 'settings' );
 				settingsFolder.add( params, 'directionOffset' ).min( 0.0 ).max( 1 ).step( 0.01 );
 				settingsFolder.add( params, 'stepOffset' ).min( 0.0 ).max( 1 ).step( 0.01 );
-				settingsFolder.add( params, 'enableRotationJitter' );
-				settingsFolder.add( params, 'enableRadiusJitter' );
+				settingsFolder.add( params, 'rotationJitter', {
+					NONE: 0,
+					RANDOM: 1,
+					BLUE_NOISE: 2,
+				} );
+				settingsFolder.add( params, 'radiusJitter', {
+					NONE: 0,
+					RANDOM: 1,
+					BLUE_NOISE: 2,
+				} );
 				settingsFolder.add( params, 'numSteps' ).min( 1 ).max( 32 ).step( 1 );
 				settingsFolder.add( params, 'numDirections' ).min( 1 ).max( 32 ).step( 1 );
 				settingsFolder.add( params, 'intensity' ).min( 0 ).max( 2.0 ).step( 0.01 );
@@ -440,8 +448,8 @@
 				gtaoPass.debug.display = parseInt( params.display );
 				gtaoPass.enabled = params.enabled;
 				gtaoPass.singlePass = params.singlePass;
-				gtaoPass.enableRotationJitter = params.enableRotationJitter;
-				gtaoPass.enableRadiusJitter = params.enableRadiusJitter;
+				gtaoPass.rotationJitter = parseInt( params.rotationJitter );
+				gtaoPass.radiusJitter = parseInt( params.radiusJitter );
 				gtaoPass.blurMode = parseFloat( params.blurMode );
 				gtaoPass.blurIterations = params.blurIterations;
 				gtaoPass.blurStride = params.blurStride;

@@ -14,18 +14,46 @@ import {
 	DataTexture,
 	RGBAFormat,
 	FloatType,
-	ShaderMaterial
+	ShaderMaterial,
+	RepeatWrapping,
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
+import { BlueNoiseGenerator } from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { traverseVisibleMeshes } from './utils.js';
 
 const _blackColor = new Color( 0, 0, 0 );
 const _defaultOverrides = {};
 const _rendererState = new RendererState();
+
+// Generate Blue Noise Textures
+const generator = new BlueNoiseGenerator();
+generator.size = 32;
+
+const data = new Uint8Array( 32 ** 2 * 4 );
+for ( let i = 0, l = 1; i < l; i ++ ) {
+
+	const result = generator.generate();
+	const bin = result.data;
+	const maxValue = result.maxValue;
+
+	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+		const value = 255 * ( bin[ j ] / maxValue );
+		data[ j * 3 + i ] = value;
+
+	}
+
+}
+
+// TODO: Why won't RedFormat work here?
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBFormat );
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.minFilter = LinearFilter;
 
 export class MotionBlurPass extends Pass {
 
@@ -63,6 +91,8 @@ export class MotionBlurPass extends Pass {
 		this.blurTransparent = 'blurTransparent' in options ? options.blurTransparent : false;
 		this.renderCameraBlur = 'renderCameraBlur' in options ? options.renderCameraBlur : true;
 		this.renderTargetScale = 'renderTargetScale' in options ? options.renderTargetScale : 1;
+		this.jitter = 'jitter' in options ? options.jitter : 1;
+		this.jitterStrategy = 'jitterStrategy' in options ? options.jitterStrategy : MotionBlurPass.RANDOM_JITTER;
 
 		this.debug = {
 
@@ -117,7 +147,7 @@ export class MotionBlurPass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const debug = this.debug;
 		const scene = this.scene;
@@ -136,7 +166,7 @@ export class MotionBlurPass extends Pass {
 		renderer.compile( scene, camera );
 		this._ensurePrevCameraTransform();
 
-		switch( debug.display ) {
+		switch ( debug.display ) {
 
 			case MotionBlurPass.GEOMETRY: {
 
@@ -167,10 +197,19 @@ export class MotionBlurPass extends Pass {
 				const uniforms = compositeMaterial.uniforms;
 				uniforms.sourceBuffer.value = readBuffer.texture;
 				uniforms.velocityBuffer.value = this._velocityBuffer.texture;
+				uniforms.jitter.value = this.jitter;
+				uniforms.blueNoiseTex.value = blueNoiseTex;
 
 				if ( compositeMaterial.defines.SAMPLES !== this.samples ) {
 
 					compositeMaterial.defines.SAMPLES = Math.max( 0, Math.floor( this.samples ) );
+					compositeMaterial.needsUpdate = true;
+
+				}
+
+				if ( compositeMaterial.defines.JITTER_STRATEGY !== this.jitterStrategy ) {
+
+					compositeMaterial.defines.JITTER_STRATEGY = this.jitterStrategy;
 					compositeMaterial.needsUpdate = true;
 
 				}
@@ -379,3 +418,7 @@ export class MotionBlurPass extends Pass {
 MotionBlurPass.DEFAULT = 0;
 MotionBlurPass.VELOCITY = 1;
 MotionBlurPass.GEOMETRY = 2;
+
+MotionBlurPass.REGULAR_JITTER = 0;
+MotionBlurPass.RANDOM_JITTER = 1;
+MotionBlurPass.BLUENOISE_JITTER = 2;

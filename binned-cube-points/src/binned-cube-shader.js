@@ -1,26 +1,26 @@
 import { UniformsUtils, Vector3 } from '//unpkg.com/three@0.106.0/build/three.module.js';
 
-function cloneShader(shader, uniforms, defines) {
+function cloneShader( shader, uniforms, defines ) {
 
-	const newShader = Object.assign({}, shader);
-	newShader.uniforms = UniformsUtils.merge([
+	const newShader = Object.assign( {}, shader );
+	newShader.uniforms = UniformsUtils.merge( [
 		newShader.uniforms,
 		uniforms
-	]);
-	newShader.defines = Object.assign({}, defines);
+	] );
+	newShader.defines = Object.assign( {}, defines );
 
 	return newShader;
 
 }
 
-export function addInstancePosition(shader) {
+export function addInstancePosition( shader ) {
 
 	const newShader = cloneShader(
 		shader,
 		{
 			scale: { value: 1 },
 			offset: { value: new Vector3() },
-		},
+		}
 	);
 
 	newShader.vertexShader = `
@@ -28,7 +28,7 @@ export function addInstancePosition(shader) {
 		uniform vec3 offset;
 		attribute vec3 instancePosition;
 		${newShader.vertexShader}
-	`.replace('#include <project_vertex>', match => `
+	`.replace( '#include <project_vertex>', match => `
 		vec3 offsetPos = instancePosition + offset;
 		offsetPos /= scale;
 		offsetPos = floor(offsetPos);
@@ -39,7 +39,7 @@ export function addInstancePosition(shader) {
 		transformed *= scale;
 		transformed += offsetPos;
 		${match}
-	`);
+	` );
 
 	return newShader;
 

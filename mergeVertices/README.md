@@ -7,7 +7,7 @@ Submitted in [this PR](https://github.com/mrdoob/three.js/pull/14116) to THREE.j
 
 ## Use
 
-```js
+```html
 <script src=".../three.js"></script>
 <script src=".../BufferGeometryOptimizeTriangleIndices.js"></script>
 

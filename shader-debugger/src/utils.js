@@ -122,7 +122,7 @@ function parseDeclarations( body, startIndex, endIndex ) {
 		const index = lastResult.index + line.length;
 
 		const splits = rest.split( ',' );
-		for( let i = 0, l = splits.length; i < l; i ++ ) {
+		for ( let i = 0, l = splits.length; i < l; i ++ ) {
 
 			const item = splits[ i ];
 			let name;
@@ -217,7 +217,7 @@ export function getScopeDepth( text, index ) {
 	const braceRegex = /[{}]/g;
 	let braceCount = 0;
 	let lastResult;
-	while( lastResult = braceRegex.exec ) {
+	while ( lastResult = braceRegex.exec ) {
 
 		if ( lastResult.lastIndex > index ) {
 
@@ -251,7 +251,7 @@ export function getMainExtents( text ) {
 	const braceRegex = /[{}]/g;
 	braceRegex.lastIndex = mainRegex.lastIndex + mainResult[ 0 ].length;
 
-	const before = mainRegex.lastIndex -  mainResult[ 0 ].length;
+	const before = mainRegex.lastIndex - mainResult[ 0 ].length;
 	const after = mainRegex.lastIndex;
 	let end = 0;
 

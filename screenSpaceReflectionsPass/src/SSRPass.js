@@ -3,12 +3,19 @@ import {
 	FloatType,
 	WebGLRenderTarget,
 	RGBAFormat,
+	RGBFormat,
 	Color,
 	ShaderMaterial,
 	FrontSide,
 	BackSide,
+	DataTexture,
+	RepeatWrapping,
+	LinearFilter,
+	LinearMipMapLinearFilter,
+	MathUtils,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
 import {
@@ -21,6 +28,9 @@ import {
 import { PackedNormalPass } from './PackedNormalPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';
 import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
+import { BlueNoiseGenerator } from '../../blue-noise-generation/src/BlueNoiseGenerator.js';
+import { PackedMipMapGenerator } from '../../custom-mipmap-generation/src/PackedMipMapGenerator.js';
+import { FullScreenQuad } from '../../custom-mipmap-generation/src/FullScreenQuad.js';
 
 // Approach from
 // http://jcgt.org/published/0003/04/04/paper.pdf
@@ -43,7 +53,33 @@ const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
 
 const _rendererState = new RendererState();
 const _blackColor = new Color( 0 );
-export class SSRRPass extends Pass {
+
+// Generate Blue Noise Textures
+const generator = new BlueNoiseGenerator();
+generator.size = 32;
+
+const data = new Uint8Array( 32 ** 2 * 4 );
+for ( let i = 0, l = 4; i < l; i ++ ) {
+
+	const result = generator.generate();
+	const bin = result.data;
+	const maxValue = result.maxValue;
+
+	for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+		const value = 255 * ( bin[ j ] / maxValue );
+		data[ j * 4 + i ] = value;
+
+	}
+
+}
+const blueNoiseTex = new DataTexture( data, generator.size, generator.size, RGBAFormat );
+blueNoiseTex.wrapS = RepeatWrapping;
+blueNoiseTex.wrapT = RepeatWrapping;
+blueNoiseTex.minFilter = LinearFilter;
+
+export class SSRPass extends Pass {
+
 	constructor( scene, camera, options = {} ) {
 
 		super();
@@ -60,18 +96,25 @@ export class SSRRPass extends Pass {
 		this.jitter = 1;
 		this.thickness = 1;
 		this.useThickness = false;
+		this.useNormalMaps = true;
+		this.useRoughnessMaps = true;
+		this.roughnessCutoff = 1.0;
+		this.roughnessOverride = null;
+		this.glossinessMode = SSRPass.NO_GLOSSY;
+		this.jitterStrategy = SSRPass.REGULAR_JITTER;
+		this.glossyJitterStrategy = SSRPass.RANDOM_JITTER;
 
 		this.useBlur = true;
 		this.blurStride = 1;
-		this.blurIterations = 5;
+		this.blurRadius = 5;
 
 		this.scene = scene;
 		this.camera = camera;
 		this.debug = {
-			display: SSRRPass.DEFAULT
+			display: SSRPass.DEFAULT
 		};
 
-		// render targets
+		// Depth Buffers
 		this._depthBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
@@ -79,17 +122,44 @@ export class SSRRPass extends Pass {
 				format: RGBAFormat,
 				type: FloatType
 			} );
-		this._depthBuffer.texture.name = 'SSRRPass.Depth';
+		this._depthBuffer.texture.name = 'SSRPass.Depth';
 		this._depthReplacement = new LinearDepthPass();
-		this._depthReplacement.side = FrontSide;
 
 		this._backfaceDepthBuffer = this._depthBuffer.clone();
-		this._backfaceDepthBuffer.texture.name = 'SSRRPass.Depth';
+		this._backfaceDepthBuffer.texture.name = 'SSRPass.Depth';
 		this._backfaceDepthReplacement = new LinearDepthPass();
-		this._backfaceDepthReplacement.side = BackSide;
+		this._backfaceDepthReplacement.invertSide = true;
 
+		// Depth Pyramid Buffer
+		this._depthBufferLod =
+		new WebGLRenderTarget( 256, 256, {
+			minFilter: LinearMipMapLinearFilter,
+			magFilter: LinearFilter,
+			format: RGBAFormat,
+			type: FloatType
+		} );
+		this._depthBufferLodGenerator = new PackedMipMapGenerator(
+			/* glsl */`
+				float minVal = samples[ 0 ].r;
+				for ( int i = 1; i < SAMPLES; i ++ ) {
+
+					minVal = min( minVal, samples[ i ].r );
+
+				}
+				gl_FragColor = vec4( minVal );
+			`
+		);
+
+		// Mipmapped Color Buffer
+		this._colorLod = new WebGLRenderTarget( 1, 1, {
+			format: RGBFormat,
+			minFilter: LinearMipMapLinearFilter,
+			magFilter: NearestFilter,
+			generateMipmaps: true,
+		} );
+
+		// Normal Pass Material Replacement and Buffer
 		this._packedReplacement = new PackedNormalPass();
-
 		this._packedBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: NearestFilter,
@@ -97,20 +167,24 @@ export class SSRRPass extends Pass {
 				type: FloatType,
 				format: RGBAFormat
 			} );
-		this._packedBuffer.texture.name = 'SSRRPass.Packed';
+		this._packedBuffer.texture.name = 'SSRPass.Packed';
 
+		// March Results Buffer
 		this._marchResultsBuffer =
 			new WebGLRenderTarget( 256, 256, {
 				type: FloatType,
 				format: RGBAFormat
 			} );
-		this._marchResultsBuffer.texture.name = 'SSRRPass.MarchResults';
+		this._marchResultsBuffer.texture.name = 'SSRPass.MarchResults';
 
+		// Full Screen Quads
 		const marchMaterial = new ShaderMaterial( MarchResultsShader );
 		this._marchQuad = new Pass.FullScreenQuad( marchMaterial );
 
 		const colorResolveMaterial = new ShaderMaterial( ColorResolveShader );
 		this._colorResolveQuad = new Pass.FullScreenQuad( colorResolveMaterial );
+
+		this._copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
 	}
 
@@ -125,14 +199,14 @@ export class SSRRPass extends Pass {
 	setSize( width, height ) {
 
 		const raymarchTargetScale = this.raymarchTargetScale;
-		const raymarchWidth = width * raymarchTargetScale;
-		const raymarchHeight = height * raymarchTargetScale;
+		const raymarchWidth = Math.floor( width * raymarchTargetScale );
+		const raymarchHeight = Math.floor( height * raymarchTargetScale );
 
 		this._marchResultsBuffer.setSize( raymarchWidth, raymarchHeight );
 
 		const renderTargetScale = this.renderTargetScale;
-		const renderWidth = width * renderTargetScale;
-		const renderHeight = height * renderTargetScale;
+		const renderWidth = Math.floor( width * renderTargetScale );
+		const renderHeight = Math.floor( height * renderTargetScale );
 
 		this._depthBuffer.setSize( renderWidth, renderHeight );
 		this._backfaceDepthBuffer.setSize( renderWidth, renderHeight );
@@ -146,17 +220,20 @@ export class SSRRPass extends Pass {
 		const camera = this.camera;
 		const debug = this.debug;
 
-		// Save the previous scene state
+		// Get variables
 		const finalBuffer = this.renderToScreen ? null : writeBuffer;
 		const depthBuffer = this._depthBuffer;
 		const packedBuffer = this._packedBuffer;
 		const backfaceDepthBuffer = this._backfaceDepthBuffer;
-		const useThickness = this.useThickness;
+
+		// we can't render use back face depth and z pyramid glossiness
+		const useThickness = this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY || this.useThickness;
 
 		const depthReplacement = this._depthReplacement;
 		const backfaceDepthReplacement = this._backfaceDepthReplacement;
 		const packedReplacement = this._packedReplacement;
 
+		// Save the previous scene state
 		_rendererState.copy( renderer, scene );
 		const replaceOriginalValues = () => {
 
@@ -173,10 +250,15 @@ export class SSRRPass extends Pass {
 
 		// Roughness / Normal pass
 		packedReplacement.replace( scene, true, true );
+		packedReplacement.useNormalMaps = this.useNormalMaps;
+		packedReplacement.useRoughnessMaps = this.useRoughnessMaps;
+		packedReplacement.roughnessOverride = this.roughnessOverride;
 		renderer.setRenderTarget( packedBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
-		if ( debug.display === SSRRPass.NORMAL ) {
+
+		// Debug Render Normal Map
+		if ( debug.display === SSRPass.NORMAL ) {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
@@ -189,7 +271,8 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( debug.display === SSRRPass.ROUGHNESS ) {
+		// Debug Render Roughness Map
+		if ( debug.display === SSRPass.ROUGHNESS ) {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
@@ -202,28 +285,42 @@ export class SSRRPass extends Pass {
 
 		}
 
-		// Render depth
+		// Render Depth
 		depthReplacement.replace( scene, true, false );
 		renderer.setRenderTarget( depthBuffer );
 		renderer.clear();
 		renderer.render( scene, camera );
 
-		// TODO: Use a depth texture with 1 value rather than 4 (Luminance, depth texture type?)
-		// TODO: Depth looks banded right now -- instead of using float and storing the large values maybe
-		// scale from zero to one and unpack in the raymarching code
-		// TODO: Separate depth buffer resolution from final and march resolution
-		if ( debug.display === SSRRPass.FRONT_DEPTH ) {
+		// Render Depth Pyramid
+		if ( this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY ) {
+
+			// generate depth pyramid
+			this._depthBufferLodGenerator.update( depthBuffer, this._depthBufferLod, renderer, false );
+
+			// copy the color buffer to a target that can create mipmaps
+			const pow2ColorSize = MathUtils.floorPowerOfTwo( readBuffer.texture.image.width, readBuffer.texture.image.height );
+			this._copyQuad.material.uniforms.tDiffuse.value = readBuffer.texture;
+			this._colorLod.texture.generateMipmaps = true;
+			this._colorLod.setSize( pow2ColorSize, pow2ColorSize );
+			renderer.setRenderTarget( this._colorLod );
+			this._copyQuad.render( renderer );
+
+		}
+
+		// Render Debug Depth Buffer
+		if ( debug.display === SSRPass.FRONT_DEPTH ) {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_debugDepthMaterial.uniforms.texture.value = depthBuffer.texture;
+			_debugDepthMaterial.uniforms.texture.value = this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY ? this._depthBufferLod : depthBuffer.texture;
 			_debugDepthQuad.render( renderer );
 			replaceOriginalValues();
 			return;
 
 		}
 
+		// Render Backface Depth
 		if ( useThickness === false ) {
 
 			// Render Backface Depth
@@ -232,7 +329,8 @@ export class SSRRPass extends Pass {
 			renderer.clear();
 			renderer.render( scene, camera );
 
-			if ( debug.display === SSRRPass.BACK_DEPTH ) {
+			// Debug Render Backface Depth
+			if ( debug.display === SSRPass.BACK_DEPTH ) {
 
 				renderer.setRenderTarget( finalBuffer );
 				renderer.clear();
@@ -244,7 +342,8 @@ export class SSRRPass extends Pass {
 
 			}
 
-			if ( debug.display === SSRRPass.DEPTH_DELTA ) {
+			// Debug Render Depth Delta
+			if ( debug.display === SSRPass.DEPTH_DELTA ) {
 
 				renderer.setRenderTarget( finalBuffer );
 				renderer.clear();
@@ -260,14 +359,13 @@ export class SSRRPass extends Pass {
 
 		}
 
-		// Render march results
+		// Initialize Ray March Material
 		const marchResultsBuffer = this._marchResultsBuffer;
 		const marchQuad = this._marchQuad;
 		const marchMaterial = marchQuad.material;
 		const marchUniforms = marchMaterial.uniforms;
 		marchUniforms.depthBuffer.value = depthBuffer.texture;
 		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
-
 		marchUniforms.colorBuffer.value = readBuffer.texture;
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
 		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
@@ -276,6 +374,43 @@ export class SSRRPass extends Pass {
 		marchUniforms.jitter.value = this.jitter;
 		marchUniforms.thickness.value = this.thickness;
 		marchUniforms.stride.value = this.stride;
+		marchUniforms.blueNoiseTex.value = blueNoiseTex;
+		marchUniforms.roughnessCutoff.value = this.roughnessCutoff;
+
+		if ( this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY ) {
+
+			marchUniforms.colorBuffer.value = this._colorLod.texture;
+			marchUniforms.depthBufferLod.value = this._depthBufferLod.texture;
+
+		}
+
+		if ( marchMaterial.defines.GLOSSY_MODE !== this.glossinessMode ) {
+
+			marchMaterial.defines.GLOSSY_MODE = this.glossinessMode;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.JITTER_STRATEGY !== this.jitterStrategy ) {
+
+			marchMaterial.defines.JITTER_STRATEGY = this.jitterStrategy;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.GLOSSY_JITTER_STRATEGY !== this.glossyJitterStrategy ) {
+
+			marchMaterial.defines.GLOSSY_JITTER_STRATEGY = this.glossyJitterStrategy;
+			marchMaterial.needsUpdate = true;
+
+		}
+
+		if ( marchMaterial.defines.ORTHOGRAPHIC_CAMERA !== Number( camera.isOrthographicCamera || false ) ) {
+
+			marchMaterial.defines.ORTHOGRAPHIC_CAMERA = Number( camera.isOrthographicCamera || false );
+			marchMaterial.needsUpdate = true;
+
+		}
 
 		if ( marchMaterial.defines.MAX_STEPS !== this.steps ) {
 
@@ -298,7 +433,7 @@ export class SSRRPass extends Pass {
 
 		}
 
-		const needsDebug = debug.display === SSRRPass.INTERSECTION_RESULTS || debug.display === SSRRPass.INTERSECTION_DISTANCE;
+		const needsDebug = debug.display === SSRPass.INTERSECTION_RESULTS || debug.display === SSRPass.INTERSECTION_DISTANCE;
 		if ( needsDebug !== Boolean( marchMaterial.defines.ENABLE_DEBUG ) ) {
 
 			marchMaterial.defines.ENABLE_DEBUG = needsDebug ? 1.0 : 0.0;
@@ -306,11 +441,13 @@ export class SSRRPass extends Pass {
 
 		}
 
+		// Render Ray March Colors
 		renderer.setRenderTarget( marchResultsBuffer );
 		renderer.clear();
 		marchQuad.render( renderer );
 
-		if ( debug.display === SSRRPass.INTERSECTION_RESULTS ) {
+		// Render Debug March UV Hits
+		if ( debug.display === SSRPass.INTERSECTION_RESULTS ) {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
@@ -322,7 +459,8 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( debug.display === SSRRPass.INTERSECTION_DISTANCE ) {
+		// Render Debug March Distance
+		if ( debug.display === SSRPass.INTERSECTION_DISTANCE ) {
 
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
@@ -334,14 +472,12 @@ export class SSRRPass extends Pass {
 
 		}
 
-		// TODO: Raymarch in a separate buffer and keep distance and final position in the final buffer
-		// TODO: use the raymarch results at full scale, read the colors, and blend. The raymarch will be
-		// larger than the target pixels so you can share the ray result with neighboring pixels and
-		// blend silhouette using roughness map.
+		// Initialize Color Resolve Material
 		const resolveQuad = this._colorResolveQuad;
 		const resolveMaterial = resolveQuad.material;
 		const resolveUniforms = resolveMaterial.uniforms;
 		const resolveDefines = resolveMaterial.defines;
+		resolveUniforms.depthBuffer.value = depthBuffer.texture;
 		resolveUniforms.sourceBuffer.value = readBuffer.texture;
 		resolveUniforms.packedBuffer.value = packedBuffer.texture;
 		resolveUniforms.intersectBuffer.value = marchResultsBuffer.texture;
@@ -357,14 +493,14 @@ export class SSRRPass extends Pass {
 
 		}
 
-		if ( this.blurIterations !== resolveDefines.BLUR_ITERATIONS ) {
+		if ( this.blurRadius !== resolveDefines.BLUR_RADIUS ) {
 
-			resolveDefines.BLUR_ITERATIONS = this.blurIterations;
+			resolveDefines.BLUR_RADIUS = this.blurRadius;
 			resolveMaterial.needsUpdate = true;
 
 		}
 
-		const colorHitOnly = debug.display === SSRRPass.INTERSECTION_COLOR;
+		const colorHitOnly = debug.display === SSRPass.INTERSECTION_COLOR;
 		if ( colorHitOnly !== Boolean( resolveDefines.COLOR_HIT_ONLY ) ) {
 
 			resolveDefines.COLOR_HIT_ONLY = colorHitOnly ? 1.0 : 0.0;
@@ -372,21 +508,33 @@ export class SSRRPass extends Pass {
 
 		}
 
+		// Blend Color Resolve and Final Buffer
 		renderer.setRenderTarget( finalBuffer );
 		renderer.clear();
 		resolveQuad.render( renderer );
+
+		// Reset Initial State
 		replaceOriginalValues();
 
 	}
 
 }
 
-SSRRPass.DEFAULT = 0;
-SSRRPass.FRONT_DEPTH = 1;
-SSRRPass.BACK_DEPTH = 2;
-SSRRPass.DEPTH_DELTA = 3;
-SSRRPass.NORMAL = 4;
-SSRRPass.ROUGHNESS = 5;
-SSRRPass.INTERSECTION_RESULTS = 6;
-SSRRPass.INTERSECTION_DISTANCE = 7;
-SSRRPass.INTERSECTION_COLOR = 8;
+SSRPass.DEFAULT = 0;
+SSRPass.FRONT_DEPTH = 1;
+SSRPass.BACK_DEPTH = 2;
+SSRPass.DEPTH_DELTA = 3;
+SSRPass.NORMAL = 4;
+SSRPass.ROUGHNESS = 5;
+SSRPass.INTERSECTION_RESULTS = 6;
+SSRPass.INTERSECTION_DISTANCE = 7;
+SSRPass.INTERSECTION_COLOR = 8;
+
+SSRPass.NO_GLOSSY = 0;
+SSRPass.SIMPLE_GLOSSY = 1;
+SSRPass.MULTI_GLOSSY = 2;
+SSRPass.MIP_PYRAMID_GLOSSY = 3;
+
+SSRPass.REGULAR_JITTER = 0;
+SSRPass.BLUENOISE_JITTER = 1;
+SSRPass.RANDOM_JITTER = 2;

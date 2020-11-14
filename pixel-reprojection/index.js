@@ -22,7 +22,7 @@ import {
 } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
 import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
-import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js'
+import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js';
 import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
 import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
 import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
@@ -68,7 +68,7 @@ function init() {
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = PCFSoftShadowMap;
 	renderer.outputEncoding = sRGBEncoding;
-	document.body.appendChild(renderer.domElement);
+	document.body.appendChild( renderer.domElement );
 
 	currColorBuffer = new WebGLRenderTarget( 1, 1, {
 		format: RGBFormat,
@@ -82,7 +82,7 @@ function init() {
 		format: RGBFormat,
 	} );
 
-	velocityBuffer = new WebGLRenderTarget( 1, 1,  {
+	velocityBuffer = new WebGLRenderTarget( 1, 1, {
 		minFilter: NearestFilter,
 		magFilter: NearestFilter,
 		format: RGBFormat,

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - postprocessing - colorblindness utils</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+				user-select: none;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Blue Noise Generator by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+			</br>
+			Blue noise generator based on void cluster algorithm outlined <a href="http://cv.ulichney.com/papers/1993-void-cluster.pdf">here</a>.</br>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.114.0/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import { BlueNoiseGenerator } from './src/BlueNoiseGenerator.js';
+
+			// globals
+			var stats;
+			var params = {
+				tile: 1,
+				interpolate: false,
+				channels: 1,
+
+				regenerate: regenerateNoise,
+			};
+			var camera, scene, renderer, controls;
+			var generator, dataTexture, material;
+
+			init();
+			animate();
+
+			function regenerateNoise() {
+
+				if ( material.map ) {
+
+					material.map.dispose();
+
+				}
+
+				console.log( '' );
+				console.time( 'Blue Noise Generation' );
+				const channels = params.channels;
+				const data = new Uint8Array( ( generator.size ** 2 ) * 4 );
+				for ( let i = 0, l = channels; i < l; i ++ ) {
+
+					const result = generator.generate();
+					const bin = result.data;
+					const maxValue = result.maxValue;
+
+					if ( channels === 1 ) {
+
+						for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+							const value = 255 * ( bin[ j ] / maxValue );
+							for ( let c = i; c < 4; c ++ ) {
+
+								data[ j * 4 + c ] = value;
+
+							}
+
+						}
+
+					} else {
+
+						for ( let j = 0, l2 = bin.length; j < l2; j ++ ) {
+
+							const value = 255 * ( bin[ j ] / maxValue );
+							data[ j * 4 + i ] = value;
+
+						}
+
+					}
+
+				}
+				console.timeEnd( 'Blue Noise Generation' );
+
+				const dataTexture = new THREE.DataTexture( data, generator.size, generator.size, THREE.RGBAFormat );
+				dataTexture.wrapS = THREE.RepeatWrapping;
+				dataTexture.wrapT = THREE.RepeatWrapping;
+				dataTexture.minFilter = THREE.LinearFilter;
+				if ( params.interpolate ) {
+
+					dataTexture.minFilter = THREE.LinearMipMapLinearFilter;
+					dataTexture.magFilter = THREE.LinearFilter;
+					dataTexture.generateMipmaps = true;
+
+				}
+
+				dataTexture.needsUpdate = true;
+
+				material.map = dataTexture;
+				material.needsUpdate = true;
+				material.map.repeat.setScalar( params.tile );
+
+			}
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.set( 0.0, 0.0, 5 * 3.5 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x263238 ).convertGammaToLinear();
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				// geometry
+				material = new THREE.MeshBasicMaterial( { side: THREE.DoubleSide } );
+				var mesh = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					material
+				);
+				mesh.scale.setScalar( 5 );
+				scene.add( mesh );
+
+				window.mesh = mesh;
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				generator = new BlueNoiseGenerator();
+
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				var noiseFolder = gui.addFolder( 'noise' );
+				noiseFolder.add( generator, 'size', [ 16, 32, 64, 128, 256 ] ).onChange( v => {
+
+					generator.size = parseFloat( v );
+
+				} );
+				noiseFolder.add( generator, 'sigma' ).min( 0.1 ).max( 5 ).step( 0.1 );
+				noiseFolder.add( generator, 'majorityPointsRatio' ).min( 0.01 ).max( 0.49 ).step( 0.01 );
+				noiseFolder.add( params, 'channels' ).min( 1 ).max( 3 ).step( 1 );
+				noiseFolder.open();
+
+				var texFolder = gui.addFolder( 'display' );
+				texFolder.add( params, 'tile' ).min( 1 ).max( 10 ).step( 0.1 ).onChange( v => {
+
+					material.map.repeat.setScalar( v );
+
+				} );
+				texFolder.add( params, 'interpolate' ).onChange( v => {
+
+					const dataTexture = material.map;
+					if ( v ) {
+
+						dataTexture.minFilter = THREE.LinearMipMapLinearFilter;
+						dataTexture.magFilter = THREE.LinearFilter;
+						dataTexture.generateMipmaps = true;
+
+					} else {
+
+						dataTexture.minFilter = THREE.LinearFilter;
+						dataTexture.magFilter = THREE.NearestFilter;
+						dataTexture.generateMipmaps = false;
+
+					}
+
+					dataTexture.needsUpdate = true;
+					material.needsUpdate = true;
+
+				} );
+				texFolder.open();
+
+				gui.add( params, 'regenerate' );
+
+				gui.open();
+
+				regenerateNoise();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

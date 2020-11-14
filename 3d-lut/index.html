@@ -35,23 +35,25 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
-			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
-			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
-			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
-			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+			import * as THREE from '//unpkg.com/three@0.120.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.120.1/examples/jsm/controls/OrbitControls.js';
+			import { CopyShader } from '//unpkg.com/three@0.120.1/examples/jsm/shaders/CopyShader.js';
+			import { EffectComposer } from '//unpkg.com/three@0.120.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from '//unpkg.com/three@0.120.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.120.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.120.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.120.1/examples/jsm/shaders/FXAAShader.js';
 			import { LUTCubeLoader } from './src/LUTCubeLoader.js';
 			import { LUT3dlLoader } from './src/LUT3dlLoader.js';
-			import { LUTShader } from './src/shaders/LUTShader.js';
+			import { LUTPass } from './src/LUTPass.js';
+			import { TetrahedralUpscaler } from './src/TetrahedralUpscaler.js';
 
-			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+			import Stats from '//unpkg.com/three@0.120.1/examples/jsm/libs/stats.module.js';
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			const luts = [
-				'no op',
+				'2³ no op',
+				'32³ no op',
 				'./luts/Presetpro-Cinematic.3dl',
 				'./luts/Presetpro-Cinematic.cube',
 				'./luts/Arabica 12.CUBE',
@@ -98,12 +100,15 @@
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
+				use3dTexture: true,
+				tetrahedralResize: false,
+				resizeDimensions: 32,
 			};
 			var camera, scene, renderer, controls;
 			var composer;
 			var renderPass, lutPass, gammaPass, fxaaPass;
 			var lut3dl, lutCube;
-			var lutMesh, mesh;
+			var lutMesh, mesh, currLut;
 
 
 			init();
@@ -119,9 +124,9 @@
 						for ( let b = 0; b < size; b ++ ) {
 
 							const index = r + g * size + b * size * size;
-							data[ index * 3 + 0 ] = 255 * r / size;
-							data[ index * 3 + 1 ] = 255 * g / size;
-							data[ index * 3 + 2 ] = 255 * b / size;
+							data[ index * 3 + 0 ] = 255 * r / ( size - 1 );
+							data[ index * 3 + 1 ] = 255 * g / ( size - 1 );
+							data[ index * 3 + 2 ] = 255 * b / ( size - 1 );
 
 						}
 
@@ -136,9 +141,25 @@
 				texture.format = THREE.RGBFormat;
 				texture.type = THREE.UnsignedByteType;
 				texture.magFilter = THREE.LinearFilter;
+				texture.wrapS = THREE.ClampToEdgeWrapping;
+				texture.wrapT = THREE.ClampToEdgeWrapping;
 				texture.generateMipmaps = false;
 
-				return texture;
+				const texture3D = new THREE.DataTexture3D();
+				texture3D.image.data = data;
+				texture3D.image.width = size;
+				texture3D.image.height = size;
+				texture3D.image.depth = size;
+				texture3D.format = THREE.RGBFormat;
+				texture3D.type = THREE.UnsignedByteType;
+				texture3D.magFilter = THREE.LinearFilter;
+				texture3D.wrapS = THREE.ClampToEdgeWrapping;
+				texture3D.wrapT = THREE.ClampToEdgeWrapping;
+				texture3D.wrapR = THREE.ClampToEdgeWrapping;
+				texture3D.generateMipmaps = false;
+				texture3D.unpackAlignment = 1;
+
+				return { texture, texture3D, size };
 
 			}
 
@@ -179,20 +200,25 @@
 
 				luts.forEach( l => {
 
-					if ( l === 'no op' ) {
+					if ( l === '32³ no op' ) {
 
-						lutMap[ l ] = {
+						lutMap[ l ] = generateNoOpLUT( 32 );
 
-							texture: generateNoOpLUT( 32 ),
-							size: 32,
+					} else if ( l === '2³ no op' ){
 
-						};
+						lutMap[ l ] = generateNoOpLUT( 2 );
 
 					} else if ( /3dl$/.test( l ) ) {
 
 						new LUT3dlLoader().load( l, res => {
 
 							lutMap[ l ] = res;
+
+							if ( l === params.lut ) {
+
+								regenerateLut();
+
+							}
 
 						} );
 
@@ -202,15 +228,22 @@
 
 							lutMap[ l ] = res;
 
+							if ( l === params.lut ) {
+
+								regenerateLut();
+
+							}
+
 						} );
 
 					}
+
 
 				} );
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
-				lutPass = new ShaderPass( LUTShader );
+				lutPass = new LUTPass();
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 
@@ -233,13 +266,62 @@
 				var gui = new dat.GUI();
 				gui.width = 450;
 
-				gui.add( params, 'lut', luts );
+				gui.add( params, 'lut', luts ).onChange( regenerateLut );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
+				gui.add( params, 'tetrahedralResize' ).onChange( regenerateLut );
+				gui.add( params, 'resizeDimensions', [ 4, 16, 32, 64, 128, 256 ] ).onChange( regenerateLut );
+
+				if ( renderer.capabilities.isWebGL2 ) {
+
+					gui.add( params, 'use3dTexture' );
+
+				} else {
+
+					params.use3dTexture = false;
+
+				}
 
 				gui.open();
 
 				onWindowResize();
+
+			}
+
+			function regenerateLut() {
+
+				if ( currLut ) {
+
+					currLut.texture.dispose();
+					currLut.texture3D.dispose();
+
+				}
+
+				let lut = lutMap[ params.lut ];
+				if ( params.tetrahedralResize ) {
+
+					const upscaler = new TetrahedralUpscaler();
+
+					console.time( 'LUT resize' );
+					const texture3D = upscaler.generate( lut.texture3D, params.resizeDimensions );
+					console.timeEnd( 'LUT resize' );
+					const texture = lut.texture.clone();
+					texture.image = { ...texture3D.image };
+					texture.image.height *= texture.image.height;
+
+					currLut = {
+
+						...lut,
+						texture3D,
+						texture,
+
+					};
+
+				} else {
+
+					currLut = lut;
+
+				}
 
 			}
 
@@ -275,8 +357,8 @@
 				lutMesh.visible = params.displayLut;
 
 				const prevMap = lutMesh.material.map;
-				lutMesh.material.map = lutMap[ params.lut ] && lutMap[ params.lut ].texture;
-				lutPass.material.uniforms.intensity.value = params.intensity;
+				lutMesh.material.map = currLut && currLut.texture;
+				lutPass.intensity = params.intensity;
 
 				if ( lutMesh.material.map ) {
 
@@ -286,17 +368,26 @@
 
 					}
 
-					const lut = lutMap[ params.lut ];
+					const lut = currLut;
 					const image = lutMesh.material.map.image;
 					const aspect = image.width / image.height;
 
 					lutMesh.scale.x = 10 * aspect;
 					lutMesh.scale.y = 10;
 
-					lutPass.material.uniforms.lutSize.value = lut.size;
-					lutPass.material.uniforms.lut.value = lut.texture;
+					if ( params.use3dTexture ) {
+
+						lutPass.lut = lut.texture3D;
+
+					} else {
+
+						lutPass.lut = lut.texture;
+
+					}
 
 				}
+
+				window.lutPass = lutPass;
 
 				lutPass.enabled = ! params.displayLut;
 				gammaPass.enabled = ! params.displayLut;

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - translucent material</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #fff;
+			}
+
+			a {
+				color:#80CBC4;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Translucent Material by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/RGBELoader.js';
+			import { OBJLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/OBJLoader.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+
+			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
+
+			import { TranslucentObjectPass } from './src/TranslucentObjectPass.js';
+
+			// globals
+			var stats;
+			var params = {
+				diffusion: 0,
+				indexOfRefraction: 1.1,
+				absorptionFactor: 1.0,
+				lightBandOffset: 0.01,
+
+				color: 0xcc6600,
+				roughness: 0.1,
+				layers: 4,
+				background: 'white'
+			};
+			var camera, scene, renderer, controls, mesh;
+			var renderPass, composer, fxaaPass, translucentPass, gammaPass;
+
+			var backgrounds = {
+				white: new THREE.Color( 0xdddddd ),
+				environment: null,
+			};
+
+			init();
+			animate();
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 50 );
+				camera.position.set( -2.5, 1, 2 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xdddddd );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.setClearColor( 0x0d1113 );
+
+				document.body.appendChild( renderer.domElement );
+
+				// Lights
+				scene.add( new THREE.HemisphereLight( 0xFFC107, 0x552233, 0.2 ) );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				directionalLight.position.set( 2, 2, 2 );
+				directionalLight.shadow.mapSize.set( 2048, 2048 );
+				directionalLight.castShadow = true;
+				scene.add( directionalLight );
+
+				var pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'https://rawgit.com/mrdoob/three.js/master/examples/textures/equirectangular/' )
+					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+
+						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+						backgrounds.environment = envMap;
+						scene.environment = envMap;
+
+						texture.dispose();
+						pmremGenerator.dispose();
+
+					} );
+
+
+				var loader = new OBJLoader();
+				loader.load( 'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/happy.obj', function ( object ) {
+
+					const model = object.children[ 0 ];
+					model.scale.setScalar( 10 );
+					model.geometry.center();
+					model.material = new THREE.MeshStandardMaterial( { color: 0xcc0000, roughness: 0.25 } );
+					model.updateMatrixWorld();
+					translucentPass.objects = [ model ];
+
+					mesh = model;
+					window.mesh = mesh;
+
+					model.geometry.deleteAttribute( 'normal' );
+					model.geometry = BufferGeometryUtils.mergeVertices( model.geometry );
+					model.geometry.computeVertexNormals();
+
+				} );
+
+				// Render Pass Setup
+				renderPass = new RenderPass( scene, camera );
+
+				fxaaPass = new ShaderPass( FXAAShader );
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+				gammaPass = new ShaderPass( GammaCorrectionShader );
+
+				translucentPass = new TranslucentObjectPass( scene, camera );
+				translucentPass.objects = [];
+
+				composer = new EffectComposer( renderer );
+				composer.setSize( window.innerWidth, window.innerHeight );
+				composer.setPixelRatio( window.devicePixelRatio );
+				composer.addPass( renderPass );
+				composer.addPass( translucentPass );
+				composer.addPass( fxaaPass );
+				composer.addPass( gammaPass );
+
+				// stats
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				// controls.minDistance = 5;
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				gui.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
+				gui.addColor( params, 'color' );
+				gui.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
+				gui.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
+				gui.add( params, 'indexOfRefraction' ).min( 0.7 ).max( 1.3 ).step( 0.01 );
+				gui.add( params, 'diffusion' ).min( 0 ).max( 1 ).step( 0.01 );
+				gui.add( params, 'lightBandOffset' ).min( -0.05 ).max( 0.05 ).step( 0.001 );
+				gui.add( params, 'background', Object.keys( backgrounds ) );
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				composer.setSize( width, height );
+				composer.setPixelRatio( window.devicePixelRatio );
+
+				fxaaPass.uniforms[ 'resolution' ].value.set( 1 / ( width * window.devicePixelRatio ), 1 / ( height * window.devicePixelRatio ) );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+				render();
+				stats.end();
+
+			}
+
+			function render() {
+
+				if ( mesh ) {
+
+					mesh.material.roughness = params.roughness;
+					mesh.material.diffusion = params.diffusion;
+					mesh.material.color.set( params.color ).convertSRGBToLinear();
+					mesh.material.absorptionFactor = params.absorptionFactor;
+					mesh.material.iorRatio = params.indexOfRefraction;
+					mesh.material.bandOffset = params.lightBandOffset;
+
+				}
+
+				const bg = backgrounds[ params.background ] || backgrounds.white;
+				scene.background = bg;
+
+				translucentPass.layers = params.layers;
+
+				composer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs webgl - general conditional edges</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				color: #333;
+			}
+
+			a {
+				color:#5d928d;
+			}
+
+			#info {
+				position: absolute;
+				padding-top: 10px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - General Conditional Edges by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
+
+			<br/>
+			<br/>
+
+			Inspired by <a href="https://discourse.threejs.org/t/ldraw-like-edges/17100/">this thread</a> from Prisoner849
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
+			import { GLTFLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/GLTFLoader.js';
+			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
+			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
+			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+
+			import { LineSegmentsGeometry } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegmentsGeometry.js';
+			import { LineSegments2 } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegments2.js';
+			import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
+
+			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
+			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
+			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
+			import { ConditionalLineSegmentsGeometry } from './src/Lines2/ConditionalLineSegmentsGeometry.js';
+			import { ConditionalLineMaterial } from './src/Lines2/ConditionalLineMaterial.js';
+
+			// globals
+			var params = {
+				lit: false,
+				opacity: 0.85,
+				threshold: 40,
+				display: 'THRESHOLD_EDGES',
+				displayConditionalEdges: true,
+				thickness: 1,
+				useThickLines: false,
+				model: 'HELMET',
+			};
+			var camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
+			var models = {};
+
+			init();
+			animate();
+
+			function updateModel() {
+
+				originalModel = models[ params.model ];
+
+				initEdgesModel();
+
+				initBackgroundModel();
+
+				initConditionalModel();
+
+			}
+
+			function mergeObject( object ) {
+
+				object.updateMatrixWorld( true );
+
+				const geometry = [];
+				object.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						const g = c.geometry;
+						g.applyMatrix4( c.matrixWorld );
+						for ( const key in g.attributes ) {
+
+							if ( key !== 'position' && key !== 'normal' ) {
+
+								g.deleteAttribute( key );
+
+							}
+
+						}
+						geometry.push( g.toNonIndexed() );
+
+					}
+
+				} );
+
+				const mergedGeometries = BufferGeometryUtils.mergeBufferGeometries( geometry, false );
+				const mergedGeometry = BufferGeometryUtils.mergeVertices( mergedGeometries ).center();
+
+				const group = new THREE.Group();
+				const mesh = new THREE.Mesh( mergedGeometry );
+				group.add( mesh );
+				return group;
+
+			}
+
+			function initBackgroundModel() {
+
+				if ( backgroundModel ) {
+
+					backgroundModel.parent.remove( backgroundModel );
+					shadowModel.parent.remove( shadowModel );
+					depthModel.parent.remove( depthModel );
+
+					backgroundModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+					shadowModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+					depthModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+				}
+
+				if ( ! originalModel ) {
+
+					return;
+
+				}
+
+				backgroundModel = originalModel.clone();
+				backgroundModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material.polygonOffset = true;
+						c.material.polygonOffsetFactor = 1;
+						c.material.polygonOffsetUnits = 1;
+						c.renderOrder = 2;
+
+					}
+
+				} );
+				scene.add( backgroundModel );
+
+				shadowModel = originalModel.clone();
+				shadowModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						c.material = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 1.0 } );
+						c.material.polygonOffset = true;
+						c.material.polygonOffsetFactor = 1;
+						c.material.polygonOffsetUnits = 1;
+						c.receiveShadow = true;
+						c.renderOrder = 2;
+
+					}
+
+				} );
+				scene.add( shadowModel );
+
+				depthModel = originalModel.clone();
+				depthModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material.polygonOffset = true;
+						c.material.polygonOffsetFactor = 1;
+						c.material.polygonOffsetUnits = 1;
+						c.material.colorWrite = false;
+						c.renderOrder = 1;
+
+					}
+
+				} );
+				scene.add( depthModel );
+
+			}
+
+			function initEdgesModel() {
+
+				// remove any previous model
+				if ( edgesModel ) {
+
+					edgesModel.parent.remove( edgesModel );
+					edgesModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							if ( Array.isArray( c.material ) ) {
+
+								c.material.forEach( m => m.dispose() );
+
+							} else {
+
+								c.material.dispose();
+
+							}
+
+						}
+
+					} );
+
+				}
+
+				// early out if there's no model loaded
+				if ( ! originalModel ) {
+
+					return;
+
+				}
+
+				// store the model and add it to the scene to display
+				// behind the lines
+				edgesModel = originalModel.clone();
+				scene.add( edgesModel );
+
+				// early out if we're not displaying any type of edge
+				if ( params.display === 'NONE' ) {
+
+					edgesModel.visible = false;
+					return;
+
+				}
+
+				const meshes = [];
+				edgesModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						meshes.push( c );
+
+					}
+
+				} );
+
+				for ( const key in meshes ) {
+
+					const mesh = meshes[ key ];
+					const parent = mesh.parent;
+
+					let lineGeom;
+					if ( params.display === 'THRESHOLD_EDGES' ) {
+
+						lineGeom = new THREE.EdgesGeometry( mesh.geometry, params.threshold );
+
+					} else {
+
+						const mergeGeom = mesh.geometry.clone();
+						mergeGeom.deleteAttribute( 'uv' );
+						mergeGeom.deleteAttribute( 'uv2' );
+						lineGeom = new OutsideEdgesGeometry( BufferGeometryUtils.mergeVertices( mergeGeom, 1e-3 ) );
+
+					}
+
+					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
+					line.position.copy( mesh.position );
+					line.scale.copy( mesh.scale );
+					line.rotation.copy( mesh.rotation );
+
+					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
+					thickLines.position.copy( mesh.position );
+					thickLines.scale.copy( mesh.scale );
+					thickLines.rotation.copy( mesh.rotation );
+
+					parent.remove( mesh );
+					parent.add( line );
+					parent.add( thickLines );
+
+
+				}
+
+			}
+
+			function initConditionalModel() {
+
+				// remove the original model
+				if ( conditionalModel ) {
+
+					conditionalModel.parent.remove( conditionalModel );
+					conditionalModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.dispose();
+
+						}
+
+					} );
+
+				}
+
+				// if we have no loaded model then exit
+				if ( ! originalModel ) {
+
+					return;
+
+				}
+
+				conditionalModel = originalModel.clone();
+				scene.add( conditionalModel );
+				conditionalModel.visible = false;
+
+				// get all meshes
+				const meshes = [];
+				conditionalModel.traverse( c => {
+
+					if ( c.isMesh ) {
+
+						meshes.push( c );
+
+					}
+
+				} );
+
+				for ( const key in meshes ) {
+
+					const mesh = meshes[ key ];
+					const parent = mesh.parent;
+
+					// Remove everything but the position attribute
+					const mergedGeom = mesh.geometry.clone();
+					for ( const key in mergedGeom.attributes ) {
+
+						if ( key !== 'position' ) {
+
+							mergedGeom.deleteAttribute( key );
+
+						}
+
+					}
+
+					// Create the conditional edges geometry and associated material
+					const lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
+					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
+					material.uniforms.diffuse.value.set( 0x455A64 );
+
+					// Create the line segments objects and replace the mesh
+					const line = new THREE.LineSegments( lineGeom, material );
+					line.position.copy( mesh.position );
+					line.scale.copy( mesh.scale );
+					line.rotation.copy( mesh.rotation );
+
+					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: 0x455A64, linewidth: 2 } ) );
+					thickLines.position.copy( mesh.position );
+					thickLines.scale.copy( mesh.scale );
+					thickLines.rotation.copy( mesh.rotation );
+
+					parent.remove( mesh );
+					parent.add( line );
+					parent.add( thickLines );
+
+				}
+
+			}
+
+			function init() {
+
+				// initialize renderer, scene, camera
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xeeeeee );
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
+				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
+				scene.add( camera );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+				document.body.appendChild( renderer.domElement );
+
+				// Floor
+				floor = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry(),
+					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.25, transparent: true } )
+				);
+				floor.rotation.x = - Math.PI / 2;
+				floor.scale.setScalar( 20 );
+				floor.receiveShadow = true;
+				scene.add( floor );
+
+				// Lights
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
+				dirLight.position.set( 5, 10, 5 );
+				dirLight.castShadow = true;
+				dirLight.shadow.bias = -1e-10;
+				dirLight.shadow.mapSize.width = 1024;
+				dirLight.shadow.mapSize.height = 1024;
+
+				const shadowCam = dirLight.shadow.camera;
+				shadowCam.left = shadowCam.bottom = -1;
+				shadowCam.right = shadowCam.top = 1;
+
+				scene.add( dirLight );
+
+				scene.add( new THREE.AmbientLight( 0xc4c9cb, 1.0 ) );
+
+				const cylinder = new THREE.Group();
+				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 100 ) ) );
+				cylinder.children[ 0 ].geometry.computeBoundingBox();
+				cylinder.children[ 0 ].castShadow = true;
+				models.CYLINDER = cylinder;
+
+				models.HELMET = null;
+				new GLTFLoader().load(
+					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
+					gltf => {
+
+						const model = mergeObject( gltf.scene );
+						model.children[ 0 ].geometry.computeBoundingBox();
+						model.children[ 0 ].castShadow = true;
+
+						models.HELMET = model;
+						updateModel();
+
+					}
+				);
+
+				// camera controls
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.maxDistance = 200;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// dat gui
+				var gui = new dat.GUI();
+				gui.width = 300;
+
+				const modelFolder = gui.addFolder( 'model' );
+
+				modelFolder.add( params, 'model', Object.keys( models ) ).onChange( updateModel );
+
+				modelFolder.add( params, 'opacity' ).min( 0 ).max( 1.0 ).step( 0.01 );
+
+				modelFolder.add( params, 'lit' );
+
+				modelFolder.open();
+
+				const linesFolder = gui.addFolder( 'conditional lines' );
+
+				linesFolder.add( params, 'threshold' )
+					.min( 0 )
+					.max( 120 )
+					.onChange( initEdgesModel );
+
+				linesFolder.add( params, 'display', [
+					'THRESHOLD_EDGES',
+					'NORMAL_EDGES',
+					'NONE',
+				] ).onChange( initEdgesModel );
+
+				linesFolder.add( params, 'displayConditionalEdges' );
+
+				linesFolder.add( params, 'useThickLines' );
+
+				linesFolder.add( params, 'thickness', 0, 5 );
+
+				linesFolder.open();
+
+				gui.open();
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				if ( conditionalModel ) {
+
+					conditionalModel.visible = params.displayConditionalEdges;
+					conditionalModel.traverse( c => {
+
+						if ( c.material && c.material.resolution ) {
+
+							renderer.getSize( c.material.resolution );
+							c.material.resolution.multiplyScalar( window.devicePixelRatio );
+							c.material.linewidth = params.thickness;
+
+						}
+
+						if ( c.material ) {
+
+							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+
+						}
+
+					} );
+
+				}
+
+
+				if ( edgesModel ) {
+
+					edgesModel.traverse( c => {
+
+						if ( c.material && c.material.resolution ) {
+
+							renderer.getSize( c.material.resolution );
+							c.material.resolution.multiplyScalar( window.devicePixelRatio );
+							c.material.linewidth = params.thickness;
+
+						}
+
+						if ( c.material ) {
+
+							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+
+						}
+
+					} );
+
+				}
+
+				if ( backgroundModel ) {
+
+					backgroundModel.visible = ! params.lit;
+					backgroundModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.transparent = params.opacity !== 1.0;
+							c.material.opacity = params.opacity;
+
+						}
+
+					} );
+
+				}
+
+				if ( shadowModel ) {
+
+					shadowModel.visible = params.lit;
+					shadowModel.traverse( c => {
+
+						if ( c.isMesh ) {
+
+							c.material.transparent = params.opacity !== 1.0;
+							c.material.opacity = params.opacity;
+
+						}
+
+					} );
+
+				}
+
+				if ( originalModel ) {
+
+					floor.position.y = originalModel.children[ 0 ].geometry.boundingBox.min.y;
+
+				}
+
+				floor.visible = params.lit;
+
+				render();
+
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>

@@ -12,80 +12,86 @@ const tempVec4 = new Vector4();
 // "fromFrame" and "toFrame" are of type Matrix4
 export class TransformUtils {
 
-    // Transforms Matrix4s between frames
-    static transformFrame( fromFrame, toFrame, mat, outputMat ) {
+	// Transforms Matrix4s between frames
+	static transformFrame( fromFrame, toFrame, mat, outputMat ) {
 
-        tempMat.getInverse( toFrame );
+		tempMat.getInverse( toFrame );
 
-        outputMat.copy( mat );
+		outputMat.copy( mat );
 
-        outputMat.multiply( fromFrame );
-        outputMat.multiply( tempMat );
+		outputMat.multiply( fromFrame );
+		outputMat.multiply( tempMat );
 
-    }
+	}
 
-    // Transforms a Vector3 as a point between frames
-    static transformPoint( fromFrame, toFrame, pos, outputVec ) {
-        
-        tempMat.getInverse( toFrame );
+	// Transforms a Vector3 as a point between frames
+	static transformPoint( fromFrame, toFrame, pos, outputVec ) {
 
-        outputVec.copy( pos );
-        outputVec.applyMatrix4( fromFrame );
-        outputVec.applyMatrix4( tempMat );
-    
-    }
+		tempMat.getInverse( toFrame );
 
-    // Transforms a Vector3 as a direction between frames
-    static transformDirection( fromFrame, toFrame, dir, outputVec ) {
+		outputVec.copy( pos );
+		outputVec.applyMatrix4( fromFrame );
+		outputVec.applyMatrix4( tempMat );
 
-        tempMat.getInverse( toFrame );
+	}
 
-        tempVec4.copy( dir );
-        tempVec4.w = 0;
-        tempVec4.applyMatrix4( fromFrame );
-        tempVec4.applyMatrix4( tempMat );
+	// Transforms a Vector3 as a direction between frames
+	static transformDirection( fromFrame, toFrame, dir, outputVec ) {
 
-        outputVec.copy( tempVec4 );
-    }
+		tempMat.getInverse( toFrame );
 
-    // Transforms a Quaternion between frames
-    static transformQuaternion( fromFrame, toFrame, quat, outputQuat ) {
-        fromFrame.decompose( tempPos, tempQuat, tempSca );
-        toFrame.decompose( tempPos, tempQuat2, tempSca );
-        tempQuat2.inverse();
+		tempVec4.copy( dir );
+		tempVec4.w = 0;
+		tempVec4.applyMatrix4( fromFrame );
+		tempVec4.applyMatrix4( tempMat );
 
-        outputQuat.copy( quat );
+		outputVec.copy( tempVec4 );
 
-        outputQuat.multiply( tempQuat );
-        outputQuat.multiply( tempQuat2 );
-    }
+	}
 
-    constructor( fromFrame, toFrame ) {
+	// Transforms a Quaternion between frames
+	static transformQuaternion( fromFrame, toFrame, quat, outputQuat ) {
 
-        this._from = fromFrame;
-        this._to = toFrame;
-    
-    }
+		fromFrame.decompose( tempPos, tempQuat, tempSca );
+		toFrame.decompose( tempPos, tempQuat2, tempSca );
+		tempQuat2.inverse();
 
-    transformMatrix( mat, output ) {
-        this.constructor.transformMatrix( this._from, this._to, mat, output );
-    }
+		outputQuat.copy( quat );
 
-    transformPoint(pos, output) {
+		outputQuat.multiply( tempQuat );
+		outputQuat.multiply( tempQuat2 );
 
-        this.constructor.transformPoint( this._from, this._to, pos, output );
-    
-    }
+	}
 
-    transformDirection(dir, output) {
-    
-        this.constructor.transformDirection( this._from, this._to, dir, output );
-    
-    }
+	constructor( fromFrame, toFrame ) {
 
-    transformQuaternion(quat, output) {
-    
-        this.constructor.transformQuaternion( this._from, this._to, quat, output );
-    
-    }
+		this._from = fromFrame;
+		this._to = toFrame;
+
+	}
+
+	transformMatrix( mat, output ) {
+
+		this.constructor.transformMatrix( this._from, this._to, mat, output );
+
+	}
+
+	transformPoint( pos, output ) {
+
+		this.constructor.transformPoint( this._from, this._to, pos, output );
+
+	}
+
+	transformDirection( dir, output ) {
+
+		this.constructor.transformDirection( this._from, this._to, dir, output );
+
+	}
+
+	transformQuaternion( quat, output ) {
+
+		this.constructor.transformQuaternion( this._from, this._to, quat, output );
+
+	}
+
 }

@@ -10,7 +10,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/lens-effects/).
 
-# Improvements
+# Possible Improvements
 
 **Grain**
 - Allow noise to darken pixels.
@@ -26,6 +26,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 - Does base ior need to be different for every band? It seems like no distortion should take place at ior 1.0
    - Technically I would think yes. The original base ior should differ per band, as well, and the base ior change should represent a shift in the base value per wavelength. This would result in a ratio of 1. when the base ior is one. However this would also mean that you couldn't get dispersion without bowing of some sort of the image, which might not be wanted.
 	 - "Inversion" of the color band order would require an inversion of the normals that the incident light is coming in on.
+- Use a full spectrum representation ((reference)[https://www.shadertoy.com/view/wlSBzD]).
 
 # References
 
@@ -38,6 +39,7 @@ _Before / After. Car image from [wallpaperflare.com](https://www.wallpaperflare.
 
 ## Lens Distortion / Dispersion
 
+- https://www.shadertoy.com/view/wlSBzD
 - https://danielilett.com/2019-10-17-tut3-1-something-fishy/
 - https://codea.io/talk/discussion/8708/barrel-distortion-shader
 - [Barrel Blur Chroma](https://www.shadertoy.com/view/XssGz8)

@@ -1,33 +1,33 @@
 import { UniformsUtils, Color } from '//unpkg.com/three@0.112.0/build/three.module.js';
 
 
-function cloneShader(shader, uniforms, defines) {
+function cloneShader( shader, uniforms, defines ) {
 
-	const newShader = Object.assign({}, shader);
-	newShader.uniforms = UniformsUtils.merge([
+	const newShader = Object.assign( {}, shader );
+	newShader.uniforms = UniformsUtils.merge( [
 		newShader.uniforms,
 		uniforms
-	]);
-	newShader.defines = Object.assign({}, defines);
+	] );
+	newShader.defines = Object.assign( {}, defines );
 
 	return newShader;
 
 }
 
-function addWorldPosition(shader) {
+function addWorldPosition( shader ) {
 
-	if (/varying\s+vec3\s+wPosition/.test(shader.vertexShader)) return;
+	if ( /varying\s+vec3\s+wPosition/.test( shader.vertexShader ) ) return;
 
 	shader.vertexShader = `
 			varying vec3 wPosition;
 			${shader.vertexShader}
 		`.replace(
-			/#include <displacementmap_vertex>/,
-			v =>
-				`${v}
+		/#include <displacementmap_vertex>/,
+		v =>
+			`${v}
 				wPosition = (modelMatrix * vec4( transformed, 1.0 )).xyz;
 				`,
-			);
+	);
 
 	shader.fragmentShader = `
 		varying vec3 wPosition;
@@ -35,9 +35,11 @@ function addWorldPosition(shader) {
 		`;
 
 	return shader;
+
 }
 
-export function TopoLineShaderMixin(shader) {
+export function TopoLineShaderMixin( shader ) {
+
 	const defineKeyword = 'ENABLE_TOPO_LINES';
 	const newShader = cloneShader(
 		shader,
@@ -49,11 +51,11 @@ export function TopoLineShaderMixin(shader) {
 			topoLineEmphasisMod: { value: 10 },
 		},
 		{
-			[defineKeyword]: 1,
+			[ defineKeyword ]: 1,
 		},
 	);
 
-	addWorldPosition(newShader);
+	addWorldPosition( newShader );
 
 	newShader.fragmentShader = `
 			uniform vec3 topoLineColor;
@@ -63,9 +65,9 @@ export function TopoLineShaderMixin(shader) {
 			uniform int topoLineEmphasisMod;
 			${newShader.fragmentShader}
 		`.replace(
-			/#include <normal_fragment_maps>/,
-			v =>
-				/* glsl */`${v}
+		/#include <normal_fragment_maps>/,
+		v =>
+		/* glsl */`${v}
 				#if ${defineKeyword}
 				{
 
@@ -124,7 +126,8 @@ export function TopoLineShaderMixin(shader) {
 				}
 				#endif
 				`,
-		);
+	);
 
 	return newShader;
+
 }

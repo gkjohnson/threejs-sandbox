@@ -161,7 +161,7 @@ export class ShaderDebugRenderer extends WebGLRenderer {
 
 		let result;
 
-		switch( type ) {
+		switch ( type ) {
 
 			case 'int':
 			case 'uint':

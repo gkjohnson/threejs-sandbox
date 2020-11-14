@@ -1,4 +1,4 @@
-import { OrthographicCamera, PlaneBufferGeometry, Mesh } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { OrthographicCamera, PlaneBufferGeometry, Mesh } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export class FullScreenQuad {
 
@@ -30,7 +30,7 @@ export class FullScreenQuad {
 
 	}
 
-	dispose () {
+	dispose() {
 
 		this._mesh.geometry.dispose();
 

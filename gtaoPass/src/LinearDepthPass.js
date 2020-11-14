@@ -1,4 +1,4 @@
-import { ShaderLib } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderLib, FrontSide, BackSide } from '//unpkg.com/three@0.114.0/build/three.module.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 export class LinearDepthPass extends ShaderReplacement {
@@ -10,7 +10,7 @@ export class LinearDepthPass extends ShaderReplacement {
 				derivatives: true
 			},
 			defines: {
-				USE_UV : ''
+				USE_UV: ''
 			},
 			uniforms: {
 				...ShaderLib.normal.uniforms,
@@ -67,6 +67,8 @@ export class LinearDepthPass extends ShaderReplacement {
 			`
 		} );
 
+		this.invertSide = false;
+
 	}
 
 	updateUniforms( object, material, target ) {
@@ -74,6 +76,11 @@ export class LinearDepthPass extends ShaderReplacement {
 		super.updateUniforms( object, material, target );
 
 		let originalDefine;
+		if ( this.invertSide ) {
+
+			target.side = target.side === FrontSide ? BackSide : FrontSide;
+
+		}
 
 		// alphatest
 		originalDefine = target.defines.ALPHATEST;
@@ -108,6 +115,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_ALPHAMAP ) {
 
 			target.needsUpdate = true;
+
 		}
 
 		// map
@@ -125,6 +133,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_MAP ) {
 
 			target.needsUpdate = true;
+
 		}
 
 		// uv
@@ -142,6 +151,7 @@ export class LinearDepthPass extends ShaderReplacement {
 		if ( originalDefine !== target.defines.USE_UV ) {
 
 			target.needsUpdate = true;
+
 		}
 
 	}

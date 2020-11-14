@@ -2,7 +2,7 @@ import { ShaderLib } from '//unpkg.com/three@0.116.1/build/three.module.js';
 
 export const uvShader = {
 	defines: {
-		USE_UV : ''
+		USE_UV: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,
 	vertexShader: ShaderLib.normal.vertexShader,
@@ -17,7 +17,7 @@ export const uvShader = {
 
 export const roughnessShader = {
 	defines: {
-		USE_UV : '',
+		USE_UV: '',
 		USE_ROUGHNESSMAP: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,
@@ -36,7 +36,7 @@ export const roughnessShader = {
 
 export const metalnessShader = {
 	defines: {
-		USE_UV : '',
+		USE_UV: '',
 		USE_ROUGHNESSMAP: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,
@@ -55,7 +55,7 @@ export const metalnessShader = {
 
 export const albedoShader = {
 	defines: {
-		USE_UV : '',
+		USE_UV: '',
 		USE_MAP: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,
@@ -77,7 +77,7 @@ export const albedoShader = {
 
 export const opacityShader = {
 	defines: {
-		USE_UV : '',
+		USE_UV: '',
 		USE_MAP: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,
@@ -98,7 +98,7 @@ export const opacityShader = {
 
 export const emissiveShader = {
 	defines: {
-		USE_UV : '',
+		USE_UV: '',
 		USE_EMISSIVEMAP: ''
 	},
 	uniforms: ShaderLib.standard.uniforms,

@@ -144,12 +144,12 @@ export class PixelOutlinePass extends Pass {
 		const auxScene = new Scene();
 		auxScene.autoUpdate = false;
 
-		this.renderTarget = new WebGLRenderTarget( 1, 1,  {
+		this.renderTarget = new WebGLRenderTarget( 1, 1, {
 			minFilter: LinearFilter,
 			magFilter: LinearFilter,
 			format: RGBAFormat
 		} );
-		this.quad = new Pass.FullScreenQuad( new ShaderMaterial( compositeShader ) );;
+		this.quad = new Pass.FullScreenQuad( new ShaderMaterial( compositeShader ) );
 		this.replacer = new BasicShaderReplacement();
 		this.colorMap = new Map();
 		this.objects = [];
@@ -223,7 +223,7 @@ export class PixelOutlinePass extends Pass {
 
 	}
 
-	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer ) {
 
 		const colorMap = this.colorMap;
 		const objects = this.objects;
