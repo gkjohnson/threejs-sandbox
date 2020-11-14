@@ -22,45 +22,45 @@ const tempVector = new Vector3();
 const tempColor = new Color();
 
 const T1 = [
-	[ 0, 0, 0 ],
-	[ 1, 0, 0 ],
-	[ 1, 1, 0 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 1, 0, 0 ),
+	new Vector3( 1, 1, 0 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 const T2 = [
-	[ 0, 0, 0 ],
-	[ 1, 0, 0 ],
-	[ 1, 0, 1 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 1, 0, 0 ),
+	new Vector3( 1, 0, 1 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 const T3 = [
-	[ 0, 0, 0 ],
-	[ 0, 0, 1 ],
-	[ 1, 0, 1 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 0, 0, 1 ),
+	new Vector3( 1, 0, 1 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 const T4 = [
-	[ 0, 0, 0 ],
-	[ 0, 1, 0 ],
-	[ 1, 1, 0 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 0, 1, 0 ),
+	new Vector3( 1, 1, 0 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 const T5 = [
-	[ 0, 0, 0 ],
-	[ 0, 1, 0 ],
-	[ 0, 1, 1 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 0, 1, 0 ),
+	new Vector3( 0, 1, 1 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 const T6 = [
-	[ 0, 0, 0 ],
-	[ 0, 0, 1 ],
-	[ 0, 1, 1 ],
-	[ 1, 1, 1 ],
+	new Vector3( 0, 0, 0 ),
+	new Vector3( 0, 0, 1 ),
+	new Vector3( 0, 1, 1 ),
+	new Vector3( 1, 1, 1 ),
 ];
 
 function calculateTetrahedronVolume( a, b, c, d ) {
@@ -115,23 +115,23 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 
 	} else if ( min.x === px && min.y === py ) {
 
-		sample( dataTexture, px, py, min.z, C0 );
-		sample( dataTexture, px, py, max.z, C1 );
-		target.lerp( C0, C1, pz - min.z );
+		sample( dataTexture, px, py, min.z, target );
+		sample( dataTexture, px, py, max.z, C0 );
+		target.lerp( C0, pz - min.z );
 		return;
 
 	} else if ( min.x === px && min.z === pz ) {
 
-		sample( dataTexture, px, min.y, pz, C0 );
-		sample( dataTexture, px, max.y, pz, C1 );
-		target.lerp( C0, C1, py - min.y );
+		sample( dataTexture, px, min.y, pz, target );
+		sample( dataTexture, px, max.y, pz, C0 );
+		target.lerp( C0, py - min.y );
 		return;
 
 	} else if ( min.y === py && min.z === pz ) {
 
-		sample( dataTexture, min.x, py, pz, C0 );
-		sample( dataTexture, max.x, py, pz, C1 );
-		target.lerp( C0, C1, px - min.x );
+		sample( dataTexture, min.x, py, pz, target );
+		sample( dataTexture, max.x, py, pz, C0 );
+		target.lerp( C0, px - min.x );
 		return;
 
 	}
@@ -162,11 +162,7 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 
 	}
 
-	// TODO calculate the volume of the three prisms formed by the given points and the point to interpolate.
-	P0.set( ...points[ 0 ] );
-	P1.set( ...points[ 1 ] );
-	P2.set( ...points[ 2 ] );
-	P3.set( ...points[ 3 ] );
+	const [ P0, P1, P2, P3 ] = points;
 	P.set( u, v, w );
 
 	tempVector.copy( max ).sub( min ).multiply( P0 ).add( min );

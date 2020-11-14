@@ -52,7 +52,8 @@
 			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 			const luts = [
-				'no op',
+				'2³ no op',
+				'32³ no op',
 				'./luts/Presetpro-Cinematic.3dl',
 				'./luts/Presetpro-Cinematic.cube',
 				'./luts/Arabica 12.CUBE',
@@ -199,9 +200,13 @@
 
 				luts.forEach( l => {
 
-					if ( l === 'no op' ) {
+					if ( l === '32³ no op' ) {
 
 						lutMap[ l ] = generateNoOpLUT( 32 );
+
+					} else if ( l === '2³ no op' ){
+
+						lutMap[ l ] = generateNoOpLUT( 2 );
 
 					} else if ( /3dl$/.test( l ) ) {
 
