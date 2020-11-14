@@ -82,9 +82,11 @@ function sample( dataTexture, x, y, z, target ) {
 	const { width, height, data } = dataTexture.image;
 	const index = x + y * width + z * width * height;
 
-	target.r = data[ 3 * index + 0 ];
-	target.g = data[ 3 * index + 1 ];
-	target.b = data[ 3 * index + 2 ];
+	const i3 = 3 * index;
+
+	target.r = data[ i3 + 0 ];
+	target.g = data[ i3 + 1 ];
+	target.b = data[ i3 + 2 ];
 
 }
 
@@ -93,15 +95,47 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 
 	const { width, depth, height } = dataTexture.image;
 
-	min.x = Math.floor( u * ( width - 1 ) );
-	min.y = Math.floor( v * ( height - 1 ) );
-	min.z = Math.floor( w * ( depth - 1 ) );
+	const px = u * ( width - 1 );
+	const py = v * ( height - 1 );
+	const pz = w * ( depth - 1 );
 
-	max.x = Math.ceil( u * ( width - 1 ) );
-	max.y = Math.ceil( v * ( height - 1 ) );
-	max.z = Math.ceil( w * ( depth - 1 ) );
+	min.x = Math.floor( px );
+	min.y = Math.floor( py );
+	min.z = Math.floor( pz );
+
+	max.x = Math.ceil( px );
+	max.y = Math.ceil( py );
+	max.z = Math.ceil( pz );
 
 	let points;
+	if ( min.x === px && min.y === py && min.z === pz ) {
+
+		sample( dataTexture, px, py, pz, target );
+		return;
+
+	} else if ( min.x === px && min.y === py ) {
+
+		sample( dataTexture, px, py, min.z, C0 );
+		sample( dataTexture, px, py, max.z, C1 );
+		target.lerp( C0, C1, pz - min.z );
+		return;
+
+	} else if ( min.x === px && min.z === pz ) {
+
+		sample( dataTexture, px, min.y, pz, C0 );
+		sample( dataTexture, px, max.y, pz, C1 );
+		target.lerp( C0, C1, py - min.y );
+		return;
+
+	} else if ( min.y === py && min.z === pz ) {
+
+		sample( dataTexture, min.x, py, pz, C0 );
+		sample( dataTexture, max.x, py, pz, C1 );
+		target.lerp( C0, C1, px - min.x );
+		return;
+
+	}
+
 	if ( u >= v && v >= w ) {
 
 		points = T1;
