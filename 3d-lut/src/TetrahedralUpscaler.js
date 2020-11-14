@@ -4,11 +4,6 @@ import { Triangle, Plane, Vector3, Color, DataTexture3D } from '//unpkg.com/thre
 const _triangle = new Triangle();
 const _plane = new Plane();
 const P = new Vector3();
-const P0 = new Vector3();
-const P1 = new Vector3();
-const P2 = new Vector3();
-const P3 = new Vector3();
-
 const C0 = new Color();
 const C1 = new Color();
 const C2 = new Color();
