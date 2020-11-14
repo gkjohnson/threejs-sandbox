@@ -5,7 +5,7 @@ import { Vector3 } from 'three';
 const v0 = new Vector3();
 const v1 = new Vector3();
 const v2 = new Vector3();
-const vertArr = [v0, v1, v2];
+const vertArr = [ v0, v1, v2 ];
 export function createEdgeMap( geometry, tolerance ) {
 
 	const position = geometry.attributes.position;
@@ -16,13 +16,16 @@ export function createEdgeMap( geometry, tolerance ) {
 
 	for ( let i = 0; i < triCount; i ++ ) {
 
-		const halfEdgeTri = new HalfEdgeTriangle();
-		halfEdgeTri.index = i;
-
 		const vertOffset = i * 3;
 		v0.fromBufferAttribute( position, vertOffset + 0 );
 		v1.fromBufferAttribute( position, vertOffset + 1 );
 		v2.fromBufferAttribute( position, vertOffset + 2 );
+
+		const halfEdgeTri = new HalfEdgeTriangle();
+		halfEdgeTri.index = i;
+		halfEdgeTri.a.copy( v0 );
+		halfEdgeTri.b.copy( v1 );
+		halfEdgeTri.c.copy( v2 );
 
 		list.push( halfEdgeTri );
 		for ( let j = 0; j < 3; j ++ ) {
