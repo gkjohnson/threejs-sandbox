@@ -1,6 +1,7 @@
 # Half Edge Structure
 
 ## TODO
+- Navigate like 2d coordinate system
 - Implicit coordinte system per face derived from first triangle edge and normal
 - Get a random point and face on the surface of the geometry
 - Use 3d perlin noise to drive the heading of the point
