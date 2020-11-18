@@ -108,27 +108,6 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 		sample( dataTexture, px, py, pz, target );
 		return;
 
-	} else if ( min.x === px && min.y === py ) {
-
-		sample( dataTexture, px, py, min.z, target );
-		sample( dataTexture, px, py, max.z, C0 );
-		target.lerp( C0, pz - min.z );
-		return;
-
-	} else if ( min.x === px && min.z === pz ) {
-
-		sample( dataTexture, px, min.y, pz, target );
-		sample( dataTexture, px, max.y, pz, C0 );
-		target.lerp( C0, py - min.y );
-		return;
-
-	} else if ( min.y === py && min.z === pz ) {
-
-		sample( dataTexture, min.x, py, pz, target );
-		sample( dataTexture, max.x, py, pz, C0 );
-		target.lerp( C0, px - min.x );
-		return;
-
 	}
 
 	if ( u >= v && v >= w ) {
