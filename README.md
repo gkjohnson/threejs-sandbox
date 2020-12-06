@@ -12,8 +12,6 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
 - Subsurface Scattering
 - SSDO
-- Terrain authoring system (https://github.com/simondevyoutube/ProceduralTerrain_Part5)
-- Capsule Geometry / Math Class
 - Stochastic transparency
 - Glossly refraction post effect
 - Hilbert indices in shader (https://www.shadertoy.com/view/3tB3z3)
