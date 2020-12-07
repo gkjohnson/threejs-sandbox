@@ -75,6 +75,10 @@ export function TopoLineShaderMixin( shader ) {
 				#if ${defineKeyword}
 				{
 
+				// TODO:
+				// - Mix normal approach with derivative approach
+				// - use firm, anti alised edges using fwidth for the lines
+
 
 				float lineIndex = mod( wPosition.y + topoLineOffset, topoLineSpacing * float( topoLineEmphasisMod ) );
 				lineIndex -= topoLineSpacing;
