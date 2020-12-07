@@ -55,6 +55,10 @@ export function TopoLineShaderMixin( shader ) {
 		},
 	);
 
+	newShader.extensions = {
+		derivatives: true,
+	};
+
 	addWorldPosition( newShader );
 
 	newShader.fragmentShader = `
@@ -71,57 +75,81 @@ export function TopoLineShaderMixin( shader ) {
 				#if ${defineKeyword}
 				{
 
-				vec3 vUp = normalize((viewMatrix * vec4(0, 1, 0, 0)).xyz);
-				float upwardness = dot(normal, vUp);
 
-				// https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material
-				float yInv = saturate(1.0 - abs(upwardness)); // use saturate to avoid webgl warning with "pow"
-				float thicknessScale = pow(yInv, 0.4); // scale for consistent thickness on slopes
-				thicknessScale *= 0.25 + 0.5 * (vViewPosition.z + 1.) / 2.0; // scale for more consistent screen-space thickness
-
-				// factor for fading the thinner lines out
-				// 1 is close to camera 0 is far
-				float fadeStart = 20.0;
-				float fadeDist = 20.0;
-				float fadeFactor = 1.0 - clamp((vViewPosition.z - fadeStart) * (1.0 / fadeDist), 0.0, 1.0);
-
-				// pull out the line index which is used to make every certain number
-				// of lines thicker
-				float lineIndex = mod(wPosition.y + topoLineOffset, topoLineSpacing * float(topoLineEmphasisMod));
+				float lineIndex = mod( wPosition.y + topoLineOffset, topoLineSpacing * float( topoLineEmphasisMod ) );
 				lineIndex -= topoLineSpacing;
 				lineIndex = abs(lineIndex);
 				lineIndex = step(lineIndex, topoLineSpacing / 2.0);
 
-				// ignore the added thickness if the other lines are faded out
-				float lineIndexFactor = lineIndex * fadeFactor;
+				float fadeStart = 20.0;
+				float fadeDist = 20.0;
+				float fadeFactor = 1.0 - clamp( ( vViewPosition.z - fadeStart ) * ( 1.0 / fadeDist ), 0.0, 1.0 );
 
-				// calculate the thickness of the line
-				float thickness = topoLineThickness * thicknessScale;
-				thickness += thickness * lineIndexFactor * 0.5;
-				thickness *= lineIndexFactor * 0.5 + 1.0;
+				float emphasis = lineIndex == 0.0 ? 1.0 : 2.0;
+				emphasis = mix( 1.0, emphasis, fadeFactor );
 
-				// calculate the line fade
-				// segment off each section for a new line
-				float lineFalloff = mod(wPosition.y + topoLineOffset, topoLineSpacing);
+				float yPosDelta = fwidth( wPosition.y );
+				float lineFalloff = mod( wPosition.y + topoLineOffset, topoLineSpacing ) / topoLineSpacing;
+				lineFalloff = max( lineFalloff, 1.0 - lineFalloff ) * 2.0 - 1.0;
 
-				// center the section about the topoLine position and get the
-				// fragment distance to the line
-				lineFalloff -= topoLineSpacing * 0.5;
-				lineFalloff = abs(lineFalloff);
+				float topo = smoothstep( 1.0, 1.0 - yPosDelta * 2. * ( 1.0 / topoLineSpacing ) * emphasis, lineFalloff );
+				float fade = smoothstep( 0., topoLineSpacing * 2.0, saturate( fwidth( vViewPosition.z ) ) );
 
-				// cut off the values outside of the thickness and transform the length of
-				// thickness to [0, 1]
-				lineFalloff -= (topoLineSpacing / 2.0);
-				lineFalloff += thickness;
-				lineFalloff /= thickness;
+				float fadedTopo = mix( topo, 0.25, fade );
+				diffuseColor = mix( diffuseColor, vec4( topoLineColor, 1.0 ), 1.0 - fadedTopo );
 
-				// firm the edge
-				lineFalloff *= 1.5;
-				lineFalloff = clamp(lineFalloff, 0.0, 1.0);
 
-				// if this is a thicker line then don't fade it out
-				lineFalloff *= max(lineIndex, fadeFactor);
-				diffuseColor = mix(diffuseColor, vec4(topoLineColor, 1.0), lineFalloff);
+				// vec3 vUp = normalize((viewMatrix * vec4(0, 1, 0, 0)).xyz);
+				// float upwardness = dot(normal, vUp);
+
+				// // https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material
+				// float yInv = saturate(1.0 - abs(upwardness)); // use saturate to avoid webgl warning with "pow"
+				// float thicknessScale = pow(yInv, 0.4); // scale for consistent thickness on slopes
+				// thicknessScale *= 0.25 + 0.5 * (vViewPosition.z + 1.) / 2.0; // scale for more consistent screen-space thickness
+
+				// // factor for fading the thinner lines out
+				// // 1 is close to camera 0 is far
+				// float fadeStart = 20.0;
+				// float fadeDist = 20.0;
+				// float fadeFactor = 1.0 - clamp((vViewPosition.z - fadeStart) * (1.0 / fadeDist), 0.0, 1.0);
+
+				// // pull out the line index which is used to make every certain number
+				// // of lines thicker
+				// float lineIndex = mod(wPosition.y + topoLineOffset, topoLineSpacing * float(topoLineEmphasisMod));
+				// lineIndex -= topoLineSpacing;
+				// lineIndex = abs(lineIndex);
+				// lineIndex = step(lineIndex, topoLineSpacing / 2.0);
+
+				// // ignore the added thickness if the other lines are faded out
+				// float lineIndexFactor = lineIndex * fadeFactor;
+
+				// // calculate the thickness of the line
+				// float thickness = topoLineThickness * thicknessScale;
+				// thickness += thickness * lineIndexFactor * 0.5;
+				// thickness *= lineIndexFactor * 0.5 + 1.0;
+
+				// // calculate the line fade
+				// // segment off each section for a new line
+				// float lineFalloff = mod(wPosition.y + topoLineOffset, topoLineSpacing);
+
+				// // center the section about the topoLine position and get the
+				// // fragment distance to the line
+				// lineFalloff -= topoLineSpacing * 0.5;
+				// lineFalloff = abs(lineFalloff);
+
+				// // cut off the values outside of the thickness and transform the length of
+				// // thickness to [0, 1]
+				// lineFalloff -= (topoLineSpacing / 2.0);
+				// lineFalloff += thickness;
+				// lineFalloff /= thickness;
+
+				// // firm the edge
+				// lineFalloff *= 1.5;
+				// lineFalloff = clamp(lineFalloff, 0.0, 1.0);
+
+				// // if this is a thicker line then don't fade it out
+				// lineFalloff *= max(lineIndex, fadeFactor);
+				// diffuseColor = mix(diffuseColor, vec4(topoLineColor, 1.0), lineFalloff);
 
 				}
 				#endif
