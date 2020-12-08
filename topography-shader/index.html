@@ -31,9 +31,6 @@
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Topographics Lines Shader by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
-			<div>
-				<a href="https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material">https://forums.epicgames.com/udk/udk-development/level-design-and-creation/281824-contour-map-material</a>
-			</div>
 		</div>
 
 		<script type="module">
@@ -55,11 +52,13 @@
 			var plane, binnedPlane;
 			var params = {
 				emphasis: 10,
-				thickness: 0.005,
+				thickness: 0.0,
 				offset: 0,
 				spacing: 0.1,
 				flatShading: false,
-				binnedHeight: false
+				binnedHeight: false,
+				fadeStart: 40,
+				fadeDist: 20,
 			};
 
 			init();
@@ -77,13 +76,13 @@
 
 				// initialize renderer, scene, camera
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 6000 );
-				camera.position.set( 60, 30, 60 );
+				camera.position.set( 30, 20, 30 );
 
 				scene = new THREE.Scene();
 				scene.fog = new THREE.FogExp2( 0x263238, 0.015 );
 
 				directionalLight = new THREE.DirectionalLight();
-				directionalLight.position.set( 1, 1, 1 );
+				directionalLight.position.set( 1, 2, 3 );
 
 				var dlShadowCam = directionalLight.shadow.camera;
 				dlShadowCam.left = dlShadowCam.bottom = -15;
@@ -107,7 +106,7 @@
 
 				// TODO: Modify a plane instead because creating tons of
 				// cubes seems intensive
-				noise.seed(Math.random());
+				noise.seed( Math.random() );
 				for( let x = 0; x < widthSegments; x ++ ) {
 
 					for( let y = 0; y < heightSegments; y ++ ) {
@@ -115,10 +114,13 @@
 						const i = y * widthSegments + x;
 						const vx = x / scale;
 						const vy = y / scale;
-						const vz = noise.perlin2( vx, vy ) + 1;
 
-						posAttr.setZ( i, vz * zScale );
-						heightGeom.setZ( x, heightSegments - y - 1, vz * zScale );
+						const vz = noise.perlin2( vx, vy ) + 1;
+						const vz2 = noise.perlin2( vx * 5, vy * 5 );
+
+						const height = vz2 * 0.5 + vz * zScale;
+						posAttr.setZ( i, height );
+						heightGeom.setZ( x, heightSegments - y - 1, height );
 
 					}
 
@@ -159,8 +161,10 @@
 				gui.width = 300;
 				gui.add( params, 'offset', 0, 10 );
 				gui.add( params, 'spacing', 0, 1 );
-				gui.add( params, 'thickness', 0, 0.05 );
+				gui.add( params, 'thickness', 0, 10, 0.25 );
 				gui.add( params, 'emphasis', 0, 50 );
+				gui.add( params, 'fadeStart', 0, 100, 0.01 );
+				gui.add( params, 'fadeDist', 0, 40, 0.01 );
 				gui.add( params, 'binnedHeight' );
 
 			}
@@ -193,6 +197,8 @@
 				plane.material.uniforms.topoLineSpacing.value = params.spacing;
 				plane.material.uniforms.topoLineOffset.value = params.offset;
 				plane.material.uniforms.topoLineEmphasisMod.value = params.emphasis;
+				plane.material.uniforms.topoFadeStart.value = params.fadeStart;
+				plane.material.uniforms.topoFadeDist.value = params.fadeDist;
 
 				binnedPlane.material.uniforms.topoLineThickness.value = params.thickness;
 				binnedPlane.material.uniforms.topoLineSpacing.value = params.spacing;
