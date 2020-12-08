@@ -13,7 +13,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Subsurface Scattering
 - SSDO
 - Stochastic transparency
-- Glossly refraction post effect
+- Glossly refraction post effect (based on overlap, depth?)
 - Hilbert indices in shader (https://www.shadertoy.com/view/3tB3z3)
 
 **Next**
