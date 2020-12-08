@@ -13,6 +13,7 @@ Class for generating blue noise textures and example for generating monochrome o
 ## TODO
 
 - Make a 3D blue noise generator.
+- Investigate Hilbert indices in shader (https://www.shadertoy.com/view/3tB3z3)
 
 ## References
 
