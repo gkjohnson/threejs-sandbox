@@ -14,6 +14,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - SSDO
 - Stochastic transparency
 - Glossly refraction post effect (based on overlap, depth?)
+- Glint shader (https://twitter.com/xavierchermain/status/1305443303819800579)
 
 **Next**
 - Half Edge data structure
