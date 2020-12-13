@@ -15,6 +15,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Stochastic transparency
 - Glossly refraction post effect (based on overlap, depth?)
 - Glint shader (https://twitter.com/xavierchermain/status/1305443303819800579)
+- Immediate-mode style global (or imported) tool that lets you draw debug widgets easily
 
 **Next**
 - Half Edge data structure
