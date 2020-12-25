@@ -16,6 +16,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 - Glossly refraction post effect (based on overlap, depth?)
 - Glint shader (https://twitter.com/xavierchermain/status/1305443303819800579)
 - Immediate-mode style global (or imported) tool that lets you draw debug widgets easily
+- Bent normals generator (https://twitter.com/FewesW/status/1342595321948499971)
 
 **Next**
 - Half Edge data structure
