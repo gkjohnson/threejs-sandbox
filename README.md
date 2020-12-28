@@ -1,6 +1,6 @@
 # threejs-sandbox
 
-[![travis build](https://img.shields.io/travis/com/gkjohnson/threejs-sandbox/master.svg?style=flat-square)](https://travis-ci.com/gkjohnson/threejs-sandbox)
+[![build](https://img.shields.io/github/workflow/status/gkjohnson/threejs-sandbox/Node.js%20CI?style=flat-square&label=build)](https://github.com/gkjohnson/threejs-sandbox/actions)
 
 Set of experiments and extensions to THREE.js. These pages are a sandbox of examples and not necessarily ready to include in projects and may require some work to properly and performantly integrate.
 
