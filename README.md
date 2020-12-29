@@ -25,4 +25,6 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 **Next**
 - Half Edge data structure
 - GPU particles
-- Curl noise (https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph2007-curlnoise.pdf)
+- Curl noise
+	- https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph2007-curlnoise.pdf
+	- http://petewerner.blogspot.com/2015/02/intro-to-curl-noise.html
