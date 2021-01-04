@@ -4,7 +4,9 @@ Shader code and post processing effect for applying 3d color LUTS. Includes file
 
 Example LUTs provided by [rocketstock.com](https://www.rocketstock.com/free-after-effects-templates/35-free-luts-for-color-grading-videos/) and [freepresets.com](https://www.freepresets.com/product/free-luts-cinematic/).
 
-Submitted in [PR #20558](https://github.com/mrdoob/three.js/pull/20558) to three.js.
+Included in three.js project in [PR #20558](https://github.com/mrdoob/three.js/pull/20558).
+
+Used as a foundation for LUTEffect in [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing).
 
 ![](./images/banner.png)
 
