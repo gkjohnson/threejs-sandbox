@@ -6,7 +6,7 @@ Example LUTs provided by [rocketstock.com](https://www.rocketstock.com/free-afte
 
 Included in three.js project in [PR #20558](https://github.com/mrdoob/three.js/pull/20558).
 
-Used as a foundation for LUTEffect in [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing).
+This implementation used as a foundation for LUTEffect in [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing).
 
 ![](./images/banner.png)
 
