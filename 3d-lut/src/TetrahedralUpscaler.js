@@ -94,6 +94,11 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 	const py = v * ( height - 1 );
 	const pz = w * ( depth - 1 );
 
+	// get the UVW coordinates relative to the min and max pixels
+	const su = px % 1;
+	const sv = py % 1;
+	const sw = pz % 1;
+
 	min.x = Math.floor( px );
 	min.y = Math.floor( py );
 	min.z = Math.floor( pz );
@@ -110,34 +115,34 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 
 	}
 
-	if ( u >= v && v >= w ) {
+	if ( su >= sv && sv >= sw ) {
 
 		points = T1;
 
-	} else if ( u >= w && w >= v ) {
+	} else if ( su >= sw && sw >= sv ) {
 
 		points = T2;
 
-	} else if ( w >= u && u >= v ) {
+	} else if ( sw >= su && su >= sv ) {
 
 		points = T3;
 
-	} else if ( v >= u && u >= w ) {
+	} else if ( sv >= su && su >= sw ) {
 
 		points = T4;
 
-	} else if ( v >= w && w >= u ) {
+	} else if ( sv >= sw && sw >= su ) {
 
 		points = T5;
 
-	} else if ( w >= v && v >= u ) {
+	} else if ( sw >= sv && sv >= su ) {
 
 		points = T6;
 
 	}
 
 	const [ P0, P1, P2, P3 ] = points;
-	P.set( u, v, w );
+	P.set( su, sv, sw );
 
 	tempVector.copy( max ).sub( min ).multiply( P0 ).add( min );
 	sample( dataTexture, tempVector.x, tempVector.y, tempVector.z, C0 );

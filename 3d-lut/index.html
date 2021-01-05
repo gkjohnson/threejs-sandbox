@@ -270,7 +270,7 @@
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
 				gui.add( params, 'tetrahedralResize' ).onChange( regenerateLut );
-				gui.add( params, 'resizeDimensions', [ 4, 16, 32, 64, 128 ] ).onChange( regenerateLut );
+				gui.add( params, 'resizeDimensions', [ 4, 16, 32, 64, 128, 256 ] ).onChange( regenerateLut );
 
 				if ( renderer.capabilities.isWebGL2 ) {
 
