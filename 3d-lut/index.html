@@ -210,7 +210,12 @@
 
 				luts.forEach( l => {
 
-					if ( l === '32³ no op' ) {
+
+					if ( l === '64³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 64 );
+
+					} else if ( l === '32³ no op' ) {
 
 						lutMap[ l ] = generateNoOpLUT( 32 );
 
