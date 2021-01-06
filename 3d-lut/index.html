@@ -96,6 +96,7 @@
 				'./luts/Zeke 39.CUBE',
 			];
 			const lutMap = {};
+			const images = {};
 
 			// globals
 			var stats;
@@ -106,6 +107,7 @@
 				use3dTexture: true,
 				tetrahedralResize: false,
 				resizeDimensions: 32,
+				image: 'car',
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -181,14 +183,19 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( './images/photo.jpg', function ( map ) {
+				const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				const textureLoader = new THREE.TextureLoader();
+				images.car = textureLoader.load( './images/photo.jpg', function ( map ) {
 
 					map.encoding = THREE.sRGBEncoding;
+					material.map = map;
+					material.needsUpdate = true;
 
-					const aspect = map.image.width / map.image.height;
-					mesh.scale.set( 7 * aspect, 7, 1 );
+				} );
+
+				images.sponza = textureLoader.load( './images/sponza.png', function ( map ) {
+
+					map.encoding = THREE.sRGBEncoding;
 					material.map = map;
 					material.needsUpdate = true;
 
@@ -297,6 +304,8 @@
 
 				}
 
+				gui.add( params, 'image', [ 'car', 'sponza' ] );
+
 				gui.open();
 
 				onWindowResize();
@@ -367,6 +376,16 @@
 			}
 
 			function render() {
+
+				console.log( params.image );
+				const map = images[ params.image ];
+				if ( map.image ) {
+
+					const aspect = map.image.width / map.image.height;
+					mesh.scale.set( 7 * aspect, 7, 1 );
+					mesh.material.map = map;
+
+				}
 
 				mesh.visible = ! params.displayLut;
 				lutMesh.visible = params.displayLut;
