@@ -53,6 +53,9 @@
 
 			const luts = [
 				'2³ no op',
+				'4³ no op',
+				'8³ no op',
+				'16³ no op',
 				'32³ no op',
 				'./luts/Presetpro-Cinematic.3dl',
 				'./luts/Presetpro-Cinematic.cube',
@@ -170,7 +173,7 @@
 				camera.position.set( 0.0, 0, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0 );
+				scene.background = new THREE.Color( 0x151515 ).convertSRGBToLinear();
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -204,7 +207,19 @@
 
 						lutMap[ l ] = generateNoOpLUT( 32 );
 
-					} else if ( l === '2³ no op' ){
+					} else if ( l === '16³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 16 );
+
+					} else if ( l === '8³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 8 );
+
+					} else if ( l === '4³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 4 );
+
+					} else if ( l === '2³ no op' ) {
 
 						lutMap[ l ] = generateNoOpLUT( 2 );
 
