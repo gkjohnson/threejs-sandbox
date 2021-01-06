@@ -269,7 +269,16 @@
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 
-				composer = new EffectComposer( renderer );
+				const rt = new THREE.WebGLRenderTarget( 1, 1, {
+
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					format: THREE.RGBAFormat,
+					type: renderer.capabilities.floatFragmentTextures ? THREE.HalfFloatType : THREE.UnsignedByteType,
+
+				} );
+
+				composer = new EffectComposer( renderer, rt );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
@@ -377,7 +386,6 @@
 
 			function render() {
 
-				console.log( params.image );
 				const map = images[ params.image ];
 				if ( map.image ) {
 
