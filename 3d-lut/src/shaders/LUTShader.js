@@ -49,19 +49,23 @@ export const LUTShader = {
 
 			vec4 val = texture2D( tDiffuse, vUv );
 
-
 			vec4 lutVal;
 			#if USE_3DTEXTURE
+
 			// pull the sample in by half a pixel so the sample begins
 			// at the center of the edge pixels.
 			float pixelWidth = 1.0 / lutSize;
 			float halfPixelWidth = 0.5 / lutSize;
 			vec3 uvw = vec3( halfPixelWidth ) + val.rgb * ( 1.0 - pixelWidth );
 			lutVal = vec4( texture( lut3d, uvw ).rgb, val.a );
+
 			#else
+
 			lutVal = vec4( lutLookup( lut, lutSize, val.rgb ), val.a );
+
 			#endif
-			gl_FragColor = vec4( mix( val.r, lutVal.r, intensity ) );
+
+			gl_FragColor = vec4( mix( val, lutVal, intensity ) );
 
 		}
 
