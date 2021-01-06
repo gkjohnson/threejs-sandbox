@@ -1,38 +1,29 @@
 export const lutShaderFunctions = /* glsl */`
 
-	vec3 lutLookup( sampler2D tex, float size, vec3 rgb ) {
+	// Based on implementation from
+	// https://threejsfundamentals.org/threejs/lessons/threejs-post-processing-3dlut.html
+    vec3 lutLookup( sampler2D tex, float size, vec3 rgb ) {
 
-		// clamp the sample in by half a pixel to avoid interpolation
-		// artifacts between slices laid out next to each other.
-		float halfPixelWidth = 0.5 / size;
-		rgb.rg = clamp( rgb.rg, halfPixelWidth, 1.0 - halfPixelWidth );
+		float sliceSize = 1.0 / size;                  // space of 1 slice
 
-		// green offset into a LUT layer
-		float gOffset = rgb.g / size;
-		vec2 uv1 = vec2( rgb.r, gOffset );
-		vec2 uv2 = vec2( rgb.r, gOffset );
+		float slicePixelSize = sliceSize / size;       // space of 1 pixel
+		float width = size - 1.0;
+		float sliceInnerSize = slicePixelSize * width; // space of size pixels
 
-		// adjust b slice offset
-		float bNormalized = size * rgb.b;
+		float zSlice0 = floor( rgb.z * width);
+		float zSlice1 = min( zSlice0 + 1.0, width);
 
-		// assume the slice is in the "middle" of a pixel so we want to interpolate
-		// to the slice above or below depending on sample position.
-		float bSlice;
-		float bMix = modf( bNormalized, bSlice ) - 0.5;
-		float bStep = sign( bMix );
+		float yOffset = slicePixelSize * 0.5 + rgb.y * sliceInnerSize;
+		float xRange = ( rgb.x * width + 0.5 ) / size;
+		float s0 = yOffset + (zSlice0 * sliceSize);
 
-		// get the first lut slice and then the one to interpolate to
-		float b1 = bSlice / size;
-		float b2 = clamp( ( bSlice + bStep ) / size, 0.0, 1.0 );
+		float s1 = yOffset + ( zSlice1 * sliceSize );
+		vec4 slice0Color = texture2D( tex, vec2( xRange, s0 ) );
+		vec4 slice1Color = texture2D( tex, vec2( xRange, s1 ) );
+		float zOffset = mod( rgb.z * width, 1.0 );
+		return mix( slice0Color.rgb, slice1Color.rgb, zOffset );
 
-		uv1.y += b1;
-		uv2.y += b2;
+    }
 
-		vec3 sample1 = texture2D( tex, uv1 ).rgb;
-		vec3 sample2 = texture2D( tex, uv2 ).rgb;
-
-		return mix( sample1, sample2, abs( bMix ) );
-
-	}
 
 `;
