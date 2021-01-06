@@ -51,7 +51,7 @@ export const LUTShader = {
 
 			// pull the sample in by half a pixel so the sample begins
 			// at the center of the edge pixels.
-			float pixelWidth = 0.5 / lutSize;
+			float pixelWidth = 1.0 / lutSize;
 			float halfPixelWidth = 0.5 / lutSize;
 			vec3 uvw = vec3( halfPixelWidth ) + val.rgb * ( 1.0 - pixelWidth );
 
