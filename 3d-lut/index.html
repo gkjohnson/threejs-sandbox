@@ -101,6 +101,7 @@
 			// globals
 			var stats;
 			var params = {
+				enabled: true,
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
@@ -302,6 +303,7 @@
 				var gui = new dat.GUI();
 				gui.width = 450;
 
+				gui.add( params, 'enabled' );
 				gui.add( params, 'lut', luts ).onChange( regenerateLut );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
@@ -434,9 +436,7 @@
 
 				}
 
-				window.lutPass = lutPass;
-
-				lutPass.enabled = ! params.displayLut;
+				lutPass.enabled = params.enabled && ! params.displayLut;
 				gammaPass.enabled = ! params.displayLut;
 
 				composer.render();
