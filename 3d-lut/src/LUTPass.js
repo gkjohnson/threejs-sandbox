@@ -25,6 +25,7 @@ export class LUTPass extends ShaderPass {
 
 				}
 
+				material.uniforms.lutSize.value = v.image.width;
 				if ( v.isDataTexture3D ) {
 
 					material.uniforms.lut3d.value = v;
@@ -32,7 +33,6 @@ export class LUTPass extends ShaderPass {
 				} else {
 
 					material.uniforms.lut.value = v;
-					material.uniforms.lutSize.value = v.image.width;
 
 				}
 

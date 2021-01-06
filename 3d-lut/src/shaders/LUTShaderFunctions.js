@@ -14,12 +14,16 @@ export const lutShaderFunctions = /* glsl */`
 
 		// adjust b slice offset
 		float bNormalized = size * rgb.b;
-		float bSlice = min( floor( size * rgb.b ), size - 1.0 );
-		float bMix = ( bNormalized - bSlice ) / size;
+
+		// assume the slice is in the "middle" of a pixel so we want to interpolate
+		// to the slice above or below depending on sample position.
+		float bSlice;
+		float bMix = modf( bNormalized, bSlice ) - 0.5;
+		float bStep = sign( bMix );
 
 		// get the first lut slice and then the one to interpolate to
 		float b1 = bSlice / size;
-		float b2 = ( bSlice + 1.0 ) / size;
+		float b2 = clamp( ( bSlice + bStep ) / size, 0.0, 1.0 );
 
 		uv1.y += b1;
 		uv2.y += b2;
@@ -27,7 +31,7 @@ export const lutShaderFunctions = /* glsl */`
 		vec3 sample1 = texture2D( tex, uv1 ).rgb;
 		vec3 sample2 = texture2D( tex, uv2 ).rgb;
 
-		return mix( sample1, sample2, bMix );
+		return mix( sample1, sample2, abs( bMix ) );
 
 	}
 
