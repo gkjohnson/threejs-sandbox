@@ -7,8 +7,8 @@ export const lutShaderFunctions = /* glsl */`
 
 		// Get the slices on either side of the sample
 		float slice = rgb.b * size;
-		float slice0;
-		float interp = modf( slice, slice0 );
+		float interp = fract( slice );
+		float slice0 = slice - interp;
 		float centeredInterp = interp - 0.5;
 
 		float slice1 = slice0 + sign( centeredInterp );
