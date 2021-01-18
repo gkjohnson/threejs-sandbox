@@ -2,6 +2,8 @@
 
 A hacky wrapper with some fancy regex for WebGLRenderer intended to help with debugging and reading data from shaders.
 
+Features include the ability complete the shader earlyto see intermediate calculations and hover over rendered pixels to see resulting values.
+
 ![](./images/screenshot.png)
 
 [Demo Here!](https://gkjohnson.github.io/threejs-sandbox/shader-debugger/)
@@ -191,6 +193,10 @@ The number of pixels to display in each dimension in the magnification.
 - Clean up code redundancy
 - Allow for stepping through functions by ensuring that `gl_FragColor` is not set anywhere else and setting it mid call.
 - Handle conditionals
+
+## UI
+- Provide a comment syntax so you can specify variable outputs by rendering multiple iterations to see multiple intermediate values.
+- Click a pixel on the canvas to fix the readout and let you see the results at a pixel of editing the shader.
 
 ## Example
 - Allow for adding conditionals or custom outputs
