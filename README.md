@@ -27,6 +27,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
 **Next**
 - Dynamic batched draw helper and material
   - Merge geometry with an extra index attribute that can look up a world matrix in the shader uniforms.
+  - Reuse builtin skinning mechanism?
 - Half Edge data structure
 - GPU particles
 - Curl noise
