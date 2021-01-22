@@ -23,6 +23,8 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
   - https://panoskarabelas.com/posts/screen_space_shadows/
 - Provide helper for depth peeling renders
   - Based on [translucent material](https://github.com/gkjohnson/threejs-sandbox/tree/master/translucent-material) demo.
+- Dynamic batched draw helper and material
+  - Merge geometry with an extra index attribute that can look up a world matrix in the shader uniforms.
 
 **Next**
 - Half Edge data structure
