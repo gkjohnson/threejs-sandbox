@@ -23,6 +23,8 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
   - https://panoskarabelas.com/posts/screen_space_shadows/
 - Provide helper for depth peeling renders
   - Based on [translucent material](https://github.com/gkjohnson/threejs-sandbox/tree/master/translucent-material) demo.
+- Gem shader
+  - https://github.com/Sorumi/UnityRayTracingGem
   
 **Next**
 - Half Edge data structure
