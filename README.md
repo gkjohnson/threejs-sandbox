@@ -25,6 +25,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
   - Based on [translucent material](https://github.com/gkjohnson/threejs-sandbox/tree/master/translucent-material) demo.
 - Gem shader
   - https://github.com/Sorumi/UnityRayTracingGem
+  - http://sorumi.xyz/posts/unity-ray-tracing-gem-shader/
   
 **Next**
 - Half Edge data structure
