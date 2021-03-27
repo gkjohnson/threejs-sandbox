@@ -31,12 +31,11 @@ export const LUTShader = {
 
 
 	fragmentShader: /* glsl */`
-		precision highp sampler3D;
-
 		${ lutShaderFunctions }
 
 		uniform float lutSize;
 		#if USE_3DTEXTURE
+		precision highp sampler3D;
 		uniform sampler3D lut3d;
 		#else
 		uniform sampler2D lut;
