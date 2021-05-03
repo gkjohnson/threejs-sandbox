@@ -27,6 +27,7 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
   - https://github.com/Sorumi/UnityRayTracingGem
   - http://sorumi.xyz/posts/unity-ray-tracing-gem-shader/
 - Texture atlaser for mesh optimization
+- Screen Space Global Illumination
   
 **Next**
 - Half Edge data structure
