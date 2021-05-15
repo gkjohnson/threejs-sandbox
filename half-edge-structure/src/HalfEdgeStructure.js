@@ -13,26 +13,28 @@ export class HalfEdgeStructure {
 
 	constructor( geometry, tolerance = 1e-5 ) {
 
-		if ( geometry.index ) {
+		// the list of triangles representing the half edge data structure
+		this.list = createEdgeMap( geometry, tolerance );
 
-			geometry = geometry.toNonIndexed();
-			console.warn( `HalfEdgeStructure: Only non indexed buffer geometry supported.` );
-
-		}
-
-		this.data = createEdgeMap( geometry, tolerance );
+		// the original geometry
 		this.geometry = geometry;
 
 	}
 
-	movePoint( index, point, dir, target ) {
+	movePoint( halfEdgePoint, dir, halfEdgeTarget ) {
 
-		const { data } = this;
+		const { list } = this;
+		const startTri = list[ halfEdgePoint.index ];
 
-		_line.start.copy( point );
-		_line.end.copy( point ).add( dir );
+		// get the direction along the triangle plane
+		startTri.projectToPlane( _tempVec0.copy( dir ) ).normalize().multiplyScalar( distance );
 
-		// TODO: project the points onto the local frame for stepping
+		// get the start point on the triangle plane
+		_line.start.copy( halfEdgePoint.point );
+		startTri.projectToPlane( _line.start );
+
+		// get the end point on the triangle plane
+		_line.end.copy( halfEdgePoint.point ).add( _tempVec0 );
 
 		let length = dir.length();
 		let nextIndex = index;
@@ -40,14 +42,17 @@ export class HalfEdgeStructure {
 
 			// TODO: transform into the local frame of the triangle
 
-			const face = data[ nextIndex ];
-			nextIndex = face.adjacent[ face.intersectEdge( _line, target ) ];
+			const face = list[ nextIndex ];
+			nextIndex = face.intersectEdge( _line, target );
+
+			const nextFace = face.adjacent[ nextIndex ];
 
 			length = Math.max( 0.0, length - _line.start.distanceTo( target ) );
 
 			_line.start.copy( target );
 
-			// TODO: transform the direction into the local frame and set it to end
+			// TODO: transform the direction into the new local frame and set it to end
+			// - rotate 
 
 		}
 

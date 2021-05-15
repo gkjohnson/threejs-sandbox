@@ -9,7 +9,8 @@ const vertArr = [ v0, v1, v2 ];
 export function createEdgeMap( geometry, tolerance ) {
 
 	const position = geometry.attributes.position;
-	const triCount = position.count / 3;
+	const index = geometry.index;
+	const triCount = index ? index.count / 3 : position.count / 3;
 
 	const list = new Array( triCount );
 	const map = {};
@@ -17,9 +18,20 @@ export function createEdgeMap( geometry, tolerance ) {
 	for ( let i = 0; i < triCount; i ++ ) {
 
 		const vertOffset = i * 3;
-		v0.fromBufferAttribute( position, vertOffset + 0 );
-		v1.fromBufferAttribute( position, vertOffset + 1 );
-		v2.fromBufferAttribute( position, vertOffset + 2 );
+		let ia = vertOffset + 0;
+		let ib = vertOffset + 1;
+		let ic = vertOffset + 2;
+		if ( index ) {
+
+			ia = index.getX( ia );
+			ib = index.getX( ib );
+			ic = index.getX( ic );
+
+		}
+
+		v0.fromBufferAttribute( position, ia );
+		v1.fromBufferAttribute( position, ib );
+		v2.fromBufferAttribute( position, ic );
 
 		const halfEdgeTri = new HalfEdgeTriangle();
 		halfEdgeTri.index = i;
