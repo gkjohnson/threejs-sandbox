@@ -28,7 +28,9 @@ Set of experiments and extensions to THREE.js. These pages are a sandbox of exam
   - http://sorumi.xyz/posts/unity-ray-tracing-gem-shader/
 - Texture atlaser for mesh optimization
 - Screen Space Global Illumination
-  
+- Triangle draw order reorganizer for transparency / overdraw
+  - http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.83.572&rep=rep1&type=pdf
+
 **Next**
 - Half Edge data structure
 - GPU particles
