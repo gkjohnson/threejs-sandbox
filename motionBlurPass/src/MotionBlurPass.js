@@ -119,7 +119,7 @@ export class MotionBlurPass extends Pass {
 			new WebGLRenderTarget( 256, 256, {
 				minFilter: LinearFilter,
 				magFilter: LinearFilter,
-				format: RGBFormat,
+				format: RGBAFormat,
 				type: HalfFloatType
 			} );
 		this._velocityBuffer.texture.name = "MotionBlurPass.Velocity";

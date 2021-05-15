@@ -53,6 +53,9 @@
 
 			const luts = [
 				'2³ no op',
+				'4³ no op',
+				'8³ no op',
+				'16³ no op',
 				'32³ no op',
 				'./luts/Presetpro-Cinematic.3dl',
 				'./luts/Presetpro-Cinematic.cube',
@@ -93,16 +96,19 @@
 				'./luts/Zeke 39.CUBE',
 			];
 			const lutMap = {};
+			const images = {};
 
 			// globals
 			var stats;
 			var params = {
+				enabled: true,
 				lut: luts[ 6 ],
 				intensity: 1.0,
 				displayLut: false,
 				use3dTexture: true,
 				tetrahedralResize: false,
 				resizeDimensions: 32,
+				image: 'car',
 			};
 			var camera, scene, renderer, controls;
 			var composer;
@@ -124,9 +130,9 @@
 						for ( let b = 0; b < size; b ++ ) {
 
 							const index = r + g * size + b * size * size;
-							data[ index * 3 + 0 ] = 255 * r / ( size - 1 );
-							data[ index * 3 + 1 ] = 255 * g / ( size - 1 );
-							data[ index * 3 + 2 ] = 255 * b / ( size - 1 );
+							data[ index * 3 + 0 ] = Math.round( 255 * r / ( size - 1 ) );
+							data[ index * 3 + 1 ] = Math.round( 255 * g / ( size - 1 ) );
+							data[ index * 3 + 2 ] = Math.round( 255 * b / ( size - 1 ) );
 
 						}
 
@@ -141,6 +147,7 @@
 				texture.format = THREE.RGBFormat;
 				texture.type = THREE.UnsignedByteType;
 				texture.magFilter = THREE.LinearFilter;
+				texture.minFilter = THREE.LinearFilter;
 				texture.wrapS = THREE.ClampToEdgeWrapping;
 				texture.wrapT = THREE.ClampToEdgeWrapping;
 				texture.generateMipmaps = false;
@@ -153,6 +160,7 @@
 				texture3D.format = THREE.RGBFormat;
 				texture3D.type = THREE.UnsignedByteType;
 				texture3D.magFilter = THREE.LinearFilter;
+				texture3D.minFilter = THREE.LinearFilter;
 				texture3D.wrapS = THREE.ClampToEdgeWrapping;
 				texture3D.wrapT = THREE.ClampToEdgeWrapping;
 				texture3D.wrapR = THREE.ClampToEdgeWrapping;
@@ -170,7 +178,7 @@
 				camera.position.set( 0.0, 0, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0 );
+				scene.background = new THREE.Color( 0x151515 ).convertSRGBToLinear();
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -178,14 +186,19 @@
 				document.body.appendChild( renderer.domElement );
 
 				// geometry
-				var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.load( './images/photo.jpg', function ( map ) {
+				const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+				const textureLoader = new THREE.TextureLoader();
+				images.car = textureLoader.load( './images/photo.jpg', function ( map ) {
 
 					map.encoding = THREE.sRGBEncoding;
+					material.map = map;
+					material.needsUpdate = true;
 
-					const aspect = map.image.width / map.image.height;
-					mesh.scale.set( 7 * aspect, 7, 1 );
+				} );
+
+				images.sponza = textureLoader.load( './images/sponza.png', function ( map ) {
+
+					map.encoding = THREE.sRGBEncoding;
 					material.map = map;
 					material.needsUpdate = true;
 
@@ -200,11 +213,28 @@
 
 				luts.forEach( l => {
 
-					if ( l === '32³ no op' ) {
+
+					if ( l === '64³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 64 );
+
+					} else if ( l === '32³ no op' ) {
 
 						lutMap[ l ] = generateNoOpLUT( 32 );
 
-					} else if ( l === '2³ no op' ){
+					} else if ( l === '16³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 16 );
+
+					} else if ( l === '8³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 8 );
+
+					} else if ( l === '4³ no op' ) {
+
+						lutMap[ l ] = generateNoOpLUT( 4 );
+
+					} else if ( l === '2³ no op' ) {
 
 						lutMap[ l ] = generateNoOpLUT( 2 );
 
@@ -247,7 +277,16 @@
 				gammaPass = new ShaderPass( GammaCorrectionShader );
 				fxaaPass = new ShaderPass( FXAAShader );
 
-				composer = new EffectComposer( renderer );
+				const rt = new THREE.WebGLRenderTarget( 1, 1, {
+
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					format: THREE.RGBAFormat,
+					type: renderer.capabilities.floatFragmentTextures ? THREE.HalfFloatType : THREE.UnsignedByteType,
+
+				} );
+
+				composer = new EffectComposer( renderer, rt );
 				composer.setSize( window.innerWidth, window.innerHeight );
 				composer.setPixelRatio( window.devicePixelRatio );
 				composer.addPass( renderPass );
@@ -266,6 +305,7 @@
 				var gui = new dat.GUI();
 				gui.width = 450;
 
+				gui.add( params, 'enabled' );
 				gui.add( params, 'lut', luts ).onChange( regenerateLut );
 				gui.add( params, 'intensity' ).min( 0.0 ).max( 1.0 ).step( 0.01 );
 				gui.add( params, 'displayLut' );
@@ -281,6 +321,8 @@
 					params.use3dTexture = false;
 
 				}
+
+				gui.add( params, 'image', [ 'car', 'sponza' ] );
 
 				gui.open();
 
@@ -353,6 +395,15 @@
 
 			function render() {
 
+				const map = images[ params.image ];
+				if ( map.image ) {
+
+					const aspect = map.image.width / map.image.height;
+					mesh.scale.set( 7 * aspect, 7, 1 );
+					mesh.material.map = map;
+
+				}
+
 				mesh.visible = ! params.displayLut;
 				lutMesh.visible = params.displayLut;
 
@@ -387,9 +438,7 @@
 
 				}
 
-				window.lutPass = lutPass;
-
-				lutPass.enabled = ! params.displayLut;
+				lutPass.enabled = params.enabled && ! params.displayLut;
 				gammaPass.enabled = ! params.displayLut;
 
 				composer.render();

@@ -94,6 +94,23 @@ export const SobelOutlineShader = {
 				normalResult.z -
 				normalBias;
 
+			// // code for scaling depth outline factor by surface normal
+			// offset = vec3( depthOutlineThickness / resolution, 0.0 );
+			// float depth = texture2D( depthTex, vUv ).r;
+			// float depthUp = texture2D( depthTex, vUv + offset.zy ).r;
+			// float depthDn = texture2D( depthTex, vUv - offset.zy ).r;
+			// float depthRt = texture2D( depthTex, vUv + offset.xz ).r;
+			// float depthLf = texture2D( depthTex, vUv - offset.xz ).r;
+
+			// float biasScale = 1.0 - abs( dot( normal, vec3( 0.0, 0.0, 1.0 ) ) );
+			// float depthResult =
+			// 	abs( depth - depthUp ) +
+			// 	abs( depth - depthDn ) +
+			// 	abs( depth - depthLf ) +
+			// 	abs( depth - depthRt );// - depthBias * biasScale;
+
+			// depthResult = depthResult > abs( depthBias * biasScale + 0.01) ? 1.0 : 0.0;
+
 			float result = saturate( max( depthResult, normalScalar ) );
 			result = pow( result, 4.0 );
 

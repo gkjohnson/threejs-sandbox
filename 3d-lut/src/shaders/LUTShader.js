@@ -31,15 +31,14 @@ export const LUTShader = {
 
 
 	fragmentShader: /* glsl */`
-		precision highp sampler3D;
-
 		${ lutShaderFunctions }
 
+		uniform float lutSize;
 		#if USE_3DTEXTURE
+		precision highp sampler3D;
 		uniform sampler3D lut3d;
 		#else
 		uniform sampler2D lut;
-		uniform float lutSize;
 		#endif
 
 		varying vec2 vUv;
@@ -49,12 +48,24 @@ export const LUTShader = {
 
 			vec4 val = texture2D( tDiffuse, vUv );
 			vec4 lutVal;
+
+			// pull the sample in by half a pixel so the sample begins
+			// at the center of the edge pixels.
+			float pixelWidth = 1.0 / lutSize;
+			float halfPixelWidth = 0.5 / lutSize;
+			vec3 uvw = vec3( halfPixelWidth ) + val.rgb * ( 1.0 - pixelWidth );
+
 			#if USE_3DTEXTURE
-			lutVal = vec4( texture( lut3d, val.rgb ).rgb, val.a );
+
+			lutVal = vec4( texture( lut3d, uvw ).rgb, val.a );
+
 			#else
-			lutVal = vec4( lutLookup( lut, lutSize, val.rgb ), val.a );
+
+			lutVal = vec4( lutLookup( lut, lutSize, uvw ), val.a );
+
 			#endif
-			gl_FragColor = mix( val, lutVal, intensity );
+
+			gl_FragColor = vec4( mix( val, lutVal, intensity ) );
 
 		}
 

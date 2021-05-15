@@ -4,11 +4,6 @@ import { Triangle, Plane, Vector3, Color, DataTexture3D } from '//unpkg.com/thre
 const _triangle = new Triangle();
 const _plane = new Plane();
 const P = new Vector3();
-const P0 = new Vector3();
-const P1 = new Vector3();
-const P2 = new Vector3();
-const P3 = new Vector3();
-
 const C0 = new Color();
 const C1 = new Color();
 const C2 = new Color();
@@ -99,6 +94,11 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 	const py = v * ( height - 1 );
 	const pz = w * ( depth - 1 );
 
+	// get the UVW coordinates relative to the min and max pixels
+	const su = px % 1;
+	const sv = py % 1;
+	const sw = pz % 1;
+
 	min.x = Math.floor( px );
 	min.y = Math.floor( py );
 	min.z = Math.floor( pz );
@@ -113,57 +113,36 @@ function tetrahedralSample( dataTexture, u, v, w, target ) {
 		sample( dataTexture, px, py, pz, target );
 		return;
 
-	} else if ( min.x === px && min.y === py ) {
-
-		sample( dataTexture, px, py, min.z, target );
-		sample( dataTexture, px, py, max.z, C0 );
-		target.lerp( C0, pz - min.z );
-		return;
-
-	} else if ( min.x === px && min.z === pz ) {
-
-		sample( dataTexture, px, min.y, pz, target );
-		sample( dataTexture, px, max.y, pz, C0 );
-		target.lerp( C0, py - min.y );
-		return;
-
-	} else if ( min.y === py && min.z === pz ) {
-
-		sample( dataTexture, min.x, py, pz, target );
-		sample( dataTexture, max.x, py, pz, C0 );
-		target.lerp( C0, px - min.x );
-		return;
-
 	}
 
-	if ( u >= v && v >= w ) {
+	if ( su >= sv && sv >= sw ) {
 
 		points = T1;
 
-	} else if ( u >= w && w >= v ) {
+	} else if ( su >= sw && sw >= sv ) {
 
 		points = T2;
 
-	} else if ( w >= u && u >= v ) {
+	} else if ( sw >= su && su >= sv ) {
 
 		points = T3;
 
-	} else if ( v >= u && u >= w ) {
+	} else if ( sv >= su && su >= sw ) {
 
 		points = T4;
 
-	} else if ( v >= w && w >= u ) {
+	} else if ( sv >= sw && sw >= su ) {
 
 		points = T5;
 
-	} else if ( w >= v && v >= u ) {
+	} else if ( sw >= sv && sv >= su ) {
 
 		points = T6;
 
 	}
 
 	const [ P0, P1, P2, P3 ] = points;
-	P.set( u, v, w );
+	P.set( su, sv, sw );
 
 	tempVector.copy( max ).sub( min ).multiply( P0 ).add( min );
 	sample( dataTexture, tempVector.x, tempVector.y, tempVector.z, C0 );
