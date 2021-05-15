@@ -1,14 +1,9 @@
-import { Triangle, Vector3, Plane } from 'three';
+import { Triangle, Vector3, Plane, Line3 } from 'three';
 import { createEdgeMap } from './utils';
 
-const _triangle = new Triangle();
-const _barycentric0 = new Vector3();
-const _barycentric1 = new Vector3();
 const _tempVec0 = new Vector3();
-const _tempVec1 = new Vector3();
-const _tempVec2 = new Vector3();
-const _plane = new Plane();
 const _line = new Line3();
+const _dir = new Vector3();
 export class HalfEdgeStructure {
 
 	constructor( geometry, tolerance = 1e-5 ) {
@@ -38,21 +33,37 @@ export class HalfEdgeStructure {
 
 		let length = dir.length();
 		let nextIndex = index;
-		while ( length ) {
-
-			// TODO: transform into the local frame of the triangle
+		while ( length > 0 ) {
 
 			const face = list[ nextIndex ];
-			nextIndex = face.intersectEdge( _line, target );
+			const originalIndex = nextIndex;
+			nextIndex = face.intersectEdge( _line, halfEdgeTarget.point );
 
-			const nextFace = face.adjacent[ nextIndex ];
+			if ( nextIndex === - 1 ) {
 
-			length = Math.max( 0.0, length - _line.start.distanceTo( target ) );
+				halfEdgeTarget.point.copy( _line.end );
+				length = 0;
+				break;
 
-			_line.start.copy( target );
+			} else {
 
-			// TODO: transform the direction into the new local frame and set it to end
-			// - rotate 
+				_dir.subVectors( halfEdgeTarget.point, _line.end );
+				const couldRotate = face.rotateOntoAdjacent( _dir, nextIndex );
+				if ( couldRotate ) {
+
+					_line.start.copy( halfEdgeTarget.point );
+					_line.end.copy( _line.start ).add( _dir );
+					length = _line.start.distanceTo( _line.end );
+
+				} else {
+
+					length = 0;
+					nextIndex = originalIndex;
+					break;
+
+				}
+
+			}
 
 		}
 

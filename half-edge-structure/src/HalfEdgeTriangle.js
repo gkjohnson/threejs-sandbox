@@ -6,6 +6,7 @@ const _vec2 = new Vector3();
 const _axisVector = new Vector3();
 const _ray = new Ray();
 const _tempVec = new Vector3();
+const _normal = new Vector3();
 
 export class HalfEdgeTriangle extends Triangle {
 
@@ -43,7 +44,7 @@ export class HalfEdgeTriangle extends Triangle {
 
 	_init() {
 
-		const { a, b, c, aLocal, bLocal, cLocal, localToWorld, worldToLocal } = this;
+		const { a, b, c, aLocal, bLocal, cLocal, localToWorld, worldToLocal, adjacent, rotationAngles, normal } = this;
 
 		_vec0.subtractVectors( b, a ).normalize();
 		_vec1.subtractVectors( c, a ).normalize();
@@ -60,7 +61,20 @@ export class HalfEdgeTriangle extends Triangle {
 		bLocal.copy( b ).applyMatrix4( worldToLocal );
 		cLocal.copy( c ).applyMatrix4( worldToLocal );
 
-		this.getNormal( this.normal );
+		this.getNormal( normal );
+
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const tri = adjacent[ i ];
+			if ( tri ) {
+
+				// TODO: need to get the signed angle here
+				tri.getNormal( _normal );
+				rotationAngles[ i ] = normal.angleTo( _normal );
+
+			}
+
+		}
 
 	}
 
@@ -80,11 +94,18 @@ export class HalfEdgeTriangle extends Triangle {
 
 		this._init();
 
-		const { rotationAngles, normal, dir } = this;
-		const angle = rotationAngles[ adjacentIndex ];
+		const { adjacent, rotationAngles, normal, dir } = this;
+		if ( ! adjacent[ adjacentIndex ] ) {
 
+			return false;
+
+		}
+
+		const angle = rotationAngles[ adjacentIndex ];
 		_axisVector.crossVectors( normal, dir ).normalize();
 		dir.applyAxisAngle( _axisVector, angle );
+
+		return true;
 
 	}
 
