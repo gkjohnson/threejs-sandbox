@@ -2,6 +2,8 @@
 
 Experiments in antialiasing opaque raymarched SDF shapes.
 
+_in progress_
+
 ## TODO
 
 - See if we can come up with a way to support both SDF shapes and non-SDF raymarched shapes.
