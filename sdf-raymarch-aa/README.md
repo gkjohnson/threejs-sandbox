@@ -9,6 +9,8 @@ _in progress_
 - See if we can come up with a way to support both SDF shapes and non-SDF raymarched shapes.
 - Provide silhouette AA.
 - Provide internal-overlap AA.
+- https://www.shadertoy.com/view/llXGR4
+- https://iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm
 
 ### Silhouette AA
 
