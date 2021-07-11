@@ -331,7 +331,20 @@ ShaderLib[ 'line' ] = {
 
 				#ifndef USE_DASH
 
-					if (norm > 0.5) discard;
+					#ifdef ALPHA_TO_COVERAGE
+
+						float dnorm = fwidth( norm );
+						alpha = 1.0 - smoothstep( 0.5 - dnorm, 0.5 + dnorm, norm );
+
+					#else
+
+						if ( norm > 0.5 ) {
+
+							discard;
+
+						}
+
+					#endif
 
 				#endif
 
