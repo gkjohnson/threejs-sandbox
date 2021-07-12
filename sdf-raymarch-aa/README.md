@@ -7,8 +7,9 @@ _in progress_
 ## TODO
 
 - See if we can come up with a way to support both SDF shapes and non-SDF raymarched shapes.
-- Provide silhouette AA.
-- Provide internal-overlap AA.
+- Add option for testing all AA approaches.
+- Use GPU timer to test performance of all performances.
+- Use basic metaball SDF for demo.
 - https://iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm
 
 ## Approach 1
