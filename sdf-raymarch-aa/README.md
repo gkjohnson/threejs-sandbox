@@ -9,17 +9,24 @@ _in progress_
 - See if we can come up with a way to support both SDF shapes and non-SDF raymarched shapes.
 - Provide silhouette AA.
 - Provide internal-overlap AA.
-- https://www.shadertoy.com/view/llXGR4
 - https://iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm
 
-### Silhouette AA
+## Approach 1
 
-- Can be done using alpha-to-coverage and taking the fwidth of the opacity.
-- "Discarded" pixels need to have a coherent color so we don't get a "halo" effect. Or the AA could just apply by eating into the existing silhouette.
+- At any given step compute the width of the pixel given the camera perspective.
+- Compute the color / alpha contribution of the fragment by mapping the range [+0.5 * px, -0.5 * px] to [0, 1] and accumulate color / opacity.
+- if opacity gets near 1 end the iteration.
+- For silhouettes return opacity to use alpha to coverage.
 
-### Internal AA
+## Approach 2
 
-- Cannot call derivative functions within the raymarch loop because steps are not guaranteed to be coherent across sibling pixels.
-- Seems occur at intersecting shapes or depth disparities of a single convex shape.
-- AA could be achieved by checking depth or march count differences at the end of the loop using derivatives.
-- Just use final color as derivative to AA?
+- Sample the SDF multiple times using a subpixel jitter and blend.
+- Use alpha to coverage for silhouette aa.
+
+## Approach 3
+
+- fwidth and dfdx / dfdy cannot be used in the loop.
+- if a fragment is "hit" create a manual fwidth / derivative functions by manually sampling a neighboring x / y pixel.
+- the alpha contribution for the pixel is computed via `alpha = smoothstep( - fw, fw, sample );`
+- May just be a more complicated version of approach 1. 
+
