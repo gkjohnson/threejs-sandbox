@@ -276,11 +276,11 @@
 				var param = {
 					'width': 10,
 					'opacity': 0.5,
-					'render depth': true,
-					'render stencil': true,
+					'prepass depth': true,
+					'prepass stencil': true,
 				};
 
-				gui.add( param, 'render depth' ).onChange( function( val ) {
+				gui.add( param, 'prepass depth' ).onChange( function( val ) {
 
 					matLinePrepass.depthWrite = val;
 					matLine.depthFunc = val ? THREE.EqualDepth : THREE.LessEqualDepth;
@@ -288,7 +288,7 @@
 				} );
 
 
-				gui.add( param, 'render stencil' ).onChange( function( val ) {
+				gui.add( param, 'prepass stencil' ).onChange( function( val ) {
 
 					matLinePrepass.stencilWrite = val;
 					matLine.stencilWrite = val;
