@@ -314,7 +314,7 @@ ShaderLib[ 'line' ] = {
 
 			#endif
 
-			float alpha = opacity;
+			float alpha = 1.0;
 
 			#ifdef WORLD_UNITS
 
@@ -380,12 +380,12 @@ ShaderLib[ 'line' ] = {
 
 			#endif
 
-			vec4 diffuseColor = vec4( diffuse, alpha );
+			vec4 diffuseColor = vec4( diffuse, opacity * alpha );
 
 			#include <logdepthbuf_fragment>
 			#include <color_fragment>
 
-			gl_FragColor = vec4( diffuseColor.rgb, alpha );
+			gl_FragColor = diffuseColor;
 
 			#include <tonemapping_fragment>
 			#include <encodings_fragment>
