@@ -1,5 +1,7 @@
 export class MetaBallsMaterial extends ShaderMaterial {
+
 	constructor() {
+
 		super( {
 			uniforms: {
 				time: {
@@ -16,5 +18,7 @@ export class MetaBallsMaterial extends ShaderMaterial {
 
 			`,
 		} );
+
 	}
+
 }
