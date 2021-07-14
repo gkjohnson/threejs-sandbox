@@ -1,0 +1,9 @@
+# Fat Lines with Clean Transparency
+
+An approach rendering the three.js fat lines with transparency using two passes, depth writing, and the stencil buffer. Options are provided to toggle both stencil and depth writing.
+
+If depth is disabled and stencil enable the line overlaps in incorrect ways. If this look is acceptable then it can be achieved in a single pass but the stencil buffer must be cleared afterward.
+
+If stencil is disabled and depth enabled then overlap artifacts are present.
+
+Demo [here](https://gkjohnson.github.io/threejs-sandbox/fat-line-opacity/webgl_lines_fat.html)!

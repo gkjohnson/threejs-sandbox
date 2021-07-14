@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - lines - fat</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+		body {
+			margin: 0;
+			background-color: #000;
+			color: #fff;
+			font-family: Monospace;
+			font-size: 13px;
+			line-height: 24px;
+			overscroll-behavior: none;
+		}
+
+		a {
+			color: #ff0;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		button {
+			cursor: pointer;
+			text-transform: uppercase;
+		}
+
+		canvas {
+			display: block;
+		}
+
+		#info {
+			position: absolute;
+			top: 0px;
+			width: 100%;
+			padding: 10px;
+			box-sizing: border-box;
+			text-align: center;
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			pointer-events: none;
+			z-index: 1; /* TODO Solve this in HTML */
+		}
+
+		a, button, input, select {
+			pointer-events: auto;
+		}
+
+		.dg.ac {
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			z-index: 2 !important; /* TODO Solve this in HTML */
+		}
+
+		#overlay {
+			position: absolute;
+			z-index: 2;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height:100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 1;
+			background-color: #000000;
+			color: #ffffff;
+		}
+
+		#overlay > div {
+			text-align: center;
+		}
+
+		#overlay > div > button {
+			height: 20px;
+			background: transparent;
+			color: #ffffff;
+			outline: 1px solid #ffffff;
+			border: 0px;
+			cursor: pointer;
+		}
+
+		#overlay > div > p {
+			color: #777777;
+			font-size: 12px;
+		}
+	</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat lines</div>
+
+		<script type="module">
+			import * as THREE from '//unpkg.com/three@0.127.0/build/three.module.js';
+
+			import Stats from '//unpkg.com/three@0.127.0/examples/jsm/libs/stats.module.js';
+
+			import { GUI } from '//unpkg.com/three@0.127.0/examples/jsm/libs/dat.gui.module.js';
+			import { OrbitControls } from '//unpkg.com/three@0.127.0/examples/jsm/controls/OrbitControls.js';
+			import { Line2 } from '//unpkg.com/three@0.127.0/examples/jsm/lines/Line2.js';
+			import { LineGeometry } from '//unpkg.com/three@0.127.0/examples/jsm/lines/LineGeometry.js';
+			import { LineMaterial } from '//unpkg.com/three@0.127.0/examples/jsm/lines/LineMaterial.js';
+			import { GeometryUtils } from '//unpkg.com/three@0.127.0/examples/jsm/utils/GeometryUtils.js';
+
+			var cube, renderer, scene, camera, camera2, controls;
+			var linePrepass, matLinePrepass, line, matLine;
+			var stats;
+			var gui;
+
+			// viewport
+			var insetWidth;
+			var insetHeight;
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setClearColor( 0x000000, 0.0 );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( - 40, 0, 60 );
+
+				camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
+				camera2.position.copy( camera.position );
+
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 10;
+				controls.maxDistance = 500;
+
+
+				// Position and THREE.Color Data
+
+				var positions = [];
+				var colors = [];
+
+				var points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 20.0, 1, 0, 1, 2, 3, 4, 5, 6, 7 );
+
+				var spline = new THREE.CatmullRomCurve3( points );
+				var divisions = Math.round( 12 * points.length );
+				var color = new THREE.Color();
+
+				for ( var i = 0, l = divisions; i < l; i ++ ) {
+
+					var point = spline.getPoint( i / l );
+					positions.push( point.x, point.y, point.z );
+
+					color.setHSL( i / l, 1.0, 0.5 );
+					colors.push( color.r, color.g, color.b );
+
+				}
+
+
+				cube = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshBasicMaterial() );
+				cube.scale.setScalar( 15 );
+				scene.add( cube );
+
+				// Line2 ( LineGeometry, LineMaterial )
+
+				var geometry = new LineGeometry();
+				geometry.setPositions( positions );
+				geometry.setColors( colors );
+
+				// stencil and depth pass 1
+				matLinePrepass = new LineMaterial( {
+
+					colorWrite: false,
+					linewidth: 10,
+					transparent: true,
+
+					stencilWrite: true,
+					stencilRef: 1,
+					stencilZPass: THREE.ReplaceStencilOp,
+
+				} );
+
+				linePrepass = new Line2( geometry, matLinePrepass );
+				linePrepass.scale.set( 1, 1, 1 );
+				linePrepass.renderOrder = 1;
+				scene.add( linePrepass );
+
+				// color pass 2
+				matLine = new LineMaterial( {
+
+					color: 0xffffff,
+					linewidth: 10,
+					vertexColors: THREE.VertexColors,
+					dashed: false,
+					transparent: true,
+					opacity: 0.5,
+					depthFunc: THREE.EqualDepth,
+
+					stencilWrite: true,
+					stencilRef: 0,
+					stencilFunc: THREE.NotEqualStencilFunc,
+					stencilFail: THREE.ReplaceStencilOp,
+					stencilZPass: THREE.ReplaceStencilOp,
+
+				} );
+
+				line = new Line2( geometry, matLine );
+				line.scale.set( 1, 1, 1 );
+				line.renderOrder = 2;
+				scene.add( line );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				initGui();
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				insetWidth = window.innerHeight / 4; // square
+				insetHeight = window.innerHeight / 4;
+
+				camera2.aspect = insetWidth / insetHeight;
+				camera2.updateProjectionMatrix();
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.update();
+
+				// main scene
+
+				renderer.setClearColor( 0x000000, 0 );
+
+				renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+
+				// renderer will set this eventually
+				matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+				matLinePrepass.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+
+				renderer.render( scene, camera );
+
+			}
+
+			//
+
+			function initGui() {
+
+				gui = new GUI();
+
+				var param = {
+					'width': 10,
+					'opacity': 0.5,
+					'render depth': true,
+					'render stencil': true,
+				};
+
+				gui.add( param, 'render depth' ).onChange( function( val ) {
+
+					matLinePrepass.depthWrite = val;
+					matLine.depthFunc = val ? THREE.EqualDepth : THREE.LessEqualDepth;
+
+				} );
+
+
+				gui.add( param, 'render stencil' ).onChange( function( val ) {
+
+					matLinePrepass.stencilWrite = val;
+					matLine.stencilWrite = val;
+
+				} );
+
+
+				gui.add( param, 'opacity', 0, 1, 0.001 ).onChange( function ( val ) {
+
+					matLine.uniforms.opacity.value = parseFloat( val );
+
+				} );
+
+				gui.add( param, 'width', 1, 20 ).onChange( function ( val ) {
+
+					matLine.linewidth = val;
+					matLinePrepass.linewidth = val;
+
+				} );
+
+			}
+
+		</script>
+
+	</body>
+
+</html>
