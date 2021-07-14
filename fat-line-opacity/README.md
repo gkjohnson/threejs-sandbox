@@ -7,3 +7,7 @@ If depth is disabled and stencil enable the line overlaps in incorrect ways. If 
 If stencil is disabled and depth enabled then overlap artifacts are present.
 
 Demo [here](https://gkjohnson.github.io/threejs-sandbox/fat-line-opacity/webgl_lines_fat.html)!
+
+**TODO**
+
+- Try cutting out an inverted circle on the negative side of the lines to make "room" for the positive side endcap circle and they won't overlap.
