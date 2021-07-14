@@ -10,6 +10,7 @@ _in progress_
 - Add option for testing all AA approaches.
 - Use GPU timer to test performance of all performances.
 - Use basic metaball SDF for demo.
+- Add visualization for step count.
 - https://iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm
 
 ## Approach 1
