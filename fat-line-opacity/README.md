@@ -13,3 +13,4 @@ Demo [here](https://gkjohnson.github.io/threejs-sandbox/fat-line-opacity/webgl_l
 **TODO**
 
 - Try cutting out an inverted circle on the negative side of the lines to make "room" for the positive side endcap circle and they won't overlap.
+- Demo use of alpha to coverage to support binned transparency if AA is enabled.
