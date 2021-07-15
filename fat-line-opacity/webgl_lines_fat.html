@@ -103,16 +103,16 @@
 		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat lines</div>
 
 		<script type="module">
-			import * as THREE from '//unpkg.com/three@0.127.0/build/three.module.js';
+			import * as THREE from '//unpkg.com/three@0.130.0/build/three.module.js?module';
 
-			import Stats from '//unpkg.com/three@0.127.0/examples/jsm/libs/stats.module.js';
+			import Stats from '//unpkg.com/three@0.130.0/examples/jsm/libs/stats.module.js?module';
 
-			import { GUI } from '//unpkg.com/three@0.127.0/examples/jsm/libs/dat.gui.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.127.0/examples/jsm/controls/OrbitControls.js';
-			import { Line2 } from '//unpkg.com/three@0.127.0/examples/jsm/lines/Line2.js';
-			import { LineGeometry } from '//unpkg.com/three@0.127.0/examples/jsm/lines/LineGeometry.js';
-			import { LineMaterial } from '//unpkg.com/three@0.127.0/examples/jsm/lines/LineMaterial.js';
-			import { GeometryUtils } from '//unpkg.com/three@0.127.0/examples/jsm/utils/GeometryUtils.js';
+			import { GUI } from '//unpkg.com/three@0.130.0/examples/jsm/libs/dat.gui.module.js?module';
+			import { OrbitControls } from '//unpkg.com/three@0.130.0/examples/jsm/controls/OrbitControls.js?module';
+			import { Line2 } from '//unpkg.com/three@0.130.0/examples/jsm/lines/Line2.js?module';
+			import { LineGeometry } from '//unpkg.com/three@0.130.0/examples/jsm/lines/LineGeometry.js?module';
+			import { LineMaterial } from './src/LineMaterial.js';
+			import { GeometryUtils } from '//unpkg.com/three@0.130.0/examples/jsm/utils/GeometryUtils.js?module';
 
 			var cube, renderer, scene, camera, camera2, controls;
 			var linePrepass, matLinePrepass, line, matLine;
@@ -206,7 +206,6 @@
 					dashed: false,
 					transparent: true,
 					opacity: 0.5,
-					depthFunc: THREE.EqualDepth,
 
 					stencilWrite: true,
 					stencilRef: 0,
@@ -278,23 +277,40 @@
 					'opacity': 0.5,
 					'prepass depth': true,
 					'prepass stencil': true,
+					'a2c transparency': false,
 				};
 
-				gui.add( param, 'prepass depth' ).onChange( function( val ) {
+				function update() {
 
-					matLinePrepass.depthWrite = val;
-					matLine.depthFunc = val ? THREE.EqualDepth : THREE.LessEqualDepth;
+					const prepassDepth = param[ 'prepass depth' ];
+					const prepassStencil = param[ 'prepass stencil' ];
+					const a2c = param[ 'a2c transparency' ];
 
-				} );
+					matLinePrepass.depthWrite = prepassDepth;
+					matLinePrepass.stencilWrite = prepassStencil;
+					matLine.stencilWrite = prepassStencil;
+					matLine.transparent = true;
+					matLine.alphaToCoverage = false;
+					linePrepass.visible = true;
 
+					if ( a2c ) {
 
-				gui.add( param, 'prepass stencil' ).onChange( function( val ) {
+						matLinePrepass.depthWrite = false;
+						matLinePrepass.stencilWrite = false;
+						matLine.stencilWrite = false;
+						matLine.transparent = false;
+						matLine.alphaToCoverage = true;
+						linePrepass.visible = false;
 
-					matLinePrepass.stencilWrite = val;
-					matLine.stencilWrite = val;
+					}
 
-				} );
+				}
 
+				gui.add( param, 'prepass depth' ).onChange( update );
+
+				gui.add( param, 'prepass stencil' ).onChange( update );
+
+				gui.add( param, 'a2c transparency' ).onChange( update );
 
 				gui.add( param, 'opacity', 0, 1, 0.001 ).onChange( function ( val ) {
 

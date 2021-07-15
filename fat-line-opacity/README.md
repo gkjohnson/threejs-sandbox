@@ -6,6 +6,8 @@ If depth is disabled and stencil enable the line overlaps in incorrect ways. If 
 
 If stencil is disabled and depth enabled then overlap artifacts are present.
 
+An alpha-to-coverage approach can also be enabled which switches the line to use a single pass and no stencil or depth tricks. Instead the alpha to coverage features are used to provide multiple bins of transparency. This only works when anti aliasing is enabled and limits the ability to use anti aliasing on the line itself.
+
 Demo [here](https://gkjohnson.github.io/threejs-sandbox/fat-line-opacity/webgl_lines_fat.html)!
 
 **TODO**
