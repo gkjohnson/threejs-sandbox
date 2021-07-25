@@ -58,6 +58,7 @@
 
 			// globals
 			var params = {
+				invertColors: false,
 				lit: false,
 				opacity: 0.85,
 				threshold: 40,
@@ -69,6 +70,14 @@
 			};
 			var camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
 			var models = {};
+
+			const LIGHT_BACKGROUND = 0xeeeeee;
+			const LIGHT_MODEL = 0xffffff;
+			const LIGHT_LINES = 0x455A64;
+
+			const DARK_BACKGROUND = 0x111111;
+			const DARK_MODEL = 0x111111;
+			const DARK_LINES = 0xABBFCB;
 
 			init();
 			animate();
@@ -172,7 +181,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material = new THREE.MeshBasicMaterial( { color: LIGHT_MODEL } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -188,7 +197,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 1.0 } );
+						c.material = new THREE.MeshStandardMaterial( { color: LIGHT_MODEL, roughness: 1.0 } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -205,7 +214,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material = new THREE.MeshBasicMaterial( { color: LIGHT_MODEL } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -295,13 +304,13 @@
 
 					}
 
-					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
+					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: LIGHT_LINES } ) );
 					line.position.copy( mesh.position );
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
 					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
+					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: LIGHT_LINES, linewidth: 3 } ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -376,7 +385,7 @@
 					// Create the conditional edges geometry and associated material
 					const lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
-					material.uniforms.diffuse.value.set( 0x455A64 );
+					material.uniforms.diffuse.value.set( LIGHT_LINES );
 
 					// Create the line segments objects and replace the mesh
 					const line = new THREE.LineSegments( lineGeom, material );
@@ -385,7 +394,7 @@
 					line.rotation.copy( mesh.rotation );
 
 					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: 0x455A64, linewidth: 2 } ) );
+					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: LIGHT_LINES, linewidth: 2 } ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -402,7 +411,7 @@
 
 				// initialize renderer, scene, camera
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xeeeeee );
+				scene.background = new THREE.Color( LIGHT_BACKGROUND );
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
 				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
@@ -419,7 +428,7 @@
 				// Floor
 				floor = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry(),
-					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.25, transparent: true } )
+					new THREE.ShadowMaterial( { color: LIGHT_LINES, opacity: 0.25, transparent: true } )
 				);
 				floor.rotation.x = - Math.PI / 2;
 				floor.scale.setScalar( 20 );
@@ -472,6 +481,7 @@
 				// dat gui
 				var gui = new dat.GUI();
 				gui.width = 300;
+				gui.add( params, 'invertColors' );
 
 				const modelFolder = gui.addFolder( 'model' );
 
@@ -541,6 +551,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.material.uniforms.diffuse.value.set( params.invertColors ? DARK_LINES : LIGHT_LINES );
 
 						}
 
@@ -564,6 +575,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.material.color.set( params.invertColors ? DARK_LINES : LIGHT_LINES );
 
 						}
 
@@ -580,6 +592,7 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
+							c.material.color.set( params.invertColors ? DARK_MODEL : LIGHT_MODEL );
 
 						}
 
@@ -596,6 +609,7 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
+							c.material.color.set( params.invertColors ? DARK_MODEL : LIGHT_MODEL );
 
 						}
 
@@ -609,6 +623,8 @@
 
 				}
 
+				scene.background.set( params.invertColors ? DARK_BACKGROUND : LIGHT_BACKGROUND );
+				floor.material.color.set( params.invertColors ? 0x000000 : LIGHT_LINES );
 				floor.visible = params.lit;
 
 				render();
