@@ -13,7 +13,7 @@
 				font-family: Monospace;
 				font-size: 13px;
 				text-align: center;
-				color: #333;
+				color: #666;
 			}
 
 			a {
@@ -58,7 +58,10 @@
 
 			// globals
 			var params = {
-				invertColors: false,
+				colors: 'LIGHT',
+				backgroundColor: 0xd2a28,
+				lineColor: 0xffb400,
+
 				lit: false,
 				opacity: 0.85,
 				threshold: 40,
@@ -77,7 +80,7 @@
 
 			const DARK_BACKGROUND = 0x111111;
 			const DARK_MODEL = 0x111111;
-			const DARK_LINES = 0xABBFCB;
+			const DARK_LINES = 0xb0bec5;
 
 			init();
 			animate();
@@ -481,7 +484,10 @@
 				// dat gui
 				var gui = new dat.GUI();
 				gui.width = 300;
-				gui.add( params, 'invertColors' );
+				gui.add( params, 'colors', [ 'LIGHT', 'DARK', 'CUSTOM' ] );
+				gui.addColor( params, 'backgroundColor' );
+				gui.addColor( params, 'lineColor' );
+
 
 				const modelFolder = gui.addFolder( 'model' );
 
@@ -535,6 +541,27 @@
 
 				requestAnimationFrame( animate );
 
+				let linesColor = LIGHT_LINES;
+				let modelColor = LIGHT_MODEL;
+				let backgroundColor = LIGHT_BACKGROUND;
+				let shadowColor = LIGHT_LINES;
+
+				if ( params.colors === 'DARK' ) {
+
+					linesColor = DARK_LINES;
+					modelColor = DARK_MODEL;
+					backgroundColor = DARK_BACKGROUND;
+					shadowColor = 0x000000;
+
+				} else if ( params.colors === 'CUSTOM' ) {
+
+					linesColor = params.lineColor;
+					modelColor = params.backgroundColor;
+					backgroundColor = params.backgroundColor;
+					shadowColor = params.lineColor;
+
+				}
+
 				if ( conditionalModel ) {
 
 					conditionalModel.visible = params.displayConditionalEdges;
@@ -551,7 +578,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
-							c.material.uniforms.diffuse.value.set( params.invertColors ? DARK_LINES : LIGHT_LINES );
+							c.material.uniforms.diffuse.value.set( linesColor );
 
 						}
 
@@ -575,7 +602,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
-							c.material.color.set( params.invertColors ? DARK_LINES : LIGHT_LINES );
+							c.material.color.set( linesColor );
 
 						}
 
@@ -592,7 +619,7 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
-							c.material.color.set( params.invertColors ? DARK_MODEL : LIGHT_MODEL );
+							c.material.color.set( modelColor );
 
 						}
 
@@ -609,7 +636,7 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
-							c.material.color.set( params.invertColors ? DARK_MODEL : LIGHT_MODEL );
+							c.material.color.set( modelColor );
 
 						}
 
@@ -623,8 +650,8 @@
 
 				}
 
-				scene.background.set( params.invertColors ? DARK_BACKGROUND : LIGHT_BACKGROUND );
-				floor.material.color.set( params.invertColors ? 0x000000 : LIGHT_LINES );
+				scene.background.set( backgroundColor );
+				floor.material.color.set( shadowColor );
 				floor.visible = params.lit;
 
 				render();
