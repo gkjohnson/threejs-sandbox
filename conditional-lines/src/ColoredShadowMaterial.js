@@ -169,7 +169,7 @@ export class ColoredShadowMaterial extends ShaderMaterial {
 				}
 
 			}
-		});
+		} );
 
 		this.setValues( options );
 		this.lights = true;
