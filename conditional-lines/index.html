@@ -74,9 +74,14 @@
 				thickness: 1,
 				useThickLines: false,
 				model: 'HELMET',
+
+				randomize: () => randomizeColors(),
 			};
-			var camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
-			var models = {};
+			let camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel, gui;
+
+			const models = {};
+			const color = new THREE.Color();
+			const color2 = new THREE.Color();
 
 			const LIGHT_BACKGROUND = 0xeeeeee;
 			const LIGHT_MODEL = 0xffffff;
@@ -90,6 +95,29 @@
 
 			init();
 			animate();
+
+			function randomizeColors() {
+
+				const lineH = Math.random();
+				const lineS = Math.random() * 0.2 + 0.8;
+				const lineL = Math.random() * 0.2 + 0.4;
+
+				const lineColor = '#' + color.setHSL( lineH, lineS, lineL ).getHexString();
+				const backgroundColor = '#' + color.setHSL( ( lineH + 0.5 ) % 1.0, lineS * 0.5, 1.0 - lineL ).getHexString();
+
+				color.set( lineColor );
+				color2.set( backgroundColor );
+				const shadowColor = '#' + color.lerp( color2, 0.7 ).getHexString();
+
+				params.shadowColor = shadowColor;
+				params.lineColor = lineColor;
+				params.backgroundColor = backgroundColor;
+				params.modelColor = backgroundColor;
+				params.colors = 'CUSTOM';
+
+				initGui();
+
+			};
 
 			function updateModel() {
 
@@ -486,14 +514,27 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+				initGui();
+
+			}
+
+			function initGui() {
+
+				if ( gui ) {
+
+					gui.destroy();
+
+				}
+
 				// dat gui
-				var gui = new dat.GUI();
+				gui = new dat.GUI();
 				gui.width = 300;
 				gui.add( params, 'colors', [ 'LIGHT', 'DARK', 'CUSTOM' ] );
 				gui.addColor( params, 'backgroundColor' );
 				gui.addColor( params, 'modelColor' );
 				gui.addColor( params, 'lineColor' );
 				gui.addColor( params, 'shadowColor' );
+				gui.add( params, 'randomize' );
 
 				const modelFolder = gui.addFolder( 'model' );
 
