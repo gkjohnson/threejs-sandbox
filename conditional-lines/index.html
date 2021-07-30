@@ -55,12 +55,16 @@
 			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
 			import { ConditionalLineSegmentsGeometry } from './src/Lines2/ConditionalLineSegmentsGeometry.js';
 			import { ConditionalLineMaterial } from './src/Lines2/ConditionalLineMaterial.js';
+			import { ColoredShadowMaterial } from './src/ColoredShadowMaterial.js';
+
 
 			// globals
 			var params = {
 				colors: 'LIGHT',
-				backgroundColor: 0xd2a28,
-				lineColor: 0xffb400,
+				backgroundColor: '#0d2a28',
+				modelColor: '#0d2a28',
+				lineColor: '#ffb400',
+				shadowColor: '#44491f',
 
 				lit: false,
 				opacity: 0.85,
@@ -77,10 +81,12 @@
 			const LIGHT_BACKGROUND = 0xeeeeee;
 			const LIGHT_MODEL = 0xffffff;
 			const LIGHT_LINES = 0x455A64;
+			const LIGHT_SHADOW = 0xc4c9cb;
 
 			const DARK_BACKGROUND = 0x111111;
 			const DARK_MODEL = 0x111111;
 			const DARK_LINES = 0xb0bec5;
+			const DARK_SHADOW = 0x2c2e2f;
 
 			init();
 			animate();
@@ -200,7 +206,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshStandardMaterial( { color: LIGHT_MODEL, roughness: 1.0 } );
+						c.material = new ColoredShadowMaterial( { color: LIGHT_MODEL, shininess: 1.0 } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -322,7 +328,6 @@
 					parent.add( line );
 					parent.add( thickLines );
 
-
 				}
 
 			}
@@ -443,16 +448,16 @@
 				dirLight.position.set( 5, 10, 5 );
 				dirLight.castShadow = true;
 				dirLight.shadow.bias = -1e-10;
-				dirLight.shadow.mapSize.width = 1024;
-				dirLight.shadow.mapSize.height = 1024;
+				dirLight.shadow.mapSize.width = 2048;
+				dirLight.shadow.mapSize.height = 2048;
+
+				window.dirLight = dirLight;
 
 				const shadowCam = dirLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -1;
 				shadowCam.right = shadowCam.top = 1;
 
 				scene.add( dirLight );
-
-				scene.add( new THREE.AmbientLight( 0xc4c9cb, 1.0 ) );
 
 				const cylinder = new THREE.Group();
 				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 100 ) ) );
@@ -486,8 +491,9 @@
 				gui.width = 300;
 				gui.add( params, 'colors', [ 'LIGHT', 'DARK', 'CUSTOM' ] );
 				gui.addColor( params, 'backgroundColor' );
+				gui.addColor( params, 'modelColor' );
 				gui.addColor( params, 'lineColor' );
-
+				gui.addColor( params, 'shadowColor' );
 
 				const modelFolder = gui.addFolder( 'model' );
 
@@ -544,21 +550,21 @@
 				let linesColor = LIGHT_LINES;
 				let modelColor = LIGHT_MODEL;
 				let backgroundColor = LIGHT_BACKGROUND;
-				let shadowColor = LIGHT_LINES;
+				let shadowColor = LIGHT_SHADOW;
 
 				if ( params.colors === 'DARK' ) {
 
 					linesColor = DARK_LINES;
 					modelColor = DARK_MODEL;
 					backgroundColor = DARK_BACKGROUND;
-					shadowColor = 0x000000;
+					shadowColor = DARK_SHADOW;
 
 				} else if ( params.colors === 'CUSTOM' ) {
 
 					linesColor = params.lineColor;
-					modelColor = params.backgroundColor;
+					modelColor = params.modelColor;
 					backgroundColor = params.backgroundColor;
-					shadowColor = params.lineColor;
+					shadowColor = params.shadowColor;
 
 				}
 
@@ -637,6 +643,7 @@
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
 							c.material.color.set( modelColor );
+							c.material.shadowColor.set( shadowColor );
 
 						}
 
@@ -652,6 +659,7 @@
 
 				scene.background.set( backgroundColor );
 				floor.material.color.set( shadowColor );
+				floor.material.opacity = params.opacity;
 				floor.visible = params.lit;
 
 				render();
