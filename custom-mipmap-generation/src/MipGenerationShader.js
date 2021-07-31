@@ -1,4 +1,4 @@
-import { UniformsUtils, Vector2 } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
+import { UniformsUtils, Vector2 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import { sampleFunctions } from './mipSampleFunctions.js';
 
 export function clone( shader ) {

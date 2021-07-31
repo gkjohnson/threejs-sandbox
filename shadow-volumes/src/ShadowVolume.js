@@ -9,7 +9,7 @@ import {
 	FrontSide,
 	LessDepth,
 	BackSide,
-} from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 const v0 = new Vector3();
 const v1 = new Vector3();
@@ -65,7 +65,7 @@ function getDynamicShadowVolumeGeometry( geometry ) {
 
 	}
 	const normAttr = new BufferAttribute( new Float32Array( normArr ), 3, false );
-	shadowGeom.addAttribute( 'normal', normAttr );
+	shadowGeom.setAttribute( 'normal', normAttr );
 
 	// generate an edge map
 	const vertHash = {};
@@ -270,6 +270,8 @@ export class ShadowVolumeMesh extends Group {
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.INCR_WRAP );
 
+			stencilBuffer.setLocked( true );
+
 		}
 
 		function decrFunc() {
@@ -278,6 +280,8 @@ export class ShadowVolumeMesh extends Group {
 			stencilBuffer.setTest( true );
 			stencilBuffer.setFunc( gl.ALWAYS, 0, 0xff );
 			stencilBuffer.setOp( gl.KEEP, gl.KEEP, gl.DECR_WRAP );
+
+			stencilBuffer.setLocked( true );
 
 		}
 
@@ -288,16 +292,19 @@ export class ShadowVolumeMesh extends Group {
 			stencilBuffer.setFunc( gl.NOTEQUAL, 0, 0xff );
 			stencilBuffer.setOp( gl.REPLACE, gl.REPLACE, gl.REPLACE );
 
+			stencilBuffer.setLocked( true );
+
 		}
 
 		function disableFunc() {
 
+			stencilBuffer.setLocked( false );
 			stencilBuffer.setTest( false );
 
 		}
 
 		const stencilBuffer = renderer.state.buffers.stencil;
-		const gl = renderer.context;
+		const gl = renderer.getContext();
 		const shadowVolumeGeometry = getDynamicShadowVolumeGeometry( geometry );
 
 		// Materials

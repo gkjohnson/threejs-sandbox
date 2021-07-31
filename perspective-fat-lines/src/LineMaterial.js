@@ -16,7 +16,7 @@ import {
 	UniformsLib,
 	UniformsUtils,
 	Vector2
-} from '//cdn.skypack.dev/three@0.127.0/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 UniformsLib.line = {
 
