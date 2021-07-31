@@ -8,6 +8,10 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html).
 
+## TODO
+- Move diffusion logic to the transmission shader
+- Use mip maps for blur
+
 ## Possible Improvements
 
 - Make it physically based
