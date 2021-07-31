@@ -277,6 +277,7 @@ const shader = {
 class ConditionalLineMaterial extends ShaderMaterial {
 
 	constructor( parameters ) {
+
 		super( {
 
 			type: 'ConditionalLineMaterial',
