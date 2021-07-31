@@ -1,4 +1,4 @@
-import { MeshPhysicalMaterial, LessEqualDepth } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { MeshPhysicalMaterial, LessEqualDepth, AdditiveBlending } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
 
 export class FinalTranslucentReplacement extends ShaderReplacement {
@@ -11,10 +11,11 @@ export class FinalTranslucentReplacement extends ShaderReplacement {
 
 	updateUniforms( object, material, target ) {
 
-		target.color.copy( material.color );
+		// TODO: we shouldn't handle diffusion here, just surface
+		target.color.copy( material.color ).multiplyScalar( material.diffusion );
 		target.depthWrite = false;
 		target.transparent = true;
-		target.transparency = 1.0 - ( material.diffusion || 0.0 );
+		target.blending = AdditiveBlending;
 		target.premultipliedAlpha = true;
 		target.roughness = material.roughness;
 		target.metalness = material.metalness;
