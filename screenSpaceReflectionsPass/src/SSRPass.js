@@ -302,7 +302,6 @@ export class SSRPass extends Pass {
 			this._copyQuad.material.uniforms.tDiffuse.value = readBuffer.texture;
 			this._colorLod.texture.generateMipmaps = true;
 			this._colorLod.setSize( pow2ColorSize, pow2ColorSize );
-			console.log( pow2ColorSize );
 			renderer.setRenderTarget( this._colorLod );
 			this._copyQuad.render( renderer );
 

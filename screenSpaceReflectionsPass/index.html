@@ -261,7 +261,8 @@
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x0 );
 
-				renderer = new THREE.WebGLRenderer();
+				// TODO: the MIP_PYRAMID_GLOSSY approach only seems to work on WebGL1?
+				renderer = new THREE.WebGL1Renderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
