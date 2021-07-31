@@ -9,6 +9,7 @@ import {
 	DepthFormat,
 	AdditiveBlending,
 	NearestFilter,
+	HalfFloatType,
 } from '//unpkg.com/three@0.116.1/build/three.module.js';
 import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';

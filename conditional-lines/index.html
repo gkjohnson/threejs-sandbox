@@ -103,7 +103,11 @@
 				const lineL = Math.random() * 0.2 + 0.4;
 
 				const lineColor = '#' + color.setHSL( lineH, lineS, lineL ).getHexString();
-				const backgroundColor = '#' + color.setHSL( ( lineH + 0.5 ) % 1.0, lineS * 0.5, 1.0 - lineL ).getHexString();
+				const backgroundColor = '#' + color.setHSL(
+					( lineH + 0.35 + 0.3 * Math.random() ) % 1.0,
+					lineS * ( 0.25 + Math.random() * 0.75 ),
+					1.0 - lineL,
+				).getHexString();
 
 				color.set( lineColor );
 				color2.set( backgroundColor );
