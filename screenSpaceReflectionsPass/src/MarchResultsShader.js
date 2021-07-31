@@ -1,4 +1,4 @@
-import { Matrix4, Vector2 } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
+import { Matrix4, Vector2 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import { sampleFunctions } from '../../custom-mipmap-generation/src/mipSampleFunctions.js';
 
 export const MarchResultsShader = {

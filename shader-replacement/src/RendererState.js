@@ -1,4 +1,4 @@
-import { Color, LinearEncoding } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
+import { Color, LinearEncoding } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 export class RendererState {
 
@@ -26,7 +26,7 @@ export class RendererState {
 		if ( renderer ) {
 
 			this.clearAlpha = renderer.getClearAlpha();
-			this.clearColor = renderer.getClearColor();
+			this.clearColor = renderer.getClearColor( this.clearColor );
 			this.renderTarget = renderer.getRenderTarget();
 
 			this.shadowsEnabled = renderer.shadowMap.enabled;

@@ -13,9 +13,9 @@ import {
 	LinearFilter,
 	LinearMipMapLinearFilter,
 	MathUtils,
-} from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
-import { Pass } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/postprocessing/Pass.js';
-import { CopyShader } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Pass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/CopyShader.js';
 import { ColorResolveShader } from './ColorResolveShader.js';
 import { MarchResultsShader } from './MarchResultsShader.js';
 import {
@@ -37,19 +37,19 @@ import { FullScreenQuad } from '../../custom-mipmap-generation/src/FullScreenQua
 // https://github.com/kode80/kode80SSR
 
 const _debugPackedMaterial = new ShaderMaterial( PackedNormalDisplayShader );
-const _debugPackedQuad = new Pass.FullScreenQuad( _debugPackedMaterial );
+const _debugPackedQuad = new FullScreenQuad( _debugPackedMaterial );
 
 const _debugDepthMaterial = new ShaderMaterial( LinearDepthDisplayShader );
-const _debugDepthQuad = new Pass.FullScreenQuad( _debugDepthMaterial );
+const _debugDepthQuad = new FullScreenQuad( _debugDepthMaterial );
 
 const _debugDepthDeltaMaterial = new ShaderMaterial( DepthDeltaShader );
-const _debugDepthDeltaQuad = new Pass.FullScreenQuad( _debugDepthDeltaMaterial );
+const _debugDepthDeltaQuad = new FullScreenQuad( _debugDepthDeltaMaterial );
 
 const _intersectUvMaterial = new ShaderMaterial( IntersectUvShader );
-const _intersectUvQuad = new Pass.FullScreenQuad( _intersectUvMaterial );
+const _intersectUvQuad = new FullScreenQuad( _intersectUvMaterial );
 
 const _intersectDistMaterial = new ShaderMaterial( IntersectDistanceShader );
-const _intersectDistQuad = new Pass.FullScreenQuad( _intersectDistMaterial );
+const _intersectDistQuad = new FullScreenQuad( _intersectDistMaterial );
 
 const _rendererState = new RendererState();
 const _blackColor = new Color( 0 );
@@ -179,10 +179,10 @@ export class SSRPass extends Pass {
 
 		// Full Screen Quads
 		const marchMaterial = new ShaderMaterial( MarchResultsShader );
-		this._marchQuad = new Pass.FullScreenQuad( marchMaterial );
+		this._marchQuad = new FullScreenQuad( marchMaterial );
 
 		const colorResolveMaterial = new ShaderMaterial( ColorResolveShader );
-		this._colorResolveQuad = new Pass.FullScreenQuad( colorResolveMaterial );
+		this._colorResolveQuad = new FullScreenQuad( colorResolveMaterial );
 
 		this._copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
@@ -368,7 +368,7 @@ export class SSRPass extends Pass {
 		marchUniforms.backfaceDepthBuffer.value = backfaceDepthBuffer.texture;
 		marchUniforms.colorBuffer.value = readBuffer.texture;
 		marchUniforms.packedBuffer.value = packedBuffer.texture;
-		marchUniforms.invProjectionMatrix.value.getInverse( camera.projectionMatrix );
+		marchUniforms.invProjectionMatrix.value.copy( camera.projectionMatrix ).invert();
 		marchUniforms.projMatrix.value.copy( camera.projectionMatrix );
 		marchUniforms.resolution.value.set( marchResultsBuffer.width, marchResultsBuffer.height );
 		marchUniforms.jitter.value = this.jitter;

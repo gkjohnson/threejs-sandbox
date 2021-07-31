@@ -10,9 +10,9 @@ import {
 	AdditiveBlending,
 	NearestFilter,
 	HalfFloatType,
-} from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
-import { Pass } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/postprocessing/Pass.js';
-import { CopyShader } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/CopyShader.js';
 import { TranslucentShader } from './TranslucentShader.js';
 import { LayerShader } from './LayerShader.js';
 import { CompositeShader } from './CompositeShader.js';
@@ -23,7 +23,7 @@ import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { FinalTranslucentReplacement } from './FinalTranslucentReplacement.js';
 import { DepthDebugShader } from './DepthDebugShader.js';
 
-const depthQuad = new Pass.FullScreenQuad( new ShaderMaterial( DepthDebugShader ) );
+const depthQuad = new FullScreenQuad( new ShaderMaterial( DepthDebugShader ) );
 
 const rendererState = new RendererState();
 const tempScene = new Scene();
@@ -37,8 +37,8 @@ export class TranslucentObjectPass extends Pass {
 		this.scene = scene;
 		this.camera = camera;
 		this.layers = 1;
-		this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
-		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+		this.copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
+		this.compositeQuad = new FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 		this.translucentReplacement = new ShaderReplacement( TranslucentShader );
 		this.layerReplacement = new ShaderReplacement( LayerShader );
 		this.transmissionReplacement = new ShaderReplacement( TransmissionShader );
