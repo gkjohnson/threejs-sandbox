@@ -1,4 +1,4 @@
-import { ShaderMaterial, UniformsUtils, ShaderLib, Color } from '//unpkg.com/three@0.116.1/build/three.module.js?module';
+import { ShaderMaterial, UniformsUtils, ShaderLib, Color } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js?module';
 
 export class ColoredShadowMaterial extends ShaderMaterial {
 

@@ -3,7 +3,7 @@ import {
 	UniformsLib,
 	UniformsUtils,
 	Vector2
-} from '//unpkg.com/three@0.116.1/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 /**
  * parameters = {
  *  color: <hex>,
@@ -274,159 +274,159 @@ const shader = {
 		`
 };
 
-var ConditionalLineMaterial = function ( parameters ) {
+class ConditionalLineMaterial extends ShaderMaterial {
 
-	ShaderMaterial.call( this, {
+	constructor( parameters ) {
+		super( {
 
-		type: 'ConditionalLineMaterial',
+			type: 'ConditionalLineMaterial',
 
-		uniforms: UniformsUtils.clone( shader.uniforms ),
+			uniforms: UniformsUtils.clone( shader.uniforms ),
 
-		vertexShader: shader.vertexShader,
-		fragmentShader: shader.fragmentShader,
+			vertexShader: shader.vertexShader,
+			fragmentShader: shader.fragmentShader,
 
-		clipping: true // required for clipping support
+			clipping: true // required for clipping support
 
-	} );
+		} );
 
-	this.dashed = false;
+		this.dashed = false;
 
-	Object.defineProperties( this, {
+		Object.defineProperties( this, {
 
-		color: {
+			color: {
 
-			enumerable: true,
+				enumerable: true,
 
-			get: function () {
+				get: function () {
 
-				return this.uniforms.diffuse.value;
+					return this.uniforms.diffuse.value;
 
-			},
+				},
 
-			set: function ( value ) {
+				set: function ( value ) {
 
-				this.uniforms.diffuse.value = value;
+					this.uniforms.diffuse.value = value;
 
-			}
-
-		},
-
-		linewidth: {
-
-			enumerable: true,
-
-			get: function () {
-
-				return this.uniforms.linewidth.value;
+				}
 
 			},
 
-			set: function ( value ) {
+			linewidth: {
 
-				this.uniforms.linewidth.value = value;
+				enumerable: true,
 
-			}
+				get: function () {
 
-		},
+					return this.uniforms.linewidth.value;
 
-		dashScale: {
+				},
 
-			enumerable: true,
+				set: function ( value ) {
 
-			get: function () {
+					this.uniforms.linewidth.value = value;
 
-				return this.uniforms.dashScale.value;
-
-			},
-
-			set: function ( value ) {
-
-				this.uniforms.dashScale.value = value;
-
-			}
-
-		},
-
-		dashSize: {
-
-			enumerable: true,
-
-			get: function () {
-
-				return this.uniforms.dashSize.value;
+				}
 
 			},
 
-			set: function ( value ) {
+			dashScale: {
 
-				this.uniforms.dashSize.value = value;
+				enumerable: true,
 
-			}
+				get: function () {
 
-		},
+					return this.uniforms.dashScale.value;
 
-		gapSize: {
+				},
 
-			enumerable: true,
+				set: function ( value ) {
 
-			get: function () {
+					this.uniforms.dashScale.value = value;
 
-				return this.uniforms.gapSize.value;
-
-			},
-
-			set: function ( value ) {
-
-				this.uniforms.gapSize.value = value;
-
-			}
-
-		},
-
-		opacity: {
-
-			enumerable: true,
-
-			get: function () {
-
-				return this.uniforms.opacity.value;
+				}
 
 			},
 
-			set: function ( value ) {
+			dashSize: {
 
-				this.uniforms.opacity.value = value;
+				enumerable: true,
 
-			}
+				get: function () {
 
-		},
+					return this.uniforms.dashSize.value;
 
-		resolution: {
+				},
 
-			enumerable: true,
+				set: function ( value ) {
 
-			get: function () {
+					this.uniforms.dashSize.value = value;
 
-				return this.uniforms.resolution.value;
+				}
 
 			},
 
-			set: function ( value ) {
+			gapSize: {
 
-				this.uniforms.resolution.value.copy( value );
+				enumerable: true,
+
+				get: function () {
+
+					return this.uniforms.gapSize.value;
+
+				},
+
+				set: function ( value ) {
+
+					this.uniforms.gapSize.value = value;
+
+				}
+
+			},
+
+			opacity: {
+
+				enumerable: true,
+
+				get: function () {
+
+					return this.uniforms.opacity.value;
+
+				},
+
+				set: function ( value ) {
+
+					this.uniforms.opacity.value = value;
+
+				}
+
+			},
+
+			resolution: {
+
+				enumerable: true,
+
+				get: function () {
+
+					return this.uniforms.resolution.value;
+
+				},
+
+				set: function ( value ) {
+
+					this.uniforms.resolution.value.copy( value );
+
+				}
 
 			}
 
-		}
+		} );
 
-	} );
+		this.setValues( parameters );
 
-	this.setValues( parameters );
+	}
 
-};
-
-ConditionalLineMaterial.prototype = Object.create( ShaderMaterial.prototype );
-ConditionalLineMaterial.prototype.constructor = ConditionalLineMaterial;
+}
 
 ConditionalLineMaterial.prototype.isConditionalLineMaterial = true;
 
