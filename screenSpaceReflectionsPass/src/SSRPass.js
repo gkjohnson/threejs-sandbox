@@ -154,7 +154,7 @@ export class SSRPass extends Pass {
 		this._colorLod = new WebGLRenderTarget( 1, 1, {
 			format: RGBFormat,
 			minFilter: LinearMipMapLinearFilter,
-			magFilter: NearestFilter,
+			magFilter: LinearFilter,
 			generateMipmaps: true,
 		} );
 
@@ -264,7 +264,7 @@ export class SSRPass extends Pass {
 			renderer.clear();
 
 			_debugPackedMaterial.uniforms.displayRoughness.value = 0.0;
-			_debugPackedMaterial.uniforms.texture.value = packedBuffer.texture;
+			_debugPackedMaterial.uniforms.tex.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -278,7 +278,7 @@ export class SSRPass extends Pass {
 			renderer.clear();
 
 			_debugPackedMaterial.uniforms.displayRoughness.value = 1.0;
-			_debugPackedMaterial.uniforms.texture.value = packedBuffer.texture;
+			_debugPackedMaterial.uniforms.tex.value = packedBuffer.texture;
 			_debugPackedQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -302,6 +302,7 @@ export class SSRPass extends Pass {
 			this._copyQuad.material.uniforms.tDiffuse.value = readBuffer.texture;
 			this._colorLod.texture.generateMipmaps = true;
 			this._colorLod.setSize( pow2ColorSize, pow2ColorSize );
+			console.log( pow2ColorSize );
 			renderer.setRenderTarget( this._colorLod );
 			this._copyQuad.render( renderer );
 
@@ -313,7 +314,7 @@ export class SSRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_debugDepthMaterial.uniforms.texture.value = this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY ? this._depthBufferLod : depthBuffer.texture;
+			_debugDepthMaterial.uniforms.tex.value = this.glossinessMode === SSRPass.MIP_PYRAMID_GLOSSY ? this._depthBufferLod : depthBuffer.texture;
 			_debugDepthQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -335,7 +336,7 @@ export class SSRPass extends Pass {
 				renderer.setRenderTarget( finalBuffer );
 				renderer.clear();
 
-				_debugDepthMaterial.uniforms.texture.value = backfaceDepthBuffer.texture;
+				_debugDepthMaterial.uniforms.tex.value = backfaceDepthBuffer.texture;
 				_debugDepthQuad.render( renderer );
 				replaceOriginalValues();
 				return;
@@ -452,7 +453,7 @@ export class SSRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_intersectUvQuad.material.uniforms.texture.value = marchResultsBuffer.texture;
+			_intersectUvQuad.material.uniforms.tex.value = marchResultsBuffer.texture;
 			_intersectUvQuad.render( renderer );
 			replaceOriginalValues();
 			return;
@@ -465,7 +466,7 @@ export class SSRPass extends Pass {
 			renderer.setRenderTarget( finalBuffer );
 			renderer.clear();
 
-			_intersectDistQuad.material.uniforms.texture.value = marchResultsBuffer.texture;
+			_intersectDistQuad.material.uniforms.tex.value = marchResultsBuffer.texture;
 			_intersectDistQuad.render( renderer );
 			replaceOriginalValues();
 			return;

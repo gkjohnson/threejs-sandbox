@@ -2,7 +2,7 @@ export const PackedNormalDisplayShader = {
 
 	uniforms: {
 
-		texture: { value: null },
+		tex: { value: null },
 		displayRoughness: { value: 0 },
 
 	},
@@ -22,11 +22,11 @@ export const PackedNormalDisplayShader = {
 
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
-		uniform sampler2D texture;
+		uniform sampler2D tex;
 		uniform float displayRoughness;
 		void main() {
 
-			vec4 texVal = texture2D( texture, vUv );
+			vec4 texVal = texture2D( tex, vUv );
 			float roughness = texVal.a;
 			vec3 packedNormal = texVal.xyz;
 			vec3 unpackedNormal = ( packedNormal - 0.5 ) * 2.0;
@@ -45,7 +45,7 @@ export const LinearDepthDisplayShader = {
 
 	uniforms: {
 
-		texture: { value: null },
+		tex: { value: null },
 
 	},
 
@@ -64,11 +64,11 @@ export const LinearDepthDisplayShader = {
 
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
-		uniform sampler2D texture;
+		uniform sampler2D tex;
 		uniform float divide;
 		void main() {
 
-			vec4 texVal = texture2D( texture, vUv );
+			vec4 texVal = texture2D( tex, vUv );
 			float depthVal = mod( - texVal.r, 1.0 );
 			gl_FragColor = vec4( depthVal );
 
@@ -81,8 +81,8 @@ export const DepthDeltaShader = {
 
 	uniforms: {
 
-		frontSideTexture: { value: null },
-		backSideTexture: { value: null },
+		frontSidetex: { value: null },
+		backSidetex: { value: null },
 		divide: { value: 1 }
 
 	},
@@ -137,7 +137,7 @@ export const IntersectUvShader = {
 
 	uniforms: {
 
-		texture: { value: null }
+		tex: { value: null }
 
 	},
 
@@ -156,10 +156,10 @@ export const IntersectUvShader = {
 
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
-		uniform sampler2D texture;
+		uniform sampler2D tex;
 		void main() {
 
-			vec4 texVal = texture2D( texture, vUv );
+			vec4 texVal = texture2D( tex, vUv );
 			gl_FragColor = vec4( texVal.xy, 0.0, 1.0 );
 
 		}
@@ -171,7 +171,7 @@ export const IntersectDistanceShader = {
 
 	uniforms: {
 
-		texture: { value: null }
+		tex: { value: null }
 
 	},
 
@@ -190,10 +190,10 @@ export const IntersectDistanceShader = {
 
 	fragmentShader: /* glsl */`
 		varying vec2 vUv;
-		uniform sampler2D texture;
+		uniform sampler2D tex;
 		void main() {
 
-			vec4 texVal = texture2D( texture, vUv );
+			vec4 texVal = texture2D( tex, vUv );
 			gl_FragColor = vec4( texVal.z, texVal.z, texVal.z, 1.0 );
 
 		}
