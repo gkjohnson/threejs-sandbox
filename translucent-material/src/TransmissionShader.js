@@ -13,7 +13,7 @@ export const TransmissionShader = {
 		uniform sampler2D backgroundTexture;
 		uniform sampler2D normalTexture;
 		uniform sampler2D absorbedTexture;
-		uniform float diffusionFactor;
+		uniform float diffusion;
 		uniform float dispersionFactor;
 		uniform float iorRatio;
 		uniform vec2 resolution;
@@ -109,7 +109,7 @@ export const TransmissionShader = {
 
 
 
-			gl_FragColor = vec4( color * transmitted, 1.0 );
+			gl_FragColor = vec4( ( 1.0 - diffusion ) * color * transmitted, 1.0 );
 
 			//gl_FragColor = vec4( thickness, 0.0, 0.0, 1.0 );
 
@@ -122,7 +122,7 @@ export const TransmissionShader = {
 		normalTexture: { value: null },
 		absorbedTexture: { value: null },
 		resolution: { value: new Vector2() },
-		diffusionFactor: { value: 1.0 },
+		diffusion: { value: 1.0 },
 		dispersionFactor: { value: 0 },
 		iorRatio: { value: 1 },
 

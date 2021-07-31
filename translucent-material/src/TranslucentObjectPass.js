@@ -267,15 +267,16 @@ export class TranslucentObjectPass extends Pass {
 				material.uniforms.backgroundTexture.value = readBuffer.texture;
 				material.uniforms.normalTexture.value = emptyBufferFront.texture;
 				material.uniforms.absorbedTexture.value = colorBuffer.texture;
-				if ( typeof material.uniforms.diffusionFactor.value !== 'number' ) {
 
-					material.uniforms.diffusionFactor.value = 0;
+				if ( typeof material.uniforms.diffusion.value !== 'number' ) {
+
+					material.uniforms.diffusion.value = 0;
 
 				}
 
 				if ( typeof material.uniforms.dispersionFactor.value !== 'number' ) {
 
-					material.uniforms.diffusionFactor.value = 0;
+					material.uniforms.dispersionFactor.value = 0;
 
 				}
 
