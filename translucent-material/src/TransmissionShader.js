@@ -38,8 +38,10 @@ export const TransmissionShader = {
 			vec2 uv = gl_FragCoord.xy / resolution;
 			vec3 normal = normalize( UnpackNormal( texture2D( normalTexture, uv ) ) );
 
-			vec3 absorbedColor = texture2D( absorbedTexture, uv ).rgb;
-			vec3 transmitted = vec3( 1.0 ) - absorbedColor;
+			vec4 sampled = texture2D( absorbedTexture, uv );
+			vec3 absorbedColor = sampled.rgb;
+			float thickness = sampled.a;
+			vec3 transmitted = max( vec3( 1.0 ) - absorbedColor, 0.0 );
 
 			// sample based on normal ior and disperse the color bands
 			// see https://github.com/gkjohnson/threejs-sandbox/blob/master/lens-effects/src/LensDistortionShader.js
@@ -55,6 +57,7 @@ export const TransmissionShader = {
 			vec3 y_refracted, c_refracted, v_refracted;
 			vec4 y_sample, c_sample, v_sample;
 
+			float bandMultiplier = abs( 1.0 - iorRatio );
 			for ( int i = 0; i < CHROMA_SAMPLES; i ++ ) {
 
 				index = float( i );
@@ -64,9 +67,9 @@ export const TransmissionShader = {
 				// Paper describing functions for creating yellow, cyan, and violet bands and reforming
 				// them into RGB:
 				// https://web.archive.org/web/20061108181225/http://home.iitk.ac.in/~shankars/reports/dispersionraytrace.pdf
-				r_ior = 1.0 + bandOffset * ( 0.0 + offsetValue );
-				g_ior = 1.0 + bandOffset * ( 2.0 + offsetValue );
-				b_ior = 1.0 + bandOffset * ( 4.0 + offsetValue );
+				r_ior = 1.0 + bandMultiplier * bandOffset * ( 0.0 + offsetValue );
+				g_ior = 1.0 + bandMultiplier * bandOffset * ( 2.0 + offsetValue );
+				b_ior = 1.0 + bandMultiplier * bandOffset * ( 4.0 + offsetValue );
 
 				r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / r_ior );
 				g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / g_ior );
@@ -76,9 +79,9 @@ export const TransmissionShader = {
 				g_sample = texture2D( backgroundTexture, uv + g_refracted.xy );
 				b_sample = texture2D( backgroundTexture, uv + b_refracted.xy );
 
-				y_ior = 1.0 + bandOffset * ( 1.0 + offsetValue );
-				c_ior = 1.0 + bandOffset * ( 3.0 + offsetValue );
-				v_ior = 1.0 + bandOffset * ( 5.0 + offsetValue );
+				y_ior = 1.0 + bandMultiplier * bandOffset * ( 1.0 + offsetValue );
+				c_ior = 1.0 + bandMultiplier * bandOffset * ( 3.0 + offsetValue );
+				v_ior = 1.0 + bandMultiplier * bandOffset * ( 5.0 + offsetValue );
 
 				y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / y_ior );
 				c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / c_ior );
@@ -107,6 +110,8 @@ export const TransmissionShader = {
 
 
 			gl_FragColor = vec4( color * transmitted, 1.0 );
+
+			//gl_FragColor = vec4( thickness, 0.0, 0.0, 1.0 );
 
 		}
 

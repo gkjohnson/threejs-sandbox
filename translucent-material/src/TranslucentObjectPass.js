@@ -49,7 +49,7 @@ export class TranslucentObjectPass extends Pass {
 			minFilter: NearestFilter,
 			magFilter: NearestFilter,
 		};
-		const colorBuffer = new WebGLRenderTarget( 1, 1, options );
+		const colorBuffer = new WebGLRenderTarget( 1, 1, { type: HalfFloatType, options } );
 
 		const emptyBufferFront = new WebGLRenderTarget( 1, 1, options );
 		emptyBufferFront.depthTexture = new DepthTexture( DepthFormat );
@@ -104,6 +104,9 @@ export class TranslucentObjectPass extends Pass {
 		layerReplacement.replace( objects, true, true );
 		rendererState.copy( renderer );
 		renderer.setClearColor( 0 );
+
+		renderer.setRenderTarget( colorBuffer );
+		renderer.clearColor();
 
 		tempScene.children = [ ...objects ];
 		tempScene.autoUpdate = false;
@@ -179,6 +182,7 @@ export class TranslucentObjectPass extends Pass {
 			renderer.render( tempScene, camera );
 
 			// Render translucent layer
+			// TODO: use render quad here and accumulate thickness in alpha
 			translucentReplacement.replace( objects, true, false );
 			tempScene.traverse( c => {
 
@@ -196,6 +200,7 @@ export class TranslucentObjectPass extends Pass {
 					material.side = FrontSide;
 					material.depthFunc = LessEqualDepth;
 					material.blending = AdditiveBlending;
+					material.premultipliedAlpha = true;
 
 					if ( typeof material.uniforms.absorptionFactor.value !== 'number' ) {
 
@@ -246,7 +251,7 @@ export class TranslucentObjectPass extends Pass {
 		renderer.clearDepth();
 		renderer.render( tempScene, camera );
 
-		emptyBufferFront.texture.generateMipMaps = true;
+		// render separation
 		transmissionReplacement.replace( tempScene, true, false );
 		tempScene.traverse( c => {
 
