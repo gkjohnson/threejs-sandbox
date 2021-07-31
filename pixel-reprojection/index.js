@@ -25,7 +25,7 @@ import { FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/pos
 import { RoughnessMipmapper } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/RoughnessMipmapper.js';
 import { GLTFLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/GLTFLoader.js';
 import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
-import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
 
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
 import { ReprojectShader } from './src/ReprojectShader.js';
