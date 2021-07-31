@@ -1,4 +1,4 @@
-import { ShaderChunk, ShaderLib, UniformsUtils, Vector2 } from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
+import { ShaderChunk, ShaderLib, UniformsUtils, Vector2 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 export const WorldUnitsPointsShader = {
 	vertexShader: `

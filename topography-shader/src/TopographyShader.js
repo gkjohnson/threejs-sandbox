@@ -1,4 +1,4 @@
-import { UniformsUtils, Color } from '//cdn.skypack.dev/three@0.112.0/build/three.module.js';
+import { UniformsUtils, Color } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 
 function cloneShader( shader, uniforms, defines ) {

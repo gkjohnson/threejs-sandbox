@@ -6,10 +6,10 @@ import {
 	MeshBasicMaterial,
 	Triangle,
 	Vector3
-} from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import {
 	MeshSurfaceSampler
-} from '//cdn.skypack.dev/three@0.116.1/examples/jsm/math/MeshSurfaceSampler.js';
+} from '//cdn.skypack.dev/three@0.130.1/examples/jsm/math/MeshSurfaceSampler.js';
 
 const _vector = new Vector3();
 const _tri = new Triangle();
