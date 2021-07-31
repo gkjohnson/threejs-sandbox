@@ -7,10 +7,10 @@ import {
 	WebGLRenderTarget,
 	LinearFilter,
 	RGBAFormat
-} from '//unpkg.com/three@0.116.1/build/three.module.js';
-import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
+} from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
+import { LineMaterial } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/lines/LineMaterial.js';
 import { ShaderReplacement } from '../../shader-replacement/src/ShaderReplacement.js';
-import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
+import { Pass } from '//cdn.skypack.dev/three@0.116.1/examples/jsm/postprocessing/Pass.js';
 
 const compositeShader = {
 

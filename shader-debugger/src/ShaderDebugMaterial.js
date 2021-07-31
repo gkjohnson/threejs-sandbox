@@ -1,4 +1,4 @@
-import { ShaderMaterial } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { ShaderMaterial } from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
 import { parseVariables, getMainExtents, splice, getScopeDepth } from './utils.js';
 
 export class ShaderDebugMaterial extends ShaderMaterial {

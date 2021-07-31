@@ -19,12 +19,12 @@ import {
 	MeshBasicMaterial,
 	ShaderMaterial,
 	UnsignedIntType,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
-import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js';
-import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
-import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
+} from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
+import { OrbitControls } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/controls/OrbitControls.js';
+import { Pass } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+import { RoughnessMipmapper } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js';
+import { GLTFLoader } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
+import Stats from '//cdn.skypack.dev/three@0.114.0/examples/jsm/libs/stats.module.js';
 import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
 
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';

@@ -1,4 +1,4 @@
-import { UniformsUtils, Vector3 } from '//unpkg.com/three@0.106.0/build/three.module.js';
+import { UniformsUtils, Vector3 } from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
 
 function cloneShader( shader, uniforms, defines ) {
 

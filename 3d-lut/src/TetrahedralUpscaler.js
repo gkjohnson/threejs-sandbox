@@ -1,4 +1,4 @@
-import { Triangle, Plane, Vector3, Color, DataTexture3D } from '//unpkg.com/three@0.120.1/build/three.module.js';
+import { Triangle, Plane, Vector3, Color, DataTexture3D } from '//cdn.skypack.dev/three@0.120.1/build/three.module.js';
 
 // TODO: improve performance
 const _triangle = new Triangle();

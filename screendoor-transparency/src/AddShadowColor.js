@@ -1,4 +1,4 @@
-import { ShaderChunk } from '//unpkg.com/three@0.106.0/build/three.module.js';
+import { ShaderChunk } from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
 
 export function initShadowColor() {
 

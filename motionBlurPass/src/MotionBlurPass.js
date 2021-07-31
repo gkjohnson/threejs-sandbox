@@ -16,8 +16,8 @@ import {
 	FloatType,
 	ShaderMaterial,
 	RepeatWrapping,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+} from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
+import { Pass } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';

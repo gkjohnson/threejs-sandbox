@@ -9,7 +9,7 @@ import {
 	FrontSide,
 	LessDepth,
 	BackSide,
-} from '//unpkg.com/three@0.106.0/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
 
 const v0 = new Vector3();
 const v1 = new Vector3();

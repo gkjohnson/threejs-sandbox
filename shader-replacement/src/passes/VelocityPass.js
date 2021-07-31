@@ -1,5 +1,5 @@
 import { ShaderReplacement } from '../ShaderReplacement.js';
-import { Matrix4 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { Matrix4 } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
 import { VelocityShader } from './VelocityShader.js';
 export class VelocityPass extends ShaderReplacement {
 

@@ -1,4 +1,4 @@
-import { ShaderLib, UniformsUtils, Vector2, Color } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderLib, UniformsUtils, Vector2, Color } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
 
 export const TransmissionShader = {
 	vertexShader: `

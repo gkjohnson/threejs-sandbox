@@ -7,7 +7,7 @@ import {
 	UniformsLib,
 	UniformsUtils,
 	Vector2
-} from '//unpkg.com/three@0.130.0/build/three.module.js?module';
+} from '//cdn.skypack.dev/three@0.130.0/build/three.module.js?module';
 
 /**
  * parameters = {

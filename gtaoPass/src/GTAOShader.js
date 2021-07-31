@@ -1,4 +1,4 @@
-import { Vector2, Vector4 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Vector2, Vector4 } from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
 
 // https://github.com/asylum2010/Asylum_Tutorials/blob/master/ShaderTutors/54_GTAO/
 export const GTAOShader = {

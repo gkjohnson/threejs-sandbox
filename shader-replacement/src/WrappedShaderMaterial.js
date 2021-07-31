@@ -1,4 +1,4 @@
-import { ShaderMaterial } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderMaterial } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
 
 export class WrappedShaderMaterial extends ShaderMaterial {
 

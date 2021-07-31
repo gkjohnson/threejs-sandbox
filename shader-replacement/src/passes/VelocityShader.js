@@ -1,4 +1,4 @@
-import { ShaderChunk, Matrix4 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderChunk, Matrix4 } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
 
 // Modified ShaderChunk.skinning_pars_vertex to handle
 // a second set of bone information from the previou frame

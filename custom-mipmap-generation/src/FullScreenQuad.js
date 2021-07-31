@@ -1,4 +1,4 @@
-import { OrthographicCamera, PlaneBufferGeometry, Mesh } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { OrthographicCamera, PlaneBufferGeometry, Mesh } from '//cdn.skypack.dev/three@0.116.1/build/three.module.js';
 
 export class FullScreenQuad {
 
