@@ -11,8 +11,8 @@ export class FinalTranslucentReplacement extends ShaderReplacement {
 
 	updateUniforms( object, material, target ) {
 
-		// TODO: we shouldn't handle diffusion here, just surface
-		target.color.copy( material.color ).multiplyScalar( material.diffusion );
+		// TODO: we shouldn't handle diffuseFactor here, just surface
+		target.color.copy( material.color ).multiplyScalar( material.diffuseFactor );
 		target.depthWrite = false;
 		target.transparent = true;
 		target.blending = AdditiveBlending;

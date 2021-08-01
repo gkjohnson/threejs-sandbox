@@ -268,9 +268,9 @@ export class TranslucentObjectPass extends Pass {
 				material.uniforms.normalTexture.value = emptyBufferFront.texture;
 				material.uniforms.absorbedTexture.value = colorBuffer.texture;
 
-				if ( typeof material.uniforms.diffusion.value !== 'number' ) {
+				if ( typeof material.uniforms.diffuseFactor.value !== 'number' ) {
 
-					material.uniforms.diffusion.value = 0;
+					material.uniforms.diffuseFactor.value = 0;
 
 				}
 
@@ -296,7 +296,7 @@ export class TranslucentObjectPass extends Pass {
 		renderer.render( tempScene, camera );
 
 		// render the surface sheen
-		// TODO: as diffusion goes up, decrease transparency
+		// TODO: as diffuseFactor goes up, decrease transparency
 		tempScene.environment = scene.environment;
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );
@@ -310,7 +310,7 @@ export class TranslucentObjectPass extends Pass {
 
 		// composite the color buffer into the read buffer
 		// using the normal sample perform refraction a sample the readbuffer
-		// use mipmap to simulate diffusion
+		// use mipmap to simulate diffuseFactor
 		// use wavelength ior diffraction
 		// render a fully translucent pass on top to emulate the surface treatment
 		// render each object with depth here
