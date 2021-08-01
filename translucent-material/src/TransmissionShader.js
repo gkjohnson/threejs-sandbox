@@ -57,6 +57,7 @@ export const TransmissionShader = {
 			vec3 y_refracted, c_refracted, v_refracted;
 			vec4 y_sample, c_sample, v_sample;
 
+			float refractMultiplier = thickness * 250.0;
 			float bandMultiplier = abs( 1.0 - iorRatio );
 			for ( int i = 0; i < CHROMA_SAMPLES; i ++ ) {
 
@@ -71,9 +72,9 @@ export const TransmissionShader = {
 				g_ior = 1.0 + bandMultiplier * bandOffset * ( 2.0 + offsetValue );
 				b_ior = 1.0 + bandMultiplier * bandOffset * ( 4.0 + offsetValue );
 
-				r_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / r_ior );
-				g_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / g_ior );
-				b_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / b_ior );
+				r_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / r_ior );
+				g_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / g_ior );
+				b_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / b_ior );
 
 				r_sample = texture2D( backgroundTexture, uv + r_refracted.xy );
 				g_sample = texture2D( backgroundTexture, uv + g_refracted.xy );
@@ -83,9 +84,9 @@ export const TransmissionShader = {
 				c_ior = 1.0 + bandMultiplier * bandOffset * ( 3.0 + offsetValue );
 				v_ior = 1.0 + bandMultiplier * bandOffset * ( 5.0 + offsetValue );
 
-				y_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / y_ior );
-				c_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / c_ior );
-				v_refracted = refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / v_ior );
+				y_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / y_ior );
+				c_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / c_ior );
+				v_refracted = refractMultiplier * refract( vec3( 0.0, 0.0, - 1.0 ), normal, iorRatio / v_ior );
 
 				y_sample = texture2D( backgroundTexture, uv + y_refracted.xy );
 				c_sample = texture2D( backgroundTexture, uv + c_refracted.xy );

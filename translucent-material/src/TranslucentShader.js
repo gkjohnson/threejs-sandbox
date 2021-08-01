@@ -46,7 +46,7 @@ export const TranslucentShader = {
 			vec3 absorbed = vec3( 1.0 ) - clamp( color, 0.0, 1.0 );
 			vec3 val = dithering( - absorbed * thickness * 1000.0 * absorptionFactor );
 			gl_FragColor.rgb = val;
-			gl_FragColor.a = 1.0;
+			gl_FragColor.a = - thickness;
 
 		}
 

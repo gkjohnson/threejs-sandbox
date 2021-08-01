@@ -10,6 +10,7 @@ import {
 	AdditiveBlending,
 	NearestFilter,
 	HalfFloatType,
+	EqualDepth,
 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
 import { CopyShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/CopyShader.js';
@@ -103,7 +104,7 @@ export class TranslucentObjectPass extends Pass {
 		} = this;
 		layerReplacement.replace( objects, true, true );
 		rendererState.copy( renderer );
-		renderer.setClearColor( 0 );
+		renderer.setClearColor( 0, 0 );
 
 		renderer.setRenderTarget( colorBuffer );
 		renderer.clearColor();
@@ -198,7 +199,7 @@ export class TranslucentObjectPass extends Pass {
 						colorBuffer.width, colorBuffer.height,
 					);
 					material.side = FrontSide;
-					material.depthFunc = LessEqualDepth;
+					material.depthFunc = EqualDepth;
 					material.blending = AdditiveBlending;
 					material.premultipliedAlpha = true;
 
