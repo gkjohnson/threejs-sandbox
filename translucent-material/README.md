@@ -11,6 +11,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 ## TODO
 - Move diffusion logic to the transmission shader
 - Use mip maps for blur
+- "Diffusion" -> "diffuseFactor"
 
 ## Possible Improvements
 
