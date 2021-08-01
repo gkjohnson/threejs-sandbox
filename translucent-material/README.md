@@ -12,6 +12,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - Move diffusion logic to the transmission shader
 - Use mip maps for blur
 - "Diffusion" -> "diffuseFactor" or "transmissionFactor". Or just "transmission"?
+- Fix refraction "dead zones"
 
 ## Possible Improvements
 
