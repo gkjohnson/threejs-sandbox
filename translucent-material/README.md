@@ -11,6 +11,7 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 ## TODO
 - Use mip maps for blur
 - Fix refraction "dead zones"
+- Fix off by 1 px issue (zoom in)
 
 ## Possible Improvements
 
