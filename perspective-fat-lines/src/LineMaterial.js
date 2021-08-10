@@ -38,7 +38,7 @@ ShaderLib[ 'line' ] = {
 	] ),
 
 	vertexShader:
-		/* glsl */`
+	/* glsl */`
 		#include <common>
 		#include <color_pars_vertex>
 		#include <fog_pars_vertex>
@@ -249,7 +249,7 @@ ShaderLib[ 'line' ] = {
 		`,
 
 	fragmentShader:
-		/* glsl */`
+	/* glsl */`
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;
