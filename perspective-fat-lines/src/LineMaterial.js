@@ -38,7 +38,7 @@ ShaderLib[ 'line' ] = {
 	] ),
 
 	vertexShader:
-		`
+		/* glsl */`
 		#include <common>
 		#include <color_pars_vertex>
 		#include <fog_pars_vertex>
@@ -174,6 +174,7 @@ ShaderLib[ 'line' ] = {
 
 					// shift the position of the quad so it hugs the forward edge of the line
 					offset.xy -= dir * forwardOffset;
+					offset.z += 0.5;
 
 				#endif
 
@@ -248,7 +249,7 @@ ShaderLib[ 'line' ] = {
 		`,
 
 	fragmentShader:
-		`
+		/* glsl */`
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;
