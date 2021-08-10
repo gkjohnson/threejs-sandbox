@@ -8,6 +8,11 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 
 [Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html).
 
+## TODO
+- Use mip maps for blur
+- Fix refraction "dead zones"
+- Fix off by 1 px issue (zoom in)
+
 ## Possible Improvements
 
 - Make it physically based
@@ -24,6 +29,9 @@ Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www
 - Possibly we don't need an alpha channel for the accumulation buffer.
 - Blur the transmission values using multiple jittered samples per frame or mip map samples.
 - Fix refraction "bare" spots where there seems to not return data.
+- Can "additive" blending subtract color?
+	- Instead of accumulating absorbed color just subtract color and perform a surface sheen render so surface is visible through transparent surface.
+
 
 ## Limitations
 

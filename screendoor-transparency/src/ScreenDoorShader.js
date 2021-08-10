@@ -5,7 +5,7 @@ import {
 	NearestFilter,
 	RepeatWrapping,
 	UniformsUtils
-} from '//unpkg.com/three@0.106.0/build/three.module.js';
+} from '//cdn.skypack.dev/three@0.106.0/build/three.module.js';
 
 export function createDitherTexture() {
 

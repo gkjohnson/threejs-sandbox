@@ -103,21 +103,19 @@
 		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat lines</div>
 
 		<script type="module">
-			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.0/build/three.module.js?module';
 
-			import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+			import Stats from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/stats.module.js?module';
 
-			import { GUI } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
-			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-			import { Line2 } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
-			import { LineGeometry } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
-			import { GeometryUtils } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
-
+			import { GUI } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/dat.gui.module.js?module';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/controls/OrbitControls.js?module';
+			import { Line2 } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/Line2.js?module';
+			import { LineGeometry } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/LineGeometry.js?module';
 			import { LineMaterial } from './src/LineMaterial.js';
+			import { GeometryUtils } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/utils/GeometryUtils.js?module';
 
-			var line, renderer, scene, camera, camera2, controls;
-			var line1;
-			var matLine, matLineBasic, matLineDashed;
+			var cube, renderer, scene, camera, camera2, controls;
+			var linePrepass, matLinePrepass, line, matLine;
 			var stats;
 			var gui;
 
@@ -171,45 +169,56 @@
 				}
 
 
+				cube = new THREE.Mesh( new THREE.BoxBufferGeometry(), new THREE.MeshBasicMaterial() );
+				cube.scale.setScalar( 15 );
+				scene.add( cube );
+
 				// Line2 ( LineGeometry, LineMaterial )
 
 				var geometry = new LineGeometry();
 				geometry.setPositions( positions );
 				geometry.setColors( colors );
 
+				// stencil and depth pass 1
+				matLinePrepass = new LineMaterial( {
+
+					colorWrite: false,
+					linewidth: 10,
+					transparent: true,
+
+					stencilWrite: true,
+					stencilRef: 1,
+					stencilZPass: THREE.ReplaceStencilOp,
+
+				} );
+
+				linePrepass = new Line2( geometry, matLinePrepass );
+				linePrepass.scale.set( 1, 1, 1 );
+				linePrepass.renderOrder = 1;
+				scene.add( linePrepass );
+
+				// color pass 2
 				matLine = new LineMaterial( {
 
 					color: 0xffffff,
-					linewidth: 5, // in world units with size attenuation, pixels otherwise
+					linewidth: 10,
 					vertexColors: THREE.VertexColors,
-					//resolution:  // to be set by renderer, eventually
 					dashed: false,
-					worldUnits: true,
-					alphaToCoverage: true,
+					transparent: true,
+					opacity: 0.5,
+
+					stencilWrite: true,
+					stencilRef: 0,
+					stencilFunc: THREE.NotEqualStencilFunc,
+					stencilFail: THREE.ReplaceStencilOp,
+					stencilZPass: THREE.ReplaceStencilOp,
 
 				} );
 
 				line = new Line2( geometry, matLine );
-				line.computeLineDistances();
 				line.scale.set( 1, 1, 1 );
+				line.renderOrder = 2;
 				scene.add( line );
-
-
-				// THREE.Line ( THREE.BufferGeometry, THREE.LineBasicMaterial ) - rendered with gl.LINE_STRIP
-
-				var geo = new THREE.BufferGeometry();
-				geo.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-				geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-
-				matLineBasic = new THREE.LineBasicMaterial( { vertexColors: THREE.VertexColors } );
-				matLineDashed = new THREE.LineDashedMaterial( { vertexColors: THREE.VertexColors, scale: 2, dashSize: 1, gapSize: 1 } );
-
-				line1 = new THREE.Line( geo, matLineBasic );
-				line1.computeLineDistances();
-				line1.visible = false;
-				scene.add( line1 );
-
-				//
 
 				window.addEventListener( 'resize', onWindowResize, false );
 				onWindowResize();
@@ -251,30 +260,9 @@
 
 				// renderer will set this eventually
 				matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+				matLinePrepass.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
 
 				renderer.render( scene, camera );
-
-				// inset scene
-
-				renderer.setClearColor( 0x222222, 1 );
-
-				renderer.clearDepth(); // important!
-
-				renderer.setScissorTest( true );
-
-				renderer.setScissor( 20, 20, insetWidth, insetHeight );
-
-				renderer.setViewport( 20, 20, insetWidth, insetHeight );
-
-				camera2.position.copy( camera.position );
-				camera2.quaternion.copy( camera.quaternion );
-
-				// renderer will set this eventually
-				matLine.resolution.set( insetWidth, insetHeight ); // resolution of the inset viewport
-
-				renderer.render( scene, camera2 );
-
-				renderer.setScissorTest( false );
 
 			}
 
@@ -285,110 +273,55 @@
 				gui = new GUI();
 
 				var param = {
-					'line type': 0,
-					'world units': true,
-					'width': 5,
-					'dashed': false,
-					'dash scale': 1,
-					'dash / gap': 1,
-					'alpha to coverage': matLine.alphaToCoverage,
+					'width': 10,
+					'opacity': 0.5,
+					'prepass depth': true,
+					'prepass stencil': true,
+					'a2c transparency': false,
 				};
 
+				function update() {
 
-				gui.add( param, 'line type', { 'LineGeometry': 0, 'gl.LINE': 1 } ).onChange( function ( val ) {
+					const prepassDepth = param[ 'prepass depth' ];
+					const prepassStencil = param[ 'prepass stencil' ];
+					const a2c = param[ 'a2c transparency' ];
 
-					switch ( val ) {
+					matLinePrepass.depthWrite = prepassDepth;
+					matLinePrepass.stencilWrite = prepassStencil;
+					matLine.stencilWrite = prepassStencil;
+					matLine.transparent = true;
+					matLine.alphaToCoverage = false;
+					linePrepass.visible = true;
 
-						case '0':
-							line.visible = true;
+					if ( a2c ) {
 
-							line1.visible = false;
-
-							break;
-
-						case '1':
-							line.visible = false;
-
-							line1.visible = true;
-
-							break;
+						matLinePrepass.depthWrite = false;
+						matLinePrepass.stencilWrite = false;
+						matLine.stencilWrite = false;
+						matLine.transparent = false;
+						matLine.alphaToCoverage = true;
+						linePrepass.visible = false;
 
 					}
 
+				}
+
+				gui.add( param, 'prepass depth' ).onChange( update );
+
+				gui.add( param, 'prepass stencil' ).onChange( update );
+
+				gui.add( param, 'a2c transparency' ).onChange( update );
+
+				gui.add( param, 'opacity', 0, 1, 0.001 ).onChange( function ( val ) {
+
+					matLine.uniforms.opacity.value = parseFloat( val );
+
 				} );
 
-				gui.add( param, 'world units' ).onChange( function ( val ) {
-
-					matLine.worldUnits = val;
-					matLine.needsUpdate = true;
-
-				} );
-
-				gui.add( param, 'width', 1, 10 ).onChange( function ( val ) {
+				gui.add( param, 'width', 1, 20 ).onChange( function ( val ) {
 
 					matLine.linewidth = val;
-
-				} );
-
-				gui.add( param, 'dashed' ).onChange( function ( val ) {
-
-					matLine.dashed = val;
-
-					// dashed is implemented as a defines -- not as a uniform. this could be changed.
-					// ... or THREE.LineDashedMaterial could be implemented as a separate material
-					// temporary hack - renderer should do this eventually
-					if ( val ) matLine.defines.USE_DASH = ""; else delete matLine.defines.USE_DASH;
-					matLine.needsUpdate = true;
-
-					line1.material = val ? matLineDashed : matLineBasic;
-
-				} );
-
-				gui.add( param, 'dash scale', 0.5, 2, 0.1 ).onChange( function ( val ) {
-
-					matLine.dashScale = val;
-					matLineDashed.scale = val;
-
-				} );
-
-				gui.add( param, 'dash / gap', { '2 : 1': 0, '1 : 1': 1, '1 : 2': 2 } ).onChange( function ( val ) {
-
-					switch ( val ) {
-
-						case '0':
-							matLine.dashSize = 2;
-							matLine.gapSize = 1;
-
-							matLineDashed.dashSize = 2;
-							matLineDashed.gapSize = 1;
-
-							break;
-
-						case '1':
-							matLine.dashSize = 1;
-							matLine.gapSize = 1;
-
-							matLineDashed.dashSize = 1;
-							matLineDashed.gapSize = 1;
-
-							break;
-
-						case '2':
-							matLine.dashSize = 1;
-							matLine.gapSize = 2;
-
-							matLineDashed.dashSize = 1;
-							matLineDashed.gapSize = 2;
-
-							break;
-
-					}
-
-				} );
-
-				gui.add( param, 'alpha to coverage' ).onChange( function ( val ) {
-
-					matLine.alphaToCoverage = Boolean( val );
+					matLinePrepass.linewidth = val;
 
 				} );
 

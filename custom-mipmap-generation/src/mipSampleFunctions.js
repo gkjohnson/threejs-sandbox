@@ -1,7 +1,7 @@
 export const sampleFunctions = /* glsl */`
 
 	// Without original size argument for power of two targets
-	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level ) {
+	vec4 packedTexture2DLOD( sampler2D tex, vec2 uv, int level ) {
 
 		// the fraction of the uv space used by the target mip
 		float targetSubview = 1.0 / pow( 2.0, float( level ) );
@@ -16,25 +16,25 @@ export const sampleFunctions = /* glsl */`
 		);
 
 		vec2 samplePoint = mix( offset, offset + scaledDimensions, uv );
-		return texture2D( texture, samplePoint );
+		return texture2D( tex, samplePoint );
 
 	}
 
-	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level ) {
+	vec4 packedTexture2DLOD( sampler2D tex, vec2 uv, float level ) {
 
 		float ratio = mod( level, 1.0 );
 		int minLevel = int( floor( level ) );
 		int maxLevel = int( ceil( level ) );
 
-		vec4 minValue = packedTexture2DLOD( texture, uv, minLevel );
-		vec4 maxValue = packedTexture2DLOD( texture, uv, maxLevel );
+		vec4 minValue = packedTexture2DLOD( tex, uv, minLevel );
+		vec4 maxValue = packedTexture2DLOD( tex, uv, maxLevel );
 
 		return mix( minValue, maxValue, ratio );
 
 	}
 
 	// With original size argument
-	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, int level, vec2 originalPixelSize ) {
+	vec4 packedTexture2DLOD( sampler2D tex, vec2 uv, int level, vec2 originalPixelSize ) {
 
 		float floatLevel = float( level );
 		vec2 atlasSize;
@@ -63,18 +63,18 @@ export const sampleFunctions = /* glsl */`
 		samplePoint = min( samplePoint, maxPixel / atlasSize - halfPixelSize );
 		samplePoint = max( samplePoint, minPixel / atlasSize + halfPixelSize );
 
-		return texture2D( texture, samplePoint );
+		return texture2D( tex, samplePoint );
 
 	}
 
-	vec4 packedTexture2DLOD( sampler2D texture, vec2 uv, float level, vec2 originalPixelSize ) {
+	vec4 packedTexture2DLOD( sampler2D tex, vec2 uv, float level, vec2 originalPixelSize ) {
 
 		float ratio = mod( level, 1.0 );
 		int minLevel = int( floor( level ) );
 		int maxLevel = int( ceil( level ) );
 
-		vec4 minValue = packedTexture2DLOD( texture, uv, minLevel, originalPixelSize );
-		vec4 maxValue = packedTexture2DLOD( texture, uv, maxLevel, originalPixelSize );
+		vec4 minValue = packedTexture2DLOD( tex, uv, minLevel, originalPixelSize );
+		vec4 maxValue = packedTexture2DLOD( tex, uv, maxLevel, originalPixelSize );
 
 		return mix( minValue, maxValue, ratio );
 

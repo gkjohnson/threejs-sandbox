@@ -19,13 +19,13 @@ import {
 	MeshBasicMaterial,
 	ShaderMaterial,
 	UnsignedIntType,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { OrbitControls } from '//unpkg.com/three@0.114.0/examples/jsm/controls/OrbitControls.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
-import { RoughnessMipmapper } from '//unpkg.com/three@0.114.0/examples/jsm/utils/RoughnessMipmapper.js';
-import { GLTFLoader } from '//unpkg.com/three@0.114.0/examples/jsm/loaders/GLTFLoader.js';
-import Stats from '//unpkg.com/three@0.114.0/examples/jsm/libs/stats.module.js';
-import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+import { FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+import { RoughnessMipmapper } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/RoughnessMipmapper.js';
+import { GLTFLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/GLTFLoader.js';
+import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
 
 import { VelocityPass } from '../shader-replacement/src/passes/VelocityPass.js';
 import { ReprojectShader } from './src/ReprojectShader.js';
@@ -158,10 +158,10 @@ function init() {
 	);
 
 	const repreojectMaterial = new ShaderMaterial( ReprojectShader );
-	reprojectQuad = new Pass.FullScreenQuad( repreojectMaterial );
+	reprojectQuad = new FullScreenQuad( repreojectMaterial );
 
 	const copyMaterial = new MeshBasicMaterial();
-	copyQuad = new Pass.FullScreenQuad( copyMaterial );
+	copyQuad = new FullScreenQuad( copyMaterial );
 
 	velocityPass = new VelocityPass();
 	velocityPass.camera = camera;

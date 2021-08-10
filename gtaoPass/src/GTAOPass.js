@@ -10,8 +10,8 @@ import {
 	DataTexture,
 	RepeatWrapping,
 	LinearFilter,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
 import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { LinearDepthPass } from './LinearDepthPass.js';
 import { LinearDepthDisplayShader } from './DebugShaders.js';
@@ -144,11 +144,11 @@ export class GTAOPass extends Pass {
 		this._normalReplacement = new NormalPass();
 
 		// quads
-		this.gtaoQuad = new Pass.FullScreenQuad( new ShaderMaterial( GTAOShader ) );
-		this.debugPackedQuad = new Pass.FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
-		this.debugDepthQuad = new Pass.FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
-		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
-		// this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
+		this.gtaoQuad = new FullScreenQuad( new ShaderMaterial( GTAOShader ) );
+		this.debugPackedQuad = new FullScreenQuad( new ShaderMaterial( PackedNormalDisplayShader ) );
+		this.debugDepthQuad = new FullScreenQuad( new ShaderMaterial( LinearDepthDisplayShader ) );
+		this.compositeQuad = new FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+		// this.copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
 
 	}
 

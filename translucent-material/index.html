@@ -13,7 +13,7 @@
 				font-family: Monospace;
 				font-size: 13px;
 				text-align: center;
-				color: #fff;
+				color: #aaa;
 			}
 
 			a {
@@ -35,43 +35,50 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
-			import { RGBELoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/RGBELoader.js';
-			import { OBJLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/OBJLoader.js';
-			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
-			import Stats from '//unpkg.com/three@0.116.1/examples/jsm/libs/stats.module.js';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+			import { RGBELoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/RGBELoader.js';
+			import { OBJLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/OBJLoader.js';
+			import { GLTFLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/GLTFLoader.js';
+			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
+			import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
 
-			import { EffectComposer } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/EffectComposer.js';
-			import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
-			import { RenderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/ShaderPass.js';
-			import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
-			import { FXAAShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/FXAAShader.js';
-			import { GammaCorrectionShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/GammaCorrectionShader.js';
-			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
+			import { EffectComposer } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/EffectComposer.js';
+			import { Pass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+			import { RenderPass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/ShaderPass.js';
+			import { CopyShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/CopyShader.js';
+			import { FXAAShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/GammaCorrectionShader.js';
+			import { BufferGeometryUtils } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/BufferGeometryUtils.js';
 
 			import { TranslucentObjectPass } from './src/TranslucentObjectPass.js';
 
 			// globals
 			var stats;
 			var params = {
-				diffusion: 0,
+				diffuseFactor: 0,
 				indexOfRefraction: 1.1,
 				absorptionFactor: 1.0,
-				lightBandOffset: 0.01,
+				lightBandOffset: 0.1,
 
-				color: 0xcc6600,
+				color: '#e69955',
 				roughness: 0.1,
 				layers: 4,
-				background: 'white'
+				background: 'white',
+				model: 'Buddha',
 			};
-			var camera, scene, renderer, controls, mesh;
+			var camera, scene, renderer, controls;
 			var renderPass, composer, fxaaPass, translucentPass, gammaPass;
 
 			var backgrounds = {
 				white: new THREE.Color( 0xdddddd ),
 				environment: null,
+			};
+
+			var models = {
+				'Buddha': null,
+				'Dragon': null,
 			};
 
 			init();
@@ -125,23 +132,46 @@
 
 
 				var loader = new OBJLoader();
-				loader.load( 'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/happy.obj', function ( object ) {
+				loader.load(
+					'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/happy.obj',
+					function ( object ) {
 
-					const model = object.children[ 0 ];
-					model.scale.setScalar( 10 );
-					model.geometry.center();
-					model.material = new THREE.MeshStandardMaterial( { color: 0xcc0000, roughness: 0.25 } );
-					model.updateMatrixWorld();
-					translucentPass.objects = [ model ];
+						const model = object.children[ 0 ];
+						model.scale.setScalar( 10 );
+						model.geometry.center();
+						model.material = new THREE.MeshStandardMaterial( { color: 0xcc0000, roughness: 0.25 } );
+						model.updateMatrixWorld();
+						translucentPass.objects.push( model );
 
-					mesh = model;
-					window.mesh = mesh;
+						models[ 'Buddha' ] = model;
 
-					model.geometry.deleteAttribute( 'normal' );
-					model.geometry = BufferGeometryUtils.mergeVertices( model.geometry );
-					model.geometry.computeVertexNormals();
+						model.geometry.deleteAttribute( 'normal' );
+						model.geometry = BufferGeometryUtils.mergeVertices( model.geometry );
+						model.geometry.computeVertexNormals();
 
-				} );
+					} );
+
+				loader = new GLTFLoader();
+				loader.load(
+					'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DragonAttenuation/glTF-Binary/DragonAttenuation.glb',
+					function ( object ) {
+
+						console.log( object );
+						const model = object.scene.children[ 0 ];
+						model.scale.setScalar( 0.1 );
+						model.position.setScalar( 0.0 );
+						model.geometry.center();
+						model.material = new THREE.MeshStandardMaterial( { color: 0xcc0000, roughness: 0.25 } );
+						model.updateMatrixWorld();
+						translucentPass.objects.push( model );
+
+						models[ 'Dragon' ] = model;
+
+						model.geometry.deleteAttribute( 'normal' );
+						model.geometry = BufferGeometryUtils.mergeVertices( model.geometry );
+						model.geometry.computeVertexNormals();
+
+					} );
 
 				// Render Pass Setup
 				renderPass = new RenderPass( scene, camera );
@@ -183,9 +213,10 @@
 				gui.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
 				gui.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
 				gui.add( params, 'indexOfRefraction' ).min( 0.7 ).max( 1.3 ).step( 0.01 );
-				gui.add( params, 'diffusion' ).min( 0 ).max( 1 ).step( 0.01 );
-				gui.add( params, 'lightBandOffset' ).min( -0.05 ).max( 0.05 ).step( 0.001 );
+				gui.add( params, 'diffuseFactor' ).min( 0 ).max( 1 ).step( 0.01 );
+				gui.add( params, 'lightBandOffset' ).min( -0.5 ).max( 0.5 ).step( 0.001 );
 				gui.add( params, 'background', Object.keys( backgrounds ) );
+				gui.add( params, 'model', Object.keys( models ) );
 				gui.open();
 
 			}
@@ -220,14 +251,26 @@
 
 			function render() {
 
-				if ( mesh ) {
+				for ( const key in models ) {
 
-					mesh.material.roughness = params.roughness;
-					mesh.material.diffusion = params.diffusion;
-					mesh.material.color.set( params.color ).convertSRGBToLinear();
-					mesh.material.absorptionFactor = params.absorptionFactor;
-					mesh.material.iorRatio = params.indexOfRefraction;
-					mesh.material.bandOffset = params.lightBandOffset;
+					if ( models[ key ] ) {
+
+						models[ key ].visible = false;
+
+					}
+
+				}
+
+				const model = models[ params.model ];
+				if ( model ) {
+
+					model.material.roughness = params.roughness;
+					model.material.diffuseFactor = params.diffuseFactor;
+					model.material.color.set( params.color ).convertSRGBToLinear();
+					model.material.absorptionFactor = params.absorptionFactor;
+					model.material.iorRatio = params.indexOfRefraction;
+					model.material.bandOffset = params.lightBandOffset;
+					model.visible = true;
 
 				}
 

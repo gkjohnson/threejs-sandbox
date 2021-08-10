@@ -9,9 +9,11 @@ import {
 	DepthFormat,
 	AdditiveBlending,
 	NearestFilter,
-} from '//unpkg.com/three@0.116.1/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.116.1/examples/jsm/postprocessing/Pass.js';
-import { CopyShader } from '//unpkg.com/three@0.116.1/examples/jsm/shaders/CopyShader.js';
+	HalfFloatType,
+	EqualDepth,
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+import { CopyShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/CopyShader.js';
 import { TranslucentShader } from './TranslucentShader.js';
 import { LayerShader } from './LayerShader.js';
 import { CompositeShader } from './CompositeShader.js';
@@ -22,7 +24,7 @@ import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { FinalTranslucentReplacement } from './FinalTranslucentReplacement.js';
 import { DepthDebugShader } from './DepthDebugShader.js';
 
-const depthQuad = new Pass.FullScreenQuad( new ShaderMaterial( DepthDebugShader ) );
+const depthQuad = new FullScreenQuad( new ShaderMaterial( DepthDebugShader ) );
 
 const rendererState = new RendererState();
 const tempScene = new Scene();
@@ -36,8 +38,8 @@ export class TranslucentObjectPass extends Pass {
 		this.scene = scene;
 		this.camera = camera;
 		this.layers = 1;
-		this.copyQuad = new Pass.FullScreenQuad( new ShaderMaterial( CopyShader ) );
-		this.compositeQuad = new Pass.FullScreenQuad( new ShaderMaterial( CompositeShader ) );
+		this.copyQuad = new FullScreenQuad( new ShaderMaterial( CopyShader ) );
+		this.compositeQuad = new FullScreenQuad( new ShaderMaterial( CompositeShader ) );
 		this.translucentReplacement = new ShaderReplacement( TranslucentShader );
 		this.layerReplacement = new ShaderReplacement( LayerShader );
 		this.transmissionReplacement = new ShaderReplacement( TransmissionShader );
@@ -48,7 +50,7 @@ export class TranslucentObjectPass extends Pass {
 			minFilter: NearestFilter,
 			magFilter: NearestFilter,
 		};
-		const colorBuffer = new WebGLRenderTarget( 1, 1, options );
+		const colorBuffer = new WebGLRenderTarget( 1, 1, { type: HalfFloatType, options } );
 
 		const emptyBufferFront = new WebGLRenderTarget( 1, 1, options );
 		emptyBufferFront.depthTexture = new DepthTexture( DepthFormat );
@@ -102,7 +104,10 @@ export class TranslucentObjectPass extends Pass {
 		} = this;
 		layerReplacement.replace( objects, true, true );
 		rendererState.copy( renderer );
-		renderer.setClearColor( 0 );
+		renderer.setClearColor( 0, 0 );
+
+		renderer.setRenderTarget( colorBuffer );
+		renderer.clearColor();
 
 		tempScene.children = [ ...objects ];
 		tempScene.autoUpdate = false;
@@ -178,6 +183,7 @@ export class TranslucentObjectPass extends Pass {
 			renderer.render( tempScene, camera );
 
 			// Render translucent layer
+			// TODO: use render quad here and accumulate thickness in alpha
 			translucentReplacement.replace( objects, true, false );
 			tempScene.traverse( c => {
 
@@ -193,8 +199,9 @@ export class TranslucentObjectPass extends Pass {
 						colorBuffer.width, colorBuffer.height,
 					);
 					material.side = FrontSide;
-					material.depthFunc = LessEqualDepth;
+					material.depthFunc = EqualDepth;
 					material.blending = AdditiveBlending;
+					material.premultipliedAlpha = true;
 
 					if ( typeof material.uniforms.absorptionFactor.value !== 'number' ) {
 
@@ -245,7 +252,7 @@ export class TranslucentObjectPass extends Pass {
 		renderer.clearDepth();
 		renderer.render( tempScene, camera );
 
-		emptyBufferFront.texture.generateMipMaps = true;
+		// render separation
 		transmissionReplacement.replace( tempScene, true, false );
 		tempScene.traverse( c => {
 
@@ -261,15 +268,16 @@ export class TranslucentObjectPass extends Pass {
 				material.uniforms.backgroundTexture.value = readBuffer.texture;
 				material.uniforms.normalTexture.value = emptyBufferFront.texture;
 				material.uniforms.absorbedTexture.value = colorBuffer.texture;
-				if ( typeof material.uniforms.diffusionFactor.value !== 'number' ) {
 
-					material.uniforms.diffusionFactor.value = 0;
+				if ( typeof material.uniforms.diffuseFactor.value !== 'number' ) {
+
+					material.uniforms.diffuseFactor.value = 0;
 
 				}
 
 				if ( typeof material.uniforms.dispersionFactor.value !== 'number' ) {
 
-					material.uniforms.diffusionFactor.value = 0;
+					material.uniforms.dispersionFactor.value = 0;
 
 				}
 
@@ -289,7 +297,7 @@ export class TranslucentObjectPass extends Pass {
 		renderer.render( tempScene, camera );
 
 		// render the surface sheen
-		// TODO: as diffusion goes up, decrease transparency
+		// TODO: as diffuseFactor goes up, decrease transparency
 		tempScene.environment = scene.environment;
 		finalTranslucentReplacement.replace( objects, true, false );
 		renderer.render( tempScene, camera );
@@ -303,7 +311,7 @@ export class TranslucentObjectPass extends Pass {
 
 		// composite the color buffer into the read buffer
 		// using the normal sample perform refraction a sample the readbuffer
-		// use mipmap to simulate diffusion
+		// use mipmap to simulate diffuseFactor
 		// use wavelength ior diffraction
 		// render a fully translucent pass on top to emulate the surface treatment
 		// render each object with depth here

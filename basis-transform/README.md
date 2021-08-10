@@ -7,7 +7,7 @@ Helper functions for creating a matrix to transform between arbitrary cartesian 
 # Use
 
 ```js
-import { Group, Vector3, Matrix4 } from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { Group, Vector3, Matrix4 } from '//cdn.skypack.dev/three@0.112.0/build/three.module.js';
 import { getBasisTransform } from './src/index.js';
 
 const threejsAxes = '+X+Y+Z';

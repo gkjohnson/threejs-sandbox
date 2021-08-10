@@ -3,7 +3,7 @@
 // http://web.archive.org/web/20081014161121/http://www.colorjack.com/labs/colormatrix/
 // http://mapeper.github.io/jsColorblindSimulator/
 
-import { Vector3, Matrix3, Color } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { Vector3, Matrix3, Color } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 const deuteranopeMat = new Matrix3().set(
 	0.625, 0.375, 0,

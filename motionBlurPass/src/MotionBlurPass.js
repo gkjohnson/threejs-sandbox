@@ -16,8 +16,8 @@ import {
 	FloatType,
 	ShaderMaterial,
 	RepeatWrapping,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
@@ -126,7 +126,7 @@ export class MotionBlurPass extends Pass {
 		this._velocityBuffer.texture.generateMipmaps = false;
 
 		this._compositeMaterial = new ShaderMaterial( CompositeShader );
-		this._compositeQuad = new Pass.FullScreenQuad( this._compositeMaterial );
+		this._compositeQuad = new FullScreenQuad( this._compositeMaterial );
 
 	}
 

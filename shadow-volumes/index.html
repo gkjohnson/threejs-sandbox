@@ -35,12 +35,12 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.106.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.106.0/examples/jsm/controls/OrbitControls.js';
-			import { FBXLoader } from '//unpkg.com/three@0.106.0/examples/jsm/loaders/FBXLoader.js';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+			import { FBXLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/FBXLoader.js';
 
-			import Stats from '//unpkg.com/three@0.106.0/examples/jsm/libs/stats.module.js';
-			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
 
 			import { ShadowVolumeMaterial, ShadowVolumeMesh } from './src/ShadowVolume.js';
 
@@ -159,8 +159,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setClearColor( 0x263238 );
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 				renderer.shadowMap.enabled = true;
 				document.body.appendChild( renderer.domElement );
 

@@ -1,4 +1,4 @@
-import { Vector3 } from '//unpkg.com/three@0.112.0/build/three.module.js';
+import { Vector3 } from '//cdn.skypack.dev/three@0.112.0/build/three.module.js';
 
 const basesRegex = /^([+-][xyz])([+-][xyz])([+-][xyz])$/i;
 const nameToIndex = { x: 0, y: 1, z: 2 };

@@ -1,4 +1,4 @@
-import { ShaderLib } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderLib } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 export const uvShader = {
 	defines: {

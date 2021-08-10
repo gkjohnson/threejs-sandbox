@@ -1,4 +1,4 @@
-import { RGBAFormat, FloatType, WebGLRenderer, WebGLRenderTarget, Vector2 } from '//unpkg.com/three@0.114.0/build/three.module.js';
+import { RGBAFormat, FloatType, WebGLRenderer, WebGLRenderTarget, Vector2 } from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
 import { CanvasInspector } from './CanvasInspector.js';
 
 const VISIBLE_SYMBOL = Symbol();

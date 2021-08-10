@@ -13,7 +13,7 @@
 				font-family: Monospace;
 				font-size: 13px;
 				text-align: center;
-				color: #333;
+				color: #666;
 			}
 
 			a {
@@ -31,33 +31,36 @@
 
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - General Conditional Edges by <a href="http://gkjohnson.github.io" target="_blank" rel="noopener">Garrett Johnson</a>
-
-			<br/>
-			<br/>
-
-			Inspired by <a href="https://discourse.threejs.org/t/ldraw-like-edges/17100/">this thread</a> from Prisoner849
 		</div>
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.116.1/build/three.module.js';
-			import { GLTFLoader } from '//unpkg.com/three@0.116.1/examples/jsm/loaders/GLTFLoader.js';
-			import { OrbitControls } from '//unpkg.com/three@0.116.1/examples/jsm/controls/OrbitControls.js';
-			import { BufferGeometryUtils } from '//unpkg.com/three@0.116.1/examples/jsm/utils/BufferGeometryUtils.js';
-			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+			import { GLTFLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/GLTFLoader.js';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+			import { BufferGeometryUtils } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/BufferGeometryUtils.js';
+			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
 
-			import { LineSegmentsGeometry } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegmentsGeometry.js';
-			import { LineSegments2 } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineSegments2.js';
-			import { LineMaterial } from '//unpkg.com/three@0.116.1/examples/jsm/lines/LineMaterial.js';
+			import { LineSegmentsGeometry } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineSegmentsGeometry.js';
+			import { LineSegments2 } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineSegments2.js';
+			import { LineMaterial } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
 
 			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
 			import { ConditionalEdgesShader } from './src/ConditionalEdgesShader.js';
 			import { ConditionalLineSegmentsGeometry } from './src/Lines2/ConditionalLineSegmentsGeometry.js';
 			import { ConditionalLineMaterial } from './src/Lines2/ConditionalLineMaterial.js';
+			import { ColoredShadowMaterial } from './src/ColoredShadowMaterial.js';
+
 
 			// globals
 			var params = {
+				colors: 'LIGHT',
+				backgroundColor: '#0d2a28',
+				modelColor: '#0d2a28',
+				lineColor: '#ffb400',
+				shadowColor: '#44491f',
+
 				lit: false,
 				opacity: 0.85,
 				threshold: 40,
@@ -66,12 +69,54 @@
 				thickness: 1,
 				useThickLines: false,
 				model: 'HELMET',
+
+				randomize: () => randomizeColors(),
 			};
-			var camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel;
-			var models = {};
+			let camera, scene, renderer, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel, gui;
+
+			const models = {};
+			const color = new THREE.Color();
+			const color2 = new THREE.Color();
+
+			const LIGHT_BACKGROUND = 0xeeeeee;
+			const LIGHT_MODEL = 0xffffff;
+			const LIGHT_LINES = 0x455A64;
+			const LIGHT_SHADOW = 0xc4c9cb;
+
+			const DARK_BACKGROUND = 0x111111;
+			const DARK_MODEL = 0x111111;
+			const DARK_LINES = 0xb0bec5;
+			const DARK_SHADOW = 0x2c2e2f;
 
 			init();
 			animate();
+
+			function randomizeColors() {
+
+				const lineH = Math.random();
+				const lineS = Math.random() * 0.2 + 0.8;
+				const lineL = Math.random() * 0.2 + 0.4;
+
+				const lineColor = '#' + color.setHSL( lineH, lineS, lineL ).getHexString();
+				const backgroundColor = '#' + color.setHSL(
+					( lineH + 0.35 + 0.3 * Math.random() ) % 1.0,
+					lineS * ( 0.25 + Math.random() * 0.75 ),
+					1.0 - lineL,
+				).getHexString();
+
+				color.set( lineColor );
+				color2.set( backgroundColor );
+				const shadowColor = '#' + color.lerp( color2, 0.7 ).getHexString();
+
+				params.shadowColor = shadowColor;
+				params.lineColor = lineColor;
+				params.backgroundColor = backgroundColor;
+				params.modelColor = backgroundColor;
+				params.colors = 'CUSTOM';
+
+				initGui();
+
+			};
 
 			function updateModel() {
 
@@ -172,7 +217,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material = new THREE.MeshBasicMaterial( { color: LIGHT_MODEL } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -188,7 +233,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 1.0 } );
+						c.material = new ColoredShadowMaterial( { color: LIGHT_MODEL, shininess: 1.0 } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -205,7 +250,7 @@
 
 					if ( c.isMesh ) {
 
-						c.material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+						c.material = new THREE.MeshBasicMaterial( { color: LIGHT_MODEL } );
 						c.material.polygonOffset = true;
 						c.material.polygonOffsetFactor = 1;
 						c.material.polygonOffsetUnits = 1;
@@ -295,13 +340,13 @@
 
 					}
 
-					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: 0x455A64 } ) );
+					const line = new THREE.LineSegments( lineGeom, new THREE.LineBasicMaterial( { color: LIGHT_LINES } ) );
 					line.position.copy( mesh.position );
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
 					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: 0x455A64, linewidth: 3 } ) );
+					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: LIGHT_LINES, linewidth: 3 } ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -309,7 +354,6 @@
 					parent.remove( mesh );
 					parent.add( line );
 					parent.add( thickLines );
-
 
 				}
 
@@ -376,7 +420,7 @@
 					// Create the conditional edges geometry and associated material
 					const lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
-					material.uniforms.diffuse.value.set( 0x455A64 );
+					material.uniforms.diffuse.value.set( LIGHT_LINES );
 
 					// Create the line segments objects and replace the mesh
 					const line = new THREE.LineSegments( lineGeom, material );
@@ -385,7 +429,7 @@
 					line.rotation.copy( mesh.rotation );
 
 					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: 0x455A64, linewidth: 2 } ) );
+					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineMaterial( { color: LIGHT_LINES, linewidth: 2 } ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -402,7 +446,7 @@
 
 				// initialize renderer, scene, camera
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xeeeeee );
+				scene.background = new THREE.Color( LIGHT_BACKGROUND );
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
 				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
@@ -419,7 +463,7 @@
 				// Floor
 				floor = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry(),
-					new THREE.ShadowMaterial( { color: 0x455A64, opacity: 0.25, transparent: true } )
+					new THREE.ShadowMaterial( { color: LIGHT_LINES, opacity: 0.25, transparent: true } )
 				);
 				floor.rotation.x = - Math.PI / 2;
 				floor.scale.setScalar( 20 );
@@ -431,16 +475,16 @@
 				dirLight.position.set( 5, 10, 5 );
 				dirLight.castShadow = true;
 				dirLight.shadow.bias = -1e-10;
-				dirLight.shadow.mapSize.width = 1024;
-				dirLight.shadow.mapSize.height = 1024;
+				dirLight.shadow.mapSize.width = 2048;
+				dirLight.shadow.mapSize.height = 2048;
+
+				window.dirLight = dirLight;
 
 				const shadowCam = dirLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -1;
 				shadowCam.right = shadowCam.top = 1;
 
 				scene.add( dirLight );
-
-				scene.add( new THREE.AmbientLight( 0xc4c9cb, 1.0 ) );
 
 				const cylinder = new THREE.Group();
 				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 100 ) ) );
@@ -469,9 +513,27 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+				initGui();
+
+			}
+
+			function initGui() {
+
+				if ( gui ) {
+
+					gui.destroy();
+
+				}
+
 				// dat gui
-				var gui = new dat.GUI();
+				gui = new dat.GUI();
 				gui.width = 300;
+				gui.add( params, 'colors', [ 'LIGHT', 'DARK', 'CUSTOM' ] );
+				gui.addColor( params, 'backgroundColor' );
+				gui.addColor( params, 'modelColor' );
+				gui.addColor( params, 'lineColor' );
+				gui.addColor( params, 'shadowColor' );
+				gui.add( params, 'randomize' );
 
 				const modelFolder = gui.addFolder( 'model' );
 
@@ -525,6 +587,27 @@
 
 				requestAnimationFrame( animate );
 
+				let linesColor = LIGHT_LINES;
+				let modelColor = LIGHT_MODEL;
+				let backgroundColor = LIGHT_BACKGROUND;
+				let shadowColor = LIGHT_SHADOW;
+
+				if ( params.colors === 'DARK' ) {
+
+					linesColor = DARK_LINES;
+					modelColor = DARK_MODEL;
+					backgroundColor = DARK_BACKGROUND;
+					shadowColor = DARK_SHADOW;
+
+				} else if ( params.colors === 'CUSTOM' ) {
+
+					linesColor = params.lineColor;
+					modelColor = params.modelColor;
+					backgroundColor = params.backgroundColor;
+					shadowColor = params.shadowColor;
+
+				}
+
 				if ( conditionalModel ) {
 
 					conditionalModel.visible = params.displayConditionalEdges;
@@ -541,6 +624,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.material.uniforms.diffuse.value.set( linesColor );
 
 						}
 
@@ -564,6 +648,7 @@
 						if ( c.material ) {
 
 							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.material.color.set( linesColor );
 
 						}
 
@@ -580,6 +665,7 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
+							c.material.color.set( modelColor );
 
 						}
 
@@ -596,6 +682,8 @@
 
 							c.material.transparent = params.opacity !== 1.0;
 							c.material.opacity = params.opacity;
+							c.material.color.set( modelColor );
+							c.material.shadowColor.set( shadowColor );
 
 						}
 
@@ -609,6 +697,9 @@
 
 				}
 
+				scene.background.set( backgroundColor );
+				floor.material.color.set( shadowColor );
+				floor.material.opacity = params.opacity;
 				floor.visible = params.lit;
 
 				render();

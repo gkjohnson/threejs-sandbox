@@ -37,11 +37,11 @@
 
 		<script type="module">
 
-			import * as THREE from '//unpkg.com/three@0.106.0/build/three.module.js';
-			import { OrbitControls } from '//unpkg.com/three@0.106.0/examples/jsm/controls/OrbitControls.js';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
 
-			import Stats from '//unpkg.com/three@0.106.0/examples/jsm/libs/stats.module.js';
-			import dat from '//unpkg.com/dat.gui/build/dat.gui.module.js';
+			import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
 
 			import { addInstancePosition } from './src/binned-cube-shader.js'
 
@@ -68,11 +68,9 @@
 				scene.background = new THREE.Color( 0x263238 );
 				scene.fog = new THREE.Fog(0x263238, 0, 60);
 
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.gammaInput = false;
-				renderer.gammaOutput = false;
 				document.body.appendChild( renderer.domElement );
 
 
@@ -92,17 +90,17 @@
 				}
 
 				var pointsGeometry = new THREE.BufferGeometry();
-				pointsGeometry.addAttribute('position', new THREE.BufferAttribute(pointsArr, 3, false));
+				pointsGeometry.setAttribute('position', new THREE.BufferAttribute(pointsArr, 3, false));
 
 				points = new THREE.Points(pointsGeometry, new THREE.PointsMaterial());
 				scene.add(points);
 
 				var cubeGeometry = new THREE.BoxBufferGeometry();
 				var instancedGeometry = new THREE.InstancedBufferGeometry();
-				instancedGeometry.addAttribute('position', cubeGeometry.attributes.position.clone());
-				instancedGeometry.addAttribute('normal', cubeGeometry.attributes.normal.clone());
+				instancedGeometry.setAttribute('position', cubeGeometry.attributes.position.clone());
+				instancedGeometry.setAttribute('normal', cubeGeometry.attributes.normal.clone());
 				instancedGeometry.setIndex(cubeGeometry.index);
-				instancedGeometry.addAttribute('instancePosition', new THREE.InstancedBufferAttribute(pointsArr, 3, false));
+				instancedGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(pointsArr, 3, false));
 				instancedGeometry.needsUpdate = true;
 
 				var instanceMat = new THREE.ShaderMaterial(addInstancePosition(THREE.ShaderLib.standard));

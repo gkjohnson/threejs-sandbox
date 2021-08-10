@@ -6,8 +6,8 @@ import {
 	HalfFloatType,
 	RGBFormat,
 	LinearFilter,
-} from '//unpkg.com/three@0.114.0/build/three.module.js';
-import { Pass } from '//unpkg.com/three@0.114.0/examples/jsm/postprocessing/Pass.js';
+} from '//cdn.skypack.dev/three@0.114.0/build/three.module.js';
+import { Pass } from '//cdn.skypack.dev/three@0.114.0/examples/jsm/postprocessing/Pass.js';
 import { NormalPass } from '../../shader-replacement/src/passes/NormalPass.js';
 import { LinearDepthPass } from '../../gtaoPass/src/LinearDepthPass.js';
 import { RendererState } from '../../shader-replacement/src/RendererState.js';

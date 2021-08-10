@@ -1,6 +1,6 @@
 import {
 	ShaderPass
-} from '//unpkg.com/three@0.120.1/examples/jsm/postprocessing/ShaderPass.js';
+} from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/ShaderPass.js';
 import {
 	LUTShader,
 } from './shaders/LUTShader.js';

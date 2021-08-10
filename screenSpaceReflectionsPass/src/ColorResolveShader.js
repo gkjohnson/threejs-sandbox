@@ -1,4 +1,4 @@
-import { Vector2 } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { Vector2 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 export const ColorResolveShader = {
 
 	defines: {
@@ -71,7 +71,7 @@ export const ColorResolveShader = {
 
 			// Found, blending
 			vec4 source = texture2D( sourceBuffer, vUv );
-			vec3 sample = vec3( 0.0 );
+			vec3 sampleValue = vec3( 0.0 );
 
 			#if ENABLE_BLUR
 
@@ -114,7 +114,7 @@ export const ColorResolveShader = {
 
 						// accumulate
 						vec4 val = texture2D( intersectBuffer, marchUv );
-						sample += val.rgb * weight;
+						sampleValue += val.rgb * weight;
 						totalWeight += weight;
 
 					}
@@ -123,21 +123,21 @@ export const ColorResolveShader = {
 
 			}
 
-			sample /= totalWeight;
+			sampleValue /= totalWeight;
 
 			#else
 
-			sample = texture2D( intersectBuffer, vUv ).rgb;
+			sampleValue = texture2D( intersectBuffer, vUv ).rgb;
 
 			#endif
 
 			#if COLOR_HIT_ONLY
 
-			gl_FragColor = vec4( sample, 1.0 );
+			gl_FragColor = vec4( sampleValue, 1.0 );
 
 			#else
 
-			source.rgb += sample * intensity;
+			source.rgb += sampleValue * intensity;
 			gl_FragColor = source;
 
 			#endif

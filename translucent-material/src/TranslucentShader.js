@@ -1,4 +1,4 @@
-import { ShaderLib, UniformsUtils, Vector2, Color } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderLib, UniformsUtils, Vector2, Color } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 // need to unpack depth backt to world space to get thickness
 // https://stackoverflow.com/questions/44121266/compute-3d-point-from-mouse-position-and-depth-map
@@ -46,7 +46,7 @@ export const TranslucentShader = {
 			vec3 absorbed = vec3( 1.0 ) - clamp( color, 0.0, 1.0 );
 			vec3 val = dithering( - absorbed * thickness * 1000.0 * absorptionFactor );
 			gl_FragColor.rgb = val;
-			gl_FragColor.a = 1.0;
+			gl_FragColor.a = - thickness;
 
 		}
 

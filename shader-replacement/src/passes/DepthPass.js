@@ -1,5 +1,5 @@
 import { ShaderReplacement } from '../ShaderReplacement.js';
-import { ShaderLib, BasicDepthPacking } from '//unpkg.com/three@0.116.1/build/three.module.js';
+import { ShaderLib, BasicDepthPacking } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 
 export class DepthPass extends ShaderReplacement {
 
