@@ -45,6 +45,7 @@ export class TranslucentObjectPass extends Pass {
 		this.transmissionReplacement = new ShaderReplacement( TransmissionShader );
 		this.normalReplacement = new NormalPass();
 		this.finalTranslucentReplacement = new FinalTranslucentReplacement();
+		this.singleLayerOnly = false;
 
 		const options = {
 			minFilter: NearestFilter,
@@ -70,6 +71,9 @@ export class TranslucentObjectPass extends Pass {
 
 	setSize( width, height ) {
 
+		// there are artifacts if the dimensions of the render targets include fractions
+		width = Math.ceil( width );
+		height = Math.ceil( height );
 		this.colorBuffer.setSize( width, height );
 		this.emptyBufferFront.setSize( width, height );
 		this.emptyBufferBack.setSize( width, height );
@@ -99,7 +103,6 @@ export class TranslucentObjectPass extends Pass {
 			emptyBufferFront,
 			emptyBufferBack,
 			scene,
-			compositeQuad,
 			copyQuad,
 		} = this;
 		layerReplacement.replace( objects, true, true );

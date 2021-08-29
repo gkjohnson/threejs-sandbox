@@ -65,6 +65,7 @@
 				color: '#e69955',
 				roughness: 0.1,
 				layers: 4,
+				singleLayerOnly: false,
 				background: 'white',
 				model: 'Buddha',
 			};
@@ -208,15 +209,24 @@
 				var gui = new dat.GUI();
 				gui.width = 300;
 
-				gui.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
-				gui.addColor( params, 'color' );
-				gui.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
-				gui.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
-				gui.add( params, 'indexOfRefraction' ).min( 0.7 ).max( 1.3 ).step( 0.01 );
-				gui.add( params, 'diffuseFactor' ).min( 0 ).max( 1 ).step( 0.01 );
-				gui.add( params, 'lightBandOffset' ).min( -0.5 ).max( 0.5 ).step( 0.001 );
-				gui.add( params, 'background', Object.keys( backgrounds ) );
-				gui.add( params, 'model', Object.keys( models ) );
+				const layersFolder = gui.addFolder( 'layers' );
+				layersFolder.add( params, 'layers' ).min( 1 ).max( 10 ).step( 1 );
+				layersFolder.add( params, 'singleLayerOnly' );
+				layersFolder.open();
+
+				const materialFolder = gui.addFolder( 'material' );
+				materialFolder.addColor( params, 'color' );
+				materialFolder.add( params, 'roughness' ).min( 0.0 ).max( 1.0 );
+				materialFolder.add( params, 'absorptionFactor' ).min( 0 ).max( 5 ).step( 0.001 );
+				materialFolder.add( params, 'indexOfRefraction' ).min( 0.7 ).max( 1.3 ).step( 0.01 );
+				materialFolder.add( params, 'diffuseFactor' ).min( 0 ).max( 1 ).step( 0.01 );
+				materialFolder.add( params, 'lightBandOffset' ).min( -0.5 ).max( 0.5 ).step( 0.001 );
+				materialFolder.open();
+
+				const envFolder = gui.addFolder( 'environment' );
+				envFolder.add( params, 'background', Object.keys( backgrounds ) );
+				envFolder.add( params, 'model', Object.keys( models ) );
+				envFolder.open();
 				gui.open();
 
 			}
@@ -278,6 +288,7 @@
 				scene.background = bg;
 
 				translucentPass.layers = params.layers;
+				translucentPass.singleLayerOnly = params.singleLayerOnly;
 
 				composer.render( scene, camera );
 
