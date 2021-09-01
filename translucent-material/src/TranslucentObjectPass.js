@@ -218,7 +218,12 @@ export class TranslucentObjectPass extends Pass {
 
 			renderer.autoClear = false;
 			renderer.setRenderTarget( colorBuffer );
-			renderer.render( tempScene, camera );
+
+			if ( ! this.singleLayerOnly || i === layers - 1 ) {
+
+				renderer.render( tempScene, camera );
+
+			}
 
 		}
 
