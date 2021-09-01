@@ -1,12 +1,12 @@
 # Translucent Material
 
-A posteffect that renders translucently with modeled light dispersion, refraction, and absorption using depth peeling.
+A posteffect that renders non-physically based translucency with modeled light refraction and absorption using depth peeling.
 
 Demo model loaded from the [alecjacobson/common-3d-test-models repo](https://www.github.com/alecjacobson/common-3d-test-models).
 
 ![](./images/banner.png)
 
-[Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html).
+[Demo Here](https://gkjohnson.github.io/threejs-sandbox/translucent-material/index.html)
 
 ## TODO
 - Use mip maps for blur
