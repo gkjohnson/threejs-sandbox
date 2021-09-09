@@ -4,6 +4,8 @@
 
 Set of experiments and extensions to THREE.js. These pages are a sandbox of examples and not necessarily ready to include in projects and may require some work to properly and performantly integrate.
 
+If any classes are used in a project or application credit is appreciated (though not required) and let me know! I love seeing my work used in practice.
+
 ## Potential Projects
 
 - Deferred Renderer
