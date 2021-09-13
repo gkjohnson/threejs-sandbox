@@ -9,7 +9,7 @@ If any classes are used in a project or application credit is appreciated (thoug
 ## Potential Projects
 
 - Deferred Renderer
-- TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf))
+- TRAA, non float buffer on volume-lights ([see playdead implementation](https://github.com/playdeadgames/temporal/blob/master/GDC2016_Temporal_Reprojection_AA_INSIDE.pdf), [article by Alex Tardif](http://alextardif.com/TAA.html))
 - use GLSL syntax parser for debugger
 - [VXGI](https://wickedengine.net/2017/08/30/voxel-based-global-illumination/)
 - Subsurface Scattering
