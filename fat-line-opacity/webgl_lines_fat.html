@@ -103,16 +103,16 @@
 		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat lines</div>
 
 		<script type="module">
-			import * as THREE from '//cdn.skypack.dev/three@0.130.0/build/three.module.js?module';
+			import * as THREE from '//cdn.skypack.dev/three@0.130.0/build/three.module.js';
 
-			import Stats from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/stats.module.js?module';
+			import Stats from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/stats.module.js';
 
-			import { GUI } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/dat.gui.module.js?module';
-			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/controls/OrbitControls.js?module';
-			import { Line2 } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/Line2.js?module';
-			import { LineGeometry } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/LineGeometry.js?module';
+			import { GUI } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/libs/dat.gui.module.js';
+			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/controls/OrbitControls.js';
+			import { Line2 } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/Line2.js';
+			import { LineGeometry } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/lines/LineGeometry.js';
 			import { LineMaterial } from './src/LineMaterial.js';
-			import { GeometryUtils } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/utils/GeometryUtils.js?module';
+			import { GeometryUtils } from '//cdn.skypack.dev/three@0.130.0/examples/jsm/utils/GeometryUtils.js';
 
 			var cube, renderer, scene, camera, camera2, controls;
 			var linePrepass, matLinePrepass, line, matLine;
