@@ -623,7 +623,7 @@
 
 						if ( c.material ) {
 
-							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
 							c.material.uniforms.diffuse.value.set( linesColor );
 
 						}
@@ -647,7 +647,7 @@
 
 						if ( c.material ) {
 
-							c.visible = c.isLineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
 							c.material.color.set( linesColor );
 
 						}
