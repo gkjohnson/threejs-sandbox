@@ -16,6 +16,7 @@ import {
 	FloatType,
 	ShaderMaterial,
 	RepeatWrapping,
+	UniformsUtils,
 } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
 import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
@@ -244,12 +245,22 @@ export class MotionBlurPass extends Pass {
 
 				lastUsedFrame: - 1,
 				matrixWorld: obj.matrixWorld.clone(),
-				geometryMaterial: new ShaderMaterial( GeometryShader ),
-				velocityMaterial: new ShaderMaterial( VelocityShader ),
+				geometryMaterial: new ShaderMaterial( {
+					uniforms: UniformsUtils.clone( GeometryShader.uniforms ),
+					vertexShader: GeometryShader.vertexShader,
+					fragmentShader: GeometryShader.fragmentShader,
+				} ),
+				velocityMaterial: new ShaderMaterial( {
+					uniforms: UniformsUtils.clone( VelocityShader.uniforms ),
+					vertexShader: VelocityShader.vertexShader,
+					fragmentShader: VelocityShader.fragmentShader,
+				} ),
 				boneMatrices: null,
 				boneTexture: null,
 
 			};
+
+
 			prevPosMap.set( obj, data );
 
 		}
