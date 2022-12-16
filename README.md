@@ -1,6 +1,6 @@
 # threejs-sandbox
 
-[![build](https://img.shields.io/github/workflow/status/gkjohnson/threejs-sandbox/Node.js%20CI?style=flat-square&label=build)](https://github.com/gkjohnson/threejs-sandbox/actions)
+[![build](https://img.shields.io/github/actions/workflow/status/gkjohnson/threejs-sandbox/node.js.yml?style=flat-square&label=build&branch=master)](https://github.com/gkjohnson/threejs-sandbox/actions)
 [![twitter](https://flat.badgen.net/twitter/follow/garrettkjohnson)](https://twitter.com/garrettkjohnson)
 [![sponsors](https://img.shields.io/github/sponsors/gkjohnson?style=flat-square&color=1da1f2)](https://github.com/sponsors/gkjohnson/)
 
