@@ -35,6 +35,7 @@ If any classes are used in a project or application credit is appreciated (thoug
 - Screen Space Global Illumination
 - Triangle draw order reorganizer for transparency / overdraw
   - http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.83.572&rep=rep1&type=pdf
+- Temporal volume lights but with per-fragment jitter
 
 **Next**
 - Half Edge data structure
