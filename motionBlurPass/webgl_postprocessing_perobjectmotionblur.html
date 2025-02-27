@@ -37,19 +37,28 @@
 			A velocity buffer is rendered using the previous and current frame positions for each object </br> which is then used to smear the final frame.
 		</div>
 
+		<script type="importmap">
+			{
+  			"imports": {
+    			"three": "https://cdn.jsdelivr.net/npm/three@0.131.2/build/three.module.min.js",
+    			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.131.2/examples/jsm/"
+  			}
+			}
+		</script>
+
 		<script type="module">
 
-			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-			import { FXAAShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/FXAAShader.js';
-			import { GammaCorrectionShader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/shaders/GammaCorrectionShader.js';
-			import { EffectComposer } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/ShaderPass.js';
-			import { FBXLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/FBXLoader.js';
+			import * as THREE from 'three';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+			import { GammaCorrectionShader } from 'three/addons/shaders/GammaCorrectionShader.js';
+			import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+			import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+			import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+			import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
-			import Stats from '//cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
-			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
+			import Stats from 'three/addons/libs/stats.module.js';
+			import dat from '//cdn.jsdelivr.net/npm/dat.gui/build/dat.gui.module.js';
 
 			import { MotionBlurPass } from './src/MotionBlurPass.js';
 
@@ -85,7 +94,7 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xE91E63 ).convertGammaToLinear();
+				scene.background = new THREE.Color( 0xE91E63 ).convertSRGBToLinear();
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -100,7 +109,7 @@
 					metalness: 0.5,
 				} );
 
-				var textureLoader = new THREE.TextureLoader();
+				/*var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
 
 					map.wrapS = THREE.RepeatWrapping;
@@ -122,7 +131,7 @@
 					standardMaterial.normalMap = map;
 					standardMaterial.needsUpdate = true;
 
-				} );
+				} ); */
 
 				var geometry = new THREE.TorusKnotBufferGeometry( 2.5, 1, 150, 40 );
 				torusMesh1 = new THREE.Mesh( geometry, standardMaterial );

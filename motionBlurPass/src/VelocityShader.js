@@ -1,4 +1,4 @@
-import { Matrix4, ShaderChunk } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { Matrix4, ShaderChunk } from 'three';
 import { prev_skinning_pars_vertex, velocity_vertex } from './MotionBlurShaderChunks.js';
 
 export const VelocityShader = {

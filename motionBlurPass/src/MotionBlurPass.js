@@ -17,8 +17,8 @@ import {
 	ShaderMaterial,
 	RepeatWrapping,
 	UniformsUtils,
-} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+} from 'three';
+import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
@@ -164,7 +164,8 @@ export class MotionBlurPass extends Pass {
 
 		// TODO: This is getting called just to set 'currentRenderState' in the renderer
 		// NOTE -- why do we need this?
-		renderer.compile( scene, camera );
+		//console.log( scene, camera );
+		//renderer.compile( scene, camera );
 		this._ensurePrevCameraTransform();
 
 		switch ( debug.display ) {
@@ -391,7 +392,7 @@ export class MotionBlurPass extends Pass {
 			uniforms.prevProjectionMatrix.value.copy( projMat );
 			uniforms.prevModelViewMatrix.value.multiplyMatrices( invMat, data.matrixWorld );
 
-			renderer.renderBufferDirect( camera, null, mesh.geometry, material, mesh, null );
+			renderer.render( this.scene, camera );
 
 			if ( saveState ) {
 
