@@ -40,8 +40,8 @@
 		<script type="importmap">
 			{
   			"imports": {
-    			"three": "https://cdn.jsdelivr.net/npm/three@0.131.2/build/three.module.min.js",
-    			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.131.2/examples/jsm/"
+    			"three": "https://cdn.jsdelivr.net/npm/three@0.174.0/build/three.module.min.js",
+    			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.174.0/examples/jsm/"
   			}
 			}
 		</script>
@@ -94,7 +94,7 @@
 				camera.position.set( 0.0, 5, 5 * 3.5 );
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xE91E63 ).convertSRGBToLinear();
+				scene.background = new THREE.Color( 0xE91E63 );
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -133,7 +133,7 @@
 
 				} ); */
 
-				var geometry = new THREE.TorusKnotBufferGeometry( 2.5, 1, 150, 40 );
+				var geometry = new THREE.TorusKnotGeometry( 2.5, 1, 150, 40 );
 				torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
 				torusMesh1.position.set( -6, 0, 6 );
 				torusMesh1.scale.multiplyScalar( 0.5 );
@@ -189,7 +189,7 @@
 				scene.add( directionalLight );
 
 				// Shadow
-				var plane = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
+				var plane = new THREE.Mesh( new THREE.PlaneGeometry(), new THREE.ShadowMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
 				plane.receiveShadow = true;
 				plane.rotation.set( -Math.PI / 2, 0, 0 );
 				plane.scale.multiplyScalar( 30 );
