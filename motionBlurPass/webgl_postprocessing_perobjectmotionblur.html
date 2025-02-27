@@ -109,7 +109,7 @@
 					metalness: 0.5,
 				} );
 
-				/*var textureLoader = new THREE.TextureLoader();
+				var textureLoader = new THREE.TextureLoader();
 				textureLoader.load( 'https://rawgit.com/mrdoob/three.js/r94/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
 
 					map.wrapS = THREE.RepeatWrapping;
@@ -131,7 +131,7 @@
 					standardMaterial.normalMap = map;
 					standardMaterial.needsUpdate = true;
 
-				} ); */
+				} );
 
 				var geometry = new THREE.TorusKnotGeometry( 2.5, 1, 150, 40 );
 				torusMesh1 = new THREE.Mesh( geometry, standardMaterial );
