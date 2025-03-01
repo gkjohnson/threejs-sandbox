@@ -1,35 +1,29 @@
-import { ShaderChunk } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { ShaderChunk } from 'three';
 
 // Modified ShaderChunk.skinning_pars_vertex to handle
 // a second set of bone information from the previou frame
-export const prev_skinning_pars_vertex =
-	`
-		#ifdef USE_SKINNING
-		#ifdef BONE_TEXTURE
-			uniform sampler2D prevBoneTexture;
-			mat4 getPrevBoneMatrix( const in float i ) {
-				float j = i * 4.0;
-				float x = mod( j, float( boneTextureSize ) );
-				float y = floor( j / float( boneTextureSize ) );
-				float dx = 1.0 / float( boneTextureSize );
-				float dy = 1.0 / float( boneTextureSize );
-				y = dy * ( y + 0.5 );
-				vec4 v1 = texture2D( prevBoneTexture, vec2( dx * ( x + 0.5 ), y ) );
-				vec4 v2 = texture2D( prevBoneTexture, vec2( dx * ( x + 1.5 ), y ) );
-				vec4 v3 = texture2D( prevBoneTexture, vec2( dx * ( x + 2.5 ), y ) );
-				vec4 v4 = texture2D( prevBoneTexture, vec2( dx * ( x + 3.5 ), y ) );
-				mat4 bone = mat4( v1, v2, v3, v4 );
-				return bone;
-			}
-		#else
-			uniform mat4 prevBoneMatrices[ MAX_BONES ];
-			mat4 getPrevBoneMatrix( const in float i ) {
-				mat4 bone = prevBoneMatrices[ int(i) ];
-				return bone;
-			}
-		#endif
-		#endif
-	`;
+export const prev_skinning_pars_vertex = /* glsl */`
+#ifdef USE_SKINNING
+
+	uniform highp sampler2D prevBoneTexture;
+
+	mat4 getPrevBoneMatrix( const in float i ) {
+
+		int size = textureSize( prevBoneTexture, 0 ).x;
+		int j = int( i ) * 4;
+		int x = j % size;
+		int y = j / size;
+		vec4 v1 = texelFetch( prevBoneTexture, ivec2( x, y ), 0 );
+		vec4 v2 = texelFetch( prevBoneTexture, ivec2( x + 1, y ), 0 );
+		vec4 v3 = texelFetch( prevBoneTexture, ivec2( x + 2, y ), 0 );
+		vec4 v4 = texelFetch( prevBoneTexture, ivec2( x + 3, y ), 0 );
+
+		return mat4( v1, v2, v3, v4 );
+
+	}
+
+#endif
+`;
 
 // Returns the body of the vertex shader for the velocity buffer and
 // outputs the position of the current and last frame positions

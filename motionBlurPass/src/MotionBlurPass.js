@@ -17,8 +17,8 @@ import {
 	ShaderMaterial,
 	RepeatWrapping,
 	UniformsUtils,
-} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-import { Pass, FullScreenQuad } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/postprocessing/Pass.js';
+} from 'three';
+import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { VelocityShader } from './VelocityShader.js';
 import { GeometryShader } from './GeometryShader.js';
 import { CompositeShader } from './CompositeShader.js';
