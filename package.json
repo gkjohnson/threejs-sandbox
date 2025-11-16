@@ -4,7 +4,7 @@
   "lint": "eslint \"./**/*.js\""
  },
  "devDependencies": {
-  "eslint": "^7.11.0",
+  "eslint": "^9.39.1",
   "eslint-config-mdcs": "^4.2.3",
   "static-server": "^2.2.1"
  }
