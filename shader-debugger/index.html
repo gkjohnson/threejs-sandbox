@@ -232,7 +232,7 @@
 
 				new RGBELoader()
 					.setDataType( THREE.UnsignedByteType )
-					.setPath( 'https://rawgit.com/mrdoob/three.js/master/examples/textures/equirectangular/' )
+					.setPath( 'https://raw.githack.com/mrdoob/three.js/r150/examples/textures/equirectangular/' )
 					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
 
 						var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
@@ -244,7 +244,7 @@
 						pmremGenerator.dispose();
 
 						new GLTFLoader().load(
-							'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+							'https://raw.githack.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
 							gltf => {
 
 								var roughnessMipmapper = new RoughnessMipmapper( renderer );
