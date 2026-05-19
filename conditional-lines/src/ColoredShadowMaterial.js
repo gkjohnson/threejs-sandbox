@@ -1,4 +1,4 @@
-import { ShaderMaterial, UniformsUtils, ShaderLib, Color } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { ShaderMaterial, UniformsUtils, ShaderLib, Color } from 'three';
 
 export class ColoredShadowMaterial extends ShaderMaterial {
 
@@ -44,7 +44,6 @@ export class ColoredShadowMaterial extends ShaderMaterial {
 				#endif
 				#include <common>
 				#include <uv_pars_vertex>
-				#include <uv2_pars_vertex>
 				#include <displacementmap_pars_vertex>
 				#include <envmap_pars_vertex>
 				#include <color_pars_vertex>
@@ -56,7 +55,6 @@ export class ColoredShadowMaterial extends ShaderMaterial {
 				#include <clipping_planes_pars_vertex>
 				void main() {
 					#include <uv_vertex>
-					#include <uv2_vertex>
 					#include <color_vertex>
 					#include <beginnormal_vertex>
 					#include <morphnormal_vertex>
@@ -93,7 +91,6 @@ export class ColoredShadowMaterial extends ShaderMaterial {
 				#include <dithering_pars_fragment>
 				#include <color_pars_fragment>
 				#include <uv_pars_fragment>
-				#include <uv2_pars_fragment>
 				#include <map_pars_fragment>
 				#include <alphamap_pars_fragment>
 				#include <aomap_pars_fragment>
@@ -136,7 +133,7 @@ export class ColoredShadowMaterial extends ShaderMaterial {
 
 					gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 					#include <tonemapping_fragment>
-					#include <encodings_fragment>
+					#include <colorspace_fragment>
 					#include <fog_fragment>
 					#include <premultiplied_alpha_fragment>
 					#include <dithering_fragment>

@@ -1,5 +1,5 @@
-import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-import { LineSegmentsGeometry } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineSegmentsGeometry.js';
+import * as THREE from 'three';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 
 export class ConditionalLineSegmentsGeometry extends LineSegmentsGeometry {
 

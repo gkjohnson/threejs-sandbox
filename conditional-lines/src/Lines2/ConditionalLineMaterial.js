@@ -3,7 +3,7 @@ import {
 	UniformsLib,
 	UniformsUtils,
 	Vector2
-} from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+} from 'three';
 /**
  * parameters = {
  *  color: <hex>,
@@ -266,7 +266,7 @@ const shader = {
 			gl_FragColor = vec4( diffuseColor.rgb, diffuseColor.a );
 
 			#include <tonemapping_fragment>
-			#include <encodings_fragment>
+			#include <colorspace_fragment>
 			#include <fog_fragment>
 			#include <premultiplied_alpha_fragment>
 
