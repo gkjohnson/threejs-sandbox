@@ -26,6 +26,15 @@
 				width: 100%;
 			}
 		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.min.js",
+					"three/": "https://cdn.jsdelivr.net/npm/three@0.184.0/",
+					"dat.gui": "https://cdn.skypack.dev/dat.gui/build/dat.gui.module.js"
+				}
+			}
+		</script>
 	</head>
 	<body>
 
@@ -44,10 +53,10 @@
 
 		<script type="module">
 
-			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+			import * as THREE from 'three';
+			import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
+			import dat from 'dat.gui';
 
 			import { bicubicShaderFunctions } from './src/bicubicShaderFunctions.js';
 
@@ -167,7 +176,7 @@
 					nearestTexture.magFilter = THREE.NearestFilter;
 					nearestTexture.needsUpdate = true;
 
-					nearestPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					nearestPlane = new THREE.Mesh( new THREE.PlaneGeometry() );
 					nearestPlane.material = new THREE.ShaderMaterial( getMipShader() );
 					nearestPlane.material.side = THREE.DoubleSide;
 					nearestPlane.material.uniforms.map.value = nearestTexture;
@@ -181,13 +190,13 @@
 					linearTexture.minFilter = THREE.LinearMipmapNearestFilter;
 					linearTexture.magFilter = THREE.LinearFilter;
 
-					linearPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					linearPlane = new THREE.Mesh( new THREE.PlaneGeometry() );
 					linearPlane.material = new THREE.ShaderMaterial( getMipShader() );
 					linearPlane.material.side = THREE.DoubleSide;
 					linearPlane.material.uniforms.map.value = linearTexture;
 					scene.add( linearPlane );
 
-					cubicPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry() );
+					cubicPlane = new THREE.Mesh( new THREE.PlaneGeometry() );
 					cubicPlane.material = new THREE.ShaderMaterial( getCubicShader() );
 					cubicPlane.material.side = THREE.DoubleSide;
 					cubicPlane.material.uniforms.map.value = linearTexture;
