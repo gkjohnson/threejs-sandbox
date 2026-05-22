@@ -26,6 +26,15 @@
 				width: 100%;
 			}
 		</style>
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/",
+				"dat.gui": "https://cdn.skypack.dev/dat.gui/build/dat.gui.module.js"
+			}
+		}
+	</script>
 	</head>
 	<body>
 
@@ -35,15 +44,15 @@
 
 		<script type="module">
 
-			import * as THREE from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
-			import { GLTFLoader } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/loaders/GLTFLoader.js';
-			import { OrbitControls } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-			import { BufferGeometryUtils } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/utils/BufferGeometryUtils.js';
-			import dat from '//cdn.skypack.dev/dat.gui/build/dat.gui.module.js';
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+			import dat from 'dat.gui';
 
-			import { LineSegmentsGeometry } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineSegmentsGeometry.js';
-			import { LineSegments2 } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineSegments2.js';
-			import { LineMaterial } from '//cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
+			import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+			import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+			import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
 			import { OutsideEdgesGeometry } from './src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from './src/ConditionalEdgesGeometry.js';
@@ -156,8 +165,8 @@
 
 				} );
 
-				const mergedGeometries = BufferGeometryUtils.mergeBufferGeometries( geometry, false );
-				const mergedGeometry = BufferGeometryUtils.mergeVertices( mergedGeometries ).center();
+				const mergedGeometries = mergeGeometries( geometry, false );
+				const mergedGeometry = mergeVertices( mergedGeometries ).center();
 
 				const group = new THREE.Group();
 				const mesh = new THREE.Mesh( mergedGeometry );
@@ -336,7 +345,7 @@
 						const mergeGeom = mesh.geometry.clone();
 						mergeGeom.deleteAttribute( 'uv' );
 						mergeGeom.deleteAttribute( 'uv2' );
-						lineGeom = new OutsideEdgesGeometry( BufferGeometryUtils.mergeVertices( mergeGeom, 1e-3 ) );
+						lineGeom = new OutsideEdgesGeometry( mergeVertices( mergeGeom, 1e-3 ) );
 
 					}
 
@@ -418,7 +427,7 @@
 					}
 
 					// Create the conditional edges geometry and associated material
-					const lineGeom = new ConditionalEdgesGeometry( BufferGeometryUtils.mergeVertices( mergedGeom ) );
+					const lineGeom = new ConditionalEdgesGeometry( mergeVertices( mergedGeom ) );
 					const material = new THREE.ShaderMaterial( ConditionalEdgesShader );
 					material.uniforms.diffuse.value.set( LIGHT_LINES );
 
@@ -456,13 +465,13 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.shadowMap.type = THREE.PCFShadowMap;
 
 				document.body.appendChild( renderer.domElement );
 
 				// Floor
 				floor = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry(),
+					new THREE.PlaneGeometry(),
 					new THREE.ShadowMaterial( { color: LIGHT_LINES, opacity: 0.25, transparent: true } )
 				);
 				floor.rotation.x = - Math.PI / 2;
@@ -487,14 +496,14 @@
 				scene.add( dirLight );
 
 				const cylinder = new THREE.Group();
-				cylinder.add( new THREE.Mesh( new THREE.CylinderBufferGeometry( 0.25, 0.25, 0.5, 100 ) ) );
+				cylinder.add( new THREE.Mesh( new THREE.CylinderGeometry( 0.25, 0.25, 0.5, 100 ) ) );
 				cylinder.children[ 0 ].geometry.computeBoundingBox();
 				cylinder.children[ 0 ].castShadow = true;
 				models.CYLINDER = cylinder;
 
 				models.HELMET = null;
 				new GLTFLoader().load(
-					'https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
+					'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
 					gltf => {
 
 						const model = mergeObject( gltf.scene );

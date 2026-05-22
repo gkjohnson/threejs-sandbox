@@ -1,4 +1,4 @@
-import { BufferGeometry, Vector3, BufferAttribute } from '//cdn.skypack.dev/three@0.130.1/build/three.module.js';
+import { BufferGeometry, Vector3, BufferAttribute } from 'three';
 
 const vec = new Vector3();
 export class OutsideEdgesGeometry extends BufferGeometry {
