@@ -29,7 +29,11 @@ export class ConditionalEdgesNodeMaterial extends NodeMaterial {
 
 	setup( builder ) {
 
-		this.colorNode = vec4( this._diffuse, this._opacity );
+		this.colorNode = Fn( () => {
+
+			return this._diffuse;
+
+		} )();
 
 		this.vertexNode = Fn( () => {
 
@@ -49,15 +53,12 @@ export class ConditionalEdgesNodeMaterial extends NodeMaterial {
 			p0.divAssign( p0.w );
 			p1.divAssign( p1.w );
 
-			// Direction of the segment and its screen-space orthogonal (normal)
 			const dir = p1.xy.sub( p0.xy );
 			const norm = vec2( negate( dir.y ), dir.x );
 
 			const c0dir = c0.xy.sub( p1.xy );
 			const c1dir = c1.xy.sub( p1.xy );
 
-			// Control points on opposite sides of the edge normal → silhouette → draw
-			// Control points on the same side → interior edge → collapse vertex to discard
 			const d0 = dot( normalize( norm ), normalize( c0dir ) );
 			const d1 = dot( normalize( norm ), normalize( c1dir ) );
 			const discardFlag = float( sign( d0 ).notEqual( sign( d1 ) ) );

@@ -47,6 +47,7 @@
 		<script type="module">
 
 			import * as THREE from 'three';
+			import { WebGPURenderer } from 'three/webgpu';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -66,10 +67,8 @@
 			import { ConditionalEdgesNodeMaterial } from './nodeMaterials/ConditionalEdgesNodeMaterial.js';
 			import { ConditionalLineNodeMaterial } from './nodeMaterials/ConditionalLineNodeMaterial.js';
 
-
 			// globals
-			var params = {
-				currentRenderer: 'WebGL',
+			const params = {
 				colors: 'LIGHT',
 				backgroundColor: '#0d2a28',
 				modelColor: '#0d2a28',
@@ -82,13 +81,23 @@
 				display: 'THRESHOLD_EDGES',
 				displayConditionalEdges: true,
 				thickness: 1,
-				useThickLines: false,
 				model: 'HELMET',
 
 				randomize: () => randomizeColors(),
 			};
-			let renderer, webgpuRenderer;
-			let camera, scene, controls, edgesModel, originalModel, backgroundModel, conditionalModel, shadowModel, floor, depthModel, gui;
+			let renderer;
+			let camera, scene, controls;
+			// Default Edges
+			let edgesModel;
+			// Initial group created from model
+			let originalModel
+			// Unlit model underneath colored edges
+			let backgroundModel;
+			// Model that modifies the conditional lines
+			let conditionalModel;
+			// Lit model underneath colored edges
+			let shadowModel;
+			let floor, depthModel, gui;
 
 			const models = {};
 			const color = new THREE.Color();
@@ -104,7 +113,7 @@
 			const DARK_LINES = 0xb0bec5;
 			const DARK_SHADOW = 0x2c2e2f;
 
-			init();
+			await init();
 			animate();
 
 			function randomizeColors() {
@@ -361,15 +370,8 @@
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
-					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new LineMaterial( { color: LIGHT_LINES, linewidth: 3 } ) );
-					thickLines.position.copy( mesh.position );
-					thickLines.scale.copy( mesh.scale );
-					thickLines.rotation.copy( mesh.rotation );
-
 					parent.remove( mesh );
 					parent.add( line );
-					parent.add( thickLines );
 
 				}
 
@@ -445,7 +447,11 @@
 					line.rotation.copy( mesh.rotation );
 
 					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
-					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineNodeMaterial( { color: LIGHT_LINES, linewidth: 2 } ) );
+					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineNodeMaterial( {
+						color: LIGHT_LINES,
+						linewidth: 10,
+						worldUnits: true
+					} ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
 					thickLines.rotation.copy( mesh.rotation );
@@ -458,7 +464,7 @@
 
 			}
 
-			function init() {
+			async function init() {
 
 				// initialize renderer, scene, camera
 				scene = new THREE.Scene();
@@ -468,8 +474,9 @@
 				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
 				scene.add( camera );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setNodesHandler( new WebGLNodesHandler() );
+				// WebGPURenderer
+				renderer = new WebGPURenderer({antialias: true});
+				await renderer.init();
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
@@ -577,8 +584,6 @@
 
 				linesFolder.add( params, 'displayConditionalEdges' );
 
-				linesFolder.add( params, 'useThickLines' );
-
 				linesFolder.add( params, 'thickness', 0, 5 );
 
 				linesFolder.open();
@@ -597,6 +602,9 @@
 
 				renderer.setSize( width, height );
 				renderer.setPixelRatio( window.devicePixelRatio );
+
+				webgpuRenderer.setSize(width, height)
+				webgpuRenderer.setPixelRatio(window.devicePixelRatio)
 
 			}
 
@@ -630,17 +638,24 @@
 					conditionalModel.visible = params.displayConditionalEdges;
 					conditionalModel.traverse( c => {
 
-						if ( c.material && c.material.resolution ) {
-
-							renderer.getSize( c.material.resolution );
-							c.material.resolution.multiplyScalar( window.devicePixelRatio );
-							c.material.linewidth = params.thickness;
-
-						}
-
 						if ( c.material ) {
 
-							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
+							// Legacy ShaderMaterial: needs manual resolution update
+							if ( c.material.resolution ) {
+
+								renderer.getSize( c.material.resolution );
+								c.material.resolution.multiplyScalar( window.devicePixelRatio );
+
+							}
+
+							// All line materials (ShaderMaterial or Line2NodeMaterial subclass)
+							if ( c.material.linewidth !== undefined ) {
+
+								c.material.linewidth = params.thickness;
+
+							}
+
+							c.visible = c instanceof LineSegments2 ? false : true;
 							c.material.color = linesColor;
 
 						}
@@ -654,17 +669,22 @@
 
 					edgesModel.traverse( c => {
 
-						if ( c.material && c.material.resolution ) {
-
-							renderer.getSize( c.material.resolution );
-							c.material.resolution.multiplyScalar( window.devicePixelRatio );
-							c.material.linewidth = params.thickness;
-
-						}
-
 						if ( c.material ) {
 
-							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
+							if ( c.material.resolution ) {
+
+								renderer.getSize( c.material.resolution );
+								c.material.resolution.multiplyScalar( window.devicePixelRatio );
+
+							}
+
+							if ( c.material.linewidth !== undefined ) {
+
+								c.material.linewidth = params.thickness;
+
+							}
+
+							c.visible = c instanceof LineSegments2 ? false : true;
 							c.material.color.set( linesColor );
 
 						}
@@ -725,7 +745,7 @@
 
 			function render() {
 
-				params.currentRenderer = 'WebGL' ? renderer.render( scene, camera ) : webgpuRenderer.render(scene, camera);
+				renderer.render(scene, camera);
 
 			}
 
