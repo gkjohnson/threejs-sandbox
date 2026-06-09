@@ -51,20 +51,21 @@
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-			import { WebGLNodesHandler } from 'three/addons/tsl/WebGLNodesHandler.js';
 			import dat from 'dat.gui';
 
-			// Existing WebGL materials
-			import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+			// WebGPU compliant geometry (replacement for WebGL LineSegments2)
 			import { LineSegments2 } from 'three/addons/lines/webgpu/LineSegments2.js';
+
+			// Existing custom geometry classes
+			import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 			import { OutsideEdgesGeometry } from '../src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from '../src/ConditionalEdgesGeometry.js';
 			import { ConditionalLineSegmentsGeometry } from '../src/Lines2/ConditionalLineSegmentsGeometry.js';
 
-			// Node materials
-			import { ColoredShadowNodeMaterial } from './nodeMaterials/ColoredShadowNodeMaterial.js';
-			import { ConditionalEdgesNodeMaterial } from './nodeMaterials/ConditionalEdgesNodeMaterial.js';
-			import { ConditionalLineNodeMaterial } from './nodeMaterials/ConditionalLineNodeMaterial.js';
+			// Custom Node materials
+			import { ColoredShadowNodeMaterial } from './nodeMaterials/ColoredShadowNodeMaterial.js'; // port of ColoredShadowMaterial.js
+			import { ConditionalEdgesNodeMaterial } from './nodeMaterials/ConditionalEdgesNodeMaterial.js'; // port of ConditionalEdgesShader.js
+			import { ConditionalLineNodeMaterial } from './nodeMaterials/ConditionalLineNodeMaterial.js'; // port of Lines2/ConditionalLineMaterial.js
 
 			// globals
 			const params = {
