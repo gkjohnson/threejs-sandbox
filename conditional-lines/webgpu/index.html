@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - general conditional edges</title>
+		<title>threejs webgpu - general conditional edges</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -47,7 +47,7 @@
 		<script type="module">
 
 			import * as THREE from 'three';
-			import { WebGPURenderer } from 'three/webgpu';
+			import { WebGPURenderer, Line2NodeMaterial } from 'three/webgpu';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -56,8 +56,7 @@
 
 			// Existing WebGL materials
 			import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
-			import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
-			import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+			import { LineSegments2 } from 'three/addons/lines/webgpu/LineSegments2.js';
 			import { OutsideEdgesGeometry } from '../src/OutsideEdgesGeometry.js';
 			import { ConditionalEdgesGeometry } from '../src/ConditionalEdgesGeometry.js';
 			import { ConditionalLineSegmentsGeometry } from '../src/Lines2/ConditionalLineSegmentsGeometry.js';
@@ -81,6 +80,7 @@
 				display: 'THRESHOLD_EDGES',
 				displayConditionalEdges: true,
 				thickness: 1,
+				useThickLines: false,
 				model: 'HELMET',
 
 				randomize: () => randomizeColors(),
@@ -370,8 +370,15 @@
 					line.scale.copy( mesh.scale );
 					line.rotation.copy( mesh.rotation );
 
+					const thickLineGeom = new LineSegmentsGeometry().fromEdgesGeometry( lineGeom );
+					const thickLines = new LineSegments2( thickLineGeom, new Line2NodeMaterial( { color: LIGHT_LINES, linewidth: 3 } ) );
+					thickLines.position.copy( mesh.position );
+					thickLines.scale.copy( mesh.scale );
+					thickLines.rotation.copy( mesh.rotation );
+
 					parent.remove( mesh );
 					parent.add( line );
+					parent.add( thickLines );
 
 				}
 
@@ -449,8 +456,7 @@
 					const thickLineGeom = new ConditionalLineSegmentsGeometry().fromConditionalEdgesGeometry( lineGeom );
 					const thickLines = new LineSegments2( thickLineGeom, new ConditionalLineNodeMaterial( {
 						color: LIGHT_LINES,
-						linewidth: 10,
-						worldUnits: true
+						linewidth: 2
 					} ) );
 					thickLines.position.copy( mesh.position );
 					thickLines.scale.copy( mesh.scale );
@@ -584,6 +590,8 @@
 
 				linesFolder.add( params, 'displayConditionalEdges' );
 
+				linesFolder.add( params, 'useThickLines' );
+
 				linesFolder.add( params, 'thickness', 0, 5 );
 
 				linesFolder.open();
@@ -602,9 +610,6 @@
 
 				renderer.setSize( width, height );
 				renderer.setPixelRatio( window.devicePixelRatio );
-
-				webgpuRenderer.setSize(width, height)
-				webgpuRenderer.setPixelRatio(window.devicePixelRatio)
 
 			}
 
@@ -640,23 +645,15 @@
 
 						if ( c.material ) {
 
-							// Legacy ShaderMaterial: needs manual resolution update
-							if ( c.material.resolution ) {
-
-								renderer.getSize( c.material.resolution );
-								c.material.resolution.multiplyScalar( window.devicePixelRatio );
-
-							}
-
-							// All line materials (ShaderMaterial or Line2NodeMaterial subclass)
+							// All line materials (LineBasicMaterial or Line2NodeMaterial subclass)
 							if ( c.material.linewidth !== undefined ) {
 
 								c.material.linewidth = params.thickness;
 
 							}
 
-							c.visible = c instanceof LineSegments2 ? false : true;
-							c.material.color = linesColor;
+							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
+							c.material.color.set( linesColor );
 
 						}
 
@@ -671,20 +668,13 @@
 
 						if ( c.material ) {
 
-							if ( c.material.resolution ) {
-
-								renderer.getSize( c.material.resolution );
-								c.material.resolution.multiplyScalar( window.devicePixelRatio );
-
-							}
-
 							if ( c.material.linewidth !== undefined ) {
 
 								c.material.linewidth = params.thickness;
 
 							}
 
-							c.visible = c instanceof LineSegments2 ? false : true;
+							c.visible = c instanceof LineSegments2 ? params.useThickLines : ! params.useThickLines;
 							c.material.color.set( linesColor );
 
 						}

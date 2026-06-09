@@ -36,8 +36,8 @@ class ConditionalLineNodeMaterial extends Line2NodeMaterial {
 
 	setupVertex( builder ) {
 
-		// clip-space position computed by Line2NodeMaterial.
 		const mvp = super.setupVertex( builder );
+		const lineClip = this.vertexNode || mvp;
 
 		const control0 = attribute( 'control0' );
 		const control1 = attribute( 'control1' );
@@ -66,7 +66,11 @@ class ConditionalLineNodeMaterial extends Line2NodeMaterial {
 		const d1 = dot( normalize( segNorm ), normalize( c1dir ) );
 		const discardFlag = float( sign( d0 ).notEqual( sign( d1 ) ) );
 
-		return select( discardFlag.greaterThan( 0.5 ), c0, mvp );
+		// Collapse all vertices of a discarded segment onto a single point so the
+		// instanced quad degenerates and rasterizes nothing.
+		this.vertexNode = select( discardFlag.greaterThan( 0.5 ), c0, lineClip );
+
+		return this.vertexNode;
 
 	}
 
