@@ -478,7 +478,7 @@
 				scene.background = new THREE.Color( LIGHT_BACKGROUND );
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
-				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 0.75 );
+				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 2 );
 				scene.add( camera );
 
 				// WebGPURenderer
@@ -525,7 +525,7 @@
 
 				models.HELMET = null;
 				new GLTFLoader().load(
-					'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/FlightHelmet/glTF/FlightHelmet.gltf',
+					'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/heads/main/models/nasa-m2020/MER_static.glb',
 					gltf => {
 
 						const model = mergeObject( gltf.scene );
