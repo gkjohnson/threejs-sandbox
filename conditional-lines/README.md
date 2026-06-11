@@ -6,9 +6,9 @@ Generalized conditional line shader and geometry generator based on [LDrawLoader
 
 Provides an `OutsideEdgesGeometry` for generating edges based on non-merged edges rather than face normals within a threshold.
 
-[WebGL Demo Here](https://gkjohnson.github.io/threejs-sandbox/conditional-lines/).
+[WebGL Demo Here](https://gkjohnson.github.io/threejs-sandbox/conditional-lines/)
 
-[WebGPU Demo Here](https://gkjohnson.github.io/threejs-sandbox/conditional-lines/webgpu/).
+[WebGPU Demo Here](https://gkjohnson.github.io/threejs-sandbox/conditional-lines/webgpu/)
 
 ## Possible Improvements
 
