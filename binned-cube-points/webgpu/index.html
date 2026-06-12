@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>threejs webgl - postprocessing - binned cube points</title>
+		<title>threejs webgpu - postprocessing - binned cube points</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -30,7 +30,9 @@
 	<script type="importmap">
 		{
 			"imports": {
-				"three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+				"three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.webgpu.js",
+				"three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.webgpu.js",
+				"three/tsl": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.tsl.js",
 				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
 			}
 		}
@@ -46,6 +48,7 @@
 		<script type="module">
 
 			import * as THREE from 'three';
+			import { Fn, instancedArray, instanceIndex, uniform, positionLocal } from 'three/tsl';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 			import Stats from 'three/addons/libs/stats.module.js';
@@ -61,13 +64,14 @@
 			var camera, scene, renderer, controls;
 			var points, instanceMesh, instanceCount, pointsArr;
 			var instancesNeedUpdate = true;
+			var computeBins;
 
-			// reused scratch objects for building the per-instance matrices
-			const tempObject = new THREE.Object3D();
-			const tempBin = new THREE.Vector3();
+			// TSL uniforms shared by the compute kernel and the cube material.
+			// uniform() keeps a live reference to params.offset, so the GUI edits it in place.
+			const scaleUniform = uniform( params.scale );
+			const offsetUniform = uniform( params.offset );
 
 			init();
-			animate();
 
 			function init() {
 
@@ -79,7 +83,7 @@
 				scene.background = new THREE.Color( 0x263238 );
 				scene.fog = new THREE.Fog(0x263238, 0, 60);
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGPURenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
@@ -107,10 +111,33 @@
 				scene.add(points);
 
 				var cubeGeometry = new THREE.BoxGeometry();
-				var instanceMat = new THREE.MeshStandardMaterial();
 
 				instanceCount = pointsArr.length / 3;
+
+				const pointsBuffer = instancedArray( pointsArr, 'vec3' );
+				const binnedBuffer = instancedArray( instanceCount, 'vec3' );
+
+				computeBins = Fn( () => {
+
+					const point = pointsBuffer.element( instanceIndex );
+
+					const binned = point
+						.add( offsetUniform )
+						.div( scaleUniform )
+						.floor()
+						.mul( scaleUniform )
+						.add( scaleUniform.mul( 0.5 ) )
+						.sub( offsetUniform );
+
+					binnedBuffer.element( instanceIndex ).assign( binned );
+
+				} )().compute( instanceCount );
+
+				var instanceMat = new THREE.MeshStandardNodeMaterial();
+				instanceMat.positionNode = positionLocal.mul( scaleUniform ).add( binnedBuffer.toAttribute() );
+
 				instanceMesh = new THREE.InstancedMesh( cubeGeometry, instanceMat, instanceCount );
+				instanceMesh.frustumCulled = false;
 				scene.add( instanceMesh );
 
 				var dirLight = new THREE.DirectionalLight( 0xffffff, Math.PI );
@@ -120,7 +147,6 @@
 				var ambientLight = new THREE.AmbientLight(0xffffff, Math.PI);
 				scene.add(ambientLight);
 
-				// camera controls
 				controls = new OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 5;
 				controls.maxDistance = 200;
@@ -131,7 +157,12 @@
 				var gui = new GUI();
 				gui.width = 300;
 
-				gui.add(params, 'scale').min(0.25).max(3).onChange( () => instancesNeedUpdate = true );
+				gui.add(params, 'scale').min(0.25).max(3).onChange( v => {
+
+					scaleUniform.value = v;
+					instancesNeedUpdate = true;
+
+				} );
 				gui.add(params, 'showPoints');
 
 				var folder = gui.addFolder('offset');
@@ -140,6 +171,8 @@
 				folder.add(params.offset, 'z').min(-3).max(3).step(0.01).onChange( () => instancesNeedUpdate = true );
 				folder.open();
 				gui.open();
+
+				renderer.setAnimationLoop( render );
 
 			}
 
@@ -155,49 +188,12 @@
 
 			}
 
-			function animate() {
-
-				requestAnimationFrame( animate );
-				render();
-
-			}
-
-			function updateInstances() {
-
-				var scale = params.scale;
-				for ( var i = 0; i < instanceCount; i ++ ) {
-
-					tempBin.set(
-						pointsArr[ i * 3 + 0 ],
-						pointsArr[ i * 3 + 1 ],
-						pointsArr[ i * 3 + 2 ]
-					);
-
-					// Bin the point into a grid cell of size `scale` and center the cube in it.
-					// Mirrors the per-vertex math the old custom shader performed.
-					tempBin.add( params.offset );
-					tempBin.divideScalar( scale );
-					tempBin.floor();
-					tempBin.multiplyScalar( scale );
-					tempBin.addScalar( scale * 0.5 );
-					tempBin.sub( params.offset );
-
-					tempObject.position.copy( tempBin );
-					tempObject.scale.setScalar( scale );
-					tempObject.updateMatrix();
-					instanceMesh.setMatrixAt( i, tempObject.matrix );
-
-				}
-
-				instanceMesh.instanceMatrix.needsUpdate = true;
-
-			}
-
 			function render() {
 
 				if ( instancesNeedUpdate ) {
 
-					updateInstances();
+					// run binning on GPU
+					renderer.compute( computeBins );
 					instancesNeedUpdate = false;
 
 				}
