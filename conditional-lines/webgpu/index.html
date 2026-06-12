@@ -82,7 +82,7 @@
 				displayConditionalEdges: true,
 				thickness: 1,
 				useThickLines: false,
-				model: 'HELMET',
+				model: 'ROVER',
 
 				randomize: () => randomizeColors(),
 			};
@@ -478,7 +478,7 @@
 				scene.background = new THREE.Color( LIGHT_BACKGROUND );
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 2000 );
-				camera.position.set( -1, 0.5, 2 ).multiplyScalar( 2 );
+				camera.position.set( -1, 0.5, 2 );
 				scene.add( camera );
 
 				// WebGPURenderer
@@ -502,14 +502,12 @@
 				scene.add( floor );
 
 				// Lights
-				const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 3.0 );
 				dirLight.position.set( 5, 10, 5 );
 				dirLight.castShadow = true;
 				dirLight.shadow.bias = -1e-10;
 				dirLight.shadow.mapSize.width = 2048;
 				dirLight.shadow.mapSize.height = 2048;
-
-				window.dirLight = dirLight;
 
 				const shadowCam = dirLight.shadow.camera;
 				shadowCam.left = shadowCam.bottom = -1;
@@ -523,16 +521,20 @@
 				cylinder.children[ 0 ].castShadow = true;
 				models.CYLINDER = cylinder;
 
-				models.HELMET = null;
+				models.ROVER = null;
 				new GLTFLoader().load(
 					'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/heads/main/models/nasa-m2020/MER_static.glb',
 					gltf => {
+
+						gltf.scene.scale.setScalar( 0.5 );
+						gltf.scene.updateMatrixWorld( true );
 
 						const model = mergeObject( gltf.scene );
 						model.children[ 0 ].geometry.computeBoundingBox();
 						model.children[ 0 ].castShadow = true;
 
-						models.HELMET = model;
+
+						models.ROVER = model;
 						updateModel();
 
 					}
