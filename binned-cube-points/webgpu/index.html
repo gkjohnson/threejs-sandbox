@@ -81,7 +81,6 @@
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0x263238 );
-				scene.fog = new THREE.Fog(0x263238, 0, 60);
 
 				renderer = new THREE.WebGPURenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -89,14 +88,16 @@
 				document.body.appendChild( renderer.domElement );
 
 
-				pointsArr = new Float32Array(3 * 1000);
+				const numPoints = 10000;
+				const positionBufferSize = numPoints * 3;
+				pointsArr = new Float32Array(positionBufferSize);
 				var tempVec = new THREE.Vector3();
-				for (var i = 0; i < 1000; i += 3) {
+				for (var i = 0; i < positionBufferSize; i += 3) {
 
 					tempVec.x = Math.random() - 0.5;
 					tempVec.y = Math.random() - 0.5;
 					tempVec.z = Math.random() - 0.5;
-					tempVec.multiplyScalar(15);
+					tempVec.multiplyScalar(30);
 
 					pointsArr[i + 0] = tempVec.x;
 					pointsArr[i + 1] = tempVec.y;
@@ -144,7 +145,7 @@
 				dirLight.position.set(1, 2, 3);
 				scene.add(dirLight);
 
-				var ambientLight = new THREE.AmbientLight(0xffffff, Math.PI);
+				var ambientLight = new THREE.AmbientLight(0xffffff );
 				scene.add(ambientLight);
 
 				controls = new OrbitControls( camera, renderer.domElement );
