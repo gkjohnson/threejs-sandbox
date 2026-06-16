@@ -62,11 +62,8 @@
 			var points, instanceMesh, instanceCount, pointsArr;
 			var instancesNeedUpdate = true;
 
-			// reused scratch objects for building the per-instance matrices
 			const tempObject = new THREE.Object3D();
 			const tempBin = new THREE.Vector3();
-
-			console.log('test')
 
 			init();
 			animate();
@@ -176,8 +173,7 @@
 						pointsArr[ i * 3 + 2 ]
 					);
 
-					// Bin the point into a grid cell of size `scale` and center the cube in it.
-					// Mirrors the per-vertex math the old custom shader performed.
+
 					tempBin.add( params.offset );
 					tempBin.divideScalar( scale );
 					tempBin.floor();

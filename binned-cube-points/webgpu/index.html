@@ -66,8 +66,6 @@
 			var instancesNeedUpdate = true;
 			var computeBins;
 
-			// TSL uniforms shared by the compute kernel and the cube material.
-			// uniform() keeps a live reference to params.offset, so the GUI edits it in place.
 			const scaleUniform = uniform( params.scale );
 			const offsetUniform = uniform( params.offset );
 
